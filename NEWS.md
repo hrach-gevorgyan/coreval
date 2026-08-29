@@ -44,6 +44,15 @@
   no-`Operations`/`Match Datasets` rules are now executable (229 of 332
   Published-only).
 
+* `tests/conformance/run_conformance.R`: the conformance harness. Runs every
+  bundled rule against CDISC's own positive/negative reference test cases
+  (from a local `cdisc-open-rules` clone) and reports a pass/fail/skipped
+  scoreboard, broken down by rule type and skip reason. Not part of the
+  package or `R CMD check` (needs network access to the upstream repo).
+  Building it immediately surfaced two real evaluator bugs (see Bug fixes)
+  that hand-picked test cases hadn't caught. Current state: 246 rules pass,
+  37 fail, 224 skipped (mostly `Operations`/`Match Datasets`, not yet
+  implemented) - 50.2% pass rate among Fully Executable rules.
 * YAML 1.1 boolean literals (bare `y`/`Y`/`yes`/`on`/`true`,
   `n`/`N`/`no`/`off`/`false`) in a condition's `value` field were silently
   coerced to logical `TRUE`/`FALSE` instead of staying the literal string
@@ -51,3 +60,16 @@
   (`DTHFL`, `*PRESP`, `*OCCUR`, ...). `data-raw/extract_rules.R` now
   preserves the original text and separately re-coerces the schema's actual
   boolean flags (`value_is_literal`, `negative`, etc.) back to logicals.
+* `resolve_condition_value()` returned `NULL` (-> the condition always
+  evaluated to `NA`/false) whenever `value` wasn't marked literal and also
+  wasn't the name of an existing column - e.g. `value: Y` with no column
+  named `"Y"`. Per the reference engine's own resolution, this should fall
+  back to the literal text instead. Found via the conformance harness,
+  which is exactly what it's for: it turned ~50 silent false negatives into
+  passes.
+* A related bug in the same function: multi-element literal values (e.g.
+  `is_not_contained_by: [Y, N]`, common and never marked
+  `value_is_literal`) were being misidentified as a grouping operator's
+  column-name list and resolved to `NULL`. Fixed by resolving the ambiguity
+  correctly - grouping operators read their raw column names from the
+  condition directly and never depend on this function's return value.

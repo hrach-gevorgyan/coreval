@@ -11,21 +11,41 @@ resolve_var_name <- function(name, domain) {
   )
 }
 
-# Resolves a condition's comparison target per `value_is_literal` (defaults
-# to FALSE/absent - the trap: `value` names a column unless explicitly
-# marked literal). Returns NULL if the condition has no `value`, or `value`
-# is a vector of column names rather than a single reference - that shape is
-# only used by the grouping operators (is_not_unique_set, ...), which read
-# the raw names from `condition$value` themselves via ctx$dataset instead.
+# Resolves a condition's comparison target per `value_is_literal`. Returns
+# NULL only if the condition has no `value` at all.
+#
+# The trap is subtler than "value_is_literal defaults to FALSE = column
+# reference": per the reference engine's own resolution (comparator not in
+# row or value_is_literal -> literal, else row[comparator]), `value` is
+# tried as a column reference ONLY when a column by that exact name exists
+# in the dataset; otherwise it falls back to being the literal text, even
+# with value_is_literal absent. Two concrete failure modes this fixes:
+#   - `value: Y` with no column named "Y" in the dataset means the literal
+#     string "Y", not a failed column lookup - returning NULL (an earlier
+#     version of this function did) silently turned the condition into
+#     "always false," since NA propagates to FALSE.
+#   - `value: [Y, N]` (a literal array, common for is_contained_by/
+#     is_not_contained_by) is never a column reference regardless of
+#     value_is_literal - a multi-element value simply never matches a
+#     single column name, so it falls through to the literal-array case
+#     here on its own; no length-based special-casing is needed. The
+#     grouping operators (is_not_unique_set, ...) don't use this resolved
+#     value at all - they read raw column names from `condition$value`
+#     themselves via ctx$dataset, ignoring whatever this returns.
 resolve_condition_value <- function(condition, dataset, domain) {
-  if (is.null(condition$value) || length(condition$value) != 1) {
+  if (is.null(condition$value)) {
     return(NULL)
   }
   if (isTRUE(condition$value_is_literal)) {
     return(condition$value)
   }
-  ref_name <- resolve_var_name(condition$value, domain)
-  if (ref_name %in% names(dataset$data)) dataset$data[[ref_name]] else NULL
+  if (length(condition$value) == 1) {
+    ref_name <- resolve_var_name(condition$value, domain)
+    if (ref_name %in% names(dataset$data)) {
+      return(dataset$data[[ref_name]])
+    }
+  }
+  condition$value
 }
 
 evaluate_condition <- function(condition, dataset, domain) {

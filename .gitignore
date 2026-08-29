@@ -8,3 +8,4 @@ coreval-plan.md
 *.Rcheck/
 *.tar.gz
 data-raw/cdisc-open-rules/
+tests/conformance/scoreboard.csv
