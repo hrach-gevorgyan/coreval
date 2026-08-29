@@ -31,3 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `"XX--"` prefix wildcards (e.g. `SUPP--`, `AP--`).
 - `sdtm_domain_classes()`: the bundled SDTMIG 3.4 domain -> observation-class
   reference table used by `rules_for_domain()`.
+
+### Fixed
+
+- YAML 1.1 boolean literals (bare `y`/`Y`/`yes`/`on`/`true`,
+  `n`/`N`/`no`/`off`/`false`) in a condition's `value` field were silently
+  coerced to logical `TRUE`/`FALSE` instead of staying the literal string
+  they represent - corrupting extremely common SDTM Y/N flag checks
+  (`DTHFL`, `*PRESP`, `*OCCUR`, ...). `data-raw/extract_rules.R` now
+  preserves the original text and separately re-coerces the schema's actual
+  boolean flags (`value_is_literal`, `negative`, etc.) back to logicals.
