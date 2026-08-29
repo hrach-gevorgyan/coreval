@@ -1,0 +1,11 @@
+Dataset,Record,Variable,Value
+TA,1,ELEMENT,
+TA,1,ETCD,SCREEN
+TA,3,ELEMENT,Screening
+TA,3,ETCD,SCREEN
+TA,5,ELEMENT,Screening
+TA,5,ETCD,SCREEN
+TE,3,ELEMENT,Zanomaline 54 mg
+TE,3,ETCD,LOW
+TE,6,ELEMENT,Zanomaline 40 mg
+TE,6,ETCD,LOW

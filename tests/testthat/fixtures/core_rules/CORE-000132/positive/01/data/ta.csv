@@ -1,0 +1,9 @@
+STUDYID,DOMAIN,ARMCD,ARM,TAETORD,ETCD,ELEMENT,TABRANCH,TATRANS,EPOCH
+CDISCPILOT01,TA,PLACEBO,Placebo,1,SCREEN,Screening,Randomized to Placebo,,SCREENING
+CDISCPILOT01,TA,PLACEBO,Placebo,2,PLACEBO,Placebo,,,TREATMENT
+CDISCPILOT01,TA,ZAN_LOW,Zanomaline Low Dose (54 mg),1,SCREEN,Screening,Randomized to Zanomaline Low Dose,,SCREENING
+CDISCPILOT01,TA,ZAN_LOW,Zanomaline Low Dose (54 mg),2,LOW,Zanomaline 54 mg,,,TREATMENT
+CDISCPILOT01,TA,ZAN_HIGH,Zanomaline High Dose (81 mg),1,SCREEN,Screening,Randomized to Zanomaline High Dose,,SCREENING
+CDISCPILOT01,TA,ZAN_HIGH,Zanomaline High Dose (81 mg),2,TITRATE,Zanomaline 54 mg Titration,,,TREATMENT
+CDISCPILOT01,TA,ZAN_HIGH,Zanomaline High Dose (81 mg),3,HIGH,Zanomaline 81 mg,,,TREATMENT
+CDISCPILOT01,TA,ZAN_HIGH,Zanomaline High Dose (81 mg),4,TITRATE,Zanomaline 54 mg Titration,,,TREATMENT

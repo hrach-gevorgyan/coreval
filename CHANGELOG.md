@@ -45,6 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `is_contained_by`, `is_not_contained_by`, `matches_regex`,
   `not_matches_regex`, `longer_than`. Covers 286 of the 365 rules with no
   `Operations`/`Match Datasets` block (209 of 332 Published-only).
+- 4 more operators: `is_not_unique_set`/`is_unique_set` (flags a record
+  whose combination of values across several columns duplicates another
+  record's, e.g. `SUBJID` unique within `STUDYID`) and
+  `is_not_unique_relationship`/`is_unique_relationship` (enforces a
+  one-to-one mapping between two columns, e.g. `ETCD`/`ELEMENT`; flags
+  either side of an inconsistent mapping, including a value paired with
+  both a real value and a blank elsewhere). Semantics reverse-engineered
+  from `cdisc-org/cdisc-rules-engine`'s own operator implementation, since
+  the YAML schema doesn't document them, then verified against CDISC's
+  reference `results.csv` for two real rules (CORE-000186, CORE-000132).
+  Now 320 of 365 no-`Operations`/`Match Datasets` rules are executable (229
+  of 332 Published-only - past the plan's 219 target).
 
 ### Fixed
 

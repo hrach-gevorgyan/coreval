@@ -1,0 +1,28 @@
+dataset,variable,label,type,length
+se,STUDYID,Study Identifier,Char,12
+se,DOMAIN,Domain Abbreviation,Char,2
+se,USUBJID,Unique Subject Identifier,Char,8
+se,SESEQ,Sequence Number,Num,8
+se,ETCD,Element Code,Char,7
+se,ELEMENT,Description of Element,Char,26
+se,EPOCH,Epoch,Char,9
+se,SESTDTC,Start Date/Time of Element,Char,10
+se,SEENDTC,End Date/Time of Element,Char,10
+se,SESTDY,Study Day of Start of Element,Num,8
+se,SEENDY,Study Day of End of Element,Num,8
+ta,STUDYID,Study Identifier,Char,12
+ta,DOMAIN,Domain Abbreviation,Char,2
+ta,ARMCD,Planned Arm Code,Char,8
+ta,ARM,Description of Planned Arm,Char,28
+ta,TAETORD,Planned Order of Element within Arm,Num,8
+ta,ETCD,Element Code,Char,7
+ta,ELEMENT,Description of Element,Char,26
+ta,TABRANCH,Branch,Char,200
+ta,TATRANS,Transition Rule,Char,200
+ta,EPOCH,Epoch,Char,9
+te,STUDYID,Study Identifier,Char,12
+te,DOMAIN,Domain Abbreviation,Char,2
+te,ETCD,Element Code,Char,7
+te,ELEMENT,Description of Element,Char,26
+te,TESTRL,Rule for Start of Element,Char,200
+te,TEENRL,Rule for End of Element,Char,200

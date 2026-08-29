@@ -4,19 +4,21 @@
 # there it means "prefix match"; here it means "this domain's code goes
 # here."
 resolve_var_name <- function(name, domain) {
-  if (startsWith(name, "--")) {
-    paste0(toupper(domain), substr(name, 3, nchar(name)))
-  } else {
+  ifelse(
+    startsWith(name, "--"),
+    paste0(toupper(domain), substr(name, 3, nchar(name))),
     name
-  }
+  )
 }
 
 # Resolves a condition's comparison target per `value_is_literal` (defaults
 # to FALSE/absent - the trap: `value` names a column unless explicitly
-# marked literal). Returns NULL if the condition has no `value` at all
-# (e.g. exists/empty).
+# marked literal). Returns NULL if the condition has no `value`, or `value`
+# is a vector of column names rather than a single reference - that shape is
+# only used by the grouping operators (is_not_unique_set, ...), which read
+# the raw names from `condition$value` themselves via ctx$dataset instead.
 resolve_condition_value <- function(condition, dataset, domain) {
-  if (is.null(condition$value)) {
+  if (is.null(condition$value) || length(condition$value) != 1) {
     return(NULL)
   }
   if (isTRUE(condition$value_is_literal)) {
@@ -35,7 +37,8 @@ evaluate_condition <- function(condition, dataset, domain) {
     target = if (exists) dataset$data[[name]] else NULL,
     value = resolve_condition_value(condition, dataset, domain),
     n = nrow(dataset$data),
-    condition = condition
+    condition = condition,
+    dataset = dataset
   )
 
   op_fn <- get_operator(condition$operator)
