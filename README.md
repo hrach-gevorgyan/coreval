@@ -1,8 +1,10 @@
 # coreval
 
-Run CDISC Open Rules (CORE) conformance rules against SDTM datasets in R.
+[![R-CMD-check](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml)
 
-**Status:** early scaffolding — no rules implemented yet. See [coreval-plan.md](coreval-plan.md) for the development plan.
+coreval is an R package that evaluates CDISC Open Rules (CORE) conformance rules against clinical trial datasets, returning findings as a tidy data frame.
+
+**Status:** early scaffolding — no rules implemented yet.
 
 Not affiliated with or endorsed by CDISC. Not a CORE-certified engine.
 
