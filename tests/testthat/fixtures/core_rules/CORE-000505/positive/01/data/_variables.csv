@@ -1,0 +1,6 @@
+dataset,variable,label,type,length
+ts,STUDYID,Study Identifier,Char,12
+ts,DOMAIN,Domain Abbreviation,Char,2
+ts,TSSEQ,Sequence Number,Num,2
+ts,TSPARMCD,Trial Summary Parameter Short Name,Char,8
+ts,TSVAL,Parameter Value,Char,100

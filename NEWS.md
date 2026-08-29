@@ -44,15 +44,34 @@
   no-`Operations`/`Match Datasets` rules are now executable (229 of 332
   Published-only).
 
+* Date operators: `date_equal_to`, `date_not_equal_to`, `date_greater_than`,
+  `date_less_than`, `date_greater_than_or_equal_to`,
+  `date_less_than_or_equal_to`, `is_complete_date`, `is_incomplete_date`,
+  `invalid_date`, `invalid_duration`. SDTM dates are legitimately partial
+  (`"2024-03"`, `"2024---15"`), so these are backed by a partial-ISO-8601
+  parser ported from `cdisc-org/cdisc-rules-engine`'s own date-precision
+  logic, not `as.Date()`: two dates are compared by truncating both to
+  their common (coarser) precision first, and `date_equal_to`/
+  `date_not_equal_to` additionally require matching precision - `"2024"`
+  and `"2024-01-01"` are never equal, even though truncating both to
+  year-precision gives the same value.
+* String/set operators: `contains`, `does_not_contain`, `starts_with`,
+  `ends_with`, `has_equal_length`, `has_not_equal_length`,
+  `is_contained_by_case_insensitive`, `is_not_contained_by_case_insensitive`,
+  `prefix_matches_regex`, `not_prefix_matches_regex`,
+  `suffix_matches_regex`, `not_suffix_matches_regex`, `shorter_than`,
+  `contains_all`, `not_contains_all` (the last two are dataset-level, like
+  `exists`/`not_exists` - they check the target column's full value set,
+  not row by row).
 * `tests/conformance/run_conformance.R`: the conformance harness. Runs every
   bundled rule against CDISC's own positive/negative reference test cases
   (from a local `cdisc-open-rules` clone) and reports a pass/fail/skipped
   scoreboard, broken down by rule type and skip reason. Not part of the
   package or `R CMD check` (needs network access to the upstream repo).
   Building it immediately surfaced two real evaluator bugs (see Bug fixes)
-  that hand-picked test cases hadn't caught. Current state: 246 rules pass,
-  37 fail, 224 skipped (mostly `Operations`/`Match Datasets`, not yet
-  implemented) - 50.2% pass rate among Fully Executable rules.
+  that hand-picked test cases hadn't caught. Current state: 260 rules pass,
+  51 fail, 196 skipped (mostly `Operations`/`Match Datasets`, not yet
+  implemented) - 53.1% pass rate among Fully Executable rules.
 * YAML 1.1 boolean literals (bare `y`/`Y`/`yes`/`on`/`true`,
   `n`/`N`/`no`/`off`/`false`) in a condition's `value` field were silently
   coerced to logical `TRUE`/`FALSE` instead of staying the literal string
@@ -73,3 +92,9 @@
   column-name list and resolved to `NULL`. Fixed by resolving the ambiguity
   correctly - grouping operators read their raw column names from the
   condition directly and never depend on this function's return value.
+* `is_valid_date_str()` only checked the date regex's *shape*, not real
+  calendar validity - `"2023-02-30"` matches the day pattern fine (nothing
+  in the regex knows February doesn't have 30 days) but isn't a real date.
+  The reference engine's `isoparse` rejects it for fully-specified dates;
+  now matched explicitly with a leap-year-aware day-count check. Uncertain/
+  partial dates (`"2024---15"`) skip this, matching upstream.

@@ -1,0 +1,12 @@
+dataset,variable,label,type,length
+ts,STUDYID,Study Identifier,Char,10
+ts,DOMAIN,Domain Abbreviation,Char,2
+ts,TSSEQ,Sequence Number,Num,8
+ts,TSGRPID,Group ID,Char,5
+ts,TSPARMCD,Trial Summary Parameter Short Name,Char,8
+ts,TSPARM,Trial Summary Parameter,Char,40
+ts,TSVAL,Parameter Value,Char,149
+ts,TSVALNF,Parameter Null Flavor,Char,2
+ts,TSVALCD,Parameter Value Code,Char,11
+ts,TSVCDREF,Name of the Reference Terminology,Char,18
+ts,TSVCDVER,Version of the Reference Terminology,Char,10

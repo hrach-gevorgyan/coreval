@@ -1,0 +1,6 @@
+STUDYID,DOMAIN,ETCD,ELEMENT,TESTRL,TEENRL,TEDUR
+CDISCPILOT01,TE,SCREEN,Screening,Date of informed consent,"Completion of all screening activities, no more than 2 weeks from informed consent",P14D
+CDISCPILOT01,TE,PLACEBO,Placebo,First dose when drug is Placebo,26 weeks after the start of the Element,
+CDISCPILOT01,TE,LOW,Zanomaline 54 mg,First dose when Dose=54 mg,26 weeks after the start of the Element,P182D
+CDISCPILOT01,TE,TITRATE,Zanomaline 54 mg Titration,First dose of titration period,2 weeks after the start of the Element,P14D
+CDISCPILOT01,TE,HIGH,Zanomaline 81 mg,First dose when Dose=81 mg,22 weeks after the start of the Element,P154D
