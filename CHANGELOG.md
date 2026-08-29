@@ -19,3 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `source` (`published`, `deprecated_dir`, `fda_business_rules_draft`) and
   `status`.
 - `rules_version()`: returns the pinned upstream commit SHA.
+- `read_study(path)`: reads a directory of XPT datasets, or a CORE test-case
+  `data/` directory (`.env` + `_datasets.csv` + `_variables.csv` + one CSV
+  per dataset), into a common internal representation. Character columns
+  use `""` for blank/missing (matching how SAS XPT round-trips blanks, since
+  it has no character `NA`); column types come from the source rather than
+  being guessed from data.
+- `rules_for_domain(domain, use_case = NULL)`: resolves a rule's
+  `Scope > Classes` and `Scope > Domains` against an actual SDTM domain
+  code, handling the `"ALL"`/`"NONE"` sentinels, Include vs Exclude, and
+  `"XX--"` prefix wildcards (e.g. `SUPP--`, `AP--`).
+- `sdtm_domain_classes()`: the bundled SDTMIG 3.4 domain -> observation-class
+  reference table used by `rules_for_domain()`.
