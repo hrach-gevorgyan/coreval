@@ -7,3 +7,4 @@
 ^tests/conformance$
 ^LICENSE\.md$
 ^CLAUDE\.md$
+^\.claude$
