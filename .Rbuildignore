@@ -10,3 +10,4 @@
 ^\.claude$
 ^CHANGELOG\.md$
 ^NOTICE\.md$
+^tests/testthat/fixtures/.*/\.env$

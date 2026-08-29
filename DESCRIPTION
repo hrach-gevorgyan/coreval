@@ -12,7 +12,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
-    data.table
+    data.table,
+    haven
 Suggests:
     xml2,
     testthat (>= 3.0.0)

@@ -1,0 +1,6 @@
+dataset,variable,label,type,length
+DM,STUDYID,Study Identifier,Char,50
+DM,DOMAIN,Domain Abbreviation,Char,2
+DM,USUBJID,Unique Subject Identifier,Char,50
+DM,SEX,Sex,Char,1
+DM,AGE,Age,Num,8
