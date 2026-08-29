@@ -1,0 +1,18 @@
+Package: coreval
+Title: Evaluate CDISC Open Rules (CORE) Conformance Against SDTM Data
+Version: 0.0.0.9000
+Authors@R:
+    person("Hrach", "Gevorgyan", email = "hrach.gevorgyan@yandex.com", role = c("aut", "cre", "cph"))
+Description: Reads SDTM datasets (XPT/sas7bdat/CSV) and evaluates CDISC Open
+    Rules (CORE) conformance rules against them, returning findings as a
+    tidy data frame. Rule definitions ship inside the package as data,
+    extracted from the CDISC Open Rules repository. Not affiliated with or
+    endorsed by CDISC, and not a CORE-certified engine.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests:
+    xml2,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

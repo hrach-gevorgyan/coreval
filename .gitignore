@@ -1,0 +1,8 @@
+CLAUDE.md
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rcheck/
+*.tar.gz
+data-raw/cdisc-open-rules/

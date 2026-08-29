@@ -1,0 +1,9 @@
+^coreval\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^coreval-plan\.md$
+^data-raw$
+^README\.Rmd$
+^tests/conformance$
+^LICENSE\.md$
+^CLAUDE\.md$
