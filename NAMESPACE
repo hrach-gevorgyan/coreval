@@ -2,4 +2,6 @@
 
 export(list_rules)
 export(read_study)
+export(rules_for_domain)
 export(rules_version)
+export(sdtm_domain_classes)
