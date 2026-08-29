@@ -8,3 +8,5 @@
 ^LICENSE\.md$
 ^CLAUDE\.md$
 ^\.claude$
+^CHANGELOG\.md$
+^NOTICE\.md$
