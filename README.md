@@ -42,6 +42,6 @@ MIT for package code (see [LICENSE.md](LICENSE.md)). Rule content is sourced
 from [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
 (CDISC) under its own terms — see [NOTICE.md](NOTICE.md).
 
-## Changelog
+## News
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [NEWS.md](NEWS.md).
