@@ -41,12 +41,48 @@ int_handler <- function(x) {
   if (is.na(v)) as.numeric(x) else v
 }
 
+# YAML 1.1 (which this parser follows) treats bare y/Y/yes/on/true and
+# n/N/no/off/false as booleans. SDTM Y/N flag literals (`value: Y`, `value: N`
+# - extremely common: DTHFL, *PRESP, *OCCUR, ...) get silently corrupted into
+# logical TRUE/FALSE instead of the strings "Y"/"N" they actually are.
+# Override both boolean handlers to keep the original text, then re-coerce
+# the schema's actual boolean flags (value_is_literal, negative, etc., which
+# would otherwise also come through as strings like "true") back to logicals
+# in normalize_flags() below.
+preserve_bool_text <- function(x) x
+
+FLAG_KEYS <- c(
+  "value_is_literal", "negative", "type_insensitive", "value_is_reference",
+  "include_split_datasets"
+)
+
+normalize_flags <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  nm <- names(x)
+  for (i in seq_along(x)) {
+    key <- if (!is.null(nm)) nm[i] else NA
+    if (!is.na(key) && key %in% FLAG_KEYS) {
+      x[[i]] <- isTRUE(as.logical(x[[i]]))
+    } else {
+      x[[i]] <- normalize_flags(x[[i]])
+    }
+  }
+  x
+}
+
 has_results_csv <- function(rule_dir) {
   length(list.files(rule_dir, pattern = "^results\\.csv$", recursive = TRUE)) > 0
 }
 
 extract_one <- function(path, source) {
-  d <- yaml::yaml.load_file(path, handlers = list(int = int_handler))
+  d <- yaml::yaml.load_file(path, handlers = list(
+    int = int_handler,
+    `bool#yes` = preserve_bool_text,
+    `bool#no` = preserve_bool_text
+  ))
+  d <- normalize_flags(d)
 
   standards <- unique(unlist(lapply(d$Authorities, function(a) {
     vapply(a$Standards, function(s) s$Name, character(1))
