@@ -1,0 +1,7 @@
+Dataset,Record,Variable,Value
+ZB,8,$domain_list,['ZB']
+ZB,8,variable_name,LBORRES
+ZM,6,$domain_list,['ZM']
+ZM,6,variable_name,AEINDC
+ZM,7,$domain_list,['ZM']
+ZM,7,variable_name,CMDOSE

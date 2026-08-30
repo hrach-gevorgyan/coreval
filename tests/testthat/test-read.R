@@ -36,6 +36,22 @@ test_that("read_study preserves a literal character value of 'NA', not just true
   expect_equal(ts$data$TSVAL, c("", "some value"))
 })
 
+test_that("read_study preserves leading/trailing whitespace in character values", {
+  # Bug: fread()'s default strip.white = TRUE silently trimmed leading/
+  # trailing whitespace from unquoted character fields - destroying exactly
+  # the kind of data-quality defect CORE conformance rules exist to catch
+  # (e.g. CORE-000867's "text variable must not have leading spaces").
+  dir <- tempfile("coreval_ws_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("Filename,Label\ncm,Concomitant Medications", file.path(dir, "_datasets.csv"))
+  writeLines("dataset,variable,label,type,length\nCM,CMTRT,Reported Name,Char,10", file.path(dir, "_variables.csv"))
+  writeLines("CMTRT\n HYTRIN ", file.path(dir, "cm.csv"))
+
+  study <- read_study(dir)
+  expect_equal(study$datasets$CM$data$CMTRT, " HYTRIN ")
+})
+
 test_that("read_study reads a directory of XPT files with the same semantics", {
   dir <- tempfile("coreval_xpt_")
   dir.create(dir)

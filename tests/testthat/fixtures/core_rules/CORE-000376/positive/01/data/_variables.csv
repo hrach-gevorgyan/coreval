@@ -1,0 +1,51 @@
+dataset,variable,label,type,length
+lb,STUDYID,Study Identifier,Char,12
+lb,DOMAIN,Domain Abbreviation,Char,2
+lb,USUBJID,Unique Subject Identifier,Char,8
+lb,X1SEQ,Sequence Number,Num,8
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,7
+lb,LBTEST,Lab Test or Examination Name,Char,39
+lb,LBCAT,Category for Lab Test,Char,10
+lb,LBORRES,Result or Finding in Original Units,Char,6
+lb,LBORRESU,Original Units,Char,7
+lb,LBORNRLO,Reference Range Lower Limit in Orig Unit,Char,200
+lb,LBORNRHI,Reference Range Upper Limit in Orig Unit,Char,200
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,8
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,7
+lb,LBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+lb,LBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+lb,LBNRIND,Reference Range Indicator,Char,8
+lb,LBSTAT,Completion Status,Char,50
+lb,LBLOBXFL,Last Observation Before Exposure Flag,Char,1
+lb,LBDRVFL,Derived Flag,Char,50
+lb,VISITNUM,Visit Number,Num,8
+lb,VISIT,Visit Name,Char,200
+lb,EPOCH,Epoch,Char,9
+lb,LBDTC,Date/Time of Specimen Collection,Char,19
+lb,LBDY,Study Day of Specimen Collection,Num,8
+zb,STUDYID,Study Identifier,Char,12
+zb,DOMAIN,Domain Abbreviation,Char,2
+zb,USUBJID,Unique Subject Identifier,Char,8
+zb,ZBSEQ,Sequence Number,Num,8
+zb,ZBTESTCD,Lab Test or Examination Short Name,Char,7
+zb,ZBTEST,Lab Test or Examination Name,Char,39
+zb,ZBCAT,Category for Lab Test,Char,10
+zb,ZBORRES,Result or Finding in Original Units,Char,6
+zb,ZBORRESU,Original Units,Char,7
+zb,ZBORNRLO,Reference Range Lower Limit in Orig Unit,Char,200
+zb,ZBORNRHI,Reference Range Upper Limit in Orig Unit,Char,200
+zb,ZBSTRESC,Character Result/Finding in Std Format,Char,8
+zb,ZBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+zb,ZBSTRESU,Standard Units,Char,7
+zb,ZBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+zb,ZBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+zb,ZBNRIND,Reference Range Indicator,Char,8
+zb,ZBSTAT,Completion Status,Char,50
+zb,ZBLOBXFL,Last Observation Before Exposure Flag,Char,1
+zb,ZBDRVFL,Derived Flag,Char,50
+zb,VISITNUM,Visit Number,Num,8
+zb,VISIT,Visit Name,Char,200
+zb,EPOCH,Epoch,Char,9
+zb,ZBDTC,Date/Time of Specimen Collection,Char,19
+zb,ZBDY,Study Day of Specimen Collection,Num,8

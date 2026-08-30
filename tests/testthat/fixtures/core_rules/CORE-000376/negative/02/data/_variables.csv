@@ -1,0 +1,83 @@
+dataset,variable,label,type,length
+xa,STUDYID,Study Identifier,Char,50
+xa,DOMAIN,Domain Abbreviation,Char,50
+xa,USUBJID,Unique Subject Identifier,Char,50
+xa,XASEQ,Sequence Number,Num,8
+xa,XATERM,Reported Term for the Adverse Event,Char,50
+xa,XAMODIFY,Modified Reported Term,Char,50
+xa,XADECOD,Dictionary-Derived Term,Char,50
+xa,XABODSYS,Body System or Organ Class,Char,50
+xa,XASEV,Severity/Intensity,Char,50
+xa,XASER,Serious Event,Char,50
+xa,XAACN,Action Taken with Study Treatment,Char,50
+xa,XAREL,Causality,Char,50
+xa,CMOUT,Outcome of Adverse Event,Char,50
+xa,XASCONG,Congenital Anomaly or Birth Defect,Char,50
+xa,XASDISAB,Persist or Signif Disability/Incapacity,Char,50
+xa,XASDTH,Results in Death,Char,50
+xa,XASHOSP,Requires or Prolongs Hospitalization,Char,50
+xa,XASLIFE,Is Life Threatening,Char,50
+xa,EPOCH,Epoch,Char,50
+xa,XASTDTC,Start Date/Time of Adverse Event,Char,50
+xa,XAENDTC,End Date/Time of Adverse Event,Char,50
+xa,XASTDY,Study Day of Start of Adverse Event,Num,8
+xa,XAENDY,Study Day of End of Adverse Event,Num,8
+xa,XAENRF,End Relative to Reference Period,Char,50
+xm,STUDYID,Study Identifier,Char,12
+xm,DOMAIN,Domain Abbreviation,Char,2
+xm,USUBJID,Unique Subject Identifier,Char,8
+xm,XMSEQ,Sequence Number,Num,8
+xm,XMTRT,"Reported Name of Drug, Med, or Therapy",Char,200
+xm,XMINDC,Indication,Char,200
+xm,XMDOSE,Dose per Administration,Num,8
+xm,XMDOSU,Dose Units,Char,6
+xm,XMDOSFRQ,Dosing Frequency per Interval,Char,3
+xm,XMROUTE,Route of Administration,Char,24
+xm,EPOCH,Epoch,Char,9
+xm,PRSTDTC,Start Date/Time of Medication,Char,10
+xm,PRENDTC,End Date/Time of Medication,Char,10
+xm,XMSTDY,Study Day of Start of Medication,Num,8
+xm,XMENDY,Study Day of End of Medication,Num,8
+xm,XMSTRF,Start Relative to Reference Period,Char,7
+xm,XMENRF,End Relative to Reference Period,Char,5
+xm,VISIT,Visit Name,Char,200
+xm,VISITNUM,Visit Number,Num,8
+dm,STUDYID,Study Identifier,Char,50
+dm,DOMAIN,Domain Abbreviation,Char,50
+dm,USUBJID,Unique Subject Identifier,Char,50
+dm,SUBJID,Subject Identifier for the Study,Char,50
+dm,RFSTDTC,Subject Reference Start Date/Time,Char,50
+dm,RFENDTC,Subject Reference End Date/Time,Char,50
+dm,RFXSTDTC,Date/Time of First Study Treatment,Char,50
+dm,RFXENDTC,Date/Time of Last Study Treatment,Char,50
+dm,RFICDTC,Date/Time of Informed Consent,Char,50
+dm,RFPENDTC,Date/Time of End of Participation,Char,50
+dm,DTHDTC,Date/Time of Death,Char,50
+dm,DTHFL,Subject Death Flag,Char,50
+dm,SITEID,Study Site Identifier,Char,50
+dm,BRTHDTC,Date/Time of Birth,Char,50
+dm,AGE,Age,Num,8
+dm,AGEU,Age Units,Char,50
+dm,SEX,Sex,Char,50
+dm,RACE,Race,Char,50
+dm,ETHNIC,Ethnicity,Char,50
+dm,ARMCD,Planned Arm Code,Char,50
+dm,ARM,Description of Planned Arm,Char,50
+dm,ACTARMCD,Actual Arm Code,Char,50
+dm,ACTARM,Description of Actual Arm,Char,50
+dm,ARMNRS,Reason Arm and/or Actual Arm is Null,Char,50
+dm,ACTARMUD,Description of Unplanned Actual Arm,Char,50
+dm,COUNTRY,Country,Char,50
+dm,DMDTC,Date/Time of Collection,Char,50
+dm,DMDY,Study Day of Collection,Num,8
+yp,STUDYID,Study Identifier,Char,200
+yp,DOMAIN,Domain Abbreviation,Char,200
+yp,SPTOBID,Applicant-Defined Tobacco Product ID,Char,40
+yp,IGDCMPID,Ingredient or Component Identifier,Char,40
+yp,YPSEQ,Sequence Number,Num,10
+yp,YPPARMCD,Design Parameter Element Short Name,Char,8
+yp,YPPARM,Design Parameter Element Name,Char,40
+yp,YPVALTRG,Design Parameter Element Target Value,Char,50
+yp,YPVALMIN,Design Parameter Element Minimum Value,Char,50
+yp,YPVALMAX,Design Parameter Element Maximum Value,Char,50
+yp,PMVALU,Design Parameter Element Value Unit,Char,50

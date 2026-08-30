@@ -1,0 +1,7 @@
+Dataset,Record,Variable,Value
+XA,13,$domain_list,['XA']
+XA,13,variable_name,CMOUT
+XM,12,$domain_list,['XM']
+XM,12,variable_name,PRSTDTC
+XM,13,$domain_list,['XM']
+XM,13,variable_name,PRENDTC

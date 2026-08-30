@@ -1,0 +1,72 @@
+dataset,variable,label,type,length
+cm,STUDYID,Study Identifier,Char,50
+cm,DOMAIN,Domain Abbreviation,Char,50
+cm,USUBJID,Unique Subject Identifier,Char,50
+cm,CMSEQ,Sequence Number,Num,8
+cm,CMTRT,"Reported Name of Drug, Med, or Therapy",Char,50
+cm,CMINDC,Indication,Char,50
+cm,CMDOSE,Dose per Administration,Num,8
+cm,CMDOSU,Dose Units,Char,50
+cm,CMDOSFRQ,Dosing Frequency per Interval,Char,50
+cm,CMROUTE,Route of Administration,Char,50
+cm,EPOCH,Epoch,Char,50
+cm,CMSTDTC,Start Date/Time of Medication,Char,50
+cm,CMSTDY,Study Day of Start of Medication,Num,8
+cm,CMENDY,Study Day of End of Medication,Num,8
+cm,CMSTRTPT,Start Relative to Reference Time Point,Char,50
+cm,CMSTTPT,Start Reference Time Point,Char,50
+cm,CMENRTPT,End Relative to Reference Time Point,Char,50
+cm,CMENTPT,End Reference Time Point,Char,50
+ce,STUDYID,Study Identifier,Char,50
+ce,DOMAIN,Domain Abbreviation,Char,50
+ce,USUBJID,Unique Subject Identifier,Char,50
+ce,CESEQ,Sequence Number,Num,8
+ce,CEGRPID,Group ID,Char,50
+ce,CETERM,Reported Term for the Clinical Event,Char,50
+ce,CESEV,Severity/Intensity,Char,50
+ce,EPOCH,Epoch,Char,50
+ce,CEDTC,Start Date/Time of Event Collection,Char,50
+ce,CESTDTC,Start Date/Time of Clinical Event,Char,50
+ce,CESTDY,Study Day of Start of Event,Num,8
+ce,CEENDY,Study Day of End of Event,Num,8
+ce,CESTRTPT,Start Relative to Reference Time Point,Char,50
+ce,CESTTPT,Start Reference Time Point,Char,50
+ce,CEENRTPT,End Relative to Reference Time Point,Char,50
+ce,CEENTPT,End Reference Time Point,Char,50
+lb,STUDYID,Study Identifier,Char,12
+lb,DOMAIN,Domain Abbreviation,Char,2
+lb,USUBJID,Unique Subject Identifier,Char,8
+lb,LBSEQ,Sequence Number,Num,8
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,7
+lb,LBTEST,Lab Test or Examination Name,Char,39
+lb,LBCAT,Category for Lab Test,Char,10
+lb,LBORRES,Result or Finding in Original Units,Char,6
+lb,LBORRESU,Original Units,Char,7
+lb,LBORNRLO,Reference Range Lower Limit in Orig Unit,Char,200
+lb,LBORNRHI,Reference Range Upper Limit in Orig Unit,Char,200
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,8
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,7
+lb,LBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+lb,LBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+lb,LBNRIND,Reference Range Indicator,Char,8
+lb,LBLOBXFL,Last Observation Before Exposure Flag,Char,1
+lb,VISITNUM,Visit Number,Num,8
+lb,VISIT,Visit Name,Char,200
+lb,EPOCH,Epoch,Char,9
+lb,LBSTDTC,Start Date/Time of Specimen Collection,Char,19
+lb,LBENDY,Study Day of Start of Specimen Collection,Num,8
+lb,LBENRTPT,End Relative to Reference Time Point,Char,50
+lb,LBENTPT,End Reference Time Point,Char,50
+se,STUDYID,Study Identifier,Char,12
+se,DOMAIN,Domain Abbreviation,Char,2
+se,USUBJID,Unique Subject Identifier,Char,8
+se,SESEQ,Sequence Number,Num,8
+se,ETCD,Element Code,Char,7
+se,ELEMENT,Description of Element,Char,26
+se,EPOCH,Epoch,Char,9
+se,SESTDTC,Start Date/Time of Element,Char,10
+se,SEENRTPT,End Relative to Reference Time Point,Char,50
+se,SEENTPT,End Reference Time Point,Char,50
+se,SESTDY,Study Day of Start of Element,Num,8
+se,SEENDY,Study Day of End of Element,Num,8

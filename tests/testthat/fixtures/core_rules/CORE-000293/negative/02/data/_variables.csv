@@ -1,0 +1,11 @@
+dataset,variable,label,type,length
+suppdmmmm,STUDYID,Study Identifier,Char,12
+suppdmmmm,RDOMAIN,Related Domain Abbreviation,Char,6
+suppdmmmm,USUBJID,Unique Subject Identifier,Char,8
+suppdmmmm,IDVAR,Identifying Variable,Char,200
+suppdmmmm,IDVARVAL,Identifying Variable Value,Char,200
+suppdmmmm,QNAM,Qualifier Variable Name,Char,5
+suppdmmmm,QLABEL,Qualifier Variable Label,Char,40
+suppdmmmm,QVAL,Data Value,Char,41
+suppdmmmm,QORIG,Origin,Char,13
+suppdmmmm,QEVAL,Evaluator,Char,200

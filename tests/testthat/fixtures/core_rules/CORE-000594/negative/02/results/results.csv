@@ -1,0 +1,6 @@
+Dataset,Record,Variable,Value
+AE,1,variable_label,Study identifier
+AE,2,variable_label,domain abbreviation
+AE,3,variable_label,unique subject identifier
+AE,4,variable_label,serious event
+AE,6,variable_label,causality

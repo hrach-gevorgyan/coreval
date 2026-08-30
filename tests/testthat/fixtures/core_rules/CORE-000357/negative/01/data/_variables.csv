@@ -1,0 +1,21 @@
+dataset,variable,label,type,length
+suppqscqi,STUDYID,Study Identifier,Char,50
+suppqscqi,RDOMAIN,Related Domain Abbreviation,Char,2
+suppqscqi,USUBJID,Subject Identifier,Char,14
+suppqscqi,IDVAR,Identifying Variable,Char,6
+suppqscqi,IDVARVAL,Identifying Variable Value,Char,4
+suppqscqi,QNAM,Qualifier Variable Name,Char,11
+suppqscqi,QLABEL,Qualifier Variable Label,Char,49
+suppqscqi,QVAL,Data Value,Char,19
+suppqscqi,QORIG,Origin,Char,8
+suppqscqi,QEVAL,Evaluator,Char,22
+suppqsswls,STUDYID,Study Identifier,Char,50
+suppqsswls,RDOMAIN,Related Domain Abbreviation,Char,2
+suppqsswls,USUBJID,Subject Identifier,Char,14
+suppqsswls,IDVAR,Identifying Variable,Char,6
+suppqsswls,IDVARVAL,Identifying Variable Value,Char,4
+suppqsswls,QNAM,Qualifier Variable Name,Char,11
+suppqsswls,QLABEL,Qualifier Variable Label,Char,49
+suppqsswls,QVAL,Data Value,Char,19
+suppqsswls,QORIG,Origin,Char,8
+suppqsswls,QEVAL,Evaluator,Char,22

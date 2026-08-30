@@ -235,7 +235,103 @@ as_study <- function(dataset_or_study, domain) {
 #' @return The joined dataset, `list(data, meta)`.
 #' @noRd
 prepare_dataset_for_rule <- function(rule, study, domain) {
-  apply_match_datasets(study$datasets[[domain]], rule, study, domain)
+  dataset <- study$datasets[[domain]]
+  # rule$rule_type is often absent on rules built directly in tests/by
+  # callers (defaults to the ordinary record-level path) - identical()
+  # rather than switch() so a NULL/missing rule_type never errors.
+  if (identical(rule$rule_type, "Variable Metadata Check")) {
+    return(build_variable_metadata_dataset(dataset))
+  }
+  if (identical(rule$rule_type, "Dataset Metadata Check")) {
+    return(build_dataset_metadata_dataset(dataset, domain))
+  }
+  if (identical(rule$rule_type, "Value Check with Variable Metadata")) {
+    return(build_variable_value_check_dataset(dataset))
+  }
+  apply_match_datasets(dataset, rule, study, domain)
+}
+
+# Three rule types check metadata FACTS rather than record values, and each
+# needs a genuinely different "what is one row" model than the record-level
+# default - built once here, upstream of the ordinary Check-tree evaluator,
+# so evaluate_check()/evaluate_condition()/assemble_findings() need no
+# special-casing at all: the pseudo-field names below (variable_name,
+# dataset_name, ...) just become real columns of a synthetic dataset.
+#
+# - Variable Metadata Check: one row per VARIABLE (from dataset$meta), e.g.
+#   "variable_name longer_than 8" - confirmed against CORE-000182's real
+#   fixtures, including that "Record" (for Sensitivity: Record rules) is the
+#   variable's 1-based position within that dataset's variable list, exactly
+#   matching _variables.csv's own row order (CORE-000569).
+# - Dataset Metadata Check: a single synthetic row (the dataset-level fact is
+#   constant, so N real records would just repeat it) - confirmed against
+#   CORE-000357 (Sensitivity: Record), whose reference reports exactly
+#   Record = 1 regardless of how many real records the dataset actually has.
+# - Value Check with Variable Metadata: one row per (record, variable) pair -
+#   confirmed against CORE-000867's real fixtures (multiple different
+#   records flagged for the SAME variable, e.g. STUDYID). `.coreval_row_id`
+#   is stamped to the ORIGINAL record number so the existing Match-Datasets-
+#   style collapse-back-to-one-result-per-original-row machinery in
+#   `collapse_exploded_violations()` does the right thing with zero new code.
+
+#' Build a single-row synthetic dataset for a Dataset Metadata Check rule
+#'
+#' Also carries through the real dataset's own `DOMAIN` variable (its first
+#' record's value) - confirmed necessary against CORE-000598 ("the dataset
+#' name must begin with the DOMAIN value"), which compares `dataset_name`
+#' against the real `DOMAIN` column, not a literal string - a split dataset
+#' like `AB` legitimately has `DOMAIN == "LB"` inside its own data.
+#' @param real_dataset The domain's real dataset (`list(data, meta)`).
+#' @param domain Domain code (used as-is for `dataset_name` - matches the
+#'   observed uppercase convention in reference `results.csv` Values).
+#' @return A single-row synthetic dataset with columns `dataset_name` and (if present) `DOMAIN`.
+#' @noRd
+build_dataset_metadata_dataset <- function(real_dataset, domain) {
+  cols <- list(dataset_name = domain)
+  if ("DOMAIN" %in% names(real_dataset$data)) {
+    cols$DOMAIN <- real_dataset$data$DOMAIN[1]
+  }
+  list(data = data.table::as.data.table(cols), meta = NULL)
+}
+
+#' Build a per-variable synthetic dataset for a Variable Metadata Check rule
+#' @param real_dataset The domain's real dataset (`list(data, meta)`).
+#' @return A synthetic dataset with columns `variable_name`/`variable_label`/`variable_data_type`.
+#' @noRd
+build_variable_metadata_dataset <- function(real_dataset) {
+  meta <- real_dataset$meta
+  list(
+    data = data.table::data.table(
+      variable_name = meta$variable,
+      variable_label = meta$label,
+      variable_data_type = meta$type
+    ),
+    meta = NULL
+  )
+}
+
+#' Build a per-(record, variable) synthetic dataset for a Value Check with Variable Metadata rule
+#' @param real_dataset The domain's real dataset (`list(data, meta)`).
+#' @return A synthetic dataset with columns `variable_name`/`variable_data_type`/`variable_value`,
+#'   `.coreval_row_id` set to the original record number.
+#' @noRd
+build_variable_value_check_dataset <- function(real_dataset) {
+  meta <- real_dataset$meta
+  data <- real_dataset$data
+  n_records <- nrow(data)
+  melted <- lapply(seq_len(nrow(meta)), function(i) {
+    v <- meta$variable[i]
+    if (!(v %in% names(data))) {
+      return(NULL)
+    }
+    data.table::data.table(
+      .coreval_row_id = seq_len(n_records),
+      variable_name = v,
+      variable_data_type = meta$type[i],
+      variable_value = as.character(data[[v]])
+    )
+  })
+  list(data = data.table::rbindlist(melted), meta = NULL)
 }
 
 #' Compute a rule's Operations bindings, if it has any

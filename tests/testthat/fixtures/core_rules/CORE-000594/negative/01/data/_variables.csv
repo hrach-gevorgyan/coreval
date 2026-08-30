@@ -1,0 +1,7 @@
+dataset,variable,label,type,length
+ae,STUDYID,study identifier,Char,10
+ae,DOMAIN,domain abbreviation,Char,2
+ae,USUBJID,unique subject identifier,Char,14
+ae,AESER,serious event,Char,1
+ae,AEACN,Action Taken With Study Treatment,Char,1
+ae,AEREL,causality,Char,1

@@ -1,0 +1,8 @@
+dataset,variable,label,type,length
+alb,STUDYID,Study Identifier,Char,12
+alb,DOMAIN,Domain Abbreviation,Char,2
+alb,USUBJID,Unique Subject Identifier,Char,8
+alb,LBTESTCD,Lab Test or Examination Short Name,Char,50
+alb,LBTEST,Lab Test or Examination Name,Char,50
+alb,LBSTREFC,Character Reference Result,Char,8
+alb,LBSTREFN,Numeric Reference Result in Std Units,Num,8

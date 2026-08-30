@@ -116,7 +116,14 @@ build_dataset_from_csv <- function(path, fname, variables_csv) {
   # for character columns - indistinguishable from an actually blank field.
   # Numeric columns don't need na.strings at all: fread already parses a
   # genuinely blank numeric field as NA on its own.
-  dt <- data.table::fread(file.path(path, paste0(fname, ".csv")), colClasses = col_classes, na.strings = character(0))
+  # fread()'s default strip.white = TRUE would also silently trim leading/
+  # trailing whitespace from character fields - destroying exactly the kind
+  # of data-quality defect CORE conformance rules exist to catch (e.g.
+  # CORE-000867's "text variable must not have leading spaces").
+  dt <- data.table::fread(
+    file.path(path, paste0(fname, ".csv")), colClasses = col_classes,
+    na.strings = character(0), strip.white = FALSE
+  )
 
   fill_char_blanks(dt)
 

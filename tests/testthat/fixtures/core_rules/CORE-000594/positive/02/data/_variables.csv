@@ -1,0 +1,29 @@
+dataset,variable,label,type,length
+ae,STUDYID,Study Identifier,Char,10
+ae,DOMAIN,Domain Abbreviation,Char,2
+ae,USUBJID,Unique Subject Identifier,Char,14
+ae,AESEQ,Sequence Number,Num,8
+ae,AESPID,Sponsor-Defined Identifier,Char,4
+ae,AETERM,Reported Term for the Adverse Event,Char,38
+ae,AELLT,Lowest Level Term,Char,38
+ae,AELLTCD,Lowest Level Term Code,Num,8
+ae,AEDECOD,Dictionary-Derived Term,Char,38
+ae,AEPTCD,Preferred Term Code,Num,8
+ae,AEHLT,High Level Term,Char,65
+ae,AEHLTCD,High Level Term Code,Num,8
+ae,AEHLGT,High Level Group Term,Char,55
+ae,AEHLGTCD,High Level Group Term Code,Num,8
+ae,AEBODSYS,Body System or Organ Class,Char,52
+ae,AEBDSYCD,Body System or Organ Class Code,Num,8
+ae,AESOC,Primary System Organ Class,Char,52
+ae,AESOCCD,Primary System Organ Class Code,Num,8
+ae,AESEV,Severity/Intensity,Char,8
+ae,AESER,Serious Event,Char,1
+ae,AEACN,Action Taken with Study Treatment,Char,1
+ae,AEREL,Causality,Char,1
+ae,AEOUT,Outcome of Adverse Event,Char,26
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,1
+ae,AEREASND,Reason Note Done,Char,200
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,10
+ae,AEENDTC,End Date/Time of Adverse Event,Char,1
+ae,AESTDY,Study Day of Start of Adverse Event,Num,8
