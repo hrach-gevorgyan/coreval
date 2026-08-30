@@ -146,21 +146,40 @@ test_that("contains/does_not_contain use exact set membership (not substring sea
   expect_equal(get_operator("does_not_contain")(ctx), c(TRUE, FALSE))
 })
 
-test_that("contains_all/not_contains_all are dataset-level checks on the column's full value set", {
+test_that("contains_all/not_contains_all attach their dataset-level verdict to record 1 only", {
+  # The verdict is a whole-column fact, but it is reported against the
+  # FIRST RECORD ONLY - it is NOT broadcast to every row. The reference
+  # engine returns `convert_to_series(<bare bool>)`, i.e. a LENGTH-1
+  # pandas Series, and pandas index alignment then fills rows 2..n with
+  # NaN (which its boolean ops read as FALSE) when that series meets a
+  # length-n sibling condition. Operators that genuinely mean "every row"
+  # broadcast explicitly instead (`exists` writes
+  # `convert_to_series([True] * len(self.value))`); contains_all
+  # pointedly does not, and upstream's own test_contains_all asserts the
+  # scalar/length-1 shape against a 3-row dataset. Confirmed against
+  # CORE-000737/740/741's real fixtures, whose results.csv each report
+  # exactly ONE record even though every row satisfies the check.
   data <- data.table::data.table(TSPARMCD = c("AGEMAX", "AGEMIN", "SEXPOP"))
   dataset <- list(data = data, meta = NULL)
   check <- list(
     name = "TSPARMCD", operator = "not_contains_all",
     value = c("AGEMAX", "AGEMIN"), value_is_literal = TRUE
   )
-  # both present -> contains_all TRUE -> not_ FALSE, recycled to one per row
+  # both present -> contains_all TRUE -> not_ FALSE everywhere
   expect_equal(evaluate_check(check, dataset, "TS"), rep(FALSE, 3))
 
   check2 <- list(
     name = "TSPARMCD", operator = "not_contains_all",
     value = c("AGEMAX", "MISSING_ONE"), value_is_literal = TRUE
   )
-  expect_equal(evaluate_check(check2, dataset, "TS"), rep(TRUE, 3))
+  # violated -> flagged on record 1 alone, never rows 2-3
+  expect_equal(evaluate_check(check2, dataset, "TS"), c(TRUE, FALSE, FALSE))
+
+  check3 <- list(
+    name = "TSPARMCD", operator = "contains_all",
+    value = c("AGEMAX", "AGEMIN"), value_is_literal = TRUE
+  )
+  expect_equal(evaluate_check(check3, dataset, "TS"), c(TRUE, FALSE, FALSE))
 })
 
 test_that("contains_all/not_contains_all are NA (unresolvable), not a forced FALSE/TRUE, when value is unresolvable", {

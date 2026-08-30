@@ -1,0 +1,5 @@
+Dataset,Record,Variable,Value
+DM,1,$suppdm_race_count,1
+DM,1,RACE,MULTIPLE
+DM,2,$suppdm_race_count,1
+DM,2,RACE,MULTIPLE

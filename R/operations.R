@@ -12,9 +12,24 @@
 # no bundled data for them - and simply return NULL, which surfaces as an
 # unresolvable binding.
 
+# A filter value ending in "&" is a PREFIX WILDCARD, not a literal - per
+# the reference engine's own `_is_wildcard_pattern()` /
+# `_apply_wildcard_filter()` (base_operation.py): `value.endswith("&")`
+# selects `series.str.startswith(value.rstrip("&"), na=False)`, and only
+# a non-"&" value falls through to `filtered_df[variable] == value`.
+# Confirmed against CORE-000846's real fixture, whose `QNAM: RACE&` must
+# match RACE1/RACE2/RACE3/RACEOTH/RACEA; read literally it matches
+# nothing, silently collapsing a `record_count` to 0 and inverting the
+# rule's `less_than_or_equal_to 1` verdict.
+#
+# `na=False` on the Python side also means a blank/NA cell is a
+# non-match rather than an unknown - so NAs are folded to FALSE for the
+# equality path too, which otherwise propagates NA into the row index and
+# silently drops those rows' membership decision.
 #' Filter a data.table to rows matching an Operations `filter` spec
 #' @param dt A data.table.
-#' @param filter Named list of column/value equality constraints, or `NULL`.
+#' @param filter Named list of column/value constraints (a value ending in
+#'   `"&"` is a prefix wildcard), or `NULL`.
 #' @return The filtered data.table.
 #' @noRd
 apply_operation_filter <- function(dt, filter) {
@@ -24,7 +39,14 @@ apply_operation_filter <- function(dt, filter) {
   keep <- rep(TRUE, nrow(dt))
   for (col in names(filter)) {
     if (col %in% names(dt)) {
-      keep <- keep & (dt[[col]] == filter[[col]])
+      value <- filter[[col]]
+      matched <- if (is.character(value) && length(value) == 1L && endsWith(value, "&")) {
+        startsWith(as.character(dt[[col]]), sub("&+$", "", value))
+      } else {
+        dt[[col]] == value
+      }
+      matched[is.na(matched)] <- FALSE
+      keep <- keep & matched
     }
   }
   dt[keep, ]

@@ -365,3 +365,39 @@ test_that("prefix_is_not_contained_by correctly identifies a missing parent doma
     }
   }
 })
+
+test_that("an Operations filter value ending in \"&\" is a prefix wildcard, not a literal", {
+  # The reference engine's _is_wildcard_pattern()/_apply_wildcard_filter()
+  # (base_operation.py) route a filter value ending in "&" to
+  # series.str.startswith(value.rstrip("&"), na=False); only a non-"&"
+  # value falls through to the plain `== value` comparison. Read
+  # literally, "RACE&" matches nothing at all, which silently collapses a
+  # record_count to 0 rather than erroring.
+  dt <- data.table::data.table(
+    QNAM = c("RACE1", "RACE2", "RACEOTH", "ETHNIC", NA_character_),
+    QVAL = c("a", "b", "c", "d", "e")
+  )
+  expect_equal(apply_operation_filter(dt, list(QNAM = "RACE&"))$QVAL, c("a", "b", "c"))
+  # a value without the "&" suffix stays an exact-equality match
+  expect_equal(apply_operation_filter(dt, list(QNAM = "RACE1"))$QVAL, "a")
+  # na=False on the Python side: a blank cell is a non-match, never an
+  # NA that propagates into the row index and drops the row silently
+  expect_equal(apply_operation_filter(dt, list(QNAM = "ETHNIC"))$QVAL, "d")
+})
+
+test_that("a \"&\" prefix-wildcard filter matches CDISC's reference results.csv (CORE-000846)", {
+  # $suppdm_race_count counts SUPPDM rows per USUBJID whose QNAM starts
+  # with "RACE". positive/01 has subjects with 3 and 2 such rows, so
+  # neither violates "less_than_or_equal_to 1"; a literal "RACE&" match
+  # finds 0 rows for everyone and wrongly flags both. negative/01 passed
+  # even with the bug only by accident (its true counts are 1 and 1).
+  rule <- .coreval_env$data$rules[["CORE-000846"]]
+  for (case in c("negative/01", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000846", case)
+    study <- read_study(file.path(dir, "data"))
+    actual <- which(evaluate_rule(rule, study, domain = "DM"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "DM"])))
+    expect_equal(sort(unname(actual)), expected, info = case)
+  }
+})
