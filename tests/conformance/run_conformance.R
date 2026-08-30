@@ -96,7 +96,12 @@ run_case <- function(rule, case_dir) {
 
     if (identical(rule$sensitivity, "Dataset")) {
       actual_any <- any(violations)
-      expected_any <- length(expected) > 0
+      # A whole-study-level rule (e.g. Domain Presence Check's "is DM
+      # present anywhere") reports its finding under a "STUDY" sentinel
+      # Dataset, not the domain that happened to be iterated to produce it -
+      # the reference results.csv row is the same regardless of which
+      # domain the harness checks it against.
+      expected_any <- length(expected) > 0 || length(expected_records(results_csv, "STUDY")) > 0
       if (!identical(actual_any, expected_any)) {
         return(list(status = "FAIL", reason = sprintf(
           "[%s] Dataset-sensitivity mismatch: expected violation=%s, got %s",
