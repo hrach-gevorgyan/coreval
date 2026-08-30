@@ -329,13 +329,17 @@ duration_regex_positive <- paste0(
 )
 duration_regex_negative <- paste0("^[-]?", substring(duration_regex_positive, 2))
 
-# Operator: invalid_duration - target is not a valid ISO 8601 duration
+# Operator: invalid_duration - target is not a valid ISO 8601 duration.
+# `negative` here is a parameter to THIS operator (may the duration carry a
+# leading "-"?), not a generic result-negation flag - see evaluate_condition().
+# The upstream engine's own default (when absent) is to ALLOW a negative
+# sign; only an EXPLICIT `negative: false` requires a positive-only duration.
 register_operator("invalid_duration", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  negative <- isTRUE(ctx$condition$negative)
-  pattern <- if (negative) duration_regex_negative else duration_regex_positive
+  allow_negative <- !identical(ctx$condition$negative, FALSE)
+  pattern <- if (allow_negative) duration_regex_negative else duration_regex_positive
   x <- as.character(ctx$target)
   !grepl(pattern, x, perl = TRUE) | is.na(x) | x == ""
 })

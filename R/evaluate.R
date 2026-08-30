@@ -67,6 +67,17 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
   condition$value
 }
 
+# A condition's `negative` field is NOT a generic "negate this result" flag,
+# despite its name suggesting one - confirmed by checking every rule that
+# uses it (only 4, in the entire 756-rule set) against the upstream Python
+# engine's own source (`Rule.py`'s condition parsing feeds `negative`
+# straight into the operator's own `value` dict, and `invalid_duration` is
+# the only operator that reads it there, as a parameter meaning "allow a
+# leading minus sign", per its own bundled comment "negative: true means:
+# allow negative durations"). An earlier version of this function
+# generically negated `result` here whenever `negative: true` was set,
+# double-negating `invalid_duration`'s own already-negative-aware result
+# and silently flagging a perfectly valid duration like "P40Y" as invalid.
 #' Evaluate one leaf Check condition against a dataset
 #' @param condition One Check condition (`name`, `operator`, optional `value`).
 #' @param dataset The dataset being checked.
@@ -113,12 +124,7 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   )
 
   op_fn <- get_operator(condition$operator)
-  result <- op_fn(ctx)
-
-  if (isTRUE(condition$negative)) {
-    result <- !result
-  }
-  result
+  op_fn(ctx)
 }
 
 # Walks an arbitrarily nested Check tree (all/any/not), returning a per-row
