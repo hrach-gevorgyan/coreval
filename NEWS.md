@@ -46,7 +46,7 @@ run alongside and before a qualified validation system, never instead of one.
 ## Correctness
 
 * Verified by replaying CDISC's own reference test cases and comparing flagged
-  records one by one. Currently agrees with CDISC on 479 of 502 published,
+  records one by one. Currently agrees with CDISC on 482 of 505 published,
   fully executable rules that ship reference data (about 95%). See the README
   for the other denominators and what they mean.
 * A rule that cannot be evaluated is always reported as skipped, with a reason,
