@@ -180,6 +180,25 @@ run_rule <- function(rule) {
 }
 
 rules <- .coreval_env$data$rules
+
+# Optional targeted mode: any rule IDs after the upstream dir restrict the run
+# to just those rules, which takes seconds instead of the full ~5-minute
+# 756-rule sweep. Use it to verify one fix in a tight loop; run the full sweep
+# (no IDs) before committing, since a shared operator change can regress a
+# rule outside the targeted set. A targeted run does NOT rewrite
+# scoreboard.csv - that file always reflects a full run, so it can't be
+# silently truncated to a handful of rules.
+#   Rscript tests/conformance/run_conformance.R <upstream_dir>
+#   Rscript tests/conformance/run_conformance.R <upstream_dir> CORE-000109 CORE-000149
+target_ids <- if (length(args) >= 2) args[-1] else NULL
+if (!is.null(target_ids)) {
+  unknown <- setdiff(target_ids, names(rules))
+  if (length(unknown) > 0) {
+    stop("No such rule id(s) in the bundled registry: ", paste(unknown, collapse = ", "), call. = FALSE)
+  }
+  rules <- rules[target_ids]
+}
+
 cat(sprintf("Running conformance harness on %d rules...\n", length(rules)))
 
 scoreboard <- data.table::rbindlist(lapply(rules, function(rule) {
@@ -225,6 +244,10 @@ if (nrow(fail_rows) > 0) {
   cat("(none)\n")
 }
 
-out_path <- file.path("tests", "conformance", "scoreboard.csv")
-data.table::fwrite(scoreboard, out_path)
-cat("\nFull scoreboard written to", out_path, "\n")
+if (is.null(target_ids)) {
+  out_path <- file.path("tests", "conformance", "scoreboard.csv")
+  data.table::fwrite(scoreboard, out_path)
+  cat("\nFull scoreboard written to", out_path, "\n")
+} else {
+  cat("\n(targeted run - scoreboard.csv left untouched)\n")
+}
