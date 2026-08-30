@@ -85,3 +85,56 @@ register_operator("not_contains_all", function(ctx) {
   }
   verdict_on_first_row(!all(ctx$value %in% ctx$target), ctx$n)
 })
+
+# Both operators below compare SETS/SEQUENCES, so their target and value are
+# normally `$`-bound Operations bindings that resolve to a list (one
+# collection per row) rather than a plain column. A scalar is treated as a
+# one-element collection, matching the reference engine's own
+# `set(row[t]) if isinstance(row[t], (list, set)) else {row[t]}`.
+#' Coerce an operator side to a per-row list of collections
+#' @param x A list (one collection per row) or an atomic vector.
+#' @param n Number of rows.
+#' @return A list of length `n`.
+#' @noRd
+as_row_collections <- function(x, n) {
+  # A LIST is already one collection per row (a grouped `distinct` binding).
+  # An atomic vector is a single collection that applies to every row - a
+  # scalar binding like `$dataset_variables` IS the whole variable list, so
+  # it must be repeated whole, not split into one element per row.
+  if (is.list(x)) {
+    return(rep_len(x, n))
+  }
+  rep(list(x), n)
+}
+
+# Operator: shares_no_elements_with - target and value have an empty intersection
+register_operator("shares_no_elements_with", guarded_op(function(ctx) {
+  targets <- as_row_collections(ctx$target, ctx$n)
+  values <- as_row_collections(ctx$value, ctx$n)
+  vapply(seq_len(ctx$n), function(i) {
+    length(intersect(targets[[i]], values[[i]])) == 0
+  }, logical(1))
+}))
+
+# Every element of the target must appear in the comparator AND their
+# positions there must ascend - i.e. the target is a subsequence of the
+# comparator, order preserved. A target element missing from the comparator
+# is FALSE outright, per the reference's own early return. Used to check a
+# dataset's variable order against the standard's (CORE-000852).
+# Operator: is_ordered_subset_of - target is an order-preserving subsequence of value
+register_operator("is_ordered_subset_of", guarded_op(function(ctx) {
+  targets <- as_row_collections(ctx$target, ctx$n)
+  values <- as_row_collections(ctx$value, ctx$n)
+  vapply(seq_len(ctx$n), function(i) {
+    positions <- match(targets[[i]], values[[i]])
+    if (anyNA(positions)) {
+      return(FALSE)
+    }
+    identical(positions, sort(positions))
+  }, logical(1))
+}))
+
+# Operator: is_not_ordered_subset_of - negation of is_ordered_subset_of
+register_operator("is_not_ordered_subset_of", function(ctx) {
+  !get_operator("is_ordered_subset_of")(ctx)
+})

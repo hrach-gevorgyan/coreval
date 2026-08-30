@@ -266,6 +266,22 @@ library_variables_for <- function(study, domain) {
 #' @noRd
 normalize_class <- function(x) toupper(gsub("-", " ", x, fixed = TRUE))
 
+# An Operations spec can narrow a metadata lookup to rows whose `key_name`
+# field equals `key_value` (e.g. role == "Timing"). Both keys are optional;
+# without them every row is kept.
+#' Apply an Operations spec's optional `key_name`/`key_value` filter
+#' @param rows A data.frame of metadata rows.
+#' @param op One Operations spec entry.
+#' @return The filtered rows.
+#' @noRd
+filter_metadata_rows <- function(rows, op) {
+  key <- op$key_name
+  if (is.null(key) || nrow(rows) == 0 || !(key %in% names(rows))) {
+    return(rows)
+  }
+  rows[!is.na(rows[[key]]) & rows[[key]] == op$key_value, ]
+}
+
 # The SDTM Model's own variables for a domain's observation class, with the
 # generic "--" templates resolved against that domain (so "--CHENDY" becomes
 # "LBCHENDY" for LB).
@@ -361,6 +377,29 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     max = date_extreme_binding(dt, op, want_max = TRUE),
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
+    # NOT IMPLEMENTED, deliberately. This is the standard's full expected
+    # variable ORDER, and the reference builds it by MERGING the SDTM
+    # Model's class variables INTO the Implementation Guide's per-domain
+    # list (sdtm_utilities.get_variables_metadata_from_standard), not by
+    # reading either alone. The merge is positional, and order is the whole
+    # point of the only rule that uses this (CORE-000852 asks whether the
+    # dataset's column order is an ordered subset of the standard's), so an
+    # approximation is worse than nothing: appending the Model's extras at
+    # the end puts CMDTC after CMSTDTC and reports a false violation.
+    #
+    # The gap is real: the IG's CM list genuinely has no CMDTC/CMDY (41
+    # variables, verified in the cache) - those come from the Model's
+    # generic --DTC/--DY and belong mid-list. Implementing this means
+    # porting that merge faithfully, including its ordering.
+    get_column_order_from_library = NULL,
+    # The SDTM MODEL's variables for this domain's class, filtered by a
+    # metadata key (e.g. role == "Timing"). Distinct from
+    # get_column_order_from_library, which reads the Implementation Guide's
+    # per-domain list rather than the abstract Model's per-class one.
+    get_model_filtered_variables = {
+      rows <- filter_metadata_rows(model_variables_for(current_domain, current_dataset), op)
+      if (nrow(rows) == 0) NULL else scalar_binding(rows$variable)
+    },
     variable_exists = if (is.null(dt)) scalar_binding(FALSE) else scalar_binding(resolve_var_name(op$name, dataset_wildcard(ds, domain)) %in% names(dt)),
     variable_count = {
       target <- op$name

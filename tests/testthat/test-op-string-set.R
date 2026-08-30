@@ -193,3 +193,44 @@ test_that("contains_all/not_contains_all are NA (unresolvable), not a forced FAL
   check <- list(name = "TSPARMCD", operator = "not_contains_all", value = "$unresolvable")
   expect_equal(evaluate_check(check, dataset, "TS", bindings = list()), rep(NA, 2))
 })
+
+test_that("shares_no_elements_with treats a scalar binding as ONE collection, not one per row", {
+  # A `$`-bound scalar Operations binding (e.g. $dataset_variables) IS the
+  # whole collection and applies to every row; only a grouped binding is
+  # already one collection per row. Splitting the vector into one element
+  # per row instead made the intersection almost always empty, so a dataset
+  # that clearly does share elements reported that it shares none.
+  ctx <- list(
+    target = c("STUDYID", "AEENRF", "AETERM"),
+    value = c("VISITNUM", "AEENRF", "AEDTC"),
+    exists = TRUE, n = 3L, condition = list(operator = "shares_no_elements_with")
+  )
+  # AEENRF is shared, so every row reports FALSE.
+  expect_equal(get_operator("shares_no_elements_with")(ctx), rep(FALSE, 3))
+
+  ctx$value <- c("VISITNUM", "AEDTC")
+  expect_equal(get_operator("shares_no_elements_with")(ctx), rep(TRUE, 3))
+})
+
+test_that("is_ordered_subset_of requires every element present AND in ascending order", {
+  base <- list(exists = TRUE, n = 1L, condition = list(operator = "is_ordered_subset_of"))
+  ordered <- utils::modifyList(base, list(
+    target = c("A", "C"), value = c("A", "B", "C", "D")
+  ))
+  expect_true(get_operator("is_ordered_subset_of")(ordered))
+
+  # Present, but out of order relative to the comparator.
+  out_of_order <- utils::modifyList(base, list(
+    target = c("C", "A"), value = c("A", "B", "C", "D")
+  ))
+  expect_false(get_operator("is_ordered_subset_of")(out_of_order))
+
+  # An element missing from the comparator is FALSE outright, matching the
+  # reference's own early return rather than being skipped over.
+  missing <- utils::modifyList(base, list(
+    target = c("A", "Z"), value = c("A", "B", "C")
+  ))
+  expect_false(get_operator("is_ordered_subset_of")(missing))
+
+  expect_true(get_operator("is_not_ordered_subset_of")(out_of_order))
+})
