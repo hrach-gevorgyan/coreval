@@ -4,7 +4,7 @@
 \alias{rules_for_domain}
 \title{Rules that apply to a given SDTM domain}
 \usage{
-rules_for_domain(domain, use_case = NULL)
+rules_for_domain(domain, use_case = NULL, dataset = NULL)
 }
 \arguments{
 \item{domain}{Domain code, e.g. \code{"AE"}.}
@@ -12,6 +12,13 @@ rules_for_domain(domain, use_case = NULL)
 \item{use_case}{Optional use case (e.g. \code{"INDH"}). When supplied, also
 filters out rules whose \verb{Scope > Use Case} doesn't include it. Rules
 with no Use Case constraint always pass, regardless of this argument.}
+
+\item{dataset}{Optional dataset (an element of a \code{\link[=read_study]{read_study()}} object's
+\verb{$datasets}). Only needed to resolve a rule's
+\code{include_split_datasets} scope flag, which depends on whether this
+dataset is one file of a domain split across several - a property of
+the data's \code{DOMAIN} column, not of its name. Without it, such rules
+are neither narrowed nor widened.}
 }
 \value{
 A \code{\link[data.table:data.table]{data.table::data.table()}} with the same columns as

@@ -93,13 +93,31 @@ domains_match <- function(domains_spec, domain) {
 #' @param use_case Optional use case to also filter on.
 #' @return A single logical.
 #' @noRd
-rule_applies_to_domain <- function(rule, domain, use_case = NULL) {
+rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL) {
   scope <- rule$scope
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain)) {
     return(FALSE)
   }
   if (!is.null(scope$Domains) && !domains_match(scope$Domains, domain)) {
     return(FALSE)
+  }
+  # `include_split_datasets` narrows or widens scope by whether the dataset
+  # is one FILE of a domain split across several, which is a property of
+  # the data (its DOMAIN column), not of the name - so it can only be
+  # evaluated when the dataset itself is available. Per the reference's
+  # _is_domain_name_included / _handle_split_domains: TRUE with no Include
+  # list means "only split datasets"; TRUE with one ADDS split datasets to
+  # whatever the list already matched; FALSE excludes split datasets
+  # outright; absent does nothing.
+  include_split <- scope$Domains[["include_split_datasets"]]
+  if (!is.null(include_split) && !is.null(dataset)) {
+    split <- dataset_is_split(dataset, domain)
+    if (isTRUE(include_split) && !split && length(scope$Domains$Include) == 0) {
+      return(FALSE)
+    }
+    if (identical(include_split, FALSE) && split) {
+      return(FALSE)
+    }
   }
   if (!is.null(use_case) && !is.null(scope[["Use Case"]])) {
     allowed <- trimws(strsplit(scope[["Use Case"]], ",")[[1]])
@@ -142,17 +160,23 @@ sdtm_domain_classes <- function() {
 #' @param use_case Optional use case (e.g. `"INDH"`). When supplied, also
 #'   filters out rules whose `Scope > Use Case` doesn't include it. Rules
 #'   with no Use Case constraint always pass, regardless of this argument.
+#' @param dataset Optional dataset (an element of a [read_study()] object's
+#'   `$datasets`). Only needed to resolve a rule's
+#'   `include_split_datasets` scope flag, which depends on whether this
+#'   dataset is one file of a domain split across several - a property of
+#'   the data's `DOMAIN` column, not of its name. Without it, such rules
+#'   are neither narrowed nor widened.
 #' @return A [data.table::data.table()] with the same columns as
 #'   [list_rules()], filtered to matching rules.
 #' @examples
 #' ae_rules <- rules_for_domain("AE")
 #' nrow(ae_rules)
 #' @export
-rules_for_domain <- function(domain, use_case = NULL) {
+rules_for_domain <- function(domain, use_case = NULL, dataset = NULL) {
   rules <- .coreval_env$data$rules
   keep <- vapply(
     rules, rule_applies_to_domain, logical(1),
-    domain = domain, use_case = use_case
+    domain = domain, use_case = use_case, dataset = dataset
   )
   ids <- vapply(rules[keep], function(r) r$id, character(1))
   rules_table <- list_rules()

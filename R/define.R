@@ -19,6 +19,50 @@
 # (ItemGroupDef, ItemDef, ItemRef, HasNoData, ...) are unchanged between
 # the two versions.
 
+# A dataset's UNSPLIT name - the name the domain has when it isn't split
+# across files. Per the reference's SDTMDatasetMetadata: the DOMAIN
+# column's value, or SUPP/SQ + RDOMAIN for a supplemental dataset, falling
+# back to the dataset's own name. `lbae.csv` carrying `DOMAIN=LB` unsplits
+# to LB, so it IS split; `ae.csv` carrying `DOMAIN=AE` unsplits to itself,
+# so it is not. Distinct from dataset_wildcard(), which returns the AP
+# SUFFIX for an Associated Persons dataset (APQS -> QS) where the unsplit
+# name is APQS.
+#' A dataset's unsplit name (the DOMAIN it belongs to)
+#' @param dataset The dataset (`list(data, meta)`).
+#' @param domain The dataset's key/file name.
+#' @return A single string.
+#' @noRd
+dataset_unsplit_name <- function(dataset, domain) {
+  up <- toupper(domain)
+  dom_col <- dataset$data[["DOMAIN"]]
+  if (!is.null(dom_col) && length(dom_col) > 0) {
+    first <- as.character(dom_col[1])
+    if (!is.na(first) && nzchar(first)) {
+      return(toupper(first))
+    }
+  }
+  # A SUPP/SQ dataset has no DOMAIN of its own; it names its parent in
+  # RDOMAIN, so SUPPLBAE unsplits to SUPPLB.
+  rdom <- dataset$data[["RDOMAIN"]]
+  if (grepl("^(SUPP|SQ)", up) && !is.null(rdom) && length(rdom) > 0) {
+    first <- as.character(rdom[1])
+    if (!is.na(first) && nzchar(first)) {
+      prefix <- if (startsWith(up, "SUPP")) "SUPP" else "SQ"
+      return(paste0(prefix, toupper(first)))
+    }
+  }
+  up
+}
+
+#' Is this dataset one file of a domain split across several?
+#' @param dataset The dataset (`list(data, meta)`).
+#' @param domain The dataset's key/file name.
+#' @return `TRUE` if the dataset's name differs from its unsplit name.
+#' @noRd
+dataset_is_split <- function(dataset, domain) {
+  !identical(toupper(domain), dataset_unsplit_name(dataset, domain))
+}
+
 #' Is define.xml support available (i.e. is `xml2` installed)?
 #' @return `TRUE` if define.xml files can be read.
 #' @noRd

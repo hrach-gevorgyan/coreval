@@ -78,7 +78,7 @@ run_case <- function(rule, case_dir) {
   }
 
   domains <- names(study$datasets)
-  applicable <- Filter(function(d) rule_applies_to_domain(rule, d), domains)
+  applicable <- Filter(function(d) rule_applies_to_domain(rule, d, dataset = study$datasets[[d]]), domains)
   if (length(applicable) == 0) {
     return(list(status = "SKIPPED", reason = "no dataset in this test case matches the rule's scope"))
   }

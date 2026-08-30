@@ -294,7 +294,7 @@ check_study <- function(study, use_case = NULL) {
   study_level_done <- character(0)
 
   for (domain in domains) {
-    rules_here <- rules_for_domain(domain, use_case = use_case)
+    rules_here <- rules_for_domain(domain, use_case = use_case, dataset = study$datasets[[domain]])
     for (rule_id in rules_here$id) {
       rule <- .coreval_env$data$rules[[rule_id]]
       if (!rule_type_is_supported(rule$rule_type)) {

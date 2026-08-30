@@ -83,3 +83,47 @@ test_that("sdtm_domain_classes exposes the bundled reference table", {
   expect_true(nrow(tbl) == 82) # 63 SDTMIG 3.4 + 10 base-SEND + 9 SEND extension-standard additions
   expect_true(all(c("domain", "class") %in% names(tbl)))
 })
+
+test_that("dataset_is_split distinguishes a split file from an ordinary or AP dataset", {
+  # Split-ness is a property of the DATA (its DOMAIN column), not the name:
+  # lbae.csv carrying DOMAIN=LB unsplits to LB, so it IS split.
+  split <- list(data = data.table::data.table(DOMAIN = "LB", LBSEQ = 1), meta = NULL)
+  expect_true(dataset_is_split(split, "LBAE"))
+  expect_equal(dataset_unsplit_name(split, "LBAE"), "LB")
+
+  plain <- list(data = data.table::data.table(DOMAIN = "AE", AESEQ = 1), meta = NULL)
+  expect_false(dataset_is_split(plain, "AE"))
+
+  # A SUPP dataset has no DOMAIN of its own; it names its parent in
+  # RDOMAIN, so SUPPLB is unsplit but a split SUPPLBAE is not.
+  supp <- list(data = data.table::data.table(RDOMAIN = "LB", QNAM = "X"), meta = NULL)
+  expect_false(dataset_is_split(supp, "SUPPLB"))
+  expect_true(dataset_is_split(supp, "SUPPLBAE"))
+})
+
+test_that("include_split_datasets narrows or widens a rule's domain scope", {
+  # Per the reference's _is_domain_name_included/_handle_split_domains:
+  # TRUE with no Include list means "only split datasets"; FALSE excludes
+  # split datasets outright; absent does nothing.
+  split <- list(data = data.table::data.table(DOMAIN = "QS", QSSEQ = 1), meta = NULL)
+  plain <- list(data = data.table::data.table(DOMAIN = "QS", QSSEQ = 1), meta = NULL)
+
+  only_split <- list(scope = list(Domains = list(include_split_datasets = TRUE)))
+  expect_true(rule_applies_to_domain(only_split, "QSCGI", dataset = split))
+  expect_false(rule_applies_to_domain(only_split, "QS", dataset = plain))
+
+  no_split <- list(scope = list(Domains = list(
+    Include = "ALL", include_split_datasets = FALSE
+  )))
+  expect_false(rule_applies_to_domain(no_split, "QSCGI", dataset = split))
+  expect_true(rule_applies_to_domain(no_split, "QS", dataset = plain))
+
+  # Absent flag: unchanged behaviour for both.
+  silent <- list(scope = list(Domains = list(Include = "ALL")))
+  expect_true(rule_applies_to_domain(silent, "QSCGI", dataset = split))
+  expect_true(rule_applies_to_domain(silent, "QS", dataset = plain))
+
+  # Without a dataset the flag can't be resolved, so it neither narrows
+  # nor widens rather than guessing.
+  expect_true(rule_applies_to_domain(only_split, "QSCGI"))
+})
