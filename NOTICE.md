@@ -1,5 +1,17 @@
 # Notice
 
+## What this project is
+
+coreval is an **independent, personal open-source project**, written and
+maintained by Hrach Gevorgyan. It is not a CDISC product, is not affiliated with
+or endorsed by CDISC, and is not a CORE-certified conformance engine.
+
+Its purpose is to give people preparing clinical trial data a **fast, local,
+unqualified pre-check** — a way to catch obvious conformance problems while
+still writing the code, instead of discovering them later through a slower
+formal validation cycle. It is meant to run *alongside and before* a qualified
+validation tool, never instead of one.
+
 ## Licensing
 
 coreval's own package code is MIT licensed — see [LICENSE.md](LICENSE.md).
@@ -38,16 +50,32 @@ Not every bundled rule carries the same weight. `coreval::list_rules()` exposes 
   reference test data are included. Draft means what it says: some carry the rule
   authors' own open questions in their source.
 
+## Coverage
+
+Rules for SDTM, SEND and TIG are included, across their published versions.
+
+**ADaM rules are not yet included, and their absence is not a design decision.**
+CDISC publishes 197 ADaM rules, but none of them currently ships reference
+results — there is no published expected output against which an implementation
+can be verified. Including them would mean shipping checks that nobody has
+validated, which contradicts this project's core rule of never reporting an
+unverifiable check as a pass. They will be added once CDISC publishes reference
+data for them.
+
 ## Disclaimer
 
-coreval is not affiliated with, endorsed by, or certified by CDISC, and is not a
-CORE-certified conformance engine.
+coreval is an independent project, not affiliated with, endorsed by, or
+certified by CDISC, and is not a CORE-certified conformance engine.
+
+It is an **unqualified** tool. It is not validated software, carries no
+regulatory standing, and is not a substitute for your organisation's own
+validation procedures or for a qualified validation system. Passing every check
+here does not mean a submission will be accepted; a finding here does not
+necessarily mean a submission will be rejected.
 
 Reported conformance figures describe agreement with CDISC's published reference
-test data. They are not certification, not a regulatory guarantee, and not a
-substitute for your organisation's own validation. Passing every check here does
-not mean a submission will be accepted; a finding here does not necessarily mean
-a submission will be rejected.
+test data — nothing more. They are a lower bound on correctness, not
+certification.
 
 Use of this software is at your own risk, under the terms in
 [LICENSE.md](LICENSE.md).

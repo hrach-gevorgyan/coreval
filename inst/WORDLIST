@@ -1,10 +1,13 @@
+ADaM
 ADaMIG
 ADaMIG's
+AE
 BG
 BW
 CDISC
 CDISC's
 CMD
+DM
 FW
 FX
 GENETOX
@@ -29,6 +32,7 @@ XPT
 XPT's
 bdat
 cdisc
+codelist
 conformant
 coreval's
 data's
@@ -36,7 +40,9 @@ dataset's
 deduplicated
 equi
 errored
+interruptible
 misordered
+organisation's
 pre
 roxygen
 runnable
