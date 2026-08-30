@@ -331,31 +331,75 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
 #' evaluate_rule(rule, dataset, domain = "DM")
 #' @export
 evaluate_rule <- function(rule, dataset_or_study, domain) {
-  # Refuse rules that compare against define.xml. This package has no
-  # define.xml reader, so the define-side pseudo-columns those rules name
-  # (e.g. `define_variable_label`) are simply absent, and
-  # resolve_condition_value()'s documented "not a real column -> literal
-  # text" fallback would silently turn the comparison into
-  # `variable_label != "define_variable_label"` - true for every variable,
-  # in the compliant and non-compliant case alike. That is worse than not
-  # running the rule: it manufactures confident findings out of missing
-  # input. Erroring lets callers record "could not evaluate" (check_study()
-  # already reports these under `$skipped`, since none of them are the
-  # "Record Data" type it runs) rather than a fabricated verdict.
-  if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE))) {
-    stop(
-      "rule type '", rule$rule_type,
-      "' needs define.xml, which coreval does not read",
-      call. = FALSE
-    )
-  }
   study <- as_study(dataset_or_study, domain)
+  assert_rule_inputs_available(rule, study)
   dataset <- prepare_dataset_for_rule(rule, study, domain)
+  assert_referenced_metadata_available(rule, dataset)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
 
   result <- evaluate_check(rule$check, dataset, domain, bindings, study)
   result[is.na(result)] <- FALSE
   collapse_exploded_violations(dataset, result)
+}
+
+# Refuses a rule whose Check names a CDISC Library pseudo-column
+# (`library_variable_name`, `library_variable_role`, ...) that this package
+# cannot supply - there is no bundled Library variable metadata for those.
+# Without the guard, resolve_condition_value()'s "not a real column ->
+# literal text" fallback silently turns the comparison into e.g.
+# `define_variable_role != "library_variable_role"`, which is true for
+# EVERY variable in the compliant and non-compliant case alike - the same
+# fabricate-findings-from-missing-input failure the define.xml guard
+# prevents. Checking against the BUILT dataset rather than a hard-coded
+# rule-type list keeps this self-maintaining: add real Library metadata as
+# columns later and the guard disables itself.
+#' Refuse a rule referencing metadata pseudo-columns this package cannot supply
+#' @param rule A rule record.
+#' @param dataset The dataset built for the rule.
+#' @return `invisible(NULL)`; raises an error when a reference is unresolvable.
+#' @noRd
+assert_referenced_metadata_available <- function(rule, dataset) {
+  targets <- collect_rule_targets(rule)
+  lib <- unique(targets[startsWith(targets, "library_")])
+  missing <- setdiff(lib, names(dataset$data))
+  if (length(missing) > 0) {
+    stop(
+      "needs CDISC Library variable metadata, which coreval does not bundle: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Refuse a rule whose required input sources are unavailable for this study
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @return `invisible(NULL)`; raises an error when an input source is missing.
+#' @noRd
+assert_rule_inputs_available <- function(rule, study) {
+  # A rule comparing against define.xml can only run when the study
+  # actually has one (and `xml2` is installed to read it). Without it the
+  # define-side pseudo-columns are absent, and
+  # resolve_condition_value()'s documented "not a real column -> literal
+  # text" fallback would silently turn the comparison into
+  # `variable_label != "define_variable_label"` - true for every variable,
+  # in the compliant and non-compliant case alike. That is worse than not
+  # running the rule: it manufactures confident findings out of missing
+  # input. Erroring lets callers record "could not evaluate" rather than a
+  # fabricated verdict.
+  if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE)) && is.null(study$define)) {
+    stop(
+      "rule type '", rule$rule_type, "' needs define.xml: ",
+      if (define_xml_available()) {
+        "no define.xml found in this study"
+      } else {
+        "install the 'xml2' package to enable define.xml support"
+      },
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }
 
 # A Match Datasets join can explode one original row into several (see
@@ -427,7 +471,10 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     "Variable Metadata Check", "Variable Metadata Check against Library Metadata",
     "Variable Metadata Check against Define XML"
   ))) {
-    return(build_variable_metadata_dataset(dataset))
+    return(build_variable_metadata_dataset(dataset, study$define, domain))
+  }
+  if (identical(rule$rule_type, "Domain Presence Check against Define XML")) {
+    return(build_domain_list_with_define_dataset(study))
   }
   if (identical(rule$rule_type, "Dataset Metadata Check")) {
     return(build_dataset_metadata_dataset(dataset, domain))
@@ -481,20 +528,85 @@ build_dataset_metadata_dataset <- function(real_dataset, domain) {
   list(data = data.table::as.data.table(cols), meta = NULL)
 }
 
-#' Build a per-variable synthetic dataset for a Variable Metadata Check rule
-#' @param real_dataset The domain's real dataset (`list(data, meta)`).
-#' @return A synthetic dataset with columns `variable_name`/`variable_label`/`variable_data_type`.
+# One row per dataset DECLARED IN define.xml, with `domain`/`filename`
+# populated only when the study actually ships that dataset - the shape the
+# reference engine's DomainListWithDefineDatasetBuilder documents:
+#
+#    domain  filename  define_dataset_name  define_dataset_has_no_data
+#  0 AE      ae.xpt    AE                   False
+#  1 EC      ec.xpt    EC                   False
+#  2 SE      None      SE                   True
+#
+# UNVERIFIED against reference output, unlike everything else in this file:
+# all 12 bundled rules of this type ship NO test fixtures at all, so there
+# is no results.csv to differentially test against. They are additionally
+# `Status: Draft` and carry the rule authors' own "# Is this correct?"
+# comment on the rule type. The builder shape below follows the reference's
+# documented example; the rules built on it should be treated as
+# best-effort until upstream ships fixtures for them.
+#' Build a one-row-per-define-dataset table for a Domain Presence Check against Define XML
+#' @param study Full study object (needs `$define` and `$datasets`).
+#' @return A synthetic dataset, one row per dataset declared in define.xml.
 #' @noRd
-build_variable_metadata_dataset <- function(real_dataset) {
+build_domain_list_with_define_dataset <- function(study) {
+  define_datasets <- study$define$datasets
+  if (is.null(define_datasets) || nrow(define_datasets) == 0) {
+    return(list(data = data.table::data.table(), meta = NULL))
+  }
+  # Match a define entry to a shipped dataset by its UNSPLIT name (the
+  # DOMAIN column's value), so a domain split across several files still
+  # counts as present.
+  present <- vapply(names(study$datasets), function(k) {
+    dataset_wildcard(study$datasets[[k]], k)
+  }, character(1))
+
+  data <- data.table::copy(define_datasets)
+  idx <- match(toupper(data$define_dataset_name), toupper(present))
+  data$domain <- ifelse(is.na(idx), NA_character_, data$define_dataset_name)
+  data$filename <- ifelse(is.na(idx), NA_character_, names(study$datasets)[idx])
+  list(data = data, meta = NULL)
+}
+
+#' Build a per-variable synthetic dataset for a Variable Metadata Check rule
+#'
+#' When the study has a define.xml, this domain's declared variable
+#' metadata is joined on alongside the observed metadata, so a rule can
+#' compare the two directly (e.g. CORE-000507's `variable_label
+#' not_equal_to define_variable_label`). The join is by variable NAME
+#' within this dataset, left from the observed side - a variable present in
+#' the data but absent from define.xml gets `NA` for the define columns
+#' rather than being dropped, since "declared nowhere" is itself a
+#' finding some rules look for.
+#' @param real_dataset The domain's real dataset (`list(data, meta)`).
+#' @param define Parsed define.xml (`list(datasets, variables)`), or `NULL`.
+#' @param domain Domain code, used to select this dataset's define rows.
+#' @return A synthetic dataset with one row per variable.
+#' @noRd
+build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain = NULL) {
   meta <- real_dataset$meta
-  list(
-    data = data.table::data.table(
-      variable_name = meta$variable,
-      variable_label = meta$label,
-      variable_data_type = meta$type
-    ),
-    meta = NULL
+  data <- data.table::data.table(
+    variable_name = meta$variable,
+    variable_label = meta$label,
+    variable_data_type = meta$type
   )
+  dv <- define$variables
+  if (!is.null(dv) && nrow(dv) > 0 && !is.null(domain)) {
+    dv <- dv[toupper(dv$define_dataset_name) == toupper(domain), ]
+    if (nrow(dv) > 0) {
+      dv <- dv[!duplicated(dv$define_variable_name), ]
+      data <- merge(
+        data, dv,
+        by.x = "variable_name", by.y = "define_variable_name",
+        all.x = TRUE, sort = FALSE
+      )
+      # merge() reorders; restore the dataset's own variable order, which
+      # is the Record number a Variable Metadata Check reports against.
+      data <- data[match(meta$variable, data$variable_name), ]
+      data$define_variable_name <- data$variable_name
+      data$define_dataset_name <- NULL
+    }
+  }
+  list(data = data, meta = NULL)
 }
 
 #' Build a per-(record, variable) synthetic dataset for a Value Check with Variable Metadata rule

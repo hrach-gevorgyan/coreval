@@ -58,7 +58,7 @@ read_study_xpt <- function(path) {
   files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
   datasets <- lapply(files, function(f) build_dataset_from_xpt(haven::read_xpt(f)))
   names(datasets) <- toupper(tools::file_path_sans_ext(basename(files)))
-  list(datasets = datasets, define = NULL, ct = NULL, standard = list(product = NA_character_, version = NA_character_))
+  list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
 #' Convert one `haven::read_xpt()` data frame into a `list(data, meta)` dataset entry
@@ -121,7 +121,7 @@ read_study_test_case <- function(path) {
   })
   names(datasets) <- toupper(datasets_csv$Filename)
 
-  list(datasets = datasets, define = NULL, ct = NULL, standard = read_env_standard(path))
+  list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = read_env_standard(path))
 }
 
 # A CORE test case's `.env` file declares which standard/version its data

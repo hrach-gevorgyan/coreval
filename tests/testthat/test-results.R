@@ -184,10 +184,14 @@ test_that("check_study evaluates the metadata rule types, not just Record Data",
   expect_true(rule_type_is_supported("Variable Metadata Check"))
   expect_true(rule_type_is_supported("Value Check with Variable Metadata"))
 
-  # Anything comparing against define.xml stays out: with no define.xml
-  # reader, evaluating one manufactures findings from missing input.
-  expect_false(rule_type_is_supported("Variable Metadata Check against Define XML"))
-  expect_false(rule_type_is_supported("Domain Presence Check against Define XML"))
+  # define.xml IS read (R/define.R), so those types are supported too;
+  # evaluate_rule() refuses per-study when a study has no define.xml,
+  # rather than evaluating against absent columns.
+  expect_true(rule_type_is_supported("Variable Metadata Check against Define XML"))
+  expect_true(rule_type_is_supported("Domain Presence Check against Define XML"))
+
+  # Still out: needs CDISC Library metadata on top of define.xml, and
+  # there is no bundled data for it.
   expect_false(rule_type_is_supported("Define Item Metadata Check against Library Metadata"))
   expect_false(rule_type_is_supported(NULL))
 })

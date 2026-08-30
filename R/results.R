@@ -53,10 +53,14 @@ get_output_variables <- function(rule, domain) {
 # rather than defaulting every unrecognised type down the record-level path
 # where its pseudo-field names silently resolve to literal text.
 #
-# Deliberately absent: anything comparing against define.xml (this package
-# has no define.xml reader, and evaluating one anyway manufactures findings
-# out of missing input - see evaluate_rule()'s own guard), and
-# "Define Item Metadata Check against Library Metadata", which needs both.
+# The two "against Define XML" types are included: define.xml IS read (see
+# R/define.R), and evaluate_rule() refuses per-study when the study has no
+# define.xml or `xml2` is missing, so a rule is skipped with a reason
+# rather than evaluated against absent columns.
+#
+# Deliberately absent: "Define Item Metadata Check against Library
+# Metadata", which needs CDISC Library metadata this package has no
+# bundled data for, on top of define.xml.
 #' Rule types `check_study()` can evaluate
 #' @param rule_type A rule's `rule_type` string.
 #' @return `TRUE` if `check_study()` should evaluate rules of this type.
@@ -65,9 +69,11 @@ rule_type_is_supported <- function(rule_type) {
   isTRUE(rule_type %in% c(
     "Record Data",
     "Domain Presence Check",
+    "Domain Presence Check against Define XML",
     "Dataset Metadata Check",
     "Variable Metadata Check",
     "Variable Metadata Check against Library Metadata",
+    "Variable Metadata Check against Define XML",
     "Value Check with Variable Metadata",
     "Value Check with Dataset Metadata"
   ))
@@ -307,7 +313,13 @@ check_study <- function(study, use_case = NULL) {
       }
       outcome <- tryCatch(
         {
+          # Same guards evaluate_rule() applies - this path builds and
+          # evaluates inline rather than calling it, so refusing a rule
+          # whose define.xml or CDISC Library inputs are unavailable has
+          # to happen here too, or it fabricates findings instead.
+          assert_rule_inputs_available(rule, study)
           dataset <- prepare_dataset_for_rule(rule, study, domain)
+          assert_referenced_metadata_available(rule, dataset)
           bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
           violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
           violations[is.na(violations)] <- FALSE
