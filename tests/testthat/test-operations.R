@@ -104,6 +104,63 @@ test_that("compute_dy returns NA (not a crash) for a USUBJID with no matching DM
   expect_equal(binding$value, c(5, NA_real_))
 })
 
+test_that("compute_dy resolves a '--'-templated name against the CURRENT domain, not an empty string", {
+  # Bug: compute_dy() didn't receive current_domain at all, so
+  # resolve_var_name(op$name, "") turned "--STDTC" into "STDTC" instead of
+  # "CMSTDTC" - the target column never existed, so $val_stdy was always
+  # NA. Confirmed against CORE-000552's real fixture.
+  study <- list(datasets = list(
+    DM = list(data = data.table::data.table(USUBJID = "S1", RFSTDTC = "2024-01-01"), meta = NULL),
+    CM = list(data = data.table::data.table(USUBJID = "S1", CMSTDTC = "2024-01-05"), meta = NULL)
+  ))
+  op <- list(id = "$val_stdy", name = "--STDTC", operator = "dy")
+  binding <- compute_operation(op, study, "CM", study$datasets$CM)
+  expect_equal(binding$kind, "per_row")
+  expect_equal(binding$value, 5)
+})
+
+test_that("not_equal_to/equal_to matches CDISC's reference results.csv across the --DY/dy Operations family (CORE-000436/CORE-000529/CORE-000552/CORE-000553)", {
+  for (id in c("CORE-000436", "CORE-000529", "CORE-000552", "CORE-000553")) {
+    rule <- .coreval_env$data$rules[[id]]
+    for (case in c("negative", "positive")) {
+      cases <- Sys.glob(test_path("fixtures", "core_rules", id, case, "*"))
+      for (dir in cases) {
+        study <- read_study(file.path(dir, "data"))
+        results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+        for (domain in names(study$datasets)) {
+          if (!rule_applies_to_domain(rule, domain)) next
+          actual <- which(evaluate_rule(rule, study, domain))
+          expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+          expect_equal(sort(unname(actual)), expected, info = paste(id, dir, domain))
+        }
+      }
+    }
+  }
+})
+
+test_that("not_equal_to leaves an unresolvable Operations aggregate's blank comparator unforced (CORE-000454)", {
+  # An all-blank EXENDTC column makes max_date's $max_ex_exendtc binding
+  # genuinely unresolvable (NA), not "blank" in the same sense as a
+  # per-row column value that's simply missing - forcing not_equal_to TRUE
+  # here would wrongly flag RFXENDTC as violating just because the
+  # AGGREGATE had nothing to aggregate. Confirmed against CORE-000454's
+  # real fixture (negative/02: EXENDTC blank on every row).
+  rule <- .coreval_env$data$rules[["CORE-000454"]]
+  for (case in c("negative", "positive")) {
+    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000454", case, "*"))
+    for (dir in cases) {
+      study <- read_study(file.path(dir, "data"))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      for (domain in names(study$datasets)) {
+        if (!rule_applies_to_domain(rule, domain)) next
+        actual <- which(evaluate_rule(rule, study, domain))
+        expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+        expect_equal(sort(unname(actual)), expected, info = paste(dir, domain))
+      }
+    }
+  }
+})
+
 test_that("resolve_binding does not collide grouped-join keys across a multi-column boundary", {
   # Bug: pasting group columns together with no separator lets ("1", "23")
   # and ("12", "3") key to the same string "123", joining the wrong group's

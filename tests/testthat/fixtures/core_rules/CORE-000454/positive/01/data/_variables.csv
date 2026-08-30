@@ -1,0 +1,44 @@
+dataset,variable,label,type,length
+dm,STUDYID,Study Identifier,Char,50
+dm,DOMAIN,Domain Abbreviation,Char,50
+dm,USUBJID,Unique Subject Identifier,Char,50
+dm,SUBJID,Subject Identifier for the Study,Char,50
+dm,RFSTDTC,Subject Reference Start Date/Time,Char,50
+dm,RFENDTC,Subject Reference End Date/Time,Char,50
+dm,RFXSTDTC,Date/Time of First Study Treatment,Char,50
+dm,RFXENDTC,Date/Time of Last Study Treatment,Char,50
+dm,RFICDTC,Date/Time of Informed Consent,Char,50
+dm,RFPENDTC,Date/Time of End of Participation,Char,50
+dm,DTHDTC,Date/Time of Death,Char,50
+dm,DTHFL,Subject Death Flag,Char,50
+dm,SITEID,Study Site Identifier,Char,50
+dm,BRTHDTC,Date/Time of Birth,Char,50
+dm,AGE,Age,Num,8
+dm,AGEU,Age Units,Char,50
+dm,SEX,Sex,Char,50
+dm,RACE,Race,Char,50
+dm,ETHNIC,Ethnicity,Char,50
+dm,ARMCD,Planned Arm Code,Char,50
+dm,ARM,Description of Planned Arm,Char,50
+dm,ACTARMCD,Actual Arm Code,Char,50
+dm,ACTARM,Description of Actual Arm,Char,50
+dm,ARMNRS,Reason Arm and/or Actual Arm is Null,Char,50
+dm,ACTARMUD,Description of Unplanned Actual Arm,Char,50
+dm,COUNTRY,Country,Char,50
+ex,STUDYID,Study Identifier,Char,50
+ex,DOMAIN,Domain Abbreviation,Char,50
+ex,USUBJID,Unique Subject Identifier,Char,50
+ex,SPDEVID,Sponsor Device Identifier,Char,200
+ex,EXSEQ,Sequence Number,Num,8
+ex,EXTRT,Name of Treatment,Char,50
+ex,EXDOSE,Dose,Num,8
+ex,EXDOSU,Dose Units,Char,50
+ex,EXDOSFRM,Dose Form,Char,50
+ex,EXDOSFRQ,Dosing Frequency per Interval,Char,50
+ex,EXROUTE,Route of Administration,Char,50
+ex,EXLOT,Lot Number,Char,50
+ex,EPOCH,Epoch,Char,50
+ex,EXSTDTC,Start Date/Time of Treatment,Char,50
+ex,EXENDTC,End Date/Time of Treatment,Char,50
+ex,EXSTDY,Study Day of Start of Treatment,Num,8
+ex,EXENDY,Study Day of End of Treatment,Num,8

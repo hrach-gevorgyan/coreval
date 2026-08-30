@@ -103,15 +103,16 @@ compute_group_agg <- function(dt, group_cols, name, fn) {
 #' @param op One Operations spec entry.
 #' @param study Full study object.
 #' @param current_dataset The dataset being checked.
+#' @param current_domain Domain code, used to resolve a `"--"`-templated `op$name` (e.g. `"--STDTC"`).
 #' @return A `per_row_binding()` of numeric study-day values.
 #' @noRd
-compute_dy <- function(op, study, current_dataset) {
+compute_dy <- function(op, study, current_dataset, current_domain) {
   n <- nrow(current_dataset$data)
   dm <- study$datasets[["DM"]]
   if (is.null(dm) || !("RFSTDTC" %in% names(dm$data)) || !("USUBJID" %in% names(current_dataset$data))) {
     return(per_row_binding(rep(NA_character_, n)))
   }
-  target_name <- resolve_var_name(op$name, "")
+  target_name <- resolve_var_name(op$name, current_domain)
   if (!(target_name %in% names(current_dataset$data))) {
     return(per_row_binding(rep(NA_character_, n)))
   }
@@ -304,7 +305,7 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     # "SUPPAE"), unlike the plural dataset_names Operations type (used by
     # e.g. CORE-000539/540), which is separately confirmed lowercase.
     extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(current_domain) else NULL,
-    dy = compute_dy(op, study, current_dataset),
+    dy = compute_dy(op, study, current_dataset, current_domain),
     NULL
   )
 }

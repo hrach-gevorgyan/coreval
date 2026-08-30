@@ -34,16 +34,32 @@ compare_op <- function(fn) {
       value <- canonicalize_numeric_string(value)
     }
     result <- fn(target, value)
-    # Clinical-data equality convention: two BLANK values are never
-    # "equal" and never "not equal" to each other - both resolve to FALSE,
-    # matching the reference engine's own truth table (`_check_equality`/
-    # `_check_inequality` in check_operators/dataframe_operators.py: "''
-    # or null" vs "'' or null" -> False for BOTH operators). Confirmed
-    # against CORE-000195's real fixture: a row with AESCAT and AEDECOD
-    # both blank must NOT be flagged by equal_to_case_insensitive, even
-    # though "" == "" is naturally TRUE in R.
-    both_blank <- is_blank(ctx$target) & is_blank(ctx$value)
-    result[both_blank] <- FALSE
+    # Clinical-data equality convention, per the reference engine's own
+    # truth table (`_check_equality`/`_check_inequality` in
+    # check_operators/dataframe_operators.py) - but narrowed to the TARGET
+    # side only, per two real, contradictory fixtures: CORE-000552/553 need
+    # not_equal_to forced TRUE when the TARGET (--STDY/--ENDY, a genuine
+    # per-row blank column value) is blank and the comparator ($val_stdy, a
+    # calculated Operations binding) is populated. But CORE-000454 needs
+    # the OPPOSITE result for the mirror-image case: TARGET (RFXENDTC)
+    # populated, comparator ($max_ex_exendtc) blank because the underlying
+    # `max_date` Operations aggregate found NOTHING to aggregate (an
+    # all-blank EXENDTC column) - there, the raw NA-propagating comparison
+    # (no forced result) is what the reference expects, i.e. an
+    # unresolvable AGGREGATE is not the same "blank" as a genuinely blank
+    # per-row value. Since both cases resolve `ctx$value` to a blank the
+    # same way, only the TARGET side reliably distinguishes them here.
+    # equal_to's mirror case (target blank -> not equal) is applied
+    # symmetrically since nothing contradicts it; forcing based on `value`
+    # alone is deliberately NOT done, to avoid CORE-000454's regression.
+    target_blank <- is_blank(ctx$target)
+    value_blank <- is_blank(ctx$value)
+    is_negation <- startsWith(ctx$condition$operator, "not_")
+    if (is_negation) {
+      result[target_blank & !value_blank] <- TRUE
+    } else {
+      result[target_blank] <- FALSE
+    }
     result
   }
 }
