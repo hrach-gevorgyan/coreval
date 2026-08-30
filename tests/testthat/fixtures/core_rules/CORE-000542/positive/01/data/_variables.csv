@@ -1,0 +1,65 @@
+dataset,variable,label,type,length
+eg,STUDYID,Study Identifier,Char,50
+eg,DOMAIN,Domain Abbreviation,Char,50
+eg,USUBJID,Unique Subject Identifier,Char,50
+eg,EGSEQ,Sequence Number,Num,8
+eg,EGTESTCD,ECG Test or Examination Short Name,Char,8
+eg,EGTEST,ECG Test or Examination Name,Char,40
+eg,EGORRES,Result or Finding in Original Units,Char,50
+eg,EGORRESU,Original Units,Char,50
+eg,EGSTRESC,Character Result/Finding in Std Format,Char,50
+eg,EGSTRESN,Standardized Result in Numeric Format ,Num,8
+eg,EGSTRESU,Standard Units,Char,50
+eg,EGSTAT,Completion Status,Char,50
+fa,STUDYID,Study Identifier,Char,50
+fa,DOMAIN,Domain Abbreviation,Char,50
+fa,USUBJID,Unique Subject Identifier,Char,50
+fa,FASEQ,Sequence Number,Num,8
+fa,FATESTCD,Findings About Test Short Name,Char,8
+fa,FATEST,Findings About Test Name,Char,40
+fa,FAOBJ,Object of the Observation,Char,50
+fa,FAORRES,Result or Finding in Original Units,Char,50
+fa,FAORRESU,Original Units,Char,50
+fa,FASTRESC,Character Result/Finding in Std Format,Char,50
+fa,FASTRESN,Standardized Result in Numeric Format ,Num,8
+fa,FASTRESU,Standard Units,Char,50
+fa,FASTAT,Completion Status,Char,50
+mi,STUDYID,Study Identifier,Char,50
+mi,DOMAIN,Domain Abbreviation,Char,50
+mi,USUBJID,Unique Subject Identifier,Char,50
+mi,MISEQ,Sequence Number,Num,8
+mi,MITESTCD,Microscopic Examination Short Name,Char,8
+mi,MITEST,Microscopic Examination Name,Char,50
+mi,MICAT,Category for Microscopic Finding,Char,50
+mi,MISCAT,Subcategory for Microscopic Finding,Char,50
+mi,MIORRES,Result or Finding in Original Units,Char,50
+mi,MIORRESU,Original Units,Char,50
+mi,MISTRESC,Character Result/Finding in Std Format,Char,50
+mi,MISTRESN,Standardized Result in Numeric Format ,Num,8
+mi,MISTRESU,Standard Units,Char,50
+mi,MIRESCAT,Result Category,Char,50
+mi,MISTAT,Completion Status,Char,50
+lb,STUDYID,Study Identifier,Char,50
+lb,DOMAIN,Domain Abbreviation,Char,50
+lb,USUBJID,Unique Subject Identifier,Char,50
+lb,LBSEQ,Sequence Number,Num,8
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,50
+lb,LBTEST,Lab Test or Examination Name,Char,50
+lb,LBORRES,Result or Finding in Original Units,Char,50
+lb,LBORRESU,Original Units,Char,50
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,50
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,50
+lb,LBSTAT,Completion Status,Char,50
+vs,STUDYID,Study Identifier,Char,50
+vs,DOMAIN,Domain Abbreviation,Char,50
+vs,USUBJID,Unique Subject Identifier,Char,50
+vs,VSSEQ,Sequence Number,Num,8
+vs,VSTESTCD,Vital Signs Test Short Name,Char,50
+vs,VSTEST,Vital Signs Test Name,Char,50
+vs,VSORRES,Result or Finding in Original Units,Char,50
+vs,VSORRESU,Original Units,Char,50
+vs,VSSTRESC,Character Result/Finding in Std Format,Char,50
+vs,VSSTRESN,Numeric Result/Finding in Standard Units,Num,8
+vs,VSSTRESU,Standard Units,Char,50
+vs,VSSTAT,Completion Status,Char,50

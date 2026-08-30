@@ -1,3 +1,18 @@
+#' Normalize a value for a `type_insensitive` comparison (numeric strings
+#' compare by value, not by formatting - "200.00" and "200" are equal)
+#' @param x A vector.
+#' @return A character vector, canonical-numeric where `x` parses as numeric.
+#' @noRd
+canonicalize_numeric_string <- function(x) {
+  x_chr <- trimws(as.character(x))
+  num <- suppressWarnings(as.numeric(x_chr))
+  # as.character() on a numeric formats each element independently ("200"
+  # stays "200", "200.01" stays "200.01") - format() was tried first but
+  # rejected: format() aligns decimal places across the WHOLE vector, so
+  # c(200, 200.01) becomes c("200.00", "200.01") instead of c("200", "200.01").
+  ifelse(is.na(num) | x_chr == "", x_chr, as.character(num))
+}
+
 #' Build a scalar/vector comparison operator from a two-argument comparator
 #' @param fn Function of `(target, value)` returning a logical vector.
 #' @return An operator function of `ctx`.
@@ -7,7 +22,18 @@ compare_op <- function(fn) {
     if (!ctx$exists || is.null(ctx$value)) {
       return(rep(NA, ctx$n))
     }
-    fn(ctx$target, ctx$value)
+    target <- ctx$target
+    value <- ctx$value
+    # `type_insensitive` means numeric-looking values compare by VALUE, not
+    # by formatting - "200.00" and "200" (or the number 200) are equal.
+    # Confirmed against CORE-000542's real fixtures: LBSTRESC="200.00"
+    # (character) vs LBSTRESN=200 (numeric) must NOT be flagged as
+    # not_equal_to, even though they differ as raw strings.
+    if (isTRUE(ctx$condition$type_insensitive)) {
+      target <- canonicalize_numeric_string(target)
+      value <- canonicalize_numeric_string(value)
+    }
+    fn(target, value)
   }
 }
 

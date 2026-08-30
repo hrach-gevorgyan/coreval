@@ -32,3 +32,29 @@ test_that("equal_to/not_equal_to are unaffected by numeric/character type mismat
   check <- list(name = "AGE", operator = "equal_to", value = "65", value_is_literal = TRUE)
   expect_equal(evaluate_check(check, dataset, "DM"), c(TRUE, FALSE))
 })
+
+test_that("type_insensitive makes not_equal_to compare numeric-looking values by value, not formatting (CORE-000542)", {
+  # "LBSTRESC not_equal_to, type_insensitive: true, value: LBSTRESN" -
+  # "200.00" and 200 must compare EQUAL (not_equal_to = FALSE), even though
+  # they differ as raw strings. An earlier version had no type_insensitive
+  # handling at all, so this compared "200.00" != "200" as plain strings.
+  data <- data.table::data.table(LBSTRESC = c("200.00", "200.01"), LBSTRESN = c(200, 200))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "LBSTRESC", operator = "not_equal_to", value = "LBSTRESN", type_insensitive = TRUE)
+  expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, TRUE))
+})
+
+test_that("not_equal_to matches CDISC's reference results.csv across all domains (CORE-000542)", {
+  rule <- .coreval_env$data$rules[["CORE-000542"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000542", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected, info = paste(case, domain))
+    }
+  }
+})
