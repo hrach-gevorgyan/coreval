@@ -128,11 +128,17 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   TRUE
 }
 
-#' SDTM domain to observation-class reference table
+#' Domain to observation-class reference table
 #'
-#' The static SDTMIG 3.4 domain/class assignments used to resolve a rule's
-#' `Scope > Classes` (e.g. `"FINDINGS"`) against an actual domain code (e.g.
-#' `"LB"`). See `data-raw/domain_classes.R` for provenance.
+#' Maps a domain code (e.g. `"LB"`) to its observation class (e.g.
+#' `"FINDINGS"`), which is how a rule's `Scope > Classes` is resolved against
+#' real data.
+#'
+#' A domain's class is stable across Implementation Guide versions — `LB` is a
+#' Findings domain in every version of SDTMIG — so one table serves all of
+#' them. It covers the SDTM domains plus the SEND-specific ones (`BW`, `MA`,
+#' `TF`, ...), so SDTMIG, SENDIG and TIG rules all resolve. See
+#' `data-raw/domain_classes.R` for provenance.
 #'
 #' @return A [data.table::data.table()] with columns `domain`, `class`.
 #' @examples

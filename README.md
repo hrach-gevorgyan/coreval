@@ -1,66 +1,44 @@
 # coreval
 
+<!-- badges: start -->
 [![R-CMD-check](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
 
-coreval is an R package that evaluates CDISC Open Rules (CORE) conformance rules against clinical trial datasets, returning findings as a tidy data frame.
+**Check your clinical trial data against CDISC's conformance rules, from R.**
 
-**Status:** Phases 0-9 of the development plan are implemented: rule
-extraction, `read_study()`, `rules_for_domain()`, the `Check`-tree evaluator
-(~60 operators, including dates and grouping), the `Operations` pipeline,
-`Match Datasets` joins, and `check_study()` as the main user-facing entry
-point.
+Before a clinical study is submitted to a regulator, its datasets have to follow
+the CDISC standards — the shared conventions for how trial data is laid out.
+CDISC publishes hundreds of machine-readable rules describing what "correct"
+means: dates that must not run backwards, codes that must come from an approved
+list, records that must not be duplicated, and so on.
 
-Not affiliated with or endorsed by CDISC. Not a CORE-certified conformance engine.
+coreval runs those rules against your data and tells you, record by record, what
+doesn't conform — so you can fix it before someone else finds it.
 
-## Conformance
+```r
+study <- read_study("path/to/my/study")
+result <- check_study(study)
 
-coreval ships 756 rules and is verified by a harness
-(`tests/conformance/run_conformance.R`) that runs every one of them against
-CDISC's own positive/negative reference test cases and compares which records
-each rule flags. Current results:
+head(result$findings)
+#>       rule_id Dataset Record Variable      Value
+#> 1 CORE-000005      AE      3   AESTDTC 2013-02-30
+#> 2 CORE-000005      AE      3   AEENDTC 2013-02-11
+```
 
-| Slice | Pass rate |
-|---|---|
-| Published rules, Fully Executable, **with reference output to compare against** | **475 / 499 (95.2%)** |
-| Published rules, Fully Executable, including those with no reference output | 475 / 543 (87.5%) |
-| All Fully Executable rules (Published + Deprecated + FDA draft) | 583 / 722 (80.7%) |
+Findings come back as a plain data frame, so you can filter, count, join and
+export them with whatever tools you already use.
 
-Two denominators are reported deliberately, because the difference is not a
-quality signal:
+## Why you might want it
 
-- **81 rules ship no reference output at all** — upstream provides either no
-  `positive/`/`negative/` fixtures, or fixture data with no accompanying
-  `results/`. These cannot pass or fail, so counting them as failures
-  understates real conformance by roughly ten points.
-- **Deprecated and draft rules are a lower-value pool** whose bundled fixtures
-  predate current engine conventions. Several were verified to number records
-  counting the CSV header row — one cites record 5 in a four-row file — so
-  they are presumed stale until shown otherwise.
-
-Of the remaining Published failures, essentially all are triaged: confirmed
-stale fixtures (a fixture's own reported values contradict its own data),
-rules requiring CDISC Library variable metadata that this package does not
-bundle, or acknowledged open bugs in the upstream reference engine. Rules
-that cannot be evaluated are reported as skipped with a reason — never as a
-pass, and never as a fabricated finding.
-
-**Treat the pass rate as a lower bound on defects, not a readiness signal.**
-CDISC's reference fixtures are almost entirely unsplit datasets, so whole
-classes of real-world input — a domain split across several files, an
-Associated Persons dataset — aren't exercised by them at all. A real bug in
-`"--"` wildcard resolution that silently disabled a third of the rule set on
-split-domain studies produced *no* change in this table.
-
-### define.xml
-
-`read_study()` reads a CDISC Define-XML 2.0/2.1 file when one is present in
-the study directory, exposing declared dataset- and variable-level metadata
-so rules can compare it against what the data actually contains. This needs
-the `xml2` package, which is a `Suggests`: without it, define.xml support is
-simply unavailable and the affected rules report as skipped.
-
-Not a CORE-certified engine: these numbers describe agreement with CDISC's
-published reference data, not certification.
+- **It runs entirely on your machine.** No internet connection, no API key, no
+  account, no uploading trial data to a third-party service. The rules are
+  bundled inside the package.
+- **It tells you when it *couldn't* check something.** A rule that can't be
+  evaluated is reported as skipped with a reason — never quietly counted as a
+  pass. A clean findings table always means what it appears to mean.
+- **It's a normal R data frame at the end.** No bespoke report format to parse.
 
 ## Installation
 
@@ -71,53 +49,117 @@ Not on CRAN yet. Install the development version from GitHub:
 pak::pak("hrach-gevorgyan/coreval")
 ```
 
-## Usage
+Requires R 4.1 or later. Only two packages are needed to run it: `data.table`
+and `haven`. Add `xml2` if you want Define-XML support.
+
+## Getting started
 
 ```r
 library(coreval)
 
-# Read a study - either a directory of XPT datasets, or a CORE test-case
-# data/ directory (.env + _datasets.csv + _variables.csv + one CSV per
-# dataset). read_study() detects which one it's looking at.
+# 1. Read a study. Point it at a folder of datasets - transport (.xpt),
+#    SAS, or CSV. If a Define-XML file is in the folder, it's picked up too.
 study <- read_study("path/to/study")
 
-# Evaluate every applicable, executable bundled rule against every domain
-# in the study.
+# 2. Check it. Every applicable rule runs against every dataset.
 result <- check_study(study)
 
-# A tidy findings table: one row per (Dataset, Record, Variable) violation
-# (Record is blank for Dataset-sensitivity rules).
+# 3. What didn't conform - one row per (dataset, record, variable).
 head(result$findings)
 
-# Which rule/domain combinations couldn't be evaluated, and why - so a
-# clean findings table is never mistaken for "everything passed."
+# 4. What couldn't be checked, and why. Worth a look every time:
+#    a short findings table might mean clean data, or might mean
+#    a lot of rules were skipped.
 head(result$skipped)
 ```
 
-Lower-level building blocks are also exported for inspecting the rule set
-itself:
+### Looking at the rules themselves
 
 ```r
-# The exact upstream cdisc-open-rules commit this rule set was built from
-rules_version()
-
-# All bundled rules, with provenance
-rules <- list_rules()
-head(rules)
-
-# Only the fully-trusted, Published-status rules
-subset(rules, source == "published")
+rules_version()          # the exact CDISC Open Rules commit these came from
+rules <- list_rules()    # all bundled rules, with where each came from
+subset(rules, source == "published")   # only the fully-vetted ones
+rules_for_domain("AE")   # which rules apply to a given domain
 ```
 
-`source` distinguishes how much a rule can be trusted — see [NOTICE.md](NOTICE.md)
-for what `published`, `deprecated_dir`, and `fda_business_rules_draft` each mean.
+Not every bundled rule carries the same weight. `list_rules()` has a `source`
+column saying whether a rule is published, deprecated, or draft — see
+[NOTICE.md](NOTICE.md) for what each means and how much to trust it.
 
-## License
+## How well does it work?
 
-MIT for package code (see [LICENSE.md](LICENSE.md)). Rule content is sourced
-from [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
-(CDISC) under its own terms — see [NOTICE.md](NOTICE.md).
+coreval is tested by replaying CDISC's own reference test cases. For each rule,
+CDISC publishes example datasets that *should* trigger it and example datasets
+that *shouldn't*, along with the exact records their engine flags. We run every
+bundled rule against all of it and compare, record by record.
 
-## News
+Of the rules that are published, fully executable, and ship reference data to
+compare against, coreval currently agrees with CDISC's own results on
+**475 of 499 — about 95%**.
 
-See [NEWS.md](NEWS.md).
+<details>
+<summary>The other numbers, and why there's more than one</summary>
+
+| What's being counted | Agreement |
+|---|---|
+| Published rules that ship reference data — **the meaningful number** | **475 / 499 (95%)** |
+| All published rules, including those with nothing to compare against | 475 / 543 (87%) |
+| Every bundled rule, including deprecated and draft ones | 583 / 722 (81%) |
+
+Three honest caveats behind those numbers:
+
+**81 rules ship no reference data at all.** CDISC publishes the rule but no
+example datasets, so there's nothing to compare against — those rules can't pass
+*or* fail. Counting them as failures would understate things by about ten points;
+hiding them would overstate. Both numbers are shown.
+
+**Deprecated and draft rules are a weaker pool.** Their example data predates
+CDISC's current conventions — several number their records starting from the
+spreadsheet header row, so one expects a "record 5" in a four-row file. Those are
+problems with the example data, not with coreval.
+
+**Most remaining disagreements are problems in the reference data, not bugs.**
+The usual tell is that a file's own stated values contradict its own data, which
+means the data was edited after the expected results were generated. Where a
+disagreement *is* a real gap in coreval, it's recorded as one.
+
+</details>
+
+**Please don't read that percentage as a quality score.** CDISC's example data is
+almost entirely made of simple, single-file datasets, so it doesn't exercise
+plenty of things real submissions do — a domain split across several files, for
+instance. A real bug that silently switched off a third of the rules on
+split-domain studies moved that percentage by exactly zero. It's a floor, not a
+ceiling.
+
+coreval is **not** a CORE-certified engine. These numbers describe agreement with
+CDISC's published reference data. They aren't certification, and they aren't a
+regulatory guarantee.
+
+## Define-XML
+
+If a Define-XML file (2.0 or 2.1) sits in the study folder, `read_study()` reads
+it, and rules that compare your data against what Define-XML declares will run.
+This needs the `xml2` package; without it, those rules are simply reported as
+skipped.
+
+## Status
+
+Under active development, and the API may still change. It's useful today for
+finding real problems in real data; it isn't yet a finished product. See
+[NEWS.md](NEWS.md) for what's landed.
+
+## Contributing
+
+Issues and pull requests are welcome — bug reports especially, and most
+especially a dataset that produces a wrong or missing finding. Please take a
+look at the [Code of Conduct](CODE_OF_CONDUCT.md) first.
+
+## License and attribution
+
+Package code is MIT licensed ([LICENSE.md](LICENSE.md)). The bundled rule
+definitions come from
+[cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules) and
+remain under CDISC's own terms — see [NOTICE.md](NOTICE.md).
+
+Not affiliated with or endorsed by CDISC.

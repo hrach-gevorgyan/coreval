@@ -1,7 +1,11 @@
 # Regenerates inst/extdata/sdtm_domain_classes.rds: a static domain ->
-# observation-class table (SDTMIG 3.4 plus SENDIG 3.1's SEND-specific
-# domains), needed to resolve a rule's `Scope > Classes` (e.g. "FINDINGS")
-# against an actual domain code (e.g. "LB").
+# observation-class table, needed to resolve a rule's `Scope > Classes`
+# (e.g. "FINDINGS") against an actual domain code (e.g. "LB").
+#
+# One table serves every Implementation Guide version: a domain's class is
+# stable across them (LB is a Findings domain in every SDTMIG version), so
+# this is not versioned. It covers the SDTM domains plus the SEND-specific
+# ones, so SDTMIG, SENDIG and TIG rules all resolve.
 #
 # This is NOT extracted from cdisc-org/cdisc-open-rules - that repo has no
 # domain/class model, only the CORE rules themselves. It's transcribed from

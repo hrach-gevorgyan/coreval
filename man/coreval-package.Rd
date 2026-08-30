@@ -4,9 +4,9 @@
 \name{coreval-package}
 \alias{coreval}
 \alias{coreval-package}
-\title{coreval: Evaluate CDISC Open Rules (CORE) Conformance Against SDTM Data}
+\title{coreval: Evaluate CDISC Open Rules (CORE) Conformance Against Clinical Trial Data}
 \description{
-Reads SDTM datasets (XPT/sas7bdat/CSV) and evaluates CDISC Open Rules (CORE) conformance rules against them, returning findings as a tidy data frame. Rule definitions ship inside the package as data, extracted from the CDISC Open Rules repository. Not affiliated with or endorsed by CDISC, and not a CORE-certified engine.
+Checks clinical trial datasets against the CDISC Open Rules (CORE) conformance rules and returns the findings as a tidy data frame, so data issues can be found and fixed before submission. Reads study data from transport ('XPT'), 'SAS' and comma-separated files, and reads a Define-XML file when one is present. Covers rules for the SDTM, SEND and TIG standards across their published versions. Rule definitions are bundled as data, extracted at build time from a pinned commit of the CDISC Open Rules repository, so checking a study needs no internet connection, no API key and no external service. Rules that cannot be evaluated are reported as skipped, with a reason, rather than silently passing. Not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
 }
 \seealso{
 Useful links:

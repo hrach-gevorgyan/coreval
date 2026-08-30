@@ -2,7 +2,7 @@
 % Please edit documentation in R/scope.R
 \name{sdtm_domain_classes}
 \alias{sdtm_domain_classes}
-\title{SDTM domain to observation-class reference table}
+\title{Domain to observation-class reference table}
 \usage{
 sdtm_domain_classes()
 }
@@ -10,9 +10,16 @@ sdtm_domain_classes()
 A \code{\link[data.table:data.table]{data.table::data.table()}} with columns \code{domain}, \code{class}.
 }
 \description{
-The static SDTMIG 3.4 domain/class assignments used to resolve a rule's
-\code{Scope > Classes} (e.g. \code{"FINDINGS"}) against an actual domain code (e.g.
-\code{"LB"}). See \code{data-raw/domain_classes.R} for provenance.
+Maps a domain code (e.g. \code{"LB"}) to its observation class (e.g.
+\code{"FINDINGS"}), which is how a rule's \code{Scope > Classes} is resolved against
+real data.
+}
+\details{
+A domain's class is stable across Implementation Guide versions — \code{LB} is a
+Findings domain in every version of SDTMIG — so one table serves all of
+them. It covers the SDTM domains plus the SEND-specific ones (\code{BW}, \code{MA},
+\code{TF}, ...), so SDTMIG, SENDIG and TIG rules all resolve. See
+\code{data-raw/domain_classes.R} for provenance.
 }
 \examples{
 classes <- sdtm_domain_classes()

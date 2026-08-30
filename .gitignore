@@ -1,5 +1,4 @@
 CLAUDE.md
-coreval-plan.md
 .claude/
 .Rproj.user
 .Rhistory
@@ -10,3 +9,4 @@ coreval-plan.md
 data-raw/cdisc-open-rules/
 data-raw/upstream/
 tests/conformance/scoreboard.csv
+docs/

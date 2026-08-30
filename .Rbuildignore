@@ -1,7 +1,6 @@
 ^coreval\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
-^coreval-plan\.md$
 ^data-raw$
 ^README\.Rmd$
 ^tests/conformance$
@@ -9,3 +8,5 @@
 ^CLAUDE\.md$
 ^\.claude$
 ^NOTICE\.md$
+^docs$
+^CODE_OF_CONDUCT\.md$
