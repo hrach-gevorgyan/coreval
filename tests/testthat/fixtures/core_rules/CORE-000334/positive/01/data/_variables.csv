@@ -1,0 +1,98 @@
+dataset,variable,label,type,length
+ta,STUDYID,Study Identifier,Char,12
+ta,DOMAIN,Domain Abbreviation,Char,2
+ta,ARMCD,Planned Arm Code,Char,8
+ta,ARM,Description of Planned Arm,Char,28
+ta,TAETORD,Planned Order of Element within Arm,Num,8
+ta,ETCD,Element Code,Char,7
+ta,ELEMENT,Description of Element,Char,26
+ta,TABRANCH,Branch,Char,200
+ta,TATRANS,Transition Rule,Char,200
+ta,EPOCH,Epoch,Char,9
+ae,STUDYID,Study Identifier,Char,12
+ae,DOMAIN,Domain Abbreviation,Char,2
+ae,USUBJID,Unique Subject Identifier,Char,8
+ae,AESEQ,Sequence Number,Num,8
+ae,AELNKID,Link ID,Char,50
+ae,AETERM,Reported Term for the Adverse Event,Char,200
+ae,AELLT,Lowest Level Term,Char,1
+ae,AELLTCD,Lowest Level Term Code,Char,1
+ae,AEDECOD,Dictionary-Derived Term,Char,1
+ae,AEPTCD,Preferred Term Code,Char,1
+ae,AEHLT,High Level Term,Char,1
+ae,AEHLTCD,High Level Term Code,Char,1
+ae,AEHLGT,High Level Group Term,Char,1
+ae,AEHLGTCD,High Level Group Term Code,Char,1
+ae,AEBODSYS,Body System or Organ Class,Char,1
+ae,AEBDSYCD,Body System or Organ Class Code,Char,1
+ae,AESOC,Primary System Organ Class,Char,1
+ae,AESOCCD,Primary System Organ Class Code,Char,1
+ae,AESEV,Severity/Intensity,Char,8
+ae,AESER,Serious Event,Char,1
+ae,AEACN,Action Taken with Study Treatment,Char,16
+ae,AEREL,Causality,Char,16
+ae,AEOUT,Outcome of Adverse Event,Char,32
+ae,AESCAN,Involves Cancer,Char,1
+ae,AESCONG,Congenital Anomaly or Birth Defect,Char,1
+ae,AESDISAB,Persist or Signif Disability/Incapacity,Char,1
+ae,AESDTH,Results in Death,Char,1
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,1
+ae,AESLIFE,Is Life Threatening,Char,1
+ae,AESOD,Occurred with Overdose,Char,1
+ae,EPOCH,Epoch,Char,9
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,10
+ae,AEENDTC,End Date/Time of Adverse Event,Char,10
+ae,AESTDY,Study Day of Start of Adverse Event,Num,8
+ae,AEENDY,Study Day of End of Adverse Event,Num,8
+ae,AEENRTPT,End Relative to Reference Time Point,Char,7
+ae,AEENTPT,End Reference Time Point,Char,10
+lb,STUDYID,Study Identifier,Char,12
+lb,DOMAIN,Domain Abbreviation,Char,2
+lb,USUBJID,Unique Subject Identifier,Char,8
+lb,LBSEQ,Sequence Number,Num,8
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,7
+lb,LBTEST,Lab Test or Examination Name,Char,39
+lb,LBCAT,Category for Lab Test,Char,10
+lb,LBORRES,Result or Finding in Original Units,Char,6
+lb,LBORRESU,Original Units,Char,7
+lb,LBORNRLO,Reference Range Lower Limit in Orig Unit,Char,200
+lb,LBORNRHI,Reference Range Upper Limit in Orig Unit,Char,200
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,8
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,7
+lb,LBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+lb,LBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+lb,LBNRIND,Reference Range Indicator,Char,8
+lb,LBLOBXFL,Last Observation Before Exposure Flag,Char,1
+lb,VISITNUM,Visit Number,Num,8
+lb,VISIT,Visit Name,Char,200
+lb,EPOCH,Epoch,Char,9
+lb,LBDTC,Date/Time of Specimen Collection,Char,19
+lb,LBDY,Study Day of Specimen Collection,Num,8
+ex,STUDYID,Study Identifier,Char,12
+ex,DOMAIN,Domain Abbreviation,Char,2
+ex,USUBJID,Unique Subject Identifier,Char,8
+ex,SPDEVID,Sponsor Device Identifier,Char,200
+ex,EXSEQ,Sequence Number,Num,8
+ex,EXTRT,Name of Treatment,Char,10
+ex,EXDOSE,Dose,Num,8
+ex,EXDOSU,Dose Units,Char,2
+ex,EXDOSFRM,Dose Form,Char,9
+ex,EXDOSFRQ,Dosing Frequency per Interval,Char,2
+ex,EXROUTE,Route of Administration,Char,12
+ex,EXLOT,Lot Number,Char,200
+ex,EPOCH,Epoch,Char,9
+ex,EXSTDTC,Start Date/Time of Treatment,Char,10
+ex,EXENDTC,End Date/Time of Treatment,Char,10
+ex,EXSTDY,Study Day of Start of Treatment,Num,8
+ex,EXENDY,Study Day of End of Treatment,Num,8
+suppae,STUDYID,Study Identifier,Char,10
+suppae,RDOMAIN,Related Domain Abbreviation,Char,2
+suppae,USUBJID,Unique Subject Identifier,Char,14
+suppae,IDVAR,Identifying Variable,Char,6
+suppae,IDVARVAL,Identifying Variable Value,Char,4
+suppae,QNAM,Qualifier Variable Name,Char,7
+suppae,QLABEL,Qualifier Variable Label,Char,40
+suppae,QVAL,Data Value,Char,19
+suppae,QORIG,Origin,Char,8
+suppae,QEVAL,Evaluator,Char,22

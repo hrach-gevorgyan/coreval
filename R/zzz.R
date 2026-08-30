@@ -20,4 +20,7 @@ utils::globalVariables(".N")
 
   model_variables_path <- system.file("extdata", "sdtm_model_variables.rds", package = pkgname)
   .coreval_env$model_variables <- readRDS(model_variables_path)
+
+  sdtmig_variables_path <- system.file("extdata", "sdtmig_variables.rds", package = pkgname)
+  .coreval_env$sdtmig_variables <- readRDS(sdtmig_variables_path)
 }

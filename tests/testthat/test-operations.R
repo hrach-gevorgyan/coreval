@@ -144,6 +144,45 @@ test_that("read_study captures each dataset's own label", {
   expect_equal(study$datasets$DM$label, "Demographics")
 })
 
+test_that("expected_variables matches CDISC's reference results.csv (CORE-000334), version-aware", {
+  # "variable_name not_contains_all $expected_variables" - the positive
+  # fixture declares SDTMIG 3.4, the negative fixture SDTMIG 3.3, so this
+  # also exercises picking the study's OWN declared version rather than
+  # always defaulting to the newest.
+  rule <- .coreval_env$data$rules[["CORE-000334"]]
+  for (case in c("negative/01", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000334", case)
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual_any <- any(evaluate_rule(rule, study, domain))
+      expected_any <- nrow(results[results$Dataset == domain, ]) > 0
+      expect_equal(actual_any, expected_any)
+    }
+  }
+})
+
+test_that("sdtmig_variables_for resolves SUPPxx datasets via the SUPPQUAL template", {
+  study <- list(standard = list(product = "SDTMIG", version = "3-4"))
+  vars <- sdtmig_variables_for(study, "SUPPAE", "Exp")
+  expect_setequal(vars, c("IDVAR", "IDVARVAL", "QEVAL"))
+})
+
+test_that("sdtmig_variables_for returns NULL for a study explicitly declared as a different standard", {
+  # Confirmed necessary against CORE-000355's own EX fixture, whose .env
+  # declares SENDIG 3.1 - using SDTMIG data there would silently produce a
+  # plausible-but-wrong answer.
+  study <- list(standard = list(product = "SENDIG", version = "3-1"))
+  expect_null(sdtmig_variables_for(study, "EX", "Req"))
+})
+
+test_that("sdtmig_variables_for defaults to the newest SDTMIG version when the study doesn't declare one", {
+  study <- list(standard = list(product = NA_character_, version = NA_character_))
+  vars <- sdtmig_variables_for(study, "EX", "Req")
+  expect_true("EXTRT" %in% vars)
+})
+
 test_that("get_model_column_order matches CDISC's reference results.csv (CORE-000550)", {
   # "variable_name is_not_contained_by $allowed_variables" - $allowed_variables
   # is the full set of variable names the SDTM Model allows for the domain's

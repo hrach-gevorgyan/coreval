@@ -1,7 +1,7 @@
 test_that("read_study reads a CORE test-case data/ directory", {
   study <- read_study(test_path("fixtures", "test_case", "data"))
 
-  expect_equal(names(study), c("datasets", "define", "ct"))
+  expect_equal(names(study), c("datasets", "define", "ct", "standard"))
   expect_equal(names(study$datasets), "DM")
 
   dm <- study$datasets$DM
@@ -50,6 +50,30 @@ test_that("read_study preserves leading/trailing whitespace in character values"
 
   study <- read_study(dir)
   expect_equal(study$datasets$CM$data$CMTRT, " HYTRIN ")
+})
+
+test_that("read_study captures a CORE test case's declared standard from .env", {
+  dir <- tempfile("coreval_env_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("Filename,Label\ndm,Demographics", file.path(dir, "_datasets.csv"))
+  writeLines("dataset,variable,label,type,length\nDM,USUBJID,Subject,Char,20", file.path(dir, "_variables.csv"))
+  writeLines("USUBJID\n1", file.path(dir, "dm.csv"))
+  writeLines("PRODUCT=SDTMIG\nVERSION=3-4", file.path(dir, ".env"))
+  study <- read_study(dir)
+  expect_equal(study$standard, list(product = "SDTMIG", version = "3-4"))
+})
+
+test_that("read_study's standard is NA/NA when .env is absent (a real XPT study, or a test case without one)", {
+  dir <- tempfile("coreval_noenv_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("Filename,Label\ndm,Demographics", file.path(dir, "_datasets.csv"))
+  writeLines("dataset,variable,label,type,length\nDM,USUBJID,Subject,Char,20", file.path(dir, "_variables.csv"))
+  writeLines("USUBJID\n1", file.path(dir, "dm.csv"))
+  study <- read_study(dir)
+  expect_true(is.na(study$standard$product))
+  expect_true(is.na(study$standard$version))
 })
 
 test_that("read_study reads a directory of XPT files with the same semantics", {

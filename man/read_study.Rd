@@ -10,10 +10,12 @@ read_study(path)
 \item{path}{Directory path.}
 }
 \value{
-A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define = NULL, ct = NULL)}. Each \code{data} is a
-\code{\link[data.table:data.table]{data.table::data.table()}}; each \code{meta} is a data.table with columns
-\code{variable}, \code{label}, \code{type}; \code{label} is the dataset's own label (e.g.
-\code{"Adverse Events"}), or \code{NA} if unavailable.
+A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define = NULL, ct = NULL, standard = list(product, version))}. Each \code{data} is a \code{\link[data.table:data.table]{data.table::data.table()}};
+each \code{meta} is a data.table with columns \code{variable}, \code{label}, \code{type};
+\code{label} is the dataset's own label (e.g. \code{"Adverse Events"}), or \code{NA} if
+unavailable. \code{standard} is the study's declared standard/version (e.g.
+\code{list(product = "SDTMIG", version = "3-4")}), read from a CORE test
+case's \code{.env} file - both \code{NA} for a real XPT-based study (no \code{.env}).
 }
 \description{
 Detects whether \code{path} is a directory of XPT datasets (a real study) or a

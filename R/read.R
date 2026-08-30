@@ -14,10 +14,13 @@
 #'
 #' @param path Directory path.
 #' @return A study object: `list(datasets = <named list of domain ->
-#'   list(data, meta, label)>, define = NULL, ct = NULL)`. Each `data` is a
-#'   [data.table::data.table()]; each `meta` is a data.table with columns
-#'   `variable`, `label`, `type`; `label` is the dataset's own label (e.g.
-#'   `"Adverse Events"`), or `NA` if unavailable.
+#'   list(data, meta, label)>, define = NULL, ct = NULL, standard =
+#'   list(product, version))`. Each `data` is a [data.table::data.table()];
+#'   each `meta` is a data.table with columns `variable`, `label`, `type`;
+#'   `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
+#'   unavailable. `standard` is the study's declared standard/version (e.g.
+#'   `list(product = "SDTMIG", version = "3-4")`), read from a CORE test
+#'   case's `.env` file - both `NA` for a real XPT-based study (no `.env`).
 #' @examples
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)
@@ -55,7 +58,7 @@ read_study_xpt <- function(path) {
   files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
   datasets <- lapply(files, function(f) build_dataset_from_xpt(haven::read_xpt(f)))
   names(datasets) <- toupper(tools::file_path_sans_ext(basename(files)))
-  list(datasets = datasets, define = NULL, ct = NULL)
+  list(datasets = datasets, define = NULL, ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
 #' Convert one `haven::read_xpt()` data frame into a `list(data, meta)` dataset entry
@@ -94,7 +97,32 @@ read_study_test_case <- function(path) {
   })
   names(datasets) <- toupper(datasets_csv$Filename)
 
-  list(datasets = datasets, define = NULL, ct = NULL)
+  list(datasets = datasets, define = NULL, ct = NULL, standard = read_env_standard(path))
+}
+
+# A CORE test case's `.env` file declares which standard/version its data
+# actually conforms to (e.g. "PRODUCT=SENDIG" / "VERSION=3-1") - confirmed
+# this is NOT always SDTMIG even for rules that look SDTM-flavored on their
+# face (e.g. CORE-000355's own EX fixture is SENDIG 3.1, not SDTMIG). Library
+# metadata operators (required_variables, expected_variables, ...) need this
+# to pick the right per-standard table rather than silently assuming SDTMIG.
+#' Parse a CORE test case's `.env` file into a standard/version pair
+#' @param path Study directory (may or may not contain `.env`).
+#' @return `list(product, version)`, both `NA_character_` if `.env` is absent/unparseable.
+#' @noRd
+read_env_standard <- function(path) {
+  env_path <- file.path(path, ".env")
+  if (!file.exists(env_path)) {
+    return(list(product = NA_character_, version = NA_character_))
+  }
+  lines <- readLines(env_path, warn = FALSE)
+  kv <- strsplit(lines, "=", fixed = TRUE)
+  keys <- toupper(trimws(vapply(kv, function(x) x[1], character(1))))
+  vals <- trimws(vapply(kv, function(x) if (length(x) >= 2) paste(x[-1], collapse = "="), character(1)))
+  list(
+    product = toupper(vals[match("PRODUCT", keys)]),
+    version = vals[match("VERSION", keys)]
+  )
 }
 
 #' Read one test-case dataset CSV, typed per `_variables.csv`

@@ -160,6 +160,44 @@ date_extreme_binding <- function(dt, op, want_max) {
   }
 }
 
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+#' Look up a domain's variables at a given SDTMIG Core designation (Req/Exp), version-aware
+#'
+#' Returns `NULL` (unresolvable) rather than guessing when the study's own
+#' declared standard (from `.env`, see `read_env_standard()`) is explicitly
+#' something OTHER than SDTMIG - confirmed necessary against CORE-000355's
+#' own EX fixture, whose `.env` declares `SENDIG 3.1`: using SDTMIG's
+#' required-variable list there would silently produce a plausible-but-wrong
+#' answer for a rule that looks SDTM-flavored but isn't, for THIS test case.
+#' An undeclared standard (no `.env` - a real XPT-based study) still
+#' defaults to the newest available SDTMIG version, matching
+#' sdtm_domain_classes.rds's own superset simplification, since there is no
+#' per-study version signal to go on there either.
+#' @param study Full study object.
+#' @param domain Domain code.
+#' @param core_value One of `"Req"`, `"Exp"`.
+#' @return A character vector of variable names in ordinal order, or `NULL` if unresolvable.
+#' @noRd
+sdtmig_variables_for <- function(study, domain, core_value) {
+  product <- study$standard$product %||% NA_character_
+  if (!is.na(product) && !identical(product, "SDTMIG")) {
+    return(NULL)
+  }
+  # Every SUPPxx dataset (SUPPAE, SUPPDM, ...) follows the SUPPQUAL template
+  # and is keyed as "SUPPQUAL" in the Library data, not by its own literal
+  # domain name - the same fallback domain_class() already uses.
+  lookup_domain <- if (startsWith(toupper(domain), "SUPP") && nchar(domain) > 4) "SUPPQUAL" else domain
+  tbl <- .coreval_env$sdtmig_variables
+  version <- gsub("-", ".", study$standard$version %||% NA_character_, fixed = TRUE)
+  use_version <- if (!is.na(version) && version %in% tbl$version) version else max(tbl$version)
+  rows <- tbl[tbl$version == use_version & toupper(tbl$domain) == toupper(lookup_domain) & tbl$core == core_value, ]
+  if (nrow(rows) == 0) {
+    return(NULL)
+  }
+  rows$variable[order(as.numeric(rows$ordinal))]
+}
+
 #' Compute one Operations spec entry into a binding
 #' @param op One Operations spec entry.
 #' @param study Full study object.
@@ -225,6 +263,14 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     dataset_names = scalar_binding(sort(tolower(names(study$datasets)))),
     domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
     domain_label = scalar_binding(if (is.null(ds)) NA_character_ else ds$label),
+    required_variables = {
+      vars <- sdtmig_variables_for(study, domain, "Req")
+      if (is.null(vars)) NULL else scalar_binding(vars)
+    },
+    expected_variables = {
+      vars <- sdtmig_variables_for(study, domain, "Exp")
+      if (is.null(vars)) NULL else scalar_binding(vars)
+    },
     get_model_column_order = {
       cls <- domain_class(current_domain)
       if (is.na(cls)) {
