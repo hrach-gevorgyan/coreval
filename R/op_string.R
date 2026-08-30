@@ -19,11 +19,24 @@ matches_regex_check <- function(ctx) {
   grepl(paste0("^(?:", ctx$value, ")"), ctx$target, perl = TRUE)
 }
 
+# A blank target is exempt from format validation entirely: the reference
+# engine's own matches_regex/not_matches_regex (`converted_strings.notna()
+# & ...`) is FALSE for BOTH operators when the target is blank/NA - not a
+# simple negation of each other, since `!matches_regex(blank)` would
+# otherwise make not_matches_regex wrongly TRUE for every blank value.
+# Confirmed against CORE-000558's real fixture: a numeric --DY value left
+# blank must not be flagged by "not_matches_regex ^-?[1-9]{1}\\d*$" (an
+# empty string trivially fails that digit-requiring pattern, but a MISSING
+# value isn't a formatting violation - there's nothing to validate).
 # Operator: matches_regex - target matches the given Perl regex, anchored at the start
-register_operator("matches_regex", guarded_op(matches_regex_check))
+register_operator("matches_regex", guarded_op(function(ctx) {
+  !is_blank(ctx$target) & matches_regex_check(ctx)
+}))
 
-# Operator: not_matches_regex - negation of matches_regex
-register_operator("not_matches_regex", guarded_op(function(ctx) !matches_regex_check(ctx)))
+# Operator: not_matches_regex - target does NOT match, but only when populated
+register_operator("not_matches_regex", guarded_op(function(ctx) {
+  !is_blank(ctx$target) & !matches_regex_check(ctx)
+}))
 
 # Operator: longer_than - target's character length exceeds value
 register_operator("longer_than", guarded_op(function(ctx) {

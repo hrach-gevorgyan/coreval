@@ -26,6 +26,36 @@ test_that("matches_regex only matches a suffix when the pattern lacks a leading 
   expect_equal(evaluate_check(check, dataset, "TX"), c(FALSE, TRUE, FALSE))
 })
 
+test_that("matches_regex/not_matches_regex are FALSE (not a forced result) for a blank target", {
+  # The reference engine's own implementation ANDs both operators with
+  # `converted_strings.notna()` - a blank/NA value is exempt from format
+  # validation entirely, for BOTH operators independently (not a simple
+  # negation of each other). Confirmed against CORE-000558's real fixture:
+  # a numeric --DY value left blank must not be flagged by
+  # "not_matches_regex ^-?[1-9]{1}\\d*$" - an empty string trivially fails
+  # that digit-requiring pattern, but a MISSING value isn't a formatting
+  # violation.
+  data <- data.table::data.table(X = c(NA_real_, 0, 5))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "X", operator = "not_matches_regex", value = "^-?[1-9]{1}\\d*$", value_is_literal = TRUE)
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, TRUE, FALSE))
+
+  check2 <- list(name = "X", operator = "matches_regex", value = "^-?[1-9]{1}\\d*$", value_is_literal = TRUE)
+  expect_equal(evaluate_check(check2, dataset, "TS"), c(FALSE, FALSE, TRUE))
+})
+
+test_that("not_matches_regex matches CDISC's reference results.csv, exempting blank values (CORE-000558)", {
+  rule <- .coreval_env$data$rules[["CORE-000558"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000558", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    actual <- which(evaluate_rule(rule, study, domain = "DS"))
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "DS"])))
+    expect_equal(sort(unname(actual)), expected, info = case)
+  }
+})
+
 test_that("contains/does_not_contain check substring membership", {
   data <- data.table::data.table(X = c("P-1DT2H", "P10D", ""))
   dataset <- list(data = data, meta = NULL)
