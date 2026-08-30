@@ -601,11 +601,30 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
     lib <- library_variables_for(study, domain)
     if (nrow(lib) > 0) {
       lib <- lib[!duplicated(lib$variable), ]
-      data$library_variable_name <- lib$variable[match(meta$variable, lib$variable)]
-      data$library_variable_label <- lib$label[match(meta$variable, lib$variable)]
-      data$library_variable_role <- lib$role[match(meta$variable, lib$variable)]
-      data$library_variable_data_type <- lib$type[match(meta$variable, lib$variable)]
-      data$library_variable_core <- lib$core[match(meta$variable, lib$variable)]
+      i <- match(meta$variable, lib$variable)
+      data$library_variable_name <- lib$variable[i]
+      data$library_variable_label <- lib$label[i]
+      data$library_variable_role <- lib$role[i]
+      data$library_variable_data_type <- lib$type[i]
+      data$library_variable_core <- lib$core[i]
+
+      # Fall back to the SDTM Model for anything the IG's per-domain list
+      # doesn't enumerate. The Model's generic "--" templates cover many
+      # legitimate sponsor variables (LBCHENDY from "--CHENDY"), and without
+      # this they look undefined rather than being checked against the type
+      # the Model specifies. Only fills gaps - the IG always wins where it
+      # has an entry.
+      model <- model_variables_for(domain, real_dataset)
+      if (nrow(model) > 0) {
+        m <- match(meta$variable, model$variable)
+        fill <- is.na(i) & !is.na(m)
+        if (any(fill)) {
+          data$library_variable_name[fill] <- model$variable[m[fill]]
+          data$library_variable_label[fill] <- model$label[m[fill]]
+          data$library_variable_role[fill] <- model$role[m[fill]]
+          data$library_variable_data_type[fill] <- model$type[m[fill]]
+        }
+      }
     }
   }
   dv <- define$variables

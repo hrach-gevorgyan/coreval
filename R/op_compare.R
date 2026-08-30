@@ -45,28 +45,43 @@ compare_op <- function(fn) {
     #   not_equal_to  both sides blank   -> FALSE (not a difference)
     #   not_equal_to  exactly one blank  -> TRUE  (a real difference)
     #
-    # ...BUT the forcing is deliberately narrowed to the TARGET side only.
-    # Implementing that truth table literally (forcing on a blank COMPARATOR
-    # too) was tried and reverted: it regresses CORE-000454, whose fixture
-    # expects NO violation where the target (RFXENDTC) is populated and the
-    # comparator ($max_ex_exendtc) is blank because its `max_date` aggregate
-    # had an all-blank column to aggregate. An unresolvable AGGREGATE is
-    # evidently not the same "blank" as a genuinely blank per-row value, and
-    # `ctx$value` looks identical in both cases - so only the TARGET side
-    # reliably distinguishes them here.
+    # ...with one necessary distinction the truth table doesn't make. A
+    # blank COMPARATOR means two different things depending on where it came
+    # from:
     #
-    # CORE-000552/553 pin the target-blank half: not_equal_to must be TRUE
-    # when the target (--STDY/--ENDY) is a genuine per-row blank and the
-    # comparator is populated. CORE-001082 wants the comparator half as
-    # well, but its own two fixtures disagree about it, so it isn't
-    # evidence to change this on.
+    #   * a real per-row COLUMN that happens to be blank on this row - a
+    #     genuine "populated vs missing" difference, which the reference
+    #     flags (CORE-001082: a variable defined in neither the IG nor the
+    #     SDTM Model has no library_variable_data_type to compare against,
+    #     and the reference reports that as a mismatch).
+    #   * an Operations AGGREGATE that resolved to nothing - e.g.
+    #     CORE-000454's `$max_ex_exendtc`, a `max_date` over an all-blank
+    #     column. Its fixture expects NO violation there: "the aggregate
+    #     could not be computed" is not a difference between two values.
+    #
+    # `is_blank()` cannot tell those apart, but their SHAPE can: a per-row
+    # comparator has one value per row, an aggregate is a scalar broadcast
+    # across them. So the comparator half of the truth table is applied only
+    # to genuinely per-row comparators.
+    #
+    # The target half needs no such qualification - CORE-000552/553 pin it:
+    # not_equal_to must be TRUE when the target (--STDY/--ENDY) is a genuine
+    # per-row blank and the comparator is populated.
     target_blank <- is_blank(ctx$target)
     value_blank <- is_blank(ctx$value)
+    value_is_per_row <- length(ctx$value) == ctx$n && ctx$n > 1
     is_negation <- startsWith(ctx$condition$operator, "not_")
     if (is_negation) {
       result[target_blank & !value_blank] <- TRUE
+      if (value_is_per_row) {
+        result[!target_blank & value_blank] <- TRUE
+        result[target_blank & value_blank] <- FALSE
+      }
     } else {
       result[target_blank] <- FALSE
+      if (value_is_per_row) {
+        result[value_blank] <- FALSE
+      }
     }
     result
   }

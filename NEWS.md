@@ -24,6 +24,13 @@ run alongside and before a qualified validation system, never instead of one.
 
 ## Coverage
 
+* CDISC Library variable metadata is bundled for SDTM, SEND, ADaM and TIG
+  (Core designation, ordinal, label, role and data type), together with the
+  SDTM Model's class variables. Rules that compare a dataset's own variable
+  metadata against the standard's can therefore be evaluated rather than
+  skipped, and SEND studies resolve against SEND metadata instead of being
+  refused. Extracted at build time from the offline cache that CDISC's own
+  rules engine ships; no CDISC API is contacted at build or run time.
 * 756 rules bundled as data, covering the SDTM, SEND and TIG standards across
   their published versions, extracted at build time from a pinned commit of
   CDISC Open Rules. Checking a study needs no internet connection and no API
@@ -39,7 +46,7 @@ run alongside and before a qualified validation system, never instead of one.
 ## Correctness
 
 * Verified by replaying CDISC's own reference test cases and comparing flagged
-  records one by one. Currently agrees with CDISC on 475 of 499 published,
+  records one by one. Currently agrees with CDISC on 479 of 502 published,
   fully executable rules that ship reference data (about 95%). See the README
   for the other denominators and what they mean.
 * A rule that cannot be evaluated is always reported as skipped, with a reason,
@@ -52,8 +59,8 @@ run alongside and before a qualified validation system, never instead of one.
   currently ships reference results, so there is no published expected output
   to verify an implementation against. They will be added once that reference
   data exists — shipping unverifiable checks would contradict the rule above.
-* Rules needing CDISC Library variable metadata, or a merged view of a domain
-  split across several files, are reported as skipped rather than evaluated.
+* Rules needing a merged view of a domain split across several files are
+  reported as skipped rather than evaluated.
 * Values are reported as parsed, so a source value of `0.0` is reported as `0`.
 * Not a CORE-certified engine. These results describe agreement with CDISC's
   published reference data, not certification.

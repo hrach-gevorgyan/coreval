@@ -171,8 +171,8 @@ offending row in the source. Columns:
 
 ```r
 head(result$skipped)
-#>       rule_id domain                              reason
-#> 1 CORE-000398     AE  needs CDISC Library variable metadata...
+#>       rule_id domain                                    reason
+#> 1 CORE-000916     AE  Match Datasets: unsupported join type...
 ```
 
 **This is the part people forget.** A short findings table can mean your data is
@@ -262,16 +262,16 @@ and the exact records their engine flags. Every bundled rule is run against all
 of it and compared record by record.
 
 On published rules that ship reference data to compare against, coreval agrees
-with CDISC's own results on **475 of 499 — about 95%**.
+with CDISC's own results on **479 of 502 — about 95%**.
 
 <details>
 <summary>The other numbers, and why there's more than one</summary>
 
 | What's counted | Agreement |
 |---|---|
-| Published rules with reference data — **the meaningful number** | **475 / 499 (95%)** |
-| All published rules, including those with nothing to compare against | 475 / 543 (87%) |
-| Every bundled rule, including deprecated and draft | 583 / 722 (81%) |
+| Published rules with reference data — **the meaningful number** | **479 / 502 (95%)** |
+| All published rules, including those with nothing to compare against | 479 / 543 (88%) |
+| Every bundled rule, including deprecated and draft | 587 / 722 (81%) |
 
 **81 rules ship no reference data at all.** CDISC publishes the rule but no
 examples, so there's nothing to compare against — they can't pass *or* fail.

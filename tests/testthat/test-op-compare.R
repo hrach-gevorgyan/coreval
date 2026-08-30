@@ -44,24 +44,42 @@ test_that("type_insensitive makes not_equal_to compare numeric-looking values by
   expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, TRUE))
 })
 
-test_that("not_equal_to forces TRUE only when the TARGET is blank, not when only the comparator is (CORE-000454 vs CORE-000552)", {
-  # A blank TARGET (a genuine per-row column value that's missing) forces
-  # not_equal_to TRUE when the comparator is populated - CORE-000552's
-  # CMSTDY blank vs a real calculated $val_stdy. But a blank COMPARATOR
-  # from an unresolvable Operations aggregate (e.g. max_date over an
-  # all-blank column) must NOT force anything - CORE-000454's RFXENDTC
-  # (populated) vs $max_ex_exendtc (blank because nothing to aggregate)
-  # must stay unresolved (NA), not be forced to TRUE.
+test_that("not_equal_to applies the blank truth table to a per-row comparator (CORE-001082)", {
+  # With a genuine per-row COLUMN on both sides, the reference's truth table
+  # applies in full: exactly one side blank is a real difference, both blank
+  # is not. CORE-001082 pins this - a variable defined in neither the IG nor
+  # the SDTM Model has no library_variable_data_type to compare against, and
+  # that counts as a mismatch.
   data <- data.table::data.table(TARGET = c(NA_real_, 5, NA_real_), VALUE = c(45, NA_real_, NA_real_))
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "TARGET", operator = "not_equal_to", value = "VALUE")
   expect_equal(
     evaluate_check(check, dataset, "TS"),
-    # row1: target blank, value populated -> forced TRUE.
-    # row2: target populated, value blank -> untouched, raw NA != 5 stays NA.
-    # row3: both blank -> untouched, raw NA != NA stays NA.
-    c(TRUE, NA, NA)
+    # row1: target blank, value populated -> TRUE
+    # row2: target populated, value blank -> TRUE (a real difference)
+    # row3: both blank                    -> FALSE (not a difference)
+    c(TRUE, TRUE, FALSE)
   )
+})
+
+test_that("not_equal_to does NOT force on a blank Operations AGGREGATE comparator (CORE-000454)", {
+  # The same blankness means something different when the comparator is an
+  # aggregate that resolved to nothing, rather than a per-row column:
+  # "could not be computed" is not a difference between two values.
+  # CORE-000454's RFXENDTC (populated) vs $max_ex_exendtc (a max_date over
+  # an all-blank column) must stay unresolved rather than be forced TRUE.
+  # is_blank() can't tell the two apart - the SHAPE can, since an aggregate
+  # is a scalar broadcast across rows.
+  data <- data.table::data.table(TARGET = c("2020-01-01", "2020-02-01", ""))
+  dataset <- list(data = data, meta = NULL)
+  ctx <- list(
+    name = "TARGET", exists = TRUE, target = data$TARGET,
+    value = NA_character_, n = 3L,
+    condition = list(operator = "not_equal_to"), dataset = dataset, domain = "EX"
+  )
+  res <- get_operator("not_equal_to")(ctx)
+  # Rows 1-2: populated target vs an unresolvable scalar -> NOT forced.
+  expect_true(all(is.na(res[1:2])))
 })
 
 test_that("equal_to/equal_to_case_insensitive treat two blank values as never equal (CORE-000195)", {

@@ -257,6 +257,42 @@ library_variables_for <- function(study, domain) {
   rows[toupper(rows$domain) == toupper(lookup_domain), ]
 }
 
+# Class names differ cosmetically between sources ("FINDINGS ABOUT" in a
+# rule's Scope, "Findings About" in the Model cache), so compare them
+# case- and hyphen-insensitively rather than literally.
+#' Normalize an observation-class name for comparison
+#' @param x Character vector of class names.
+#' @return The normalized names.
+#' @noRd
+normalize_class <- function(x) toupper(gsub("-", " ", x, fixed = TRUE))
+
+# The SDTM Model's own variables for a domain's observation class, with the
+# generic "--" templates resolved against that domain (so "--CHENDY" becomes
+# "LBCHENDY" for LB).
+#
+# This is the FALLBACK behind library_variables_for(): an Implementation
+# Guide's per-domain list doesn't enumerate every variable a sponsor may
+# legitimately use, but the Model's generic templates cover many of them.
+# Without it a Model-defined variable looks entirely undefined, and rules
+# comparing observed metadata against the Library's treat it as unknown
+# rather than checking it against the type the Model actually specifies.
+#' The SDTM Model's variables for a domain, with `"--"` templates resolved
+#' @param domain Domain code.
+#' @param dataset The dataset being checked, for `"--"` resolution.
+#' @return A data.frame with `variable`, `label`, `role`, `type`.
+#' @noRd
+model_variables_for <- function(domain, dataset = NULL) {
+  tbl <- .coreval_env$model_variables
+  cls <- domain_class(domain)
+  # Every class inherits the General Observations variables.
+  rows <- tbl[normalize_class(tbl$class) %in% normalize_class(c("General Observations", cls)), ]
+  if (nrow(rows) == 0) {
+    return(rows)
+  }
+  rows$variable <- resolve_var_name(rows$variable, dataset_wildcard(dataset, domain))
+  rows[!duplicated(rows$variable), ]
+}
+
 #' Look up a domain's variables at a given Core designation (Req/Exp), standard- and version-aware
 #' @param study Full study object.
 #' @param domain Domain code.
@@ -361,7 +397,6 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
       } else {
         # Normalize "-" vs " " (e.g. model class "Special-Purpose" vs
         # sdtm_domain_classes.rds's "SPECIAL PURPOSE") before comparing.
-        normalize_class <- function(x) toupper(gsub("-", " ", x, fixed = TRUE))
         model_class <- normalize_class(.coreval_env$model_variables$class)
         allowed <- .coreval_env$model_variables$variable[model_class == normalize_class(cls)]
         # Some classes (Special-Purpose, Relationship, Trial Design, Study
