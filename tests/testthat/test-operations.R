@@ -282,18 +282,40 @@ test_that("sdtmig_variables_for resolves SUPPxx datasets via the SUPPQUAL templa
   expect_setequal(vars, c("IDVAR", "IDVARVAL", "QEVAL"))
 })
 
-test_that("sdtmig_variables_for returns NULL for a study explicitly declared as a different standard", {
-  # Confirmed necessary against CORE-000355's own EX fixture, whose .env
-  # declares SENDIG 3.1 - using SDTMIG data there would silently produce a
-  # plausible-but-wrong answer.
-  study <- list(standard = list(product = "SENDIG", version = "3-1"))
-  expect_null(sdtmig_variables_for(study, "EX", "Req"))
+test_that("sdtmig_variables_for uses the study's OWN declared standard, not always SDTMIG", {
+  # A test case that looks SDTM-flavoured need not be SDTMIG: CORE-000355's
+  # EX fixture declares SENDIG 3.1. This used to return NULL for any
+  # non-SDTMIG study - correct in that it refused to guess, but it meant
+  # SEND studies could not be checked at all. Now the declared standard is
+  # honoured, and the two genuinely differ: SENDIG's EX has no USUBJID
+  # among its required variables, SDTMIG's does.
+  sendig <- list(standard = list(product = "SENDIG", version = "3-1"))
+  sendig_vars <- sdtmig_variables_for(sendig, "EX", "Req")
+  expect_true(all(c("EXTRT", "EXROUTE") %in% sendig_vars))
+  expect_false("USUBJID" %in% sendig_vars)
+
+  sdtmig <- list(standard = list(product = "SDTMIG", version = "3-4"))
+  expect_true("USUBJID" %in% sdtmig_variables_for(sdtmig, "EX", "Req"))
 })
 
-test_that("sdtmig_variables_for defaults to the newest SDTMIG version when the study doesn't declare one", {
+test_that("sdtmig_variables_for defaults to the newest NUMBERED version when none is declared", {
   study <- list(standard = list(product = NA_character_, version = NA_character_))
   vars <- sdtmig_variables_for(study, "EX", "Req")
   expect_true("EXTRT" %in% vars)
+})
+
+test_that("newest_library_version ignores appendix variants and compares numerically", {
+  # The cache holds appendix variants keyed by name alongside the numbered
+  # releases, so a plain max() picks "md-1-1" over "3-4" and silently
+  # selects an appendix's variable list as the newest SDTMIG.
+  expect_equal(
+    newest_library_version(c("3-1-2", "3-1-3", "3-2", "3-3", "3-4", "ap-1-0", "md-1-1")),
+    "3-4"
+  )
+  # Component-wise, so 3-10 is newer than 3-4 (string comparison says otherwise).
+  expect_equal(newest_library_version(c("3-4", "3-10")), "3-10")
+  # Only appendix-style versions available: fall back rather than fail.
+  expect_equal(newest_library_version(c("ap-1-0", "md-1-1")), "md-1-1")
 })
 
 test_that("get_model_column_order matches CDISC's reference results.csv (CORE-000550)", {

@@ -471,7 +471,7 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     "Variable Metadata Check", "Variable Metadata Check against Library Metadata",
     "Variable Metadata Check against Define XML"
   ))) {
-    return(build_variable_metadata_dataset(dataset, study$define, domain))
+    return(build_variable_metadata_dataset(dataset, study$define, domain, study))
   }
   if (identical(rule$rule_type, "Domain Presence Check against Define XML")) {
     return(build_domain_list_with_define_dataset(study))
@@ -582,13 +582,32 @@ build_domain_list_with_define_dataset <- function(study) {
 #' @param domain Domain code, used to select this dataset's define rows.
 #' @return A synthetic dataset with one row per variable.
 #' @noRd
-build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain = NULL) {
+build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain = NULL,
+                                            study = NULL) {
   meta <- real_dataset$meta
   data <- data.table::data.table(
     variable_name = meta$variable,
     variable_label = meta$label,
     variable_data_type = meta$type
   )
+
+  # What the CDISC Library says this domain's variables SHOULD look like,
+  # for whichever standard the study declares. Joined by variable name, so
+  # a rule can compare observed metadata against the Library's
+  # (library_variable_label, library_variable_role, ...). A variable the
+  # Library doesn't know about gets NA rather than being dropped - "not in
+  # the standard at all" is itself something rules look for.
+  if (!is.null(study)) {
+    lib <- library_variables_for(study, domain)
+    if (nrow(lib) > 0) {
+      lib <- lib[!duplicated(lib$variable), ]
+      data$library_variable_name <- lib$variable[match(meta$variable, lib$variable)]
+      data$library_variable_label <- lib$label[match(meta$variable, lib$variable)]
+      data$library_variable_role <- lib$role[match(meta$variable, lib$variable)]
+      data$library_variable_data_type <- lib$type[match(meta$variable, lib$variable)]
+      data$library_variable_core <- lib$core[match(meta$variable, lib$variable)]
+    }
+  }
   dv <- define$variables
   if (!is.null(dv) && nrow(dv) > 0 && !is.null(domain)) {
     dv <- dv[toupper(dv$define_dataset_name) == toupper(domain), ]

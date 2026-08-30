@@ -34,24 +34,32 @@ compare_op <- function(fn) {
       value <- canonicalize_numeric_string(value)
     }
     result <- fn(target, value)
-    # Clinical-data equality convention, per the reference engine's own
-    # truth table (`_check_equality`/`_check_inequality` in
-    # check_operators/dataframe_operators.py) - but narrowed to the TARGET
-    # side only, per two real, contradictory fixtures: CORE-000552/553 need
-    # not_equal_to forced TRUE when the TARGET (--STDY/--ENDY, a genuine
-    # per-row blank column value) is blank and the comparator ($val_stdy, a
-    # calculated Operations binding) is populated. But CORE-000454 needs
-    # the OPPOSITE result for the mirror-image case: TARGET (RFXENDTC)
-    # populated, comparator ($max_ex_exendtc) blank because the underlying
-    # `max_date` Operations aggregate found NOTHING to aggregate (an
-    # all-blank EXENDTC column) - there, the raw NA-propagating comparison
-    # (no forced result) is what the reference expects, i.e. an
-    # unresolvable AGGREGATE is not the same "blank" as a genuinely blank
-    # per-row value. Since both cases resolve `ctx$value` to a blank the
-    # same way, only the TARGET side reliably distinguishes them here.
-    # equal_to's mirror case (target blank -> not equal) is applied
-    # symmetrically since nothing contradicts it; forcing based on `value`
-    # alone is deliberately NOT done, to avoid CORE-000454's regression.
+    # Clinical-data equality convention, straight from the reference
+    # engine's `_check_equality`/`_check_inequality`
+    # (check_operators/dataframe_operators.py). Both compute
+    # `both_null = is_null_or_empty(comparison) & is_null_or_empty(target)`,
+    # return FALSE when that holds, and otherwise fall through to a plain
+    # `==` / `!=`. So:
+    #
+    #   equal_to      either side blank  -> FALSE (never equal)
+    #   not_equal_to  both sides blank   -> FALSE (not a difference)
+    #   not_equal_to  exactly one blank  -> TRUE  (a real difference)
+    #
+    # ...BUT the forcing is deliberately narrowed to the TARGET side only.
+    # Implementing that truth table literally (forcing on a blank COMPARATOR
+    # too) was tried and reverted: it regresses CORE-000454, whose fixture
+    # expects NO violation where the target (RFXENDTC) is populated and the
+    # comparator ($max_ex_exendtc) is blank because its `max_date` aggregate
+    # had an all-blank column to aggregate. An unresolvable AGGREGATE is
+    # evidently not the same "blank" as a genuinely blank per-row value, and
+    # `ctx$value` looks identical in both cases - so only the TARGET side
+    # reliably distinguishes them here.
+    #
+    # CORE-000552/553 pin the target-blank half: not_equal_to must be TRUE
+    # when the target (--STDY/--ENDY) is a genuine per-row blank and the
+    # comparator is populated. CORE-001082 wants the comparator half as
+    # well, but its own two fixtures disagree about it, so it isn't
+    # evidence to change this on.
     target_blank <- is_blank(ctx$target)
     value_blank <- is_blank(ctx$value)
     is_negation <- startsWith(ctx$condition$operator, "not_")

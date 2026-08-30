@@ -185,40 +185,91 @@ date_extreme_binding <- function(dt, op, want_max) {
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-#' Look up a domain's variables at a given SDTMIG Core designation (Req/Exp), version-aware
-#'
-#' Returns `NULL` (unresolvable) rather than guessing when the study's own
-#' declared standard (from `.env`, see `read_env_standard()`) is explicitly
-#' something OTHER than SDTMIG - confirmed necessary against CORE-000355's
-#' own EX fixture, whose `.env` declares `SENDIG 3.1`: using SDTMIG's
-#' required-variable list there would silently produce a plausible-but-wrong
-#' answer for a rule that looks SDTM-flavored but isn't, for THIS test case.
-#' An undeclared standard (no `.env` - a real XPT-based study) still
-#' defaults to the newest available SDTMIG version, matching
-#' sdtm_domain_classes.rds's own superset simplification, since there is no
-#' per-study version signal to go on there either.
+# The CDISC Library's own variable metadata, for whichever standard the
+# study actually declares. Keyed by (standard, version, domain, variable),
+# with Core designation, ordinal, label, role and data type.
+#
+# A CORE test case that LOOKS SDTM-flavoured is not necessarily SDTMIG - its
+# `_env` can declare SENDIG or another standard entirely (CORE-000355's EX
+# fixture is SENDIG 3.1). Using SDTMIG's list there would produce a
+# plausible-but-wrong answer, so the standard is always resolved from the
+# study rather than assumed.
+# The newest ordinary version among a standard's cached versions.
+#
+# Not `max()`: alongside the numbered releases ("3-1-2", "3-4") the cache
+# also holds APPENDIX variants keyed by name ("ap-1-0", "md-1-0", "md-1-1"),
+# and a plain lexicographic max picks "md-1-1" over "3-4" - silently
+# selecting an appendix's variable list as if it were the newest SDTMIG.
+# Numbered versions are also compared component-wise, so "3-10" would sort
+# above "3-4" rather than below it as string comparison would have it.
+#' Pick the newest numbered version from a set of CDISC Library version strings
+#' @param versions Character vector of dashed version strings.
+#' @return A single version string.
+#' @noRd
+newest_library_version <- function(versions) {
+  versions <- unique(versions)
+  numbered <- versions[grepl("^[0-9]", versions)]
+  if (length(numbered) == 0) {
+    return(max(versions))
+  }
+  parts <- lapply(strsplit(numbered, "-", fixed = TRUE), as.numeric)
+  width <- max(lengths(parts))
+  padded <- vapply(parts, function(p) {
+    paste(sprintf("%06d", c(p, rep(0, width - length(p)))), collapse = ".")
+  }, character(1))
+  numbered[order(padded)][length(numbered)]
+}
+
+#' Rows of CDISC Library variable metadata matching a study's standard and domain
+#' @param study Full study object (its `$standard` selects standard/version).
+#' @param domain Domain code.
+#' @return A data.frame of matching rows (possibly zero-row).
+#' @noRd
+library_variables_for <- function(study, domain) {
+  tbl <- .coreval_env$library_variables
+  product <- study$standard$product %||% NA_character_
+  standard <- if (is.na(product)) "sdtmig" else tolower(product)
+  # TIG bundles per-substandard tables (tig-sdtm, tig-send, ...). Without a
+  # substandard signal, SDTM is the sensible default for tabulation data.
+  if (identical(standard, "tig")) {
+    standard <- "tig-sdtm"
+  }
+  if (!(standard %in% tbl$standard)) {
+    return(tbl[0, ])
+  }
+  rows <- tbl[tbl$standard == standard, ]
+
+  # Version strings are dashed in both the `_env` file and the cache keys
+  # ("3-4"), so they compare directly. An undeclared or unknown version
+  # falls back to the newest available for that standard.
+  version <- study$standard$version %||% NA_character_
+  use_version <- if (!is.na(version) && version %in% rows$version) {
+    version
+  } else {
+    newest_library_version(rows$version)
+  }
+  rows <- rows[rows$version == use_version, ]
+
+  # Every SUPPxx dataset (SUPPAE, SUPPDM, ...) follows the SUPPQUAL template
+  # and is keyed as "SUPPQUAL" in the Library data, not by its own literal
+  # domain name - the same fallback domain_class() already uses.
+  lookup_domain <- if (startsWith(toupper(domain), "SUPP") && nchar(domain) > 4) "SUPPQUAL" else domain
+  rows[toupper(rows$domain) == toupper(lookup_domain), ]
+}
+
+#' Look up a domain's variables at a given Core designation (Req/Exp), standard- and version-aware
 #' @param study Full study object.
 #' @param domain Domain code.
 #' @param core_value One of `"Req"`, `"Exp"`.
 #' @return A character vector of variable names in ordinal order, or `NULL` if unresolvable.
 #' @noRd
 sdtmig_variables_for <- function(study, domain, core_value) {
-  product <- study$standard$product %||% NA_character_
-  if (!is.na(product) && !identical(product, "SDTMIG")) {
-    return(NULL)
-  }
-  # Every SUPPxx dataset (SUPPAE, SUPPDM, ...) follows the SUPPQUAL template
-  # and is keyed as "SUPPQUAL" in the Library data, not by its own literal
-  # domain name - the same fallback domain_class() already uses.
-  lookup_domain <- if (startsWith(toupper(domain), "SUPP") && nchar(domain) > 4) "SUPPQUAL" else domain
-  tbl <- .coreval_env$sdtmig_variables
-  version <- gsub("-", ".", study$standard$version %||% NA_character_, fixed = TRUE)
-  use_version <- if (!is.na(version) && version %in% tbl$version) version else max(tbl$version)
-  rows <- tbl[tbl$version == use_version & toupper(tbl$domain) == toupper(lookup_domain) & tbl$core == core_value, ]
+  rows <- library_variables_for(study, domain)
+  rows <- rows[rows$core == core_value, ]
   if (nrow(rows) == 0) {
     return(NULL)
   }
-  rows$variable[order(as.numeric(rows$ordinal))]
+  rows$variable[order(rows$ordinal)]
 }
 
 #' Compute one Operations spec entry into a binding
