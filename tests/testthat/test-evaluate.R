@@ -66,17 +66,20 @@ test_that("evaluate_check combines all/any/not correctly", {
   expect_equal(evaluate_check(not_check, dataset, "TS"), c(FALSE, TRUE, FALSE, TRUE))
 })
 
-test_that("exists/not_exists are dataset-level facts (a scalar), not per-row", {
+test_that("exists/not_exists are dataset-level facts, recycled to one value per row", {
   # A bare exists/not_exists condition describes the dataset, not any one
-  # record, so it stays a length-1 scalar here. It only becomes per-row when
-  # combined (via all/any) with a row-level condition, through R's normal
-  # length-1 recycling in `&`/`|` - see the next test.
+  # record, but evaluate_condition() still recycles it to one value per row
+  # (evaluate_check()'s own documented contract) - needed for a Check whose
+  # EVERY leaf is dataset-level, where there's no per-row sibling condition
+  # left for R's ordinary `&`/`|` recycling to broadcast against (confirmed
+  # necessary against CORE-000291's real fixture, a Match Datasets self-join
+  # combined with two all-scalar conditions).
   data <- data.table::data.table(A = c("X", "Y"))
   dataset <- list(data = data, meta = NULL)
 
-  expect_true(evaluate_check(list(name = "A", operator = "exists"), dataset, "TS"))
-  expect_false(evaluate_check(list(name = "B", operator = "exists"), dataset, "TS"))
-  expect_true(evaluate_check(list(name = "B", operator = "not_exists"), dataset, "TS"))
+  expect_equal(evaluate_check(list(name = "A", operator = "exists"), dataset, "TS"), c(TRUE, TRUE))
+  expect_equal(evaluate_check(list(name = "B", operator = "exists"), dataset, "TS"), c(FALSE, FALSE))
+  expect_equal(evaluate_check(list(name = "B", operator = "not_exists"), dataset, "TS"), c(TRUE, TRUE))
 })
 
 test_that("exists/not_exists resolve a Domain Presence Check's bare domain-code name against the study", {

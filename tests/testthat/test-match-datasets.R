@@ -128,6 +128,29 @@ test_that("Match Datasets with a partial key matches CDISC's reference results.c
   }
 })
 
+test_that("a Match Datasets self-join with an all-scalar Check matches CDISC's reference results.csv (CORE-000291)", {
+  # EX matched with itself on USUBJID explodes the dataset (multiple EX
+  # records per subject), but BOTH of this rule's Check conditions are
+  # dataset-level scalars ($EXVAMT_EXISTS equal_to true; EC exists) - no
+  # per-row sibling condition for R's ordinary `&` recycling to broadcast
+  # against. Confirmed this needs evaluate_condition() itself to recycle
+  # every leaf to one value per row - without it, indexing the length-1
+  # result by exploded row id produced NA past the first row.
+  rule <- .coreval_env$data$rules[["CORE-000291"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000291", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual_any <- any(evaluate_rule(rule, study, domain))
+      expected_any <- nrow(results[results$Dataset == domain, ]) > 0 ||
+        nrow(results[results$Dataset == "STUDY", ]) > 0
+      expect_equal(actual_any, expected_any, info = paste(case, domain))
+    }
+  }
+})
+
 test_that("apply_match_dataset never matches a blank/NA key against another blank/NA key", {
   # Bug: base merge() treats NA (and "" as an ordinary string) as a
   # matchable value by default - a blank USUBJID on both sides would

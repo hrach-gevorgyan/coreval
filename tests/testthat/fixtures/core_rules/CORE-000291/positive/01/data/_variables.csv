@@ -1,0 +1,35 @@
+dataset,variable,label,type,length
+ec,STUDYID,Study Identifier,Char,50
+ec,DOMAIN,Domain Abbreviation,Char,50
+ec,USUBJID,Unique Subject Identifier,Char,50
+ec,ECSEQ,Sequence Number,Num,8
+ec,ECLNKID,Link ID,Char,50
+ec,ECTRT,Name of Treatment,Char,50
+ec,ECPRESP,Pre-Specified,Char,50
+ec,ECOCCUR,Occurrence,Char,50
+ec,ECREASOC,Reason for Occur Value,Char,50
+ec,ECDOSE,Dose,Num,8
+ec,ECDOSTXT,Dose Description,Char,50
+ec,ECDOSU,Dose Units,Char,50
+ec,ECDOSFRM,Dose Form,Char,50
+ec,EcROUTE,Route of Administration,Char,50
+ec,ECSTDTC,Start Date/Time of Treatment,Char,50
+ec,ECENDTC,End Date/Time of Treatment,Char,50
+ec,ECSTDY,Study Day of Start of Treatment,Num,8
+ec,ECENDY,Study Day of End of Treatment,Num,8
+ex,STUDYID,Study Identifier,Char,50
+ex,DOMAIN,Domain Abbreviation,Char,50
+ex,USUBJID,Unique Subject Identifier,Char,50
+ex,EXSEQ,Sequence Number,Num,8
+ex,EXLNKID,Link ID,Char,50
+ex,EXTRT,Name of Treatment,Char,50
+ex,EXDOSE,Dose,Num,8
+ex,EXDOSTXT,Dose Description,Char,50
+ex,EXDOSU,Dose Units,Char,50
+ex,EXDOSFRM,Dose Form,Char,50
+ex,EXDOSFRQ,Dosing Frequency per Interval,Char,50
+ex,EXROUTE,Route of Administration,Char,50
+ex,EXSTDTC,Start Date/Time of Treatment,Char,50
+ex,EXENDTC,End Date/Time of Treatment,Char,50
+ex,EXSTDY,Study Day of Start of Treatment,Num,8
+ex,EXENDY,Study Day of End of Treatment,Num,8

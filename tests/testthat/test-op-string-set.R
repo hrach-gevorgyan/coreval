@@ -123,11 +123,12 @@ test_that("contains_all/not_contains_all are dataset-level checks on the column'
     name = "TSPARMCD", operator = "not_contains_all",
     value = c("AGEMAX", "AGEMIN"), value_is_literal = TRUE
   )
-  expect_false(evaluate_check(check, dataset, "TS")) # both present -> contains_all TRUE -> not_ FALSE
+  # both present -> contains_all TRUE -> not_ FALSE, recycled to one per row
+  expect_equal(evaluate_check(check, dataset, "TS"), rep(FALSE, 3))
 
   check2 <- list(
     name = "TSPARMCD", operator = "not_contains_all",
     value = c("AGEMAX", "MISSING_ONE"), value_is_literal = TRUE
   )
-  expect_true(evaluate_check(check2, dataset, "TS"))
+  expect_equal(evaluate_check(check2, dataset, "TS"), rep(TRUE, 3))
 })

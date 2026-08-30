@@ -124,7 +124,21 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   )
 
   op_fn <- get_operator(condition$operator)
-  op_fn(ctx)
+  result <- op_fn(ctx)
+  # Every leaf condition must return one value per row of `dataset` -
+  # documented as the contract of evaluate_check() itself, but a
+  # dataset-level operator (exists/not_exists, or `equal_to` against a
+  # scalar Operations binding) naturally returns a single value, not one
+  # per row. Recycling here (rather than relying on evaluate_check()'s
+  # `all`/`any` combinators to broadcast it against a sibling per-row
+  # condition via ordinary R recycling) also covers a Check whose EVERY
+  # leaf is dataset-level - confirmed necessary against CORE-000291's real
+  # fixture: a Match Datasets self-join explodes the dataset to 5 rows, but
+  # every one of this rule's two conditions is scalar, so the unrecycled
+  # length-1 result silently produced NA (out-of-bounds logical indexing)
+  # for every row past the first when collapse_exploded_violations() later
+  # indexed into it by row id.
+  rep_len(result, ctx$n)
 }
 
 # Walks an arbitrarily nested Check tree (all/any/not), returning a per-row

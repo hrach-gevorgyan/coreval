@@ -17,10 +17,19 @@ test_that("rules_version reports the pinned upstream SHA", {
   expect_true(nzchar(rules_version()))
 })
 
-test_that("YAML 1.1 boolean literals in `value` are preserved as text, not coerced", {
+test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word boolean becomes a real logical", {
   # Regression test: bare Y/N (and yes/no/true/false/on/off) are YAML 1.1
-  # booleans. Extremely common SDTM Y/N flag literals like `value: Y` were
-  # silently corrupted into logical TRUE/FALSE by the default yaml parser.
+  # booleans under R's yaml package. But the reference engine (Python,
+  # PyYAML) is NOT this permissive - PyYAML's own bool resolver regex only
+  # matches the FULL words yes/no/true/false/on/off (in various cases),
+  # never a bare single-letter Y/N. So a genuine SDTM flag literal like
+  # `value: Y` must stay the string "Y" (matching Python's own non-boolean
+  # treatment), but a full-word boolean like `value: true` (used to compare
+  # against an Operations binding like $EXVAMT_EXISTS) must become a REAL
+  # logical, matching what PyYAML actually hands the reference engine -
+  # confirmed necessary against CORE-000291's real fixture, where treating
+  # `true` as the literal string "true" made a boolean comparison always
+  # false (R's as.character(TRUE) is "TRUE", not "true").
   rules <- .coreval_env$data$rules
 
   c6 <- rules[["CORE-000006"]]$check$all[[1]]
@@ -31,6 +40,15 @@ test_that("YAML 1.1 boolean literals in `value` are preserved as text, not coerc
   # logicals, not as the literal strings "true"/"TRUE".
   c1 <- rules[["CORE-000001"]]$check$all[[1]]
   expect_identical(c1$value_is_literal, TRUE)
+
+  # A genuine full-word boolean Check value is a real logical, and every
+  # occurrence found is legitimately a boolean-natured comparator (an
+  # Operations binding like $EXVAMT_EXISTS/$domain_is_custom, or
+  # define_dataset_has_no_data) - never an accidentally-corrupted SDTM
+  # value literal.
+  ev <- rules[["CORE-000291"]]$check$all[[1]]
+  expect_identical(ev$name, "$EXVAMT_EXISTS")
+  expect_identical(ev$value, TRUE)
 
   walk_check <- function(check, hits = list()) {
     if (is.null(check)) {
@@ -51,7 +69,7 @@ test_that("YAML 1.1 boolean literals in `value` are preserved as text, not coerc
     }
     hits
   }
-  bad <- list()
-  for (r in rules) bad <- c(bad, walk_check(r$check))
-  expect_length(bad, 0)
+  logical_value_checks <- list()
+  for (r in rules) logical_value_checks <- c(logical_value_checks, walk_check(r$check))
+  expect_true(all(vapply(logical_value_checks, function(h) startsWith(h$name, "$") || grepl("_exists|is_custom|has_no_data", h$name, ignore.case = TRUE), logical(1))))
 })

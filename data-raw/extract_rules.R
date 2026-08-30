@@ -55,15 +55,33 @@ int_handler <- function(x) {
   if (is.na(v)) as.numeric(x) else v
 }
 
-# YAML 1.1 (which this parser follows) treats bare y/Y/yes/on/true and
-# n/N/no/off/false as booleans. SDTM Y/N flag literals (`value: Y`, `value: N`
-# - extremely common: DTHFL, *PRESP, *OCCUR, ...) get silently corrupted into
-# logical TRUE/FALSE instead of the strings "Y"/"N" they actually are.
-# Override both boolean handlers to keep the original text, then re-coerce
-# the schema's actual boolean flags (value_is_literal, negative, etc., which
-# would otherwise also come through as strings like "true") back to logicals
-# in normalize_flags() below.
-preserve_bool_text <- function(x) x
+# YAML 1.1 (which this R parser follows) treats bare y/Y/yes/on/true and
+# n/N/no/off/false as booleans - but the REFERENCE ENGINE (Python, PyYAML)
+# does NOT: PyYAML's own bool resolver regex only matches the FULL words
+# yes/Yes/YES/no/No/NO/true/True/TRUE/false/False/FALSE/on/On/ON/off/Off/OFF
+# - a bare single-letter "Y" or "N" is never one of them and stays a plain
+# string there. SDTM Y/N flag literals (`value: Y`, `value: N` - extremely
+# common: DTHFL, *PRESP, *OCCUR, ...) would otherwise get silently
+# corrupted into logical TRUE/FALSE here, diverging from what the
+# reference engine actually sees.
+#
+# So single-letter Y/N must stay text (matching Python's own non-boolean
+# treatment), but a genuine full-word boolean like `value: true` should
+# become a REAL logical - confirmed necessary against CORE-000291's real
+# fixture: `$EXVAMT_EXISTS equal_to true` compares a boolean Operations
+# binding (TRUE/FALSE) against this literal, and PyYAML parses `true` as
+# Python's real `True`, not the string "true" (which would never
+# case-sensitively equal R's `as.character(TRUE)` = "TRUE" anyway).
+# `normalize_flags()` below separately re-coerces schema flag fields
+# (value_is_literal, negative, ...) that always carry a fixed boolean
+# semantics regardless of this text/logical split.
+preserve_bool_text <- function(x) {
+  if (tolower(x) %in% c("yes", "no", "true", "false", "on", "off")) {
+    isTRUE(tolower(x) %in% c("yes", "true", "on"))
+  } else {
+    x
+  }
+}
 
 FLAG_KEYS <- c(
   "value_is_literal", "negative", "type_insensitive", "value_is_reference",
