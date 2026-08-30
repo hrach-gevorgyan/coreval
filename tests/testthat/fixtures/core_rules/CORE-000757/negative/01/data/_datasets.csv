@@ -1,0 +1,5 @@
+Filename,Dataset Name,Label
+cm,CM,Concomitant/Prior Medications
+ae,AE,Adverse Events
+fa,FA,Findings About Events or Interventions
+relrec,RELREC,Related Records

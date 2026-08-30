@@ -40,6 +40,9 @@
 #' @noRd
 apply_match_dataset <- function(dataset, spec, study, current_domain) {
   match_name <- spec$Name
+  if (identical(match_name, "RELREC") && is.null(spec$Child)) {
+    return(apply_relrec_match(dataset, study, current_domain))
+  }
   if (!is.null(spec$Child) || identical(match_name, "RELREC") || grepl("^(SUPP|SQ)", match_name)) {
     stop("Match Datasets: unsupported join type for '", match_name, "'", call. = FALSE)
   }
@@ -93,6 +96,103 @@ apply_match_dataset <- function(dataset, spec, study, current_domain) {
   merged <- data.table::rbindlist(list(merged_valid, left_blank), use.names = TRUE, fill = TRUE)
   merged <- merged[order(merged$.coreval_row_id)]
 
+  list(data = merged, meta = dataset$meta)
+}
+
+#' Left-join a rule's Match Datasets "RELREC" relationship onto a dataset
+#'
+#' RELREC declares relationships between records in DIFFERENT domains via a
+#' shared `RELID` (each side's own row in RELREC gives `RDOMAIN`/`IDVAR`/
+#' `IDVARVAL` identifying which record(s) sit on that side). Two sub-patterns
+#' coexist in the same table and are handled by one algorithm:
+#'   - record-level (`IDVARVAL` populated): pins one exact record per side.
+#'   - group-level (`IDVARVAL` blank): pairs rows by IDVAR column VALUE
+#'     EQUALITY between the two domains (e.g. `CM.CMGRPID == FA.FAGRPID`).
+#' Confirmed against CORE-000757's real fixtures: for a current-domain row
+#' `r` and a RELREC row `m` where `RDOMAIN == current_domain`, `r` qualifies
+#' when `m$IDVARVAL` is blank (unconstrained) or `r[[m$IDVAR]] == m$IDVARVAL`
+#' (record-level pin). For each partner RELREC row `p` sharing `m$RELID`
+#' (`RDOMAIN != current_domain`), the match key is `p$IDVARVAL` when
+#' populated (a literal, independent of `r`), else `r[[m$IDVAR]]` (group-level
+#' value join). Joined columns are always exposed under a literal
+#' `"RELREC.<column>"` prefix (never the partner's actual domain name), since
+#' which domain ends up on the other side of a RELID varies per rule - unlike
+#' the generic join's collision-only renaming.
+#' @param dataset The dataset being checked (`list(data, meta)`).
+#' @param study Full study object (needs `$datasets$RELREC` and the partner domain).
+#' @param current_domain Domain code of `dataset`.
+#' @return `dataset` with any matched RELREC-linked columns joined in.
+#' @noRd
+apply_relrec_match <- function(dataset, study, current_domain) {
+  relrec <- study$datasets[["RELREC"]]
+  if (is.null(relrec)) {
+    return(dataset)
+  }
+  rr <- relrec$data
+  my_side <- rr[toupper(rr$RDOMAIN) == toupper(current_domain), ]
+  if (nrow(my_side) == 0) {
+    return(dataset)
+  }
+
+  left <- data.table::copy(dataset$data)
+  if (!(".coreval_row_id" %in% names(left))) {
+    left$.coreval_row_id <- seq_len(nrow(left))
+  }
+
+  matched <- list()
+  for (i in seq_len(nrow(my_side))) {
+    m <- my_side[i, ]
+    if (!(m$IDVAR %in% names(left))) {
+      next
+    }
+    left_qualifies <- if (!is_blank(m$IDVARVAL)) {
+      as.character(left[[m$IDVAR]]) == m$IDVARVAL
+    } else {
+      rep(TRUE, nrow(left))
+    }
+    if (!is_blank(m$USUBJID) && "USUBJID" %in% names(left)) {
+      left_qualifies <- left_qualifies & (left$USUBJID == m$USUBJID)
+    }
+    qualifying_idx <- which(left_qualifies)
+    if (length(qualifying_idx) == 0) {
+      next
+    }
+
+    partners <- rr[rr$RELID == m$RELID & toupper(rr$RDOMAIN) != toupper(current_domain), ]
+    for (j in seq_len(nrow(partners))) {
+      p <- partners[j, ]
+      partner_ds <- study$datasets[[toupper(p$RDOMAIN)]]
+      if (is.null(partner_ds) || !(p$IDVAR %in% names(partner_ds$data))) {
+        next
+      }
+      right <- partner_ds$data
+
+      for (ri in qualifying_idx) {
+        key_val <- if (!is_blank(p$IDVARVAL)) p$IDVARVAL else as.character(left[[m$IDVAR]][ri])
+        right_idx <- which(as.character(right[[p$IDVAR]]) == key_val)
+        for (rj in right_idx) {
+          right_row <- right[rj, ]
+          data.table::setnames(right_row, names(right_row), paste0("RELREC.", names(right_row)))
+          matched[[length(matched) + 1]] <- cbind(left[ri, ], right_row)
+        }
+      }
+    }
+  }
+
+  if (length(matched) == 0) {
+    return(dataset)
+  }
+  matched_dt <- data.table::rbindlist(matched, fill = TRUE)
+  matched_ids <- unique(matched_dt$.coreval_row_id)
+  unmatched <- left[!(left$.coreval_row_id %in% matched_ids), ]
+  if (nrow(unmatched) > 0) {
+    right_only_cols <- setdiff(names(matched_dt), names(left))
+    for (col in right_only_cols) {
+      unmatched[[col]] <- matched_dt[[col]][NA_integer_]
+    }
+  }
+  merged <- data.table::rbindlist(list(matched_dt, unmatched), use.names = TRUE, fill = TRUE)
+  merged <- merged[order(merged$.coreval_row_id)]
   list(data = merged, meta = dataset$meta)
 }
 

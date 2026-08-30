@@ -1,0 +1,55 @@
+dataset,variable,label,type,length
+cm,STUDYID,Study Identifier,Char,50
+cm,DOMAIN,Domain Abbreviation,Char,50
+cm,USUBJID,Unique Subject Identifier,Char,50
+cm,CMSEQ,Sequence Number,Num,8
+cm,CMGRPID,Group ID,Char,30
+cm,CMTRT,"Reported Name of Drug, Med, or Therapy",Char,50
+cm,CMDECOD,Standardized Medication Name,Char,50
+cm,CMCAT,Category for Medication,Char,50
+cm,CMSCAT,Subcategory for Medication,Char,50
+cm,CMINDC,Indication,Char,50
+cm,CMDOSE,Dose per Administration,Num,8
+cm,CMDOSU,Dose Units,Char,50
+cm,CMDOSFRQ,Dosing Frequency per Interval,Char,50
+cm,CMROUTE,Route of Administration,Char,50
+cm,EPOCH,Epoch,Char,50
+cm,CMSTDTC,Start Date/Time of Medication,Char,50
+cm,CMENDTC,End Date/Time of Medication,Char,50
+cm,CMSTDY,Study Day of Start of Medication,Num,8
+cm,CMENDY,Study Day of End of Medication,Num,8
+cm,CMENRTPT,End Relative to Reference Time Point,Char,50
+cm,CMENTPT,End Reference Time Point,Char,50
+ae,STUDYID,Study Identifier,Char,50
+ae,DOMAIN,Domain Abbreviation,Char,50
+ae,USUBJID,Unique Subject Identifier,Char,50
+ae,AESEQ,Sequence Number,Num,8
+ae,AEGRPID,Group ID,Char,50
+ae,AETERM,Reported Term for the Adverse Event,Char,50
+ae,AEDECOD,Dictionary-Derived Term,Char,50
+ae,AESER,Serious Event,Char,50
+ae,AEACN,Action Taken with Study Treatment,Char,50
+ae,AEREL,Causality,Char,50
+ae,AEOUT,Outcome of Adverse Event,Char,50
+ae,AESCAN,Involves Cancer,Char,50
+ae,AESCONG,Congenital Anomaly or Birth Defect,Char,50
+ae,AESDISAB,Persist or Signif Disability/Incapacity,Char,50
+ae,AESDTH,Results in Death,Char,50
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,50
+ae,AESLIFE,Is Life Threatening,Char,50
+ae,AECONTRT,Concomitant or Additional Trtmnt Given,Char,50
+ae,AETOXGR,Standard Toxicity Grade,Char,50
+ae,EPOCH,Epoch,Char,50
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,50
+ae,AEENDTC,End Date/Time of Adverse Event,Char,50
+ae,AESTDY,Study Day of Start of Adverse Event,Num,8
+ae,AEENDY,Study Day of End of Adverse Event,Num,8
+ae,AEENRTPT,End Relative to Reference Time Point,Char,50
+ae,AEENTPT,End Reference Time Point,Char,50
+relrec,STUDYID,Study Identifier,Char,50
+relrec,RDOMAIN,Related Domain Abbreviation,Char,50
+relrec,USUBJID,Unique Subject Identifier,Char,50
+relrec,IDVAR,Identifying Variable,Char,50
+relrec,IDVARVAL,Identifying Variable Value,Char,50
+relrec,RELTYPE,Relationship Type,Char,50
+relrec,RELID,Relationship Identifier,Char,50

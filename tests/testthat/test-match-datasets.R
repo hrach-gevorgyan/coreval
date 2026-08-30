@@ -139,10 +139,56 @@ test_that("apply_match_dataset handles an all-valid-key dataset without erroring
   expect_equal(joined$data$DTHFL, c("Y", "N"))
 })
 
-test_that("apply_match_dataset refuses Child/RELREC/SUPP joins rather than guess", {
+test_that("apply_match_dataset refuses SUPP/Child joins rather than guess", {
   left <- list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
   study <- list(datasets = list())
-  expect_error(apply_match_dataset(left, list(Name = "RELREC"), study, "AE"))
   expect_error(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"))
   expect_error(apply_match_dataset(left, list(Name = "CO", Keys = "USUBJID", Child = TRUE), study, "AE"))
+})
+
+test_that("a RELREC relationship join matches CDISC's reference results.csv (CORE-000757)", {
+  # CM matched to FA via RELREC: a group-level pairing (CM.CMGRPID ==
+  # FA.FAGRPID, both RELREC IDVARVAL blank) joins FA's columns in under a
+  # literal "RELREC." prefix - confirmed directly against the real
+  # relrec.csv/results.csv (see apply_relrec_match()'s docstring).
+  rule <- .coreval_env$data$rules[["CORE-000757"]]
+  for (case in c("negative/01", "negative/02", "positive/01", "positive/02", "positive/03")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000757", case)
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study, domain = "CM")
+    expect_equal(
+      actual,
+      expected_violations_for(file.path(dir, "results", "results.csv"), "CM", nrow(study$datasets$CM$data))
+    )
+  }
+})
+
+test_that("apply_relrec_match joins the record-level pattern (both sides pinned by IDVARVAL)", {
+  left <- list(data = data.table::data.table(USUBJID = "S1", CMSEQ = c(1, 2)), meta = NULL)
+  fa_data <- data.table::data.table(USUBJID = "S1", FASEQ = c(3, 4), FAOBJ = c("ASPIRIN", "OTHER"))
+  relrec_data <- data.table::data.table(
+    STUDYID = "STUDY1", RDOMAIN = c("FA", "CM"), USUBJID = "",
+    IDVAR = c("FASEQ", "CMSEQ"), IDVARVAL = c("3", "1"), RELTYPE = "ONE", RELID = "CMFA-1"
+  )
+  study <- list(datasets = list(
+    FA = list(data = fa_data, meta = NULL),
+    RELREC = list(data = relrec_data, meta = NULL)
+  ))
+  joined <- apply_relrec_match(left, study, "CM")
+  expect_equal(joined$data$`RELREC.FAOBJ`, c("ASPIRIN", NA))
+})
+
+test_that("apply_relrec_match joins the group-level pattern (both IDVARVAL blank, matched by value)", {
+  left <- list(data = data.table::data.table(USUBJID = "S1", CMGRPID = c("1", "2")), meta = NULL)
+  fa_data <- data.table::data.table(USUBJID = "S1", FAGRPID = c("2", "9"), FAOBJ = c("ERYTHEMA", "OTHER"))
+  relrec_data <- data.table::data.table(
+    STUDYID = "STUDY1", RDOMAIN = c("FA", "CM"), USUBJID = "",
+    IDVAR = c("FAGRPID", "CMGRPID"), IDVARVAL = "", RELTYPE = c("MANY", "ONE"), RELID = "CMFA-1"
+  )
+  study <- list(datasets = list(
+    FA = list(data = fa_data, meta = NULL),
+    RELREC = list(data = relrec_data, meta = NULL)
+  ))
+  joined <- apply_relrec_match(left, study, "CM")
+  expect_equal(joined$data$`RELREC.FAOBJ`, c(NA, "ERYTHEMA"))
 })
