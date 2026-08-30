@@ -80,6 +80,6 @@ test_that("rules_for_domain matches SUPPxx domains via the RELATIONSHIP class", 
 test_that("sdtm_domain_classes exposes the bundled reference table", {
   tbl <- sdtm_domain_classes()
   expect_s3_class(tbl, "data.table")
-  expect_true(nrow(tbl) == 73) # 63 SDTMIG 3.4 + 10 SEND-only additions
+  expect_true(nrow(tbl) == 82) # 63 SDTMIG 3.4 + 10 base-SEND + 9 SEND extension-standard additions
   expect_true(all(c("domain", "class") %in% names(tbl)))
 })

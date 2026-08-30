@@ -1,0 +1,72 @@
+Authorities:
+  - Organization: CDISC
+    Standards:
+      - Name: SENDIG-DART
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "The values of SJSTDTC provide the chronological order of the actual subject Stages.
+                  SJSEQ should be assigned to be consistent with the chronological order of the Stages per subject.
+                  Note: The requirement that SJSEQ be consistent with chronological order is more stringent than
+                  in most other domains where --SEQ values need only be unique within subject."
+                Document: IG-DART v1.1
+                Item: Assumption 7
+                Section: 4.1.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: SEND354
+              Version: "1"
+            Version: "5.0"
+        Version: "1.1"
+      - Name: SENDIG-DART
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "The values of SJSTDTC provide the chronological order of the actual subject Stages.
+                  SJSEQ should be assigned to be consistent with the chronological order of the Stages per subject.
+                  Note: The requirement that SJSEQ be consistent with chronological order is more stringent than
+                  in most other domains where --SEQ values need only be unique within subject."
+                Document: IG-DART v1.2
+                Item: Assumption 7
+                Section: 4.1.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: SEND354
+              Version: "1"
+            Version: "5.0"
+        Version: "1.2"
+
+Check:
+  all:
+    - name: SJSEQ
+      operator: target_is_not_sorted_by
+      value:
+        - name:
+            SJSTDTC
+            # What is "null_position" doing?
+          null_position: last
+          sort_order: asc
+      within: USUBJID
+
+Core:
+  Id: CORE-000386
+  Status: Published
+  Version: "1"
+Description: Trigger error when the order of SJSEQ is not chronologically (based on SJSTDTC) within
+  USUBJID
+Executability: Fully Executable
+Outcome:
+  Message: SJSEQ is not chronologically (based on SJSTDTC) within USUBJID
+  Output Variables:
+    - USUBJID
+    - SJSEQ
+    - SJSTDTC
+Rule Type: Record Data
+Scope:
+  Classes:
+    Include:
+      - SPECIAL PURPOSE
+  Domains:
+    Include:
+      - SJ
+Sensitivity: Record

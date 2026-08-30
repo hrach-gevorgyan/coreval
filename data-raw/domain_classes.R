@@ -66,7 +66,25 @@ send_only_domains <- data.frame(
 )
 domain_classes <- rbind(domain_classes, send_only_domains)
 
-stopifnot(length(domain_classes$domain) == 73, !anyDuplicated(domain_classes$domain))
+# SEND's extension standards (SENDIG-DART for developmental/reproductive
+# toxicology, SENDIG-AR for animal rule/medical countermeasures, SENDIG-
+# GENETOX for genetic toxicology - same source pickle, keys
+# "standards/sendig/dart-1-1", "standards/sendig/ar-1-0",
+# "standards/sendig/genetox-1-0") add a further 8 domains with no SDTM or
+# base-SENDIG equivalent at all. Confirmed zero class conflicts, both
+# against the existing table and across the three extension standards
+# themselves, before merging.
+send_extension_domains <- data.frame(
+  domain = c("SJ", "IC", "PY", "FM", "FX", "TT", "TP", "AC", "GV"),
+  class = c(
+    "SPECIAL PURPOSE", "FINDINGS", "FINDINGS", "FINDINGS", "FINDINGS",
+    "TRIAL DESIGN", "TRIAL DESIGN", "TRIAL DESIGN", "FINDINGS"
+  ),
+  stringsAsFactors = FALSE
+)
+domain_classes <- rbind(domain_classes, send_extension_domains)
+
+stopifnot(length(domain_classes$domain) == 82, !anyDuplicated(domain_classes$domain))
 
 dir.create(file.path("inst", "extdata"), recursive = TRUE, showWarnings = FALSE)
 saveRDS(domain_classes, file.path("inst", "extdata", "sdtm_domain_classes.rds"))

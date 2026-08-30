@@ -1,0 +1,14 @@
+dataset,variable,label,type,length
+se,STUDYID,Study Identifier,Char,50
+se,DOMAIN,Domain Abbreviation,Char,50
+se,USUBJID,Unique Subject Identifier,Char,50
+se,SESEQ,Sequence Number,Num,8
+se,ETCD,Element Code,Char,50
+se,ELEMENT,Description of Element,Char,50
+se,TAETORD,Planned Order of Element within Arm,Num,8
+se,EPOCH,Epoch,Char,50
+se,SESTDTC,Start Date/Time of Element,Char,50
+se,SEENDTC,End Date/Time of Element,Char,50
+se,SESTDY,Study Day of Start of Element,Num,8
+se,SEENDY,Study Day of End of Element,Num,8
+se,SEUPDES,Description of Unplanned Element,Char,50
