@@ -7,6 +7,10 @@ utils::globalVariables(".N")
 
 .coreval_env <- new.env(parent = emptyenv())
 
+#' Load bundled rules and SDTM domain/class reference data into the package environment
+#' @param libname,pkgname Standard `.onLoad` arguments.
+#' @return `NULL`, invisibly (called for its side effect).
+#' @noRd
 .onLoad <- function(libname, pkgname) {
   path <- system.file("extdata", "rules.rds", package = pkgname)
   .coreval_env$data <- readRDS(path)

@@ -1,6 +1,11 @@
 # Does `pattern` (a value from a Scope Domains Include/Exclude list) match
 # `domain`? Handles the two sentinels ("ALL", "NONE") and the "XX--" prefix
 # wildcard (e.g. "SUPP--" matches "SUPPAE", "SUPPDM"; "AP--" matches "APDM").
+#' Test whether a Scope Domains pattern matches a domain code
+#' @param pattern One Include/Exclude entry (e.g. `"ALL"`, `"SUPP--"`).
+#' @param domain Domain code to test.
+#' @return A single logical.
+#' @noRd
 pattern_matches_domain <- function(pattern, domain) {
   pattern <- toupper(pattern)
   domain <- toupper(domain)
@@ -20,6 +25,11 @@ pattern_matches_domain <- function(pattern, domain) {
 # Shared Include/Exclude resolution for both Classes and Domains scope
 # blocks. `matches_fn(pattern)` tests one Include/Exclude list entry against
 # whatever value the caller is checking (a domain code, or a class name).
+#' Resolve a Scope Include/Exclude block against a single value
+#' @param spec A `list(Include, Exclude)` scope block, or `NULL` (matches everything).
+#' @param matches_fn Function of one pattern, returning a logical.
+#' @return A single logical: whether the value passes this Include/Exclude spec.
+#' @noRd
 include_exclude_matches <- function(spec, matches_fn) {
   if (is.null(spec)) {
     return(TRUE)
@@ -33,6 +43,10 @@ include_exclude_matches <- function(spec, matches_fn) {
   TRUE
 }
 
+#' Look up a domain's SDTMIG observation class
+#' @param domain Domain code, e.g. `"AE"`.
+#' @return A single class name, or `NA_character_` if unknown.
+#' @noRd
 domain_class <- function(domain) {
   domain <- toupper(domain)
   tbl <- .coreval_env$domain_classes
@@ -49,6 +63,11 @@ domain_class <- function(domain) {
   NA_character_
 }
 
+#' Test a rule's Scope > Classes block against a domain
+#' @param classes_spec The rule's `scope$Classes` Include/Exclude block.
+#' @param domain Domain code to test.
+#' @return A single logical.
+#' @noRd
 class_matches <- function(classes_spec, domain) {
   cls <- domain_class(domain)
   include_exclude_matches(classes_spec, function(pattern) {
@@ -59,10 +78,21 @@ class_matches <- function(classes_spec, domain) {
   })
 }
 
+#' Test a rule's Scope > Domains block against a domain
+#' @param domains_spec The rule's `scope$Domains` Include/Exclude block.
+#' @param domain Domain code to test.
+#' @return A single logical.
+#' @noRd
 domains_match <- function(domains_spec, domain) {
   include_exclude_matches(domains_spec, function(pattern) pattern_matches_domain(pattern, domain))
 }
 
+#' Test whether a rule's full Scope (Classes, Domains, Use Case) applies to a domain
+#' @param rule A rule record.
+#' @param domain Domain code to test.
+#' @param use_case Optional use case to also filter on.
+#' @return A single logical.
+#' @noRd
 rule_applies_to_domain <- function(rule, domain, use_case = NULL) {
   scope <- rule$scope
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain)) {

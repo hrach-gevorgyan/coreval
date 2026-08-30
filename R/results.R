@@ -5,6 +5,11 @@
 # (CORE-000001 has no `Output Variables`, and its reference results.csv
 # lists exactly its two Check condition names, in Check order: IECAT then
 # IEORRES).
+#' Collect the `name` fields referenced in a Check tree, in first-appearance order
+#' @param check A Check node (or `NULL`).
+#' @param names_seen Accumulator of names collected so far.
+#' @return A character vector of column names (excluding `$`-prefixed Operations bindings).
+#' @noRd
 collect_check_names <- function(check, names_seen = character(0)) {
   if (is.null(check)) {
     return(names_seen)
@@ -30,12 +35,20 @@ collect_check_names <- function(check, names_seen = character(0)) {
 # The exact, ordered set of columns a rule's findings should report -
 # getting this wrong (wrong set OR wrong order) fails a differential test
 # even when the underlying violation logic is correct.
+#' Determine a rule's ordered Output Variables (declared, or inferred from its Check)
+#' @param rule A rule record.
+#' @param domain Domain code, used to resolve `"--"` templates.
+#' @return A character vector of resolved variable names.
+#' @noRd
 get_output_variables <- function(rule, domain) {
   declared <- rule$outcome[["Output Variables"]]
   raw <- if (!is.null(declared)) declared else collect_check_names(rule$check)
   resolve_var_name(raw, domain)
 }
 
+#' An empty findings table with the correct columns
+#' @return A zero-row [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
+#' @noRd
 empty_findings <- function() {
   data.table::data.table(
     Dataset = character(0), Record = integer(0),
@@ -48,6 +61,13 @@ empty_findings <- function() {
 # Sensitivity: Dataset rules, one row per Variable with Record blank (NA)
 # and Value taken from the first violating record - the shape confirmed
 # directly against real reference output (e.g. CORE-000864).
+#' Assemble one rule's findings for one dataset into the long results.csv format
+#' @param rule A rule record.
+#' @param dataset The dataset that was checked (post Match Datasets joins).
+#' @param domain Domain code.
+#' @param violations Logical vector from [evaluate_check()], one element per row.
+#' @return A [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
+#' @noRd
 assemble_findings <- function(rule, dataset, domain, violations) {
   output_vars <- unique(get_output_variables(rule, domain))
   output_vars <- output_vars[output_vars %in% names(dataset$data)]
@@ -64,6 +84,14 @@ assemble_findings <- function(rule, dataset, domain, violations) {
     vapply(output_vars, function(v) as.character(dataset$data[[v]][row]), character(1))
   }
 
+  # A Match Datasets join can explode one original row into several (see
+  # match_datasets.R): `Record` must report the ORIGINAL row number, and
+  # the reported Value must come from whichever exploded row actually
+  # violated (e.g. the one matched SE record whose date window fit),
+  # never an arbitrary/first exploded copy.
+  row_id <- dataset$data$.coreval_row_id
+  record_of <- function(exploded_row) if (is.null(row_id)) exploded_row else row_id[exploded_row]
+
   if (identical(rule$sensitivity, "Dataset")) {
     first_row <- which(violations)[1]
     data.table::data.table(
@@ -71,9 +99,16 @@ assemble_findings <- function(rule, dataset, domain, violations) {
       Variable = output_vars, Value = value_at(first_row)
     )
   } else {
-    rows <- which(violations)
-    data.table::rbindlist(lapply(rows, function(r) {
-      data.table::data.table(Dataset = domain, Record = r, Variable = output_vars, Value = value_at(r))
+    exploded_rows <- which(violations)
+    records <- record_of(exploded_rows)
+    keep <- !duplicated(records) # one finding per original record
+    exploded_rows <- exploded_rows[keep]
+    records <- records[keep]
+    data.table::rbindlist(lapply(seq_along(exploded_rows), function(i) {
+      data.table::data.table(
+        Dataset = domain, Record = records[i],
+        Variable = output_vars, Value = value_at(exploded_rows[i])
+      )
     }))
   }
 }

@@ -3,6 +3,11 @@
 # different use of "--" than the Domains scope wildcard (`SUPP--` etc.) -
 # there it means "prefix match"; here it means "this domain's code goes
 # here."
+#' Substitute a domain code into a `"--"`-prefixed variable name template
+#' @param name Variable name, possibly starting with `"--"`.
+#' @param domain Domain code to substitute.
+#' @return The resolved variable name.
+#' @noRd
 resolve_var_name <- function(name, domain) {
   ifelse(
     startsWith(name, "--"),
@@ -35,6 +40,13 @@ resolve_var_name <- function(name, domain) {
 #
 # A `$`-prefixed value (e.g. `$tv_visit`) refers to an Operations binding
 # instead of a column - see operations.R.
+#' Resolve a Check condition's comparison value (column reference, Operations binding, or literal)
+#' @param condition One Check condition.
+#' @param dataset The dataset being checked.
+#' @param domain Domain code, used to resolve `"--"` templates.
+#' @param bindings Operations bindings for the current rule.
+#' @return The resolved value, or `NULL` if the condition has no `value`.
+#' @noRd
 resolve_condition_value <- function(condition, dataset, domain, bindings = list()) {
   if (is.null(condition$value)) {
     return(NULL)
@@ -55,6 +67,13 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
   condition$value
 }
 
+#' Evaluate one leaf Check condition against a dataset
+#' @param condition One Check condition (`name`, `operator`, optional `value`).
+#' @param dataset The dataset being checked.
+#' @param domain Domain code, used to resolve `"--"` templates.
+#' @param bindings Operations bindings for the current rule.
+#' @return A logical vector (recycled from scalar for dataset-level operators).
+#' @noRd
 evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
   if (is.character(condition$name) && startsWith(condition$name, "$")) {
     binding <- bindings[[condition$name]]
@@ -89,6 +108,13 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
 # Walks an arbitrarily nested Check tree (all/any/not), returning a per-row
 # logical vector (recycled from a scalar for dataset-level conditions like
 # exists/not_exists). TRUE means the record violates the rule.
+#' Recursively evaluate a Check tree (leaf condition, or `all`/`any`/`not`)
+#' @param check A Check node.
+#' @param dataset The dataset being checked.
+#' @param domain Domain code, used to resolve `"--"` templates.
+#' @param bindings Operations bindings for the current rule.
+#' @return A per-row logical vector; `TRUE` means the record violates the rule.
+#' @noRd
 evaluate_check <- function(check, dataset, domain, bindings = list()) {
   if (!is.null(check$name) && !is.null(check$operator)) {
     return(evaluate_condition(check, dataset, domain, bindings))
@@ -131,12 +157,39 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
 
   result <- evaluate_check(rule$check, dataset, domain, bindings)
   result[is.na(result)] <- FALSE
-  result
+  collapse_exploded_violations(dataset, result)
+}
+
+# A Match Datasets join can explode one original row into several (see
+# match_datasets.R) via `.coreval_row_id`. This function's callers document
+# "one result per row of the dataset being checked" - i.e. per ORIGINAL
+# row - so exploded per-row results collapse back via "any exploded copy of
+# this row violates", matching how CORE-000097 relies on its own Check
+# conditions to pick the one matching exploded row per original record.
+#' Collapse per-exploded-row results back to one per original row
+#' @param dataset The (possibly Match-Datasets-exploded) dataset.
+#' @param result A per-row logical vector aligned to `dataset$data`.
+#' @return `result` unchanged if there was no join explosion, otherwise
+#'   collapsed to one value per original row (`TRUE` if any exploded copy is).
+#' @noRd
+collapse_exploded_violations <- function(dataset, result) {
+  row_id <- dataset$data$.coreval_row_id
+  if (is.null(row_id)) {
+    return(result)
+  }
+  # Not tapply()/factor()-based: factor() sorts integer levels as text
+  # ("1", "10", "2", ...), which would silently misorder rows past 9.
+  vapply(seq_len(max(row_id)), function(i) any(result[row_id == i]), logical(1))
 }
 
 # Normalizes either a single dataset (list(data, meta)) or a full study
 # (list(datasets, ...)) into a study, so callers can pass whichever they
 # have without evaluate_rule() itself needing two code paths downstream.
+#' Normalize a single dataset or a full study into a study object
+#' @param dataset_or_study Either `list(data, meta)` or a full study object.
+#' @param domain Domain code to key a single dataset under.
+#' @return A full study object (`list(datasets = ...)`).
+#' @noRd
 as_study <- function(dataset_or_study, domain) {
   if (!is.null(dataset_or_study$datasets)) {
     dataset_or_study
@@ -150,10 +203,23 @@ as_study <- function(dataset_or_study, domain) {
 # from the SAME augmented dataset evaluate_rule() checked against - using
 # the un-joined dataset there would silently drop any Output Variable that
 # only exists on the matched side (e.g. DM.DTHDTC).
+#' Get the dataset a rule's Check should run against, with Match Datasets joins applied
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @param domain Domain code being checked.
+#' @return The joined dataset, `list(data, meta)`.
+#' @noRd
 prepare_dataset_for_rule <- function(rule, study, domain) {
   apply_match_datasets(study$datasets[[domain]], rule, study, domain)
 }
 
+#' Compute a rule's Operations bindings, if it has any
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @param domain Domain code being checked.
+#' @param dataset The dataset being checked.
+#' @return A named list of bindings (empty if the rule has no Operations).
+#' @noRd
 operation_bindings_for_rule <- function(rule, study, domain, dataset) {
   if (is.null(rule$operations)) {
     return(list())

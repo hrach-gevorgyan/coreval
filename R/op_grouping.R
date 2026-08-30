@@ -1,3 +1,7 @@
+#' Elementwise blank test (NA, or empty string for character vectors)
+#' @param x A vector.
+#' @return A logical vector.
+#' @noRd
 is_blank <- function(x) is.na(x) | (is.character(x) & x == "")
 
 # TRUE where a record's combination of values across [name, value...] columns
@@ -5,6 +9,7 @@ is_blank <- function(x) is.na(x) | (is.character(x) & x == "")
 # count as a real, matching value for grouping purposes (two blank rows in
 # the same columns are a genuine duplicate) - matches the reference engine's
 # own fillna("_NaN_")-before-grouping behavior.
+# Operator: is_not_unique_set - flags rows whose combination of columns duplicates another row's
 register_operator("is_not_unique_set", function(ctx) {
   cols <- unique(c(ctx$name, ctx$condition$value))
   cols <- cols[cols %in% names(ctx$dataset$data)]
@@ -19,6 +24,7 @@ register_operator("is_not_unique_set", function(ctx) {
   as.vector(ave(seq_along(key), key, FUN = length)) > 1
 })
 
+# Operator: is_unique_set - negation of is_not_unique_set
 register_operator("is_unique_set", function(ctx) {
   !get_operator("is_not_unique_set")(ctx)
 })
@@ -28,6 +34,7 @@ register_operator("is_unique_set", function(ctx) {
 # value, and vice versa. A row is flagged if either side of its pair is part
 # of an inconsistent mapping - e.g. one ETCD value paired with two different
 # ELEMENT values somewhere in the dataset.
+# Operator: is_not_unique_relationship - flags rows breaking a one-to-one mapping between two columns
 register_operator("is_not_unique_relationship", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
     return(rep(FALSE, ctx$n))
@@ -68,6 +75,7 @@ register_operator("is_not_unique_relationship", function(ctx) {
   result
 })
 
+# Operator: is_unique_relationship - negation of is_not_unique_relationship
 register_operator("is_unique_relationship", function(ctx) {
   !get_operator("is_not_unique_relationship")(ctx)
 })

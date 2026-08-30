@@ -26,6 +26,10 @@ read_study <- function(path) {
   }
 }
 
+#' Read a directory of XPT datasets into the internal study representation
+#' @param path Directory containing `.xpt` files.
+#' @return A study list, see [read_study()].
+#' @noRd
 read_study_xpt <- function(path) {
   files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
   datasets <- lapply(files, function(f) build_dataset_from_xpt(haven::read_xpt(f)))
@@ -33,6 +37,10 @@ read_study_xpt <- function(path) {
   list(datasets = datasets, define = NULL, ct = NULL)
 }
 
+#' Convert one `haven::read_xpt()` data frame into a `list(data, meta)` dataset entry
+#' @param raw Data frame returned by [haven::read_xpt()].
+#' @return `list(data, meta)`, see [read_study()].
+#' @noRd
 build_dataset_from_xpt <- function(raw) {
   dt <- data.table::as.data.table(raw)
   labels <- vapply(raw, function(col) {
@@ -55,6 +63,10 @@ build_dataset_from_xpt <- function(raw) {
   list(data = dt, meta = meta)
 }
 
+#' Read a CORE test-case `data/` directory into the internal study representation
+#' @param path Directory containing `_datasets.csv`, `_variables.csv`, and one CSV per dataset.
+#' @return A study list, see [read_study()].
+#' @noRd
 read_study_test_case <- function(path) {
   datasets_csv <- data.table::fread(file.path(path, "_datasets.csv"), colClasses = "character")
   variables_csv <- data.table::fread(file.path(path, "_variables.csv"), colClasses = "character")
@@ -67,6 +79,12 @@ read_study_test_case <- function(path) {
   list(datasets = datasets, define = NULL, ct = NULL)
 }
 
+#' Read one test-case dataset CSV, typed per `_variables.csv`
+#' @param path Study directory.
+#' @param fname Dataset filename (without extension).
+#' @param variables_csv Parsed `_variables.csv` table.
+#' @return `list(data, meta)`, see [read_study()].
+#' @noRd
 build_dataset_from_csv <- function(path, fname, variables_csv) {
   vmeta <- variables_csv[toupper(variables_csv$dataset) == toupper(fname), ]
 

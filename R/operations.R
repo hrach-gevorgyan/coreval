@@ -12,6 +12,11 @@
 # no bundled data for them - and simply return NULL, which surfaces as an
 # unresolvable binding.
 
+#' Filter a data.table to rows matching an Operations `filter` spec
+#' @param dt A data.table.
+#' @param filter Named list of column/value equality constraints, or `NULL`.
+#' @return The filtered data.table.
+#' @noRd
 apply_operation_filter <- function(dt, filter) {
   if (is.null(filter)) {
     return(dt)
@@ -25,12 +30,32 @@ apply_operation_filter <- function(dt, filter) {
   dt[keep, ]
 }
 
+#' Construct a scalar Operations binding (one value used for every row)
+#' @param value The value, used identically for every row.
+#' @return A binding list with `kind = "scalar"`.
+#' @noRd
 scalar_binding <- function(value) list(kind = "scalar", value = value)
+
+#' Construct a grouped Operations binding (a per-group aggregate joined back by `group_cols`)
+#' @param group_cols Column names to join on.
+#' @param table A data.table with `group_cols` plus `value_col`.
+#' @param value_col Name of the aggregate value column in `table`.
+#' @return A binding list with `kind = "grouped"`.
+#' @noRd
 grouped_binding <- function(group_cols, table, value_col) {
   list(kind = "grouped", group_cols = group_cols, table = table, value_col = value_col)
 }
+
+#' Construct a per-row Operations binding (already one value per row of the current dataset)
+#' @param value A vector already aligned to the current dataset's rows.
+#' @return A binding list with `kind = "per_row"`.
+#' @noRd
 per_row_binding <- function(value) list(kind = "per_row", value = value)
 
+#' Sorted, unique, non-blank values of a vector
+#' @param x A vector.
+#' @return A sorted vector of unique non-blank values.
+#' @noRd
 distinct_values <- function(x) {
   x <- x[!is.na(x) & x != ""]
   sort(unique(x))
@@ -39,6 +64,11 @@ distinct_values <- function(x) {
 # Picks the max/min of a set of (possibly partial) date strings, ignoring
 # invalid ones, using the same partial-date comparison as the date
 # operators (op_date.R).
+#' Pick the max/min of a set of (possibly partial) date strings, ignoring invalid ones
+#' @param x Character vector of date strings.
+#' @param want_max If `TRUE`, pick the maximum; otherwise the minimum.
+#' @return A single date string, or `NA_character_` if none are valid.
+#' @noRd
 pick_date <- function(x, want_max) {
   x <- x[is_valid_date_str(x)]
   if (length(x) == 0) {
@@ -49,6 +79,13 @@ pick_date <- function(x, want_max) {
   x[if (want_max) which.max(values) else which.min(values)]
 }
 
+#' Compute a per-group aggregate for a grouped Operations binding
+#' @param dt A data.table.
+#' @param group_cols Grouping column names.
+#' @param name Column to aggregate.
+#' @param fn Aggregation function applied to each group's values.
+#' @return A data.table with `group_cols` plus a `.value` column, or `NULL` if no valid group columns.
+#' @noRd
 compute_group_agg <- function(dt, group_cols, name, fn) {
   group_cols <- group_cols[group_cols %in% names(dt)]
   if (length(group_cols) == 0) {
@@ -62,6 +99,12 @@ compute_group_agg <- function(dt, group_cols, name, fn) {
   agg
 }
 
+#' Compute a `dy` Operations binding (study day relative to DM.RFSTDTC)
+#' @param op One Operations spec entry.
+#' @param study Full study object.
+#' @param current_dataset The dataset being checked.
+#' @return A `per_row_binding()` of numeric study-day values.
+#' @noRd
 compute_dy <- function(op, study, current_dataset) {
   n <- nrow(current_dataset$data)
   dm <- study$datasets[["DM"]]
@@ -88,6 +131,14 @@ compute_dy <- function(op, study, current_dataset) {
   per_row_binding(day)
 }
 
+#' Compute one Operations spec entry into a binding
+#' @param op One Operations spec entry.
+#' @param study Full study object.
+#' @param current_domain Domain code of the dataset being checked.
+#' @param current_dataset The dataset being checked.
+#' @return A binding (see `scalar_binding()`/`grouped_binding()`/`per_row_binding()`), or `NULL`
+#'   if the operation can't be computed (unimplemented, or missing data/column).
+#' @noRd
 compute_operation <- function(op, study, current_domain, current_dataset) {
   domain <- if (!is.null(op$domain)) op$domain else current_domain
   ds <- study$datasets[[domain]]
@@ -174,6 +225,13 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
   )
 }
 
+#' Compute all Operations bindings for a rule, keyed by operation id
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @param current_domain Domain code of the dataset being checked.
+#' @param current_dataset The dataset being checked.
+#' @return A named list of bindings (or `NULL` entries), keyed by `op$id`.
+#' @noRd
 compute_operation_bindings <- function(rule, study, current_domain, current_dataset) {
   bindings <- list()
   for (op in rule$operations) {
@@ -186,6 +244,11 @@ compute_operation_bindings <- function(rule, study, current_domain, current_data
 # style use, or leaves it as a set for %in%-style use - either way, the
 # caller (resolve_condition_value / operators) decides how to use it; this
 # just performs the grouped join when needed.
+#' Resolve an Operations binding to a per-row value (or leave a scalar set as-is)
+#' @param binding A binding from [compute_operation()], or `NULL`.
+#' @param dataset The dataset the binding is being applied to.
+#' @return The scalar/set value, a per-row vector, or (for a grouped binding) the joined values.
+#' @noRd
 resolve_binding <- function(binding, dataset) {
   if (is.null(binding)) {
     return(NULL)

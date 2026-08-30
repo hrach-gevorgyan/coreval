@@ -4,7 +4,13 @@
 
 coreval is an R package that evaluates CDISC Open Rules (CORE) conformance rules against clinical trial datasets, returning findings as a tidy data frame.
 
-**Status:** early scaffolding. Rule data is extracted and queryable (`list_rules()`); rule *evaluation* against actual datasets is not implemented yet.
+**Status:** Phases 0-9 of the development plan are implemented: rule
+extraction, `read_study()`, `rules_for_domain()`, the `Check`-tree evaluator
+(~35 operators, including dates and grouping), the `Operations` pipeline,
+`Match Datasets` joins, and `check_study()` as the main user-facing entry
+point. A conformance harness (`tests/conformance/run_conformance.R`) tracks
+pass rate against CDISC's own reference data as coverage grows - see
+[NEWS.md](NEWS.md) for the current numbers and known limitations.
 
 Not affiliated with or endorsed by CDISC. Not a CORE-certified conformance engine.
 
@@ -22,6 +28,28 @@ pak::pak("hrach-gevorgyan/coreval")
 ```r
 library(coreval)
 
+# Read a study - either a directory of XPT datasets, or a CORE test-case
+# data/ directory (.env + _datasets.csv + _variables.csv + one CSV per
+# dataset). read_study() detects which one it's looking at.
+study <- read_study("path/to/study")
+
+# Evaluate every applicable, executable bundled rule against every domain
+# in the study.
+result <- check_study(study)
+
+# A tidy findings table: one row per (Dataset, Record, Variable) violation
+# (Record is blank for Dataset-sensitivity rules).
+head(result$findings)
+
+# Which rule/domain combinations couldn't be evaluated, and why - so a
+# clean findings table is never mistaken for "everything passed."
+head(result$skipped)
+```
+
+Lower-level building blocks are also exported for inspecting the rule set
+itself:
+
+```r
 # The exact upstream cdisc-open-rules commit this rule set was built from
 rules_version()
 

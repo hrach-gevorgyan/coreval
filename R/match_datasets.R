@@ -20,6 +20,24 @@
 # package's row-per-record output contract - a real production study
 # should have a DM record for every USUBJID anyway, so this rarely
 # matters in practice.
+#
+# A one-to-many match (e.g. multiple time-windowed SE records per USUBJID)
+# is kept as a full cartesian expansion, NOT deduplicated to "first match" -
+# confirmed against the reference engine (a plain pd.merge with no row
+# selection at all) and against a real rule: CORE-000097 matches SV to SE
+# on USUBJID alone, and relies on its OWN Check conditions
+# (SESTDTC <= SVSTDTC <= SEENDTC) to filter down to the one SE record whose
+# time window actually contains the visit date. Deduplicating here to the
+# first SE match would grab the wrong record. `.coreval_row_id` tracks each
+# exploded row's original row, so downstream code (evaluate_rule(),
+# assemble_findings()) can collapse back to one result per original record.
+#' Left-join one Match Datasets spec's columns onto a dataset
+#' @param dataset The dataset being checked (`list(data, meta)`).
+#' @param spec One Match Datasets spec (`Name`, `Keys`, optional `Child`).
+#' @param study Full study object.
+#' @param current_domain Domain code of `dataset`, used to resolve `"--"` key names.
+#' @return `dataset` with the matched columns joined in.
+#' @noRd
 apply_match_dataset <- function(dataset, spec, study, current_domain) {
   match_name <- spec$Name
   if (!is.null(spec$Child) || identical(match_name, "RELREC") || grepl("^(SUPP|SQ)", match_name)) {
@@ -45,20 +63,25 @@ apply_match_dataset <- function(dataset, spec, study, current_domain) {
     data.table::setnames(right, collide, paste0(match_name, ".", collide))
   }
 
-  left$.row_id <- seq_len(nrow(left))
-  # A one-to-many match legitimately explodes rows temporarily; the dedup
-  # below (keep first match per original row) is what makes that safe.
+  # Only stamp row ids on the first join in a chain - a second Match
+  # Datasets entry must keep pointing back to the ORIGINAL row, not to the
+  # first join's already-exploded rows.
+  if (!(".coreval_row_id" %in% names(left))) {
+    left$.coreval_row_id <- seq_len(nrow(left))
+  }
   merged <- merge(left, right, by = keys, all.x = TRUE, allow.cartesian = TRUE)
-  merged <- merged[order(merged$.row_id)]
-  # A one-to-many match (e.g. multiple SE records per USUBJID) would
-  # duplicate original rows; keep only the first match per original row so
-  # the result stays aligned to the dataset being checked.
-  merged <- merged[!duplicated(merged$.row_id)]
-  merged$.row_id <- NULL
+  merged <- merged[order(merged$.coreval_row_id)]
 
   list(data = merged, meta = dataset$meta)
 }
 
+#' Apply all of a rule's Match Datasets joins to a dataset
+#' @param dataset The dataset being checked (`list(data, meta)`).
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @param current_domain Domain code of `dataset`.
+#' @return `dataset` with every matched dataset's columns joined in.
+#' @noRd
 apply_match_datasets <- function(dataset, rule, study, current_domain) {
   if (is.null(rule$match_datasets)) {
     return(dataset)

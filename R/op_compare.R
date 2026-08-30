@@ -1,3 +1,7 @@
+#' Build a scalar/vector comparison operator from a two-argument comparator
+#' @param fn Function of `(target, value)` returning a logical vector.
+#' @return An operator function of `ctx`.
+#' @noRd
 compare_op <- function(fn) {
   function(ctx) {
     if (!ctx$exists || is.null(ctx$value)) {
@@ -7,6 +11,8 @@ compare_op <- function(fn) {
   }
 }
 
+# Operators: equal_to / not_equal_to / less_than / less_than_or_equal_to /
+# greater_than / greater_than_or_equal_to, and case-insensitive equality variants
 register_operator("equal_to", compare_op(function(t, v) t == v))
 register_operator("not_equal_to", compare_op(function(t, v) t != v))
 register_operator("less_than", compare_op(function(t, v) t < v))

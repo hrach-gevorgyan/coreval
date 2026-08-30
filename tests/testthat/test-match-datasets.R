@@ -24,22 +24,34 @@ test_that("a simple Match Datasets join (DS matched with DM) matches CDISC's ref
   }
 })
 
-test_that("a colliding column name after Match Datasets is what the schema expects", {
-  # CORE-000097: SV matched with SE on USUBJID, both have EPOCH. The
-  # schema's own Check condition references "SE.EPOCH" directly, confirming
-  # the {MatchedDomain}.{Column} naming convention (see apply_match_dataset
-  # unit tests below for the actual join behavior).
+test_that("a one-to-many Match Datasets join matches CDISC's reference results.csv", {
+  # CORE-000097: SV matched with SE on USUBJID alone. SE has multiple
+  # time-windowed records per subject, so the join legitimately explodes
+  # one SV row into several - the rule's OWN Check conditions
+  # (SESTDTC <= SVSTDTC <= SEENDTC) filter down to the one SE record whose
+  # window actually contains the visit date. This only comes out right if
+  # the join keeps every exploded row (no "first match" dedup) and results
+  # collapse back to one finding per original SV record - confirmed against
+  # the real cdisc-rules-engine source (a plain, undeduplicated merge) and
+  # against this exact reference data (an earlier "keep first match"
+  # implementation reproduced a different, wrong record).
   #
-  # NOTE: this specific rule is a known limitation, not verified end-to-end
-  # here - SE (Subject Elements) legitimately has multiple time-windowed
-  # records per USUBJID, and this package's "keep first match per row" join
-  # isn't precise enough to reproduce CDISC's reference output for it (the
-  # real engine likely needs a date-range-aware match, picking the SE
-  # record whose window contains the SV visit date). Left as a documented
-  # follow-up rather than guessed at.
+  # The schema's own Check condition also confirms the {MatchedDomain}.
+  # {Column} collision-naming convention directly: both SV and SE have
+  # EPOCH, and the condition literally references "SE.EPOCH".
   rule <- .coreval_env$data$rules[["CORE-000097"]]
   cond <- rule$check$all[[4]]
   expect_equal(cond$value, "SE.EPOCH")
+
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000097", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study, domain = "SV")
+    expect_equal(
+      actual,
+      expected_violations_for(file.path(dir, "results", "results.csv"), "SV", nrow(study$datasets$SV$data))
+    )
+  }
 })
 
 test_that("apply_match_dataset renames only colliding columns, joins the rest bare", {
@@ -63,6 +75,40 @@ test_that("apply_match_dataset keeps every left row (left join), even without a 
   joined <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "SV")
   expect_equal(nrow(joined$data), 3)
   expect_true(is.na(joined$data$DTHFL[3]))
+})
+
+test_that("a one-to-many match keeps every exploded row, tagged with .coreval_row_id", {
+  left <- list(data = data.table::data.table(USUBJID = c("S1", "S2")), meta = NULL)
+  right_data <- data.table::data.table(
+    USUBJID = c("S1", "S1", "S2"),
+    ELEMENT = c("A", "B", "C")
+  )
+  study <- list(datasets = list(SE = list(data = right_data, meta = NULL)))
+
+  joined <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "SE"), study, "SV")
+  expect_equal(nrow(joined$data), 3) # S1 explodes into 2 rows, not deduplicated
+  expect_equal(joined$data$.coreval_row_id, c(1, 1, 2))
+})
+
+test_that("evaluate_rule collapses an exploded join back to one result per original row", {
+  sv_data <- data.table::data.table(USUBJID = c("S1", "S2"), EPOCH = c("SCREENING", "TREATMENT"))
+  se_data <- data.table::data.table(
+    USUBJID = c("S1", "S1", "S2"),
+    EPOCH = c("SCREENING", "TREATMENT", "OTHER")
+  )
+  study <- list(datasets = list(
+    SV = list(data = sv_data, meta = NULL),
+    SE = list(data = se_data, meta = NULL)
+  ))
+  rule <- list(
+    match_datasets = list(list(Keys = "USUBJID", Name = "SE")),
+    check = list(name = "EPOCH", operator = "not_equal_to", value = "SE.EPOCH")
+  )
+  # S1: exploded into (EPOCH=SCREENING vs SE.EPOCH=SCREENING -> match, not a
+  # violation) and (EPOCH=SCREENING vs SE.EPOCH=TREATMENT -> violation).
+  # "any exploded copy violates" -> S1 is a violation overall.
+  # S2: only match is EPOCH=TREATMENT vs SE.EPOCH=OTHER -> violation.
+  expect_equal(evaluate_rule(rule, study, "SV"), c(TRUE, TRUE))
 })
 
 test_that("apply_match_dataset refuses Child/RELREC/SUPP joins rather than guess", {

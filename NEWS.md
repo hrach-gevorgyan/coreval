@@ -1,5 +1,23 @@
 # coreval 0.0.0.9000
 
+* A `Match Datasets` one-to-many join (e.g. CORE-000097: `SV` matched with
+  `SE`, which has multiple time-windowed records per subject) was
+  incorrectly deduplicated to "keep the first match per row." Confirmed
+  against the reference engine's actual merge source (a plain,
+  undeduplicated `pd.merge` with zero row-selection logic) and against the
+  rule's own Check tree, which relies on the join staying fully exploded
+  so its own date-range conditions (`SESTDTC <= SVSTDTC <= SEENDTC`) can
+  filter down to the one matching record. `evaluate_rule()` and
+  `assemble_findings()` now correctly collapse the exploded per-join-row
+  results back to one outcome per original record (`.coreval_row_id`
+  tracks the mapping), rather than picking an arbitrary first match.
+  Verified end-to-end against CDISC's reference `results.csv` for
+  CORE-000097 (previously a known, documented failure). Harness impact:
+  PASS 349 -> 359, 71.7% pass rate among Fully Executable rules (344/480).
+* Internal (non-exported) functions across `R/*.R` now have roxygen
+  documentation (kept as source comments via `@noRd` - only the package's
+  actual exported API gets a `man/*.Rd` page).
+
 * `check_study(study, use_case = NULL)`: the main user-facing entry point.
   Evaluates every applicable, executable bundled rule against every domain
   in a study and returns `list(findings, skipped)` - a tidy long-format
