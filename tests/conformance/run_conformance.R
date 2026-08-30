@@ -135,7 +135,8 @@ implemented_operations <- c(
   "get_column_order_from_dataset", "variable_exists", "variable_count",
   "study_domains", "dataset_names", "domain_is_custom", "domain_label", "extract_metadata", "dy",
   "get_model_column_order", "required_variables", "expected_variables",
-  "get_model_filtered_variables", "valid_codelist_dates"
+  "get_model_filtered_variables", "valid_codelist_dates",
+  "get_dataset_filtered_variables", "get_parent_model_column_order"
 )
 
 run_rule <- function(rule) {

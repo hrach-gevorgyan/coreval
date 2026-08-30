@@ -332,7 +332,22 @@ sdtmig_variables_for <- function(study, domain, core_value) {
 #' @return A binding (see `scalar_binding()`/`grouped_binding()`/`per_row_binding()`), or `NULL`
 #'   if the operation can't be computed (unimplemented, or missing data/column).
 #' @noRd
-compute_operation <- function(op, study, current_domain, current_dataset) {
+compute_operation <- function(op, study, current_domain, current_dataset, bindings = list()) {
+  # A `group` entry can be a `$`-binding standing for a SET of column names
+  # rather than a single column (CORE-001034 groups by "$TIMING_VARIABLES").
+  # Left unexpanded it matches no column, is silently dropped, and the
+  # grouping is quietly coarser than the rule asked for - which inflates
+  # every count rather than failing visibly.
+  if (!is.null(op$group)) {
+    op$group <- unlist(lapply(op$group, function(g) {
+      if (is.character(g) && length(g) == 1L && startsWith(g, "$")) {
+        b <- bindings[[g]]
+        if (is.null(b)) character(0) else as.character(b$value)
+      } else {
+        g
+      }
+    }), use.names = FALSE)
+  }
   domain <- if (!is.null(op$domain)) op$domain else current_domain
   ds <- study$datasets[[domain]]
   dt <- if (!is.null(ds)) ds$data else NULL
@@ -409,6 +424,42 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
       }
       if (nrow(tbl) == 0) NULL else scalar_binding(sort(unique(tbl$package_date)))
     },
+    # The variables of THIS dataset that carry a given metadata role,
+    # taken from the standard rather than guessed from names. The reference
+    # derives the standard's list then intersects it with the dataset's
+    # actual columns; only that intersection is observable here, so the
+    # IG/Model ordering problem that blocks get_column_order_from_library
+    # doesn't arise - CORE-001034 uses the result as GROUPING columns,
+    # which is set-based.
+    get_dataset_filtered_variables = {
+      standard_rows <- rbind(
+        library_variables_for(study, current_domain)[, c("variable", "role", "type"), drop = FALSE],
+        model_variables_for(current_domain, current_dataset)[, c("variable", "role", "type"), drop = FALSE]
+      )
+      standard_rows <- filter_metadata_rows(standard_rows, op)
+      wanted <- resolve_var_name(
+        unique(standard_rows$variable), dataset_wildcard(current_dataset, current_domain)
+      )
+      present <- intersect(wanted, names(current_dataset$data))
+      if (length(present) == 0) NULL else scalar_binding(present)
+    },
+    # For a SUPP dataset, the MODEL variables of the parent domain each row
+    # points at via RDOMAIN - which can differ row by row, since one SUPP
+    # dataset may carry qualifiers for several parents. Used to check that a
+    # supplemental qualifier's QNAM doesn't collide with a real variable
+    # name of its parent domain.
+    get_parent_model_column_order = {
+      rdomain <- current_dataset$data[["RDOMAIN"]]
+      if (is.null(rdomain)) {
+        NULL
+      } else {
+        by_parent <- lapply(
+          stats::setNames(nm = unique(toupper(rdomain))),
+          function(p) model_variables_for(p, current_dataset)$variable
+        )
+        per_row_binding(unname(by_parent[toupper(rdomain)]))
+      }
+    },
     get_model_filtered_variables = {
       rows <- filter_metadata_rows(model_variables_for(current_domain, current_dataset), op)
       if (nrow(rows) == 0) NULL else scalar_binding(rows$variable)
@@ -484,7 +535,13 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
 compute_operation_bindings <- function(rule, study, current_domain, current_dataset) {
   bindings <- list()
   for (op in rule$operations) {
-    bindings[[op$id]] <- compute_operation(op, study, current_domain, current_dataset)
+    # Operations are computed in declaration order because a later one may
+    # REFER to an earlier one - CORE-001034 groups by "$TIMING_VARIABLES",
+    # a set of column names produced by the operation above it.
+    bindings[[op$id]] <- compute_operation(
+      op, study, current_domain, current_dataset,
+      bindings = bindings
+    )
   }
   bindings
 }
