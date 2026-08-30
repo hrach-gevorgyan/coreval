@@ -1,0 +1,38 @@
+dataset,variable,label,type,length
+dm,STUDYID,Study Identifier,Char,12
+dm,DOMAIN,Domain Abbreviation,Char,2
+dm,USUBJID,Unique Subject Identifier,Char,20
+dm,SUBJID,Subject Identifier for the Study,Char,12
+dm,RFSTDTC,Subject Reference Start Date/Time,Char,10
+dm,RFENDTC,Subject Reference End Date/Time,Char,10
+dm,RFXSTDTC,Date/Time of First Study Treatment,Char,10
+dm,RFXENDTC,Date/Time of Last Study Treatment,Char,10
+dm,RFICDTC,Date/Time of Informed Consent,Char,10
+dm,RFPENDTC,Date/Time of End of Participation,Char,10
+dm,DTHDTC,Date/Time of Death,Char,10
+dm,DTHFL,Subject Death Flag,Char,1
+dm,SITEID,Study Site Identifier,Char,3
+dm,BRTHDTC,Date/Time of Birth,Char,10
+dm,AGE,Age,Num,8
+dm,AGETXT,Age Text,Char,5
+dm,AGEU,Age Units,Char,5
+dm,SEX,Sex,Char,1
+dm,RACE,Race,Char,41
+dm,ETHNIC,Ethnicity,Char,22
+dm,ARMCD,Planned Arm Code,Char,8
+dm,ARM,Description of Planned Arm,Char,28
+dm,ACTARMCD,Actual Arm Code,Char,8
+dm,ACTARM,Description of Actual Arm,Char,28
+dm,ARMNRS,Reason Arm and/or Actual Arm is Null,Char,14
+dm,ACTARMUD,Description of Unplanned Actual Arm,Char,200
+dm,COUNTRY,Country,Char,3
+ds,STUDYID,Study Identifier,Char,12
+ds,DOMAIN,Domain Abbreviation,Char,2
+ds,USUBJID,Unique Subject Identifier,Char,20
+ds,DSSEQ,Sequence Number,Num,8
+ds,DSTERM,Reported Term for the Disposition Event,Char,200
+ds,DSDECOD,Standardized Disposition Term,Char,50
+ds,DSCAT,Category for Disposition Event,Char,50
+ds,DSSCAT,Subcategory for Disposition Event,Char,50
+ds,EPOCH,Epoch,Char,50
+ds,DSSTDTC,Start Date/Time of Disposition Event,Char,50

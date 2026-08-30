@@ -133,6 +133,8 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
     study <- list(datasets = stats::setNames(list(dataset), domain))
   }
 
+  dataset <- apply_match_datasets(dataset, rule, study, domain)
+
   bindings <- if (!is.null(rule$operations)) {
     compute_operation_bindings(rule, study, domain, dataset)
   } else {

@@ -1,5 +1,23 @@
 # coreval 0.0.0.9000
 
+* `Match Datasets`: joins another domain's columns onto the dataset being
+  checked before `Check` runs (e.g. pulling `DM.DTHDTC` in while checking
+  `DS`). Handles the standard case only - a plain equi-join on `Keys`
+  against a regular SDTM domain, left join so every row of the dataset
+  being checked survives. A colliding column name (present in both
+  datasets) is exposed as `{MatchedDomain}.{Column}` on the matched side -
+  confirmed directly from the schema's own condition text (e.g.
+  `SE.EPOCH`), not assumed. `RELREC`-based relationship joins, `SUPPxx`/
+  `SQxx` pivot merges, and `Child` (parent-hierarchy) joins use genuinely
+  different merge logic in the reference engine and raise a clear error
+  rather than guess at them.
+  Known limitation, left undebugged rather than forced: SE (Subject
+  Elements) legitimately has multiple time-windowed records per subject,
+  and this package's "keep first match per row" join isn't precise enough
+  to reproduce CDISC's reference output there - the real engine likely
+  needs a date-range-aware match. Harness impact: PASS 329 -> 349, 69.8%
+  pass rate among Fully Executable rules (335/480).
+
 * The `Operations` pipeline: pre-computes `$`-bound values (e.g. `$tv_visit`)
   before a rule's `Check` runs. `evaluate_rule()` now accepts either a
   single dataset (unchanged, backward compatible) or a full study object -

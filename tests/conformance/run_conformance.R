@@ -135,10 +135,6 @@ run_rule <- function(rule) {
       return(list(status = "SKIPPED", reason = paste("unimplemented Operations type(s):", paste(missing, collapse = ", "))))
     }
   }
-  if (!is.null(rule$match_datasets)) {
-    return(list(status = "SKIPPED", reason = "Match Datasets not yet implemented (Phase 8)"))
-  }
-
   rule_dir <- file.path(source_root(rule$source), rule$id)
   case_dirs <- c(
     Sys.glob(file.path(rule_dir, "positive", "*")),
