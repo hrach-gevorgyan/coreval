@@ -1,16 +1,17 @@
-# Regenerates inst/extdata/sdtm_domain_classes.rds: a static SDTMIG 3.4
-# domain -> observation-class table, needed to resolve a rule's `Scope >
-# Classes` (e.g. "FINDINGS") against an actual domain code (e.g. "LB").
+# Regenerates inst/extdata/sdtm_domain_classes.rds: a static domain ->
+# observation-class table (SDTMIG 3.4 plus SENDIG 3.1's SEND-specific
+# domains), needed to resolve a rule's `Scope > Classes` (e.g. "FINDINGS")
+# against an actual domain code (e.g. "LB").
 #
 # This is NOT extracted from cdisc-org/cdisc-open-rules - that repo has no
 # domain/class model, only the CORE rules themselves. It's transcribed from
 # cdisc-org/cdisc-rules-engine's own bundled cache
-# (resources/cache/standards_details.pkl, key "standards/sdtmig/3-4"),
-# which that MIT-licensed, CDISC-published repository commits directly to
-# git (not downloaded on demand) - i.e. CDISC's own official rules engine
-# ships this exact table as redistributable, offline reference data. It
-# ultimately originates from the CDISC Library API's SDTM-IG 3.4 model
-# metadata.
+# (resources/cache/standards_details.pkl, keys "standards/sdtmig/3-4" and
+# "standards/sendig/3-1"), which that MIT-licensed, CDISC-published
+# repository commits directly to git (not downloaded on demand) - i.e.
+# CDISC's own official rules engine ships this exact table as
+# redistributable, offline reference data. It ultimately originates from
+# the CDISC Library API's model metadata.
 #
 # Newer SDTMIG versions only add domains (plus one removal: MO, present in
 # 3.2/3.3, dropped in 3.4) relative to older ones - see the version comment
@@ -19,6 +20,14 @@
 # for now: it can only under-match (an old-version-only rule scoped to a
 # domain not yet in the model) or over-match a handful of newly-introduced
 # domains, never misclassify a domain into the wrong class.
+#
+# SEND (SENDIG 3.1) domains: confirmed zero class conflicts against every
+# domain code SDTM and SEND share (DM, CO, SE, EX, DS, LB, VS, EG, CV, DD,
+# MI, PC, PP, RE, SC, RELREC, SUPPQUAL, TA, TE, TS all resolve to the SAME
+# class in both standards) - so these are merged into one shared table
+# rather than keeping a second, standard-specific one. Ten domains below
+# (BW, BG, CL, FW, MA, OM, PM, TF, TX, POOLDEF) are SEND-only additions with
+# no SDTM equivalent at all (TX - "Trial Sets" - included).
 
 domain_classes <- data.frame(
   domain = c(
@@ -47,7 +56,17 @@ domain_classes <- data.frame(
   stringsAsFactors = FALSE
 )
 
-stopifnot(length(domain_classes$domain) == 63, !anyDuplicated(domain_classes$domain))
+send_only_domains <- data.frame(
+  domain = c("BW", "BG", "CL", "FW", "MA", "OM", "PM", "TF", "TX", "POOLDEF"),
+  class = c(
+    "FINDINGS", "FINDINGS", "FINDINGS", "FINDINGS", "FINDINGS", "FINDINGS",
+    "FINDINGS", "FINDINGS", "TRIAL DESIGN", "RELATIONSHIP"
+  ),
+  stringsAsFactors = FALSE
+)
+domain_classes <- rbind(domain_classes, send_only_domains)
+
+stopifnot(length(domain_classes$domain) == 73, !anyDuplicated(domain_classes$domain))
 
 dir.create(file.path("inst", "extdata"), recursive = TRUE, showWarnings = FALSE)
 saveRDS(domain_classes, file.path("inst", "extdata", "sdtm_domain_classes.rds"))

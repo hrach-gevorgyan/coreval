@@ -2,14 +2,15 @@
 # Requires the `yaml` package (not a runtime dependency of coreval).
 #
 # Usage (from the package root):
-#   git clone --depth 1 https://github.com/cdisc-org/cdisc-open-rules.git data-raw/cdisc-open-rules
+#   git clone https://github.com/cdisc-org/cdisc-open-rules.git data-raw/upstream/cdisc-open-rules
 #   Rscript data-raw/extract_rules.R
-#   rm -rf data-raw/cdisc-open-rules
 #
-# Delete the clone when done (or clone it outside the package directory to
-# begin with) - leaving ~20k upstream files under data-raw/ makes every
-# subsequent R CMD check noticeably slower, since it still has to walk and
-# exclude them even though .Rbuildignore keeps them out of the built tarball.
+# The clone lives under data-raw/upstream/ (gitignored - see .gitignore),
+# persisted across sessions on purpose so re-running this script or doing
+# ad-hoc research against the real upstream data never needs a fresh clone.
+# data-raw/ as a whole is already excluded from the built package via
+# .Rbuildignore, so its size doesn't affect R CMD check or the shipped
+# tarball either way.
 #
 # Sources combined, each tagged with a `source` field so downstream code
 # (list_rules(), the conformance harness) can tell them apart:
@@ -18,9 +19,10 @@
 #       Core$Status == "Published", full test data. The trusted core set.
 #   - Deprecated/*                      -> source "deprecated_dir"
 #       Despite the folder name, upstream's README says these are current
-#       SDTM-only rules temporarily parked here during FDA Business Rules
-#       integration work: Core$Status == "Published", full test data, but
-#       upstream itself says "not fully validated - use discernment."
+#       rules (SDTM- and SEND-family) temporarily parked here during FDA
+#       Business Rules integration work: Core$Status == "Published", full
+#       test data, but upstream itself says "not fully validated - use
+#       discernment."
 #   - Unpublished/FDA Business Rules/*  -> source "fda_business_rules_draft"
 #       Core$Status == "Draft". Only the subset that already ships test data
 #       (results.csv) is included, since untested rules can't be checked
@@ -28,10 +30,22 @@
 
 library(yaml)
 
-upstream_dir <- file.path("data-raw", "cdisc-open-rules")
+upstream_dir <- file.path("data-raw", "upstream", "cdisc-open-rules")
 sha <- system2("git", c("-C", upstream_dir, "rev-parse", "HEAD"), stdout = TRUE)
 
-want_standards <- c("SDTMIG", "ADaMIG")
+# SDTM's nonclinical sibling (SEND) and the Timing Implementation Guide
+# share the same tabular, domain-based dataset shape our engine already
+# reads/evaluates - genuinely extractable, not just "more data". ADaMIG is
+# also kept (a small number of Published/Deprecated rules already cite it
+# alongside SDTMIG) - see data-raw's own README/CLAUDE.md notes for why the
+# much larger Unpublished/ADAMIG draft folder is deliberately NOT pulled in:
+# every one of its 93 rules has test data but zero reference results.csv,
+# so nothing there can be verified against real CDISC output, unlike every
+# other tier here. USDM (a JSON study-design model, not a tabular dataset
+# format at all) is excluded outright - read_study() has no way to read it
+# as SDTM-shaped domains, so extracting it would only ever produce rules
+# with 0% possible coverage.
+want_standards <- c("SDTMIG", "SENDIG", "SENDIG-AR", "SENDIG-DART", "SENDIG-GENETOX", "TIG", "ADaMIG")
 
 # yaml::yaml.load_file() silently returns NA for whole numbers that overflow
 # 32-bit integer (e.g. byte-size thresholds like 5368709120), instead of
@@ -99,8 +113,16 @@ extract_one <- function(path, source) {
   })))
   authorities <- authorities[!is.na(authorities)]
 
+  # A handful of FDA Business Rules drafts (only surfaced now that SENDIG is
+  # in want_standards) have no Core.Id at all - unlike every other rule.yml
+  # here, which all declare one explicitly. Their directory name (e.g.
+  # "FB6501") doesn't use the "FDA.<standard>.FBxxxx" convention the rest of
+  # this tier follows, so build the same shape rather than leaving a bare,
+  # potentially-collision-prone folder name as the id.
+  rule_id <- if (!is.null(d$Core$Id)) d$Core$Id else paste0("FDA.", matched_standards[1], ".", basename(dirname(path)))
+
   list(
-    id = d$Core$Id,
+    id = rule_id,
     source = source,
     status = d$Core$Status,
     core_version = d$Core$Version,
@@ -136,9 +158,9 @@ names(rules) <- vapply(rules, function(r) r$id, character(1))
 
 stopifnot(
   "duplicate rule ids across sources" = !anyDuplicated(names(rules)),
-  "expected 332 published rules" = sum(vapply(rules, function(r) r$source == "published", logical(1))) == 332,
+  "expected 566 published rules" = sum(vapply(rules, function(r) r$source == "published", logical(1))) == 566,
   "expected 163 deprecated_dir rules" = sum(vapply(rules, function(r) r$source == "deprecated_dir", logical(1))) == 163,
-  "expected 12 fda_business_rules_draft rules" = sum(vapply(rules, function(r) r$source == "fda_business_rules_draft", logical(1))) == 12
+  "expected 27 fda_business_rules_draft rules" = sum(vapply(rules, function(r) r$source == "fda_business_rules_draft", logical(1))) == 27
 )
 
 rules_data <- list(
