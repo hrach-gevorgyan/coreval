@@ -149,6 +149,16 @@ assemble_findings <- function(rule, dataset, domain, violations) {
 #'     recording which rule/domain combinations could not be evaluated and
 #'     why (e.g. an unimplemented operator) - so a clean findings table is
 #'     never mistaken for "everything passed."
+#' @examples
+#' \donttest{
+#' dir <- tempfile("coreval_study_")
+#' dir.create(dir)
+#' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
+#' study <- read_study(dir)
+#' result <- check_study(study)
+#' result$findings
+#' unlink(dir, recursive = TRUE)
+#' }
 #' @export
 check_study <- function(study, use_case = NULL) {
   domains <- names(study$datasets)

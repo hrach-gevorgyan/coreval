@@ -1,5 +1,13 @@
 # coreval 0.0.0.9000
 
+* Every exported function (`evaluate_rule()`, `read_study()`,
+  `check_study()`, `list_rules()`, `rules_version()`, `rules_for_domain()`,
+  `sdtm_domain_classes()`) now has a runnable `@examples` block - each
+  verified with `devtools::run_examples()`. `check_study()`'s example is
+  wrapped in `\donttest{}` since it evaluates all bundled rules.
+* Added `inst/WORDLIST` so `spelling::spell_check_package()` doesn't
+  re-flag legitimate CDISC/SDTM domain terms and technical compounds.
+
 * Nine correctness bugs found by an independent adversarial code review of
   every operator/operations/join implementation, each confirmed with a
   concrete reproducible failing example before being fixed:

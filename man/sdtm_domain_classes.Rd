@@ -14,3 +14,7 @@ The static SDTMIG 3.4 domain/class assignments used to resolve a rule's
 \code{Scope > Classes} (e.g. \code{"FINDINGS"}) against an actual domain code (e.g.
 \code{"LB"}). See \code{data-raw/domain_classes.R} for provenance.
 }
+\examples{
+classes <- sdtm_domain_classes()
+head(classes)
+}

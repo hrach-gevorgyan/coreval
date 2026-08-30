@@ -17,6 +17,13 @@
 #'   list(data, meta)>, define = NULL, ct = NULL)`. Each `data` is a
 #'   [data.table::data.table()]; each `meta` is a data.table with columns
 #'   `variable`, `label`, `type`.
+#' @examples
+#' dir <- tempfile("coreval_study_")
+#' dir.create(dir)
+#' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
+#' study <- read_study(dir)
+#' study$datasets$DM$data
+#' unlink(dir, recursive = TRUE)
 #' @export
 read_study <- function(path) {
   if (file.exists(file.path(path, "_datasets.csv"))) {

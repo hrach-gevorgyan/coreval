@@ -2,6 +2,8 @@
 #'
 #' @return A single string: the git commit SHA of `cdisc-org/cdisc-open-rules`
 #'   that the bundled rule set was extracted from.
+#' @examples
+#' rules_version()
 #' @export
 rules_version <- function() {
   .coreval_env$data$upstream_sha
@@ -23,6 +25,10 @@ rules_version <- function() {
 #' @return A [data.table::data.table()] with one row per rule: `id`,
 #'   `source`, `status`, `standard`, `authority`, `rule_type`,
 #'   `executability`, `sensitivity`.
+#' @examples
+#' rules <- list_rules()
+#' nrow(rules)
+#' head(rules)
 #' @export
 list_rules <- function() {
   rules <- .coreval_env$data$rules

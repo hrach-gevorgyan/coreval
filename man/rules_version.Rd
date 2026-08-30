@@ -13,3 +13,6 @@ that the bundled rule set was extracted from.
 \description{
 CDISC Open Rules upstream commit
 }
+\examples{
+rules_version()
+}

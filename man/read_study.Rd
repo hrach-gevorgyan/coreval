@@ -28,3 +28,11 @@ taken from the source (XPT's own types, or \verb{_variables.csv}'s declared
 \code{Char}/\code{Num}) rather than guessed from the data, so numeric-looking
 identifiers (e.g. \code{"007"}) are never silently coerced.
 }
+\examples{
+dir <- tempfile("coreval_study_")
+dir.create(dir)
+haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
+study <- read_study(dir)
+study$datasets$DM$data
+unlink(dir, recursive = TRUE)
+}

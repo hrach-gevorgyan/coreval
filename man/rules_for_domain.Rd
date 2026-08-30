@@ -30,3 +30,7 @@ bundled rule pairs an \verb{AP--} domain with a specific (non-\code{"ALL"}) Clas
 constraint, so this is a known gap rather than a fix, should that change
 upstream.
 }
+\examples{
+ae_rules <- rules_for_domain("AE")
+nrow(ae_rules)
+}

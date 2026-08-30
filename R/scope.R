@@ -117,6 +117,9 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL) {
 #' `"LB"`). See `data-raw/domain_classes.R` for provenance.
 #'
 #' @return A [data.table::data.table()] with columns `domain`, `class`.
+#' @examples
+#' classes <- sdtm_domain_classes()
+#' head(classes)
 #' @export
 sdtm_domain_classes <- function() {
   data.table::as.data.table(.coreval_env$domain_classes)
@@ -141,6 +144,9 @@ sdtm_domain_classes <- function() {
 #'   with no Use Case constraint always pass, regardless of this argument.
 #' @return A [data.table::data.table()] with the same columns as
 #'   [list_rules()], filtered to matching rules.
+#' @examples
+#' ae_rules <- rules_for_domain("AE")
+#' nrow(ae_rules)
 #' @export
 rules_for_domain <- function(domain, use_case = NULL) {
   rules <- .coreval_env$data$rules

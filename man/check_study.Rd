@@ -40,3 +40,14 @@ their values) and are skipped, along with any rule using an operator,
 \code{Operations} type, or \verb{Match Datasets} join this package doesn't
 implement.
 }
+\examples{
+\donttest{
+dir <- tempfile("coreval_study_")
+dir.create(dir)
+haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
+study <- read_study(dir)
+result <- check_study(study)
+result$findings
+unlink(dir, recursive = TRUE)
+}
+}

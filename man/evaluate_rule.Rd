@@ -29,3 +29,11 @@ Operations binding) is treated as "not a confirmed violation."
 \description{
 Evaluate one rule's Check against one dataset
 }
+\examples{
+data <- data.table::data.table(USUBJID = c("1", "2", "3"), AGE = c(30, 45, 130))
+dataset <- list(data = data, meta = NULL)
+rule <- list(check = list(
+  name = "AGE", operator = "greater_than", value = 120, value_is_literal = TRUE
+))
+evaluate_rule(rule, dataset, domain = "DM")
+}

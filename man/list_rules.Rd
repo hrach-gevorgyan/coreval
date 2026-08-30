@@ -25,3 +25,8 @@ temporarily parked there during unrelated integration work and are
 included.
 }
 }
+\examples{
+rules <- list_rules()
+nrow(rules)
+head(rules)
+}

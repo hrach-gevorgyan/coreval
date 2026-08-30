@@ -149,6 +149,13 @@ evaluate_check <- function(check, dataset, domain, bindings = list()) {
 #'   checked: `TRUE` where the record violates the rule. `NA` (from a
 #'   comparison against a missing/incomparable value, or an unresolvable
 #'   Operations binding) is treated as "not a confirmed violation."
+#' @examples
+#' data <- data.table::data.table(USUBJID = c("1", "2", "3"), AGE = c(30, 45, 130))
+#' dataset <- list(data = data, meta = NULL)
+#' rule <- list(check = list(
+#'   name = "AGE", operator = "greater_than", value = 120, value_is_literal = TRUE
+#' ))
+#' evaluate_rule(rule, dataset, domain = "DM")
 #' @export
 evaluate_rule <- function(rule, dataset_or_study, domain) {
   study <- as_study(dataset_or_study, domain)
