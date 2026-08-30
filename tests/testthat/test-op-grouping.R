@@ -40,39 +40,85 @@ test_that("is_not_unique_relationship matches CDISC's reference results.csv (COR
   }
 })
 
-test_that("is_inconsistent_across_dataset matches CDISC's reference results.csv (CORE-000612)", {
-  # PCSTRESU is_inconsistent_across_dataset [PCTESTCD]: flags rows whose
-  # PCSTRESU differs from other rows sharing the same PCTESTCD.
+test_that("is_inconsistent_across_dataset's positive (compliant) CDISC fixture still matches (CORE-000612)", {
+  # PCSTRESU is_inconsistent_across_dataset [PCTESTCD]. CORE-000612's own
+  # NEGATIVE fixture is stale relative to the pinned upstream engine: it
+  # expects EVERY row in an inconsistent PCTESTCD group to be flagged (e.g.
+  # a 5-ug/mL-vs-1-bottles split flags all 6 rows), but the engine's own
+  # bundled unit tests (test_check_operators/test_value_set_checks.py::
+  # test_is_inconsistent_across_dataset, parametrized case
+  # ("STRESU", "TESTCD", ..., [False, False, True, False])) prove the real
+  # algorithm (`_check_inconsistency()` in check_operators/
+  # dataframe_operators.py) flags only the MINORITY value's rows, unless
+  # there's a tie for the majority (then it flags everyone) - see
+  # flag_inconsistent_minority() in op_grouping.R. Only the POSITIVE
+  # (all-consistent, zero expected violations) fixture is asserted here;
+  # the negative one is intentionally not, since coreval matches the
+  # engine's own source and unit tests over a stale results.csv.
   rule <- .coreval_env$data$rules[["CORE-000612"]]
-  for (case in c("negative", "positive")) {
-    dir <- test_path("fixtures", "core_rules", "CORE-000612", case, "01")
+  dir <- test_path("fixtures", "core_rules", "CORE-000612", "positive", "01")
+  study <- read_study(file.path(dir, "data"))
+  actual <- evaluate_rule(rule, study$datasets$PC, domain = "PC")
+  expect_equal(
+    actual,
+    expected_violations_for(file.path(dir, "results", "results.csv"), "PC", nrow(study$datasets$PC$data))
+  )
+})
+
+test_that("is_inconsistent_across_dataset's minority-flagging matches CDISC's reference results.csv (CORE-000142)", {
+  # --ELTM is_inconsistent_across_dataset [DOMAIN, VISITNUM, --TPTREF,
+  # --TPTNUM], combined with sibling non_empty conditions on --TPT/--TPTNUM/
+  # --ELTM. positive/01's FT data has a 3-PT1H-vs-1-PT2H group - the
+  # single PT2H row is the minority, but it's excluded from the overall
+  # Check anyway by a sibling non_empty(--TPT) condition, so NEITHER the
+  # 3 majority rows nor the 1 (already-excluded) minority row end up
+  # violating - the whole case is compliant, unlike what a
+  # flag-everyone-in-an-inconsistent-group algorithm would wrongly report.
+  rule <- .coreval_env$data$rules[["CORE-000142"]]
+  for (case in c("negative/01", "positive/01", "positive/03")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000142", case)
     study <- read_study(file.path(dir, "data"))
-    actual <- evaluate_rule(rule, study$datasets$PC, domain = "PC")
+    actual <- evaluate_rule(rule, study, domain = "FT")
     expect_equal(
       actual,
-      expected_violations_for(file.path(dir, "results", "results.csv"), "PC", nrow(study$datasets$PC$data))
+      expected_violations_for(file.path(dir, "results", "results.csv"), "FT", nrow(study$datasets$FT$data)),
+      info = case
     )
   }
 })
 
-test_that("is_inconsistent_across_dataset flags every row in a group with >1 distinct non-blank target value", {
+test_that("is_inconsistent_across_dataset flags only the minority value's rows within a group", {
+  # 3 "PT1H" vs 1 "PT2H" in the VISITNUM=1 group - PT1H is the majority, so
+  # only the single PT2H row (the minority) is flagged, not every row.
   data <- data.table::data.table(
     VISITNUM = c(1, 1, 1, 2),
     ELTM = c("PT1H", "PT2H", "PT1H", "PT1H")
   )
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
-  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE, FALSE))
+  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, TRUE, FALSE, FALSE))
 })
 
-test_that("is_inconsistent_across_dataset ignores blank target values when checking consistency", {
+test_that("is_inconsistent_across_dataset flags every row in a group on a tie for the majority value", {
+  data <- data.table::data.table(
+    VISITNUM = c(1, 1, 1, 1),
+    ELTM = c("PT1H", "PT1H", "PT2H", "PT2H")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
+  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE, TRUE))
+})
+
+test_that("is_inconsistent_across_dataset treats a blank target as its own value, not an exclusion", {
+  # A blank ELTM is a distinct value like any other - here it's the
+  # minority (1 blank vs 2 "PT1H"), so only the blank row is flagged.
   data <- data.table::data.table(
     VISITNUM = c(1, 1, 1),
     ELTM = c("PT1H", "PT1H", "")
   )
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
-  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, FALSE))
+  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, TRUE))
 })
 
 test_that("has_same_values matches CDISC's reference results.csv (CORE-000365)", {

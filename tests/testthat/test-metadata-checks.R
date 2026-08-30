@@ -142,6 +142,22 @@ test_that("Value Check with Variable Metadata matches CDISC's reference results.
   }
 })
 
+test_that("Variable Metadata Check preserves a real trailing space in a variable's label (CORE-000019)", {
+  # "variable_label longer_than 40", Sensitivity: Dataset. ML.USUBJID's real
+  # label is "...Unique Subject " (41 chars, WITH a trailing space) -
+  # fread()'s default strip.white = TRUE on _variables.csv would silently
+  # trim that space, making the label look 40 chars long and missing the
+  # violation entirely.
+  rule <- .coreval_env$data$rules[["CORE-000019"]]
+  expect_equal(rule$rule_type, "Variable Metadata Check")
+  dir <- test_path("fixtures", "core_rules", "CORE-000019", "negative", "01")
+  study <- read_study(file.path(dir, "data"))
+  actual <- evaluate_rule(rule, study, domain = "ML")
+  results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+  expect_true(any(actual)) # matches the reference: at least one violation (USUBJID's label)
+  expect_true(nrow(results[results$Dataset == "ML", ]) > 0)
+})
+
 test_that("build_variable_value_check_dataset melts to one row per (record, variable) with the original record id", {
   real_dataset <- list(
     data = data.table::data.table(A = c("x", " y"), B = c(1, 2)),

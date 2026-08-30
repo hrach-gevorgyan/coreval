@@ -1,0 +1,23 @@
+dataset,variable,label,type,length
+ft,STUDYID,Study Identifier,Char,12
+ft,DOMAIN,Domain Abbreviation,Char,2
+ft,USUBJID,Unique Subject Identifier,Char,8
+ft,FTSEQ,Sequence Number,Num,8
+ft,FTTESTCD,Short Name of Test,Char,7
+ft,FTTEST,Name of Test,Char,23
+ft,FTCAT,Category,Char,8
+ft,FTSCAT,Subcategory,Char,200
+ft,FTORRES,Result or Finding in Original Units,Char,12
+ft,FTSTRESC,Result or Finding in Standard Format,Char,200
+ft,FTSTRESN,Numeric Result/Finding in Standard Units,Num,8
+ft,FTLOBXFL,Last Observation Before Exposure Flag,Char,1
+ft,FTREPNUM,Repetition Number,Num,8
+ft,VISITNUM,Visit Number,Num,8
+ft,VISIT,Visit Name,Char,200
+ft,EPOCH,Epoch,Char,9
+ft,FTDTC,Date/Time of Test,Char,19
+ft,FTDY,Study Day of Test,Num,8
+ft,FTTPT,Planned Time Point Name,Char,200
+ft,FTTPTNUM,Planned Time Point Number,Num,8
+ft,FTELTM,Planned Elapsed Time from Time Point Ref,Char,200
+ft,FTTPTREF,Time Point Reference,Char,200

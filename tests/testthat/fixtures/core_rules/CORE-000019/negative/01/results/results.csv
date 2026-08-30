@@ -1,0 +1,5 @@
+Dataset,Record,Variable,Value
+AE,,variable_label,Reported Term for the Adverse Event in std
+AG,,variable_label,Unique Subject Identifier Subject Identif
+MH,,variable_label,Reported Term for the Medical History in this study
+ML,,variable_label,Unique Subject Identifier Unique Subject 

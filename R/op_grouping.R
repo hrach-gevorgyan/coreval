@@ -136,7 +136,48 @@ register_operator("not_present_on_multiple_rows_within", function(ctx) {
 # whether the key tuple is itself unique per target value. Grouping-column
 # names come from the condition's raw `value` (like is_not_unique_set) and
 # need `resolve_var_name()` since they can be "--"-prefixed templates.
-# Operator: is_inconsistent_across_dataset - flags rows whose target value is inconsistent within its group
+#
+# An earlier version flagged EVERY row in an inconsistent group. The
+# reference engine's own `_check_inconsistency()` is more targeted: within a
+# group with >1 distinct target value, it finds the MAJORITY value and flags
+# only the MINORITY rows (the ones that differ from it) - unless there's a
+# TIE for most-common value, in which case every row in the group is
+# flagged. Confirmed against CORE-000142's real fixtures: a group of 4 rows
+# with target values PT1H/PT1H/PT2H/PT1H is NOT a violation for the 3
+# PT1H rows (the majority) - only the single PT2H row would be, and even
+# that one is excluded from THIS rule's overall Check by a sibling
+# `non_empty` condition on a different variable. Blank target values are
+# NOT excluded from this comparison either - a blank is just another
+# distinct value that can be the majority or the minority, matching the
+# reference's `fillna("_NaN_")` (blanks become their own bucket, not
+# dropped).
+#' Flag minority-value rows in each group (or all rows, on a tie for majority)
+#' @param key A vector of group keys, same length as `target`.
+#' @param target A vector of values to check for per-group consistency.
+#' @return A logical vector, same length as `target`.
+#' @noRd
+flag_inconsistent_minority <- function(key, target) {
+  target_key <- ifelse(is_blank(target), "\x1fBLANK_TARGET\x1f", as.character(target))
+  result <- rep(FALSE, length(target))
+  for (k in unique(key)) {
+    idx <- which(key == k)
+    vals <- target_key[idx]
+    counts <- table(vals)
+    if (length(counts) <= 1) {
+      next
+    }
+    max_count <- max(counts)
+    most_common <- names(counts)[counts == max_count]
+    if (length(most_common) > 1) {
+      result[idx] <- TRUE
+    } else {
+      result[idx[vals != most_common]] <- TRUE
+    }
+  }
+  result
+}
+
+# Operator: is_inconsistent_across_dataset - flags the minority-value rows within each group (all, if tied)
 register_operator("is_inconsistent_across_dataset", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
@@ -150,7 +191,5 @@ register_operator("is_inconsistent_across_dataset", function(ctx) {
   normalized <- lapply(dt, function(col) ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col)))
   key <- do.call(paste, c(normalized, sep = "\x1f"))
 
-  grouped <- split(ctx$target, key)
-  inconsistent <- vapply(grouped, function(vals) length(unique(vals[!is_blank(vals)])) > 1, logical(1))
-  key %in% names(grouped)[inconsistent]
+  flag_inconsistent_minority(key, ctx$target)
 })

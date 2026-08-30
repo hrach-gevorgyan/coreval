@@ -90,7 +90,18 @@ build_dataset_from_xpt <- function(raw) {
 #' @return A study list, see [read_study()].
 #' @noRd
 read_study_test_case <- function(path) {
-  variables_csv <- data.table::fread(file.path(path, "_variables.csv"), colClasses = "character")
+  # strip.white = FALSE for the same reason as build_dataset_from_csv()'s own
+  # data read below: fread()'s default trims leading/trailing whitespace,
+  # which would silently shorten a `label` value that has a real trailing
+  # space in the source data - confirmed against CORE-000019's real fixture,
+  # where ML.USUBJID's label is "...Unique Subject " (41 chars, WITH a
+  # trailing space) and the rule flags labels longer than 40; stripping that
+  # space would wrongly make the label look 40 chars long and miss the
+  # violation entirely.
+  variables_csv <- data.table::fread(
+    file.path(path, "_variables.csv"),
+    colClasses = "character", na.strings = character(0), strip.white = FALSE
+  )
 
   # A handful of real CORE test cases ship `_variables.csv` and the per-
   # dataset CSVs but no `_datasets.csv` manifest at all (confirmed against
