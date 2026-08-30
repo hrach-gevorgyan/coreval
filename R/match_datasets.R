@@ -90,6 +90,88 @@ rename_referenced_match_columns <- function(right, rule, match_name, keys) {
   invisible(NULL)
 }
 
+# Pivots a SUPPxx/SQxx supplemental-qualifier dataset from its long
+# QNAM/QVAL shape into one column per QNAM, then left-joins it onto the
+# parent domain - the reference engine's `process_supp()` +
+# `merge_pivot_supp_dataset()` (data_processor.py).
+#
+# The join key is not the rule's declared `Keys`: the reference ignores
+# those here and joins on the static identifier columns present in BOTH
+# datasets (STUDYID/USUBJID/APID/POOLID/SPDEVID) plus, when the SUPP's own
+# IDVAR names one, that record-level key. SUPP's IDVARVAL is renamed to the
+# IDVAR column's name so it lines up with the parent's own column - and
+# when the parent's key is numeric both sides are string-converted first,
+# since IDVARVAL is always character (`1` must match `"1"`).
+#' Pivot a SUPP/SQ dataset's QNAM/QVAL pairs into one column per QNAM
+#' @param supp The supplemental dataset's data.
+#' @return A data.table with one row per parent record and one column per QNAM.
+#' @noRd
+pivot_supp_dataset <- function(supp) {
+  qnams <- unique(supp$QNAM[!is_blank(supp$QNAM)])
+  drop_cols <- intersect(c("QNAM", "QVAL", "QLABEL"), names(supp))
+  group_cols <- setdiff(names(supp), c(qnams, drop_cols))
+
+  out <- unique(supp[, group_cols, with = FALSE])
+  key <- function(dt) {
+    do.call(paste, c(lapply(group_cols, function(c) as.character(dt[[c]])), sep = "\x1f"))
+  }
+  out_key <- key(out)
+  supp_key <- key(supp)
+  for (qnam in qnams) {
+    rows <- which(supp$QNAM == qnam)
+    out[[qnam]] <- supp$QVAL[rows][match(out_key, supp_key[rows])]
+  }
+  out
+}
+
+#' Left-join a pivoted SUPP/SQ dataset onto its parent domain
+#' @param dataset The parent dataset being checked (`list(data, meta)`).
+#' @param supp_dataset The supplemental dataset (`list(data, meta)`).
+#' @return `dataset` with one joined-in column per QNAM.
+#' @noRd
+apply_supp_match <- function(dataset, supp_dataset) {
+  supp <- supp_dataset$data
+  if (!all(c("QNAM", "QVAL") %in% names(supp)) || nrow(supp) == 0) {
+    return(dataset)
+  }
+  idvars <- unique(supp$IDVAR)
+  if (length(idvars) > 1) {
+    stop(
+      "Match Datasets: SUPP dataset uses multiple IDVAR values, which is not implemented",
+      call. = FALSE
+    )
+  }
+
+  pivoted <- pivot_supp_dataset(supp)
+  left <- data.table::copy(dataset$data)
+  static_keys <- c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
+  keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
+
+  idvar <- if (length(idvars) == 1) idvars[[1]] else NA_character_
+  if (!is_blank(idvar) && idvar %in% names(left) && "IDVARVAL" %in% names(pivoted)) {
+    # IDVARVAL holds the parent record's key VALUE; rename it to the key's
+    # own name so the join lines up, and compare as text on both sides
+    # (IDVARVAL is character even when the parent's key is numeric).
+    data.table::setnames(pivoted, "IDVARVAL", idvar)
+    left[[idvar]] <- as.character(left[[idvar]])
+    pivoted[[idvar]] <- as.character(pivoted[[idvar]])
+    keys <- c(keys, idvar)
+  }
+  for (col in intersect(c("IDVAR", "IDVARVAL", "RDOMAIN"), names(pivoted))) {
+    pivoted[[col]] <- NULL
+  }
+  if (length(keys) == 0) {
+    return(dataset)
+  }
+
+  if (!(".coreval_row_id" %in% names(left))) {
+    left$.coreval_row_id <- seq_len(nrow(left))
+  }
+  merged <- merge(left, pivoted, by = keys, all.x = TRUE, sort = FALSE)
+  merged <- merged[order(merged$.coreval_row_id)]
+  list(data = merged, meta = dataset$meta)
+}
+
 #' Left-join one Match Datasets spec's columns onto a dataset
 #' @param dataset The dataset being checked (`list(data, meta)`).
 #' @param spec One Match Datasets spec (`Name`, `Keys`, optional `Child`).
@@ -104,7 +186,27 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   if (identical(match_name, "RELREC") && is.null(spec$Child)) {
     return(apply_relrec_match(dataset, study, current_domain))
   }
-  if (!is.null(spec$Child) || identical(match_name, "RELREC") || grepl("^(SUPP|SQ)", match_name)) {
+  # A "SUPP--"/"SQ--" name is a template for THIS domain's supplemental
+  # dataset (SUPP-- against LB means SUPPLB), resolved off the DOMAIN
+  # column's value like any other "--" template.
+  #
+  # Only when the dataset being checked is the PARENT, though. A rule can
+  # also be scoped to the SUPP dataset itself, to check its referential
+  # integrity (CORE-000206/CORE-000712 read IDVAR/IDVARVAL/RDOMAIN
+  # directly) - that is the reference's `_child_merge_datasets` parent
+  # join, a genuinely different merge this package doesn't implement.
+  # Pivoting there would join a SUPP dataset to itself and quietly answer
+  # the wrong question, so fall through to the error and let the rule be
+  # reported as unevaluable instead.
+  if (grepl("^(SUPP|SQ)", match_name) && !grepl("^(SUPP|SQ)", toupper(current_domain))) {
+    supp_name <- sub("--$", dataset_wildcard(dataset, current_domain), match_name)
+    supp_dataset <- study$datasets[[toupper(supp_name)]]
+    if (is.null(supp_dataset)) {
+      return(dataset)
+    }
+    return(apply_supp_match(dataset, supp_dataset))
+  }
+  if (!is.null(spec$Child) || identical(match_name, "RELREC")) {
     stop("Match Datasets: unsupported join type for '", match_name, "'", call. = FALSE)
   }
 

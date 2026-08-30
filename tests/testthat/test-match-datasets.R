@@ -195,11 +195,58 @@ test_that("apply_match_dataset handles an all-valid-key dataset without erroring
   expect_equal(joined$data$DTHFL, c("Y", "N"))
 })
 
-test_that("apply_match_dataset refuses SUPP/Child joins rather than guess", {
+test_that("apply_match_dataset refuses the Child/RELREC joins it doesn't implement", {
   left <- list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
   study <- list(datasets = list())
-  expect_error(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"))
   expect_error(apply_match_dataset(left, list(Name = "CO", Keys = "USUBJID", Child = TRUE), study, "AE"))
+  # A SUPP name whose dataset simply isn't in the study is a no-op, not an
+  # error - the rule just has nothing to join.
+  expect_equal(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"), left)
+})
+
+test_that("a SUPP dataset is pivoted from QNAM/QVAL into one column per QNAM and joined to its parent", {
+  # The reference's process_supp() + merge_pivot_supp_dataset(): the long
+  # QNAM/QVAL shape becomes one column per QNAM, joined on the static
+  # identifier columns present in both, plus the record-level key the
+  # SUPP's own IDVAR names (with IDVARVAL renamed to that key). IDVARVAL is
+  # character even when the parent key is numeric, so both sides compare as
+  # text - AESEQ 1 must match IDVARVAL "1".
+  parent <- list(
+    data = data.table::data.table(
+      STUDYID = "S", USUBJID = c("P1", "P1", "P2"), AESEQ = c(1, 2, 1)
+    ),
+    meta = NULL
+  )
+  supp <- list(
+    data = data.table::data.table(
+      STUDYID = "S", RDOMAIN = "AE", USUBJID = c("P1", "P1", "P2"),
+      IDVAR = "AESEQ", IDVARVAL = c("1", "1", "1"),
+      QNAM = c("AESOSP", "AESMIE", "AESOSP"),
+      QVAL = c("Other", "Y", "Another")
+    ),
+    meta = NULL
+  )
+  joined <- apply_supp_match(parent, supp)
+
+  # One column per QNAM, values attached to the right parent record only.
+  expect_true(all(c("AESOSP", "AESMIE") %in% names(joined$data)))
+  expect_equal(joined$data$AESOSP, c("Other", NA, "Another"))
+  expect_equal(joined$data$AESMIE, c("Y", NA, NA))
+  # Parent rows are all kept, in their original order.
+  expect_equal(nrow(joined$data), 3)
+  expect_equal(joined$data$USUBJID, c("P1", "P1", "P2"))
+})
+
+test_that("a SUPP join matches CDISC's reference results.csv (CORE-000597)", {
+  rule <- .coreval_env$data$rules[["CORE-000597"]]
+  for (case in c("negative/01", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000597", case)
+    study <- read_study(file.path(dir, "data"))
+    actual <- which(evaluate_rule(rule, study, domain = "AE"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "AE"])))
+    expect_equal(sort(unname(actual)), expected, info = case)
+  }
 })
 
 test_that("a RELREC relationship join matches CDISC's reference results.csv (CORE-000757)", {
