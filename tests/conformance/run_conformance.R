@@ -136,10 +136,18 @@ run_rule <- function(rule) {
     }
   }
   rule_dir <- file.path(source_root(rule$source), rule$id)
-  case_dirs <- c(
-    Sys.glob(file.path(rule_dir, "positive", "*")),
-    Sys.glob(file.path(rule_dir, "negative", "*"))
-  )
+  # Most rules number their cases (positive/01/, positive/02/, ...), but some
+  # FDA Business Rules drafts put data/ and results/ directly under
+  # positive/negative with no numbered subfolder at all (a flat layout).
+  # Globbing one level deeper in that case would return "positive/data" and
+  # "positive/results" as if they were case dirs, which then both fail the
+  # data/+results.csv check and get silently SKIPPED - the case is never
+  # actually tested, even though real test data exists right there.
+  case_dirs_for <- function(polarity) {
+    base <- file.path(rule_dir, polarity)
+    if (dir.exists(file.path(base, "data"))) base else Sys.glob(file.path(base, "*"))
+  }
+  case_dirs <- c(case_dirs_for("positive"), case_dirs_for("negative"))
   if (length(case_dirs) == 0) {
     return(list(status = "SKIPPED", reason = "no test case folders found"))
   }

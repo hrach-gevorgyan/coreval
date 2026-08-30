@@ -40,6 +40,41 @@ test_that("is_not_unique_relationship matches CDISC's reference results.csv (COR
   }
 })
 
+test_that("is_inconsistent_across_dataset matches CDISC's reference results.csv (CORE-000612)", {
+  # PCSTRESU is_inconsistent_across_dataset [PCTESTCD]: flags rows whose
+  # PCSTRESU differs from other rows sharing the same PCTESTCD.
+  rule <- .coreval_env$data$rules[["CORE-000612"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000612", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study$datasets$PC, domain = "PC")
+    expect_equal(
+      actual,
+      expected_violations_for(file.path(dir, "results", "results.csv"), "PC", nrow(study$datasets$PC$data))
+    )
+  }
+})
+
+test_that("is_inconsistent_across_dataset flags every row in a group with >1 distinct non-blank target value", {
+  data <- data.table::data.table(
+    VISITNUM = c(1, 1, 1, 2),
+    ELTM = c("PT1H", "PT2H", "PT1H", "PT1H")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
+  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE, FALSE))
+})
+
+test_that("is_inconsistent_across_dataset ignores blank target values when checking consistency", {
+  data <- data.table::data.table(
+    VISITNUM = c(1, 1, 1),
+    ELTM = c("PT1H", "PT1H", "")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
+  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, FALSE))
+})
+
 test_that("is_not_unique_set treats blanks as a real, matching value when grouping", {
   data <- data.table::data.table(A = c("", "", "X"), B = c("Y", "Y", "Y"))
   dataset <- list(data = data, meta = NULL)

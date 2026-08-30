@@ -93,7 +93,8 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
     value = resolve_condition_value(condition, dataset, domain, bindings),
     n = nrow(dataset$data),
     condition = condition,
-    dataset = dataset
+    dataset = dataset,
+    domain = domain
   )
 
   op_fn <- get_operator(condition$operator)

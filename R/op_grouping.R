@@ -78,3 +78,31 @@ register_operator("is_not_unique_relationship", function(ctx) {
 register_operator("is_unique_relationship", function(ctx) {
   !get_operator("is_not_unique_relationship")(ctx)
 })
+
+# Flags a row whose target value is inconsistent with other rows sharing the
+# same grouping-key tuple (e.g. every record for a given VISITNUM/DOMAIN/
+# --TPTREF/--TPTNUM combination must report the same --ELTM). Unlike
+# is_not_unique_relationship (a bidirectional 1:1 pairing between exactly two
+# columns), this is one-directional and supports an arbitrary-arity grouping
+# key: it only checks the target's consistency *within* each group, not
+# whether the key tuple is itself unique per target value. Grouping-column
+# names come from the condition's raw `value` (like is_not_unique_set) and
+# need `resolve_var_name()` since they can be "--"-prefixed templates.
+# Operator: is_inconsistent_across_dataset - flags rows whose target value is inconsistent within its group
+register_operator("is_inconsistent_across_dataset", function(ctx) {
+  if (!ctx$exists) {
+    return(rep(FALSE, ctx$n))
+  }
+  cols <- resolve_var_name(ctx$condition$value, ctx$domain)
+  cols <- cols[cols %in% names(ctx$dataset$data)]
+  if (length(cols) == 0) {
+    return(rep(FALSE, ctx$n))
+  }
+  dt <- ctx$dataset$data[, cols, with = FALSE]
+  normalized <- lapply(dt, function(col) ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col)))
+  key <- do.call(paste, c(normalized, sep = "\x1f"))
+
+  grouped <- split(ctx$target, key)
+  inconsistent <- vapply(grouped, function(vals) length(unique(vals[!is_blank(vals)])) > 1, logical(1))
+  key %in% names(grouped)[inconsistent]
+})

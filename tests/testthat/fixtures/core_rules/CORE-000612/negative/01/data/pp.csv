@@ -1,0 +1,20 @@
+STUDYID,DOMAIN,USUBJID,POOLID,PPGRPID,PPTESTCD,PPTEST,PPCAT,PPORRES,PPORRESU,PPSTRESC,PPSTRESN,PPSTRESU,PPSPEC,PPTPTREF
+1234,PP,123101,,,DRUGX,Study Drug,XYZ-123,11,ug/mL,11,11,ug/mL,PLASMA,Day 1 dose
+1234,PP,123101,,,DRUGX,Study Drug,XYZ-123,22,ug/mL,22,22,ug/mL,PLASMA,Day 1 dose
+1234,PP,123101,,,DRUGX,Study Drug,XYZ-123,33,ug/mL,33,33,ug/mL,SERUM,Day 1 dose
+1234,PP,123101,,,DRUGX,Study Drug,XYZ-123,44,ug/mL,44,44,ug/mL,PLASMA,Day 1 dose
+1234,PP,123101,,,METABOLA,Metabolite A,A-1,55,mmol/L,55,55,mmol/L,PLASMA,Day 1 dose
+1234,PP,123101,,,METABOLA,Metabolite A,A-1,66,flasks,66,66,flasks,PLASMA,Day 1 dose
+1234,PP,123101,,,METABOLA,Metabolite A,A-1,77,mmol/L,77,77,mmol/L,PLASMA,Day 1 dose
+1234,PP,123101,,,METABOLA,Metabolite A,A-1,88,mmol/L,88,88,mmol/L,PLASMA,Day 1 dose
+1234,PP,99,,,DRUGX,Study Drug,XYZ-123,111,ug/mL,11,11,ug/mL,PLASMA,Day 1 dose
+1234,PP,99,,,DRUGX,Study Drug,XYZ-123,221,tablets,22,22,tablets,PLASMA,Day 1 dose
+1234,PP,99,,,DRUGX,Study Drug,XYZ-123,133,ug/mL,33,33,ug/mL,SERUM,Day 1 dose
+1234,PP,99,,,DRUGX,Study Drug,XYZ-123,144,ug/mL,44,44,ug/mL,PLASMA,Day 1 dose
+1234,PP,99,,,DRUGX,Study Drug,XYZ-123,1,cars,1,1,cars ,,
+1234,PP,99,,,METABOLA,Metabolite A,A-1,155,mmol/L,55,55,mmol/L,PLASMA,Day 1 dose
+1234,PP,99,,,METABOLA,Metabolite A,A-1,166,mmol/L,66,66,mmol/L,PLASMA,Day 1 dose
+1234,PP,99,,,METABOLA,Metabolite A,A-1,771,mmol/L,77,77,mmol/L,PLASMA,Day 1 dose
+1234,PP,99,,,METABOLA,Metabolite A,A-1,881,mmol/L,88,88,mmol/L,PLASMA,Day 1 dose
+1234,PP,99,,,METABOLB,Metabolite B,B-1,33,g/L,33,33,g/L,PLASMA,Day 1 dose
+1234,PP,99,,,METABOLB,Metabolite B,B-1,34,g/L,34,34,g/L,PLASMA,Day 1 dose
