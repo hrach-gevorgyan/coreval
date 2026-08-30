@@ -334,10 +334,20 @@ resolve_binding <- function(binding, dataset) {
   if (binding$kind == "per_row") {
     return(binding$value)
   }
-  # grouped: join the aggregate table onto `dataset` by group_cols.
+  # grouped: join the aggregate table onto `dataset` by group_cols. When the
+  # CURRENT dataset doesn't even have the join column (e.g. a grouped-by-
+  # USUBJID binding computed from SV, applied to TV - a domain with no
+  # USUBJID at all), this is unresolvable, not merely "NA for every row" -
+  # returning NULL lets guarded_op()'s existing `is.null(ctx$value)` guard
+  # make the whole condition NA (unresolvable), rather than a real value
+  # vector of literal NAs. Confirmed necessary against CORE-000168: with a
+  # literal-NA vector, is_not_contained_by's `target %in% c(NA, NA, ...)` is
+  # FALSE for every real target value (NA never matches via `%in%`), so
+  # `!FALSE` wrongly flagged every row of a domain the binding can't even
+  # apply to, instead of leaving the condition unresolvable.
   group_cols <- binding$group_cols
   if (!all(group_cols %in% names(dataset$data))) {
-    return(rep(NA, nrow(dataset$data)))
+    return(NULL)
   }
   # Separator must be unlikely to appear in real data - concatenating
   # multi-column keys with no separator at all collides across column

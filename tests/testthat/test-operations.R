@@ -115,6 +115,37 @@ test_that("resolve_binding does not collide grouped-join keys across a multi-col
   expect_equal(resolve_binding(binding, study$datasets$DS), c(10, 20))
 })
 
+test_that("resolve_binding returns NULL (unresolvable), not a literal-NA vector, when the current dataset lacks the join column", {
+  # A grouped-by-USUBJID binding computed from SV, applied to a domain like
+  # TV that has no USUBJID column at all, can't be joined - it's
+  # unresolvable, not "NA for every row". Returning NULL lets
+  # guarded_op()'s `is.null(ctx$value)` guard make the whole condition NA,
+  # rather than a literal-NA vector that downstream membership operators
+  # (is_contained_by/is_not_contained_by) would wrongly treat as a real
+  # (never-matching) value set - confirmed against CORE-000168's real
+  # fixtures, where this bug flagged every row of the TV domain.
+  ds_data <- data.table::data.table(VISITNUM = c(1, 2))
+  dataset <- list(data = ds_data, meta = NULL)
+  table <- data.table::data.table(USUBJID = "1", .value = list(c(1, 2)))
+  binding <- grouped_binding("USUBJID", table, ".value")
+  expect_null(resolve_binding(binding, dataset))
+})
+
+test_that("is_not_contained_by matches CDISC's reference results.csv across every applicable domain (CORE-000168)", {
+  rule <- .coreval_env$data$rules[["CORE-000168"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000168", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected, info = paste(case, domain))
+    }
+  }
+})
+
 test_that("domain_label matches CDISC's reference results.csv (CORE-000219)", {
   # "--SCAT equal_to_case_insensitive $domain_label" - the dataset's own
   # label (from _datasets.csv's Label column / an XPT dataset label), not

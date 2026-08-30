@@ -1,0 +1,34 @@
+dataset,variable,label,type,length
+sv,STUDYID,Study Identifier,Char,12
+sv,DOMAIN,Domain Abbreviation,Char,2
+sv,USUBJID,Unique Subject Identifier,Char,8
+sv,VISITNUM,Visit Number,Num,8
+sv,VISIT,Visit Name,Char,200
+sv,SVPRESP,Pre-specified,Char,1
+sv,SVOCCUR,Occurrence,Char,1
+sv,SVSTDTC,Start Date/Time of Visit,Char,10
+sv,SVENDTC,End Date/Time of Visit,Char,10
+sv,SVSTDY,Study Day of Start of Visit,Num,8
+sv,SVENDY,Study Day of End of Visit,Num,8
+sv,SVUPDES,Description of Unplanned Visit,Char,200
+vs,STUDYID,Study Identifier,Char,12
+vs,DOMAIN,Domain Abbreviation,Char,2
+vs,USUBJID,Unique Subject Identifier,Char,8
+vs,VSSEQ,Sequence Number,Num,8
+vs,VSTESTCD,Vital Signs Test Short Name,Char,6
+vs,VSTEST,Vital Signs Test Name,Char,24
+vs,VSPOS,Vital Signs Position of Subject,Char,8
+vs,VSORRES,Result or Finding in Original Units,Char,8
+vs,VSORRESU,Original Units,Char,9
+vs,VSSTRESC,Character Result/Finding in Std Format,Char,200
+vs,VSSTRESN,Numeric Result/Finding in Standard Units,Num,8
+vs,VSSTRESU,Standard Units,Char,9
+vs,VSSTAT,Completion Status,Char,8
+vs,VSLOC,Location of Vital Signs Measurement,Char,11
+vs,VSLOBXFL,Last Observation Before Exposure Flag,Char,1
+vs,VSREPNUM,Repetition Number,Num,8
+vs,VISITNUM,Visit Number,Num,8
+vs,VISIT,Visit Name,Char,200
+vs,EPOCH,Epoch,Char,9
+vs,VSDTC,Date/Time of Measurements,Char,10
+vs,VSDY,Study Day of Vital Signs,Num,8
