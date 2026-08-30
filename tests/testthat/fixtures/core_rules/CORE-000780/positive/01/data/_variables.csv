@@ -1,0 +1,16 @@
+dataset,variable,label,type,length
+co,STUDYID,Study Identifier,Char,50
+co,DOMAIN,Domain Abbreviation,Char,50
+co,RDOMAIN,Related Domain Abbreviation,Char,50
+co,USUBJID,Unique Subject Identifier,Char,50
+co,COSEQ,Sequence Number,Num,8
+co,IDVAR,Identifying Variable,Char,50
+co,IDVARVAL,Identifying Variable Value,Char,50
+co,COREF,Comment Reference,Char,50
+co,COVAL,Comment,Char,50
+co,COVAL1,Comment,Char,50
+co,COVAL2,Comment,Char,50
+co,COEVAL,Evaluator,Char,50
+co,VISITNUM,Visitnumber,Num,8
+co,CODTC,Date/Time of Comment,Char,50
+co,CODY,Study Day of Comment,Num,8

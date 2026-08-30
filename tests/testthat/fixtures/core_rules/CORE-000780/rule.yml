@@ -1,0 +1,128 @@
+Authorities:
+  - Organization: "CDISC"
+    Standards:
+      - Name: "SENDIG"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.0"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.0"
+      - Name: "SENDIG"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.1"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.1"
+      - Name: "SENDIG"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.1.1"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.1.1"
+      - Name: "SENDIG-GENETOX"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.1.1"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.0"
+      - Name: "SENDIG-DART"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.1"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.1"
+      - Name: "SENDIG-DART"
+        References:
+          - Citations:
+              - Cited Guidance:
+                  "When the comment text is longer than 200 characters, the first 200 characters
+                  of the comment will be in COVAL, the next 200 in COVAL1, and additional text stored as needed
+                  to COVALn."
+                Document: "IG v.3.1.1"
+                Item: "Specification"
+                Section: "5.2.1.1"
+            Origin: "SEND Conformance Rules"
+            Rule Identifier:
+              Id: "SEND119"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.2"
+Check:
+  any:
+    #- all:
+    #    - name: COVAL1
+    #      operator: exists
+    #    - name: COVAL1
+    #      operator: non_empty
+    #    - name: COVAL
+    #      operator: empty
+    - all:
+        - name: --VAL
+          operator: inconsistent_enumerated_columns
+Core:
+  Id: CORE-000780
+  Status: Published
+  Version: "1"
+Description: "Correct order of population in COVALn variables check"
+Executability: Partially Executable - Possible Underreporting
+Outcome:
+  Message: "Correct order of population in COVAL variables must be COVAL, COVAL1, COVAL2 ..."
+Rule Type: Record Data
+Scope:
+  Classes:
+    Include:
+      - SPECIAL PURPOSE
+  Domains:
+    Include:
+      - CO
+Sensitivity: Record
