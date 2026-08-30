@@ -1,5 +1,25 @@
 # coreval 0.0.0.9000
 
+* The `Operations` pipeline: pre-computes `$`-bound values (e.g. `$tv_visit`)
+  before a rule's `Check` runs. `evaluate_rule()` now accepts either a
+  single dataset (unchanged, backward compatible) or a full study object -
+  needed because `Operations` routinely reads from a *different* domain
+  than the one being checked (e.g. computing `$tv_visit` from `TV` while
+  checking `SV`). 13 operation types implemented: `distinct`, `record_count`
+  (both support optional grouping, e.g. per `USUBJID`, and a `filter`),
+  `max_date`/`min_date`/`max`, `get_column_order_from_dataset`,
+  `variable_exists`, `variable_count`, `study_domains`, `dataset_names`,
+  `domain_is_custom`, `extract_metadata` (the `dataset_name` pseudo-column),
+  and `dy` (SDTM study-day calculation from `DM.RFSTDTC`). The ~12 rules
+  needing genuine CDISC Library metadata (`required_variables`,
+  `codelist_terms`, `get_model_column_order`, etc.) are left unresolvable
+  rather than faked - there is no bundled data for them.
+  Verified against CDISC's reference `results.csv` for an ungrouped
+  cross-dataset case (CORE-000036, `distinct`) and a grouped+filtered case
+  (CORE-000214, `record_count`); the latter surfaced a real bug (see Bug
+  fixes). Harness impact: PASS 260 -> 329, 65.6% pass rate among Fully
+  Executable rules (315/480).
+
 * Package skeleton passing `R CMD check` with 0 errors, 0 warnings, 0 notes
   on Windows, macOS, and Linux (GitHub Actions).
 * `data-raw/extract_rules.R`: extracts the SDTMIG/ADaMIG rule set from
@@ -98,3 +118,14 @@
   The reference engine's `isoparse` rejects it for fully-specified dates;
   now matched explicitly with a leap-year-aware day-count check. Uncertain/
   partial dates (`"2024---15"`) skip this, matching upstream.
+* `record_count` with both a `filter` and `group`: a group with zero rows
+  matching the filter was missing from the result entirely (resolving to
+  `NA`) instead of `0`. The reference engine explicitly left-joins filtered
+  counts onto the *full* (unfiltered) group set and fills missing with 0;
+  grouping only the filtered data (as an earlier version did) silently
+  drops groups that exist but had no matches. Found by a unit test before
+  it could reach real rule data.
+* Fixed a real regression introduced mid-session: `startsWith()` on a
+  numeric `value` (e.g. `ECDOSE less_than_or_equal_to 0`) errored once
+  `$`-binding resolution was added, since it always called `startsWith()`
+  without checking the value was a string first.

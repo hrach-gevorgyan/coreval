@@ -1,0 +1,14 @@
+dataset,variable,label,type,length
+ds,STUDYID,Study Identifier,Char,50
+ds,DOMAIN,Domain Abbreviation,Char,50
+ds,USUBJID,Unique Subject Identifier,Char,50
+ds,DSSEQ,Sequence Number,Num,8
+ds,DSTERM,Reported Term for the Disposition Event,Char,50
+ds,DSDECOD,Standardized Disposition Term,Char,50
+ds,DSCAT,Category for Disposition Event,Char,50
+ds,DSSCAT,Subcategory for Disposition Event,Char,50
+ds,EPOCH,Epoch,Char,50
+ds,DSDTC,Date/Time of Collection,Char,50
+ds,DSSTDTC,Start Date/Time of Disposition Event,Char,50
+ds,DSDY,Study Day of Collection,Num,8
+ds,DSSTDY,Study Day of Start of Disposition Event,Num,8

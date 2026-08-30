@@ -4,22 +4,27 @@
 \alias{evaluate_rule}
 \title{Evaluate one rule's Check against one dataset}
 \usage{
-evaluate_rule(rule, dataset, domain)
+evaluate_rule(rule, dataset_or_study, domain)
 }
 \arguments{
 \item{rule}{A rule record, e.g. \code{.coreval_env$data$rules[[id]]} or an
 equivalent list with \verb{$check}.}
 
-\item{dataset}{A single dataset entry from a study object:
-\code{list(data, meta)}, as returned inside \code{\link[=read_study]{read_study()}}'s result.}
+\item{dataset_or_study}{Either a single dataset entry from a study object
+(\code{list(data, meta)}, as returned inside \code{\link[=read_study]{read_study()}}'s result), or a
+full study object (\code{list(datasets, define, ct)}). A full study is
+required when \code{rule} has an \code{Operations} block that reads from a
+different domain than the one being checked (e.g. computing a
+\code{distinct} value from the \code{TV} dataset while evaluating \code{SV}).}
 
 \item{domain}{The dataset's domain code (e.g. \code{"AE"}), used to resolve
 \code{"--"} variable name templates.}
 }
 \value{
-A logical vector, one element per row of \code{dataset$data}: \code{TRUE}
-where the record violates the rule. \code{NA} (from a comparison against a
-missing/incomparable value) is treated as "not a confirmed violation."
+A logical vector, one element per row of the dataset being
+checked: \code{TRUE} where the record violates the rule. \code{NA} (from a
+comparison against a missing/incomparable value, or an unresolvable
+Operations binding) is treated as "not a confirmed violation."
 }
 \description{
 Evaluate one rule's Check against one dataset

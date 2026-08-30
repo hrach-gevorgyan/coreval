@@ -85,7 +85,7 @@ run_case <- function(rule, case_dir) {
 
   for (domain in applicable) {
     violations <- tryCatch(
-      evaluate_rule(rule, study$datasets[[domain]], domain),
+      evaluate_rule(rule, study, domain),
       error = function(e) e
     )
     if (inherits(violations, "error")) {
@@ -116,6 +116,12 @@ run_case <- function(rule, case_dir) {
   list(status = "PASS", reason = NA_character_)
 }
 
+implemented_operations <- c(
+  "distinct", "record_count", "max_date", "max", "min_date",
+  "get_column_order_from_dataset", "variable_exists", "variable_count",
+  "study_domains", "dataset_names", "domain_is_custom", "extract_metadata", "dy"
+)
+
 run_rule <- function(rule) {
   ops <- unique(rule_operators(rule$check))
   missing_ops <- setdiff(ops, ls(.operator_registry))
@@ -123,7 +129,11 @@ run_rule <- function(rule) {
     return(list(status = "SKIPPED", reason = paste("unimplemented operator(s):", paste(missing_ops, collapse = ", "))))
   }
   if (!is.null(rule$operations)) {
-    return(list(status = "SKIPPED", reason = "Operations not yet implemented (Phase 7)"))
+    op_types <- unique(vapply(rule$operations, function(o) o$operator, character(1)))
+    missing <- setdiff(op_types, implemented_operations)
+    if (length(missing) > 0) {
+      return(list(status = "SKIPPED", reason = paste("unimplemented Operations type(s):", paste(missing, collapse = ", "))))
+    }
   }
   if (!is.null(rule$match_datasets)) {
     return(list(status = "SKIPPED", reason = "Match Datasets not yet implemented (Phase 8)"))

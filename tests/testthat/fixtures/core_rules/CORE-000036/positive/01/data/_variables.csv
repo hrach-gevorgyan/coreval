@@ -1,0 +1,20 @@
+dataset,variable,label,type,length
+sv,STUDYID,Study Identifier,Char,12
+sv,DOMAIN,Domain Abbreviation,Char,2
+sv,USUBJID,Unique Subject Identifier,Char,8
+sv,VISITNUM,Visit Number,Num,8
+sv,VISIT,Visit Name,Char,200
+sv,SVPRESP,Pre-specified,Char,2
+sv,VISITDY,Visit Day,Num,8
+sv,SVSTDTC,Start Date/Time of Visit,Char,10
+sv,SVENDTC,End Date/Time of Visit,Char,10
+sv,SVSTDY,Study Day of Start of Visit,Num,8
+sv,SVENDY,Study Day of End of Visit,Num,8
+sv,SVUPDES,Description of Unplanned Visit,Char,200
+tv,STUDYID,Study Identifier,Char,12
+tv,DOMAIN,Domain Abbreviation,Char,2
+tv,VISITNUM,Visit Number,Num,8
+tv,VISIT,Visit Name,Char,200
+tv,ARMCD,Planned Arm Code,Char,8
+tv,TVSTRL,Visit Start Rule,Char,200
+tv,TVENRL,Visit End Rule,Char,200

@@ -1,0 +1,13 @@
+STUDYID,DOMAIN,VISITNUM,VISIT,ARMCD,TVSTRL,TVENRL
+CDISCPILOT01,TV,1,SCREEN 1,,Informed Consent Obtained,Screening Assessments Completed
+CDISCPILOT01,TV,2,SCREEN 2,,Day Before Initial Study Treatment,
+CDISCPILOT01,TV,3,BASELINE,,Day of Initial Study Treatment,
+CDISCPILOT01,TV,4,WEEK 2,,2 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,5,WEEK 4,,4 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,7,WEEK 6,,6 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,8,WEEK 8,,8 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,9,WEEK 12,,12 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,10,WEEK 16,,16 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,11,WEEK 20,,20 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,12,WEEK 24,,24 Weeks After Start of Study Treatment,
+CDISCPILOT01,TV,13,WEEK 26,,26 Weeks After Start of Study Treatment,
