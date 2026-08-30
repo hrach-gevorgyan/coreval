@@ -1,0 +1,82 @@
+dataset,variable,label,type,length
+lb,STUDYID,Study Identifier,Char,12
+lb,DOMAIN,Domain Abbreviation,Char,2
+lb,USUBJID,Unique Subject Identifier,Char,8
+lb,LBSEQ,Sequence Number,Num,8
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,7
+lb,LBTEST,Lab Test or Examination Name,Char,39
+lb,LBCAT,Category for Lab Test,Char,10
+lb,LBORRES,Result or Finding in Original Units,Char,6
+lb,LBORRESU,Original Units,Char,7
+lb,LBORNRLO,Reference Range Lower Limit in Orig Unit,Char,200
+lb,LBORNRHI,Reference Range Upper Limit in Orig Unit,Char,200
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,8
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,7
+lb,LBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+lb,LBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+lb,LBNRIND,Reference Range Indicator,Char,8
+lb,LBLOBXFL,Last Observation Before Exposure Flag,Char,1
+lb,VISITNUM,Visit Number,Num,8
+lb,VISIT,Visit Name,Char,200
+lb,EPOCH,Epoch,Char,9
+lb,LBDTC,Date/Time of Specimen Collection,Char,19
+lb,LBDY,Study Day of Specimen Collection,Num,8
+oe,STUDYID,Study Identifier,Char,12
+oe,DOMAIN,Domain Abbreviation,Char,2
+oe,USUBJID,Unique Subject Identifier,Char,8
+oe,FOCID,Focus of Study-Specific Interest,Char,2
+oe,OESEQ,Sequence Number,Num,8
+oe,OETESTCD,Short Name of Ophthalmic Test or Exam,Char,8
+oe,OETEST,Name of Ophthalmic Test or Exam,Char,18
+oe,OEORRES,Result or Finding in Original Units,Char,200
+oe,OESTRESC,Character Result/Finding in Std Format,Char,200
+oe,OELOC,Location Used for the Measurement,Char,21
+oe,OELAT,Laterality,Char,5
+oe,OEMETHOD,Method of Test or Examination,Char,9
+oe,OELOBXFL,Last Observation Before Exposure Flag,Char,1
+oe,VISITNUM,Visit Number,Num,8
+oe,VISIT,Visit Name,Char,200
+oe,EPOCH,Epoch,Char,9
+oe,OEDTC,Date/Time of Collection,Char,200
+oe,OEDY,Study Day of Visit/Collection/Exam,Num,8
+sv,STUDYID,Study Identifier,Char,12
+sv,DOMAIN,Domain Abbreviation,Char,2
+sv,USUBJID,Unique Subject Identifier,Char,8
+sv,VISITNUM,Visit Number,Num,8
+sv,VISIT,Visit Name,Char,200
+sv,SVPRESP,Pre-specified,Char,1
+sv,SVOCCUR,Occurrence,Char,1
+sv,SVSTDTC,Start Date/Time of Visit,Char,10
+sv,SVENDTC,End Date/Time of Visit,Char,10
+sv,SVSTDY,Study Day of Start of Visit,Num,8
+sv,SVENDY,Study Day of End of Visit,Num,8
+sv,SVUPDES,Description of Unplanned Visit,Char,200
+tv,STUDYID,Study Identifier,Char,12
+tv,DOMAIN,Domain Abbreviation,Char,2
+tv,VISITNUM,Visit Number,Num,8
+tv,VISIT,Visit Name,Char,200
+tv,ARMCD,Planned Arm Code,Char,8
+tv,TVSTRL,Visit Start Rule,Char,200
+tv,TVENRL,Visit End Rule,Char,200
+vs,STUDYID,Study Identifier,Char,12
+vs,DOMAIN,Domain Abbreviation,Char,2
+vs,USUBJID,Unique Subject Identifier,Char,8
+vs,VSSEQ,Sequence Number,Num,8
+vs,VSTESTCD,Vital Signs Test Short Name,Char,6
+vs,VSTEST,Vital Signs Test Name,Char,24
+vs,VSPOS,Vital Signs Position of Subject,Char,8
+vs,VSORRES,Result or Finding in Original Units,Char,8
+vs,VSORRESU,Original Units,Char,9
+vs,VSSTRESC,Character Result/Finding in Std Format,Char,200
+vs,VSSTRESN,Numeric Result/Finding in Standard Units,Num,8
+vs,VSSTRESU,Standard Units,Char,9
+vs,VSSTAT,Completion Status,Char,8
+vs,VSLOC,Location of Vital Signs Measurement,Char,11
+vs,VSLOBXFL,Last Observation Before Exposure Flag,Char,1
+vs,VSREPNUM,Repetition Number,Num,8
+vs,VISITNUM,Visit Number,Num,8
+vs,VISIT,Visit Name,Char,200
+vs,EPOCH,Epoch,Char,9
+vs,VSDTC,Date/Time of Measurements,Char,10
+vs,VSDY,Study Day of Vital Signs,Num,8

@@ -111,6 +111,23 @@ test_that("evaluate_rule collapses an exploded join back to one result per origi
   expect_equal(evaluate_rule(rule, study, "SV"), c(TRUE, TRUE))
 })
 
+test_that("Match Datasets with a partial key matches CDISC's reference results.csv across every applicable domain (CORE-000270)", {
+  rule <- .coreval_env$data$rules[["CORE-000270"]]
+  for (case in c("negative", "positive")) {
+    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000270", case, "*"))
+    for (dir in cases) {
+      study <- read_study(file.path(dir, "data"))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      for (domain in names(study$datasets)) {
+        if (!rule_applies_to_domain(rule, domain)) next
+        actual <- which(evaluate_rule(rule, study, domain))
+        expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+        expect_equal(sort(unname(actual)), expected, info = paste(dir, domain))
+      }
+    }
+  }
+})
+
 test_that("apply_match_dataset never matches a blank/NA key against another blank/NA key", {
   # Bug: base merge() treats NA (and "" as an ordinary string) as a
   # matchable value by default - a blank USUBJID on both sides would
@@ -126,6 +143,22 @@ test_that("apply_match_dataset never matches a blank/NA key against another blan
   expect_equal(joined$data$DTHFL[1], "Y") # a genuine key still matches
   expect_true(is.na(joined$data$DTHFL[2])) # blank key: no fabricated match
   expect_true(is.na(joined$data$DTHFL[3])) # NA key: no fabricated match
+})
+
+test_that("apply_match_dataset skips the join entirely when a key is missing from either side, rather than joining on the rest", {
+  # Bug: dropping just the missing key and joining on whatever's left turns
+  # a composite key (USUBJID+VISITNUM) into a much looser one (USUBJID
+  # alone) when the CURRENT domain has no VISITNUM at all - e.g. AE, which
+  # explodes into every one of that subject's SV visits instead of staying
+  # unmatched. Confirmed against CORE-000270's real fixture.
+  left <- list(data = data.table::data.table(USUBJID = c("S1", "S1")), meta = NULL)
+  right_data <- data.table::data.table(
+    USUBJID = c("S1", "S1", "S1"), VISITNUM = c(1, 2, 3), SVPRESP = c("Y", "Y", "Y")
+  )
+  study <- list(datasets = list(SV = list(data = right_data, meta = NULL)))
+  joined <- apply_match_dataset(left, list(Keys = c("USUBJID", "VISITNUM"), Name = "SV"), study, "AE")
+  expect_equal(nrow(joined$data), 2) # unchanged - no cartesian explosion
+  expect_false("SVPRESP" %in% names(joined$data))
 })
 
 test_that("apply_match_dataset handles an all-valid-key dataset without erroring on the empty blank branch", {

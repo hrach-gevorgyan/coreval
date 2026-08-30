@@ -52,9 +52,19 @@ apply_match_dataset <- function(dataset, spec, study, current_domain) {
     return(dataset)
   }
 
+  # A Match Datasets `Keys` list is a COMPLETE composite key (e.g.
+  # USUBJID+VISITNUM identifies one specific SV record per subject-visit) -
+  # dropping just the keys missing from one side and joining on whatever's
+  # left turns "one matching record per row" into an uncontrolled cartesian
+  # join (e.g. every SV visit for that subject, if the current domain has
+  # no VISITNUM of its own at all). Confirmed against CORE-000270: AE has
+  # no native VISITNUM, so joining on USUBJID alone attached SV's VISITNUM
+  # from EVERY visit to each AE row, fabricating "VISITNUM not in TV"
+  # violations for a domain this rule can't actually evaluate that way. If
+  # any key is missing from either side, the whole join is unresolvable for
+  # this domain - skip it entirely rather than degrading to a looser one.
   keys <- resolve_var_name(spec$Keys, current_domain)
-  keys <- keys[keys %in% names(dataset$data) & keys %in% names(match_dataset$data)]
-  if (length(keys) == 0) {
+  if (!all(keys %in% names(dataset$data)) || !all(keys %in% names(match_dataset$data))) {
     return(dataset)
   }
 
