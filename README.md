@@ -21,9 +21,9 @@ each rule flags. Current results:
 
 | Slice | Pass rate |
 |---|---|
-| Published rules, Fully Executable, **with reference output to compare against** | **474 / 500 (94.8%)** |
-| Published rules, Fully Executable, including those with no reference output | 474 / 543 (87.3%) |
-| All Fully Executable rules (Published + Deprecated + FDA draft) | 582 / 722 (80.6%) |
+| Published rules, Fully Executable, **with reference output to compare against** | **475 / 499 (95.2%)** |
+| Published rules, Fully Executable, including those with no reference output | 475 / 543 (87.5%) |
+| All Fully Executable rules (Published + Deprecated + FDA draft) | 583 / 722 (80.7%) |
 
 Two denominators are reported deliberately, because the difference is not a
 quality signal:
@@ -39,10 +39,25 @@ quality signal:
 
 Of the remaining Published failures, essentially all are triaged: confirmed
 stale fixtures (a fixture's own reported values contradict its own data),
-rules permanently requiring CDISC Library metadata or a define.xml reader
-that this package deliberately does not have, or acknowledged open bugs in
-the upstream reference engine. Rules that cannot be evaluated are reported as
-skipped with a reason — never as a pass, and never as a fabricated finding.
+rules requiring CDISC Library variable metadata that this package does not
+bundle, or acknowledged open bugs in the upstream reference engine. Rules
+that cannot be evaluated are reported as skipped with a reason — never as a
+pass, and never as a fabricated finding.
+
+**Treat the pass rate as a lower bound on defects, not a readiness signal.**
+CDISC's reference fixtures are almost entirely unsplit datasets, so whole
+classes of real-world input — a domain split across several files, an
+Associated Persons dataset — aren't exercised by them at all. A real bug in
+`"--"` wildcard resolution that silently disabled a third of the rule set on
+split-domain studies produced *no* change in this table.
+
+### define.xml
+
+`read_study()` reads a CDISC Define-XML 2.0/2.1 file when one is present in
+the study directory, exposing declared dataset- and variable-level metadata
+so rules can compare it against what the data actually contains. This needs
+the `xml2` package, which is a `Suggests`: without it, define.xml support is
+simply unavailable and the affected rules report as skipped.
 
 Not a CORE-certified engine: these numbers describe agreement with CDISC's
 published reference data, not certification.

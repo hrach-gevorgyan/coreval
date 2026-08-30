@@ -28,6 +28,7 @@ XPT
 XPT's
 bdat
 cdisc
+conformant
 coreval's
 dataset's
 deduplicated
@@ -43,6 +44,8 @@ triaged
 unanchored
 undebugged
 undeduplicated
+unevaluable
 ungrouped
 unresolvable
+unsplit
 upstream's

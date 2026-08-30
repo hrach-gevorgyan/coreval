@@ -1,5 +1,40 @@
 # coreval 0.0.0.9000
 
+* **define.xml is now read.** A new reader parses a CDISC Define-XML file
+  into two flat tables - one row per `ItemGroupDef`, one per
+  (dataset, variable) via `ItemRef` -> `ItemDef` - and `read_study()`
+  populates the `study$define` slot that was previously always `NULL`. A
+  `"Variable Metadata Check against Define XML"` rule can now compare a
+  dataset's observed variable metadata against what define.xml declares.
+  Namespaces are stripped rather than matched by URI, so a single code
+  path covers Define-XML 2.0 and 2.1. `xml2` is a **Suggests**, not an
+  Import: the runtime dependency footprint stays `data.table` + `haven`,
+  and define.xml support degrades gracefully when `xml2` isn't installed.
+  Verified against all 79 define.xml files in CDISC's own corpus (2,468
+  dataset rows, 34,586 variable rows). Note that only one bundled
+  define.xml rule ships reference output to verify against; the 12
+  `FDA.SENDIG` ones ship no fixtures at all and are `Status: Draft`, so
+  they are best-effort.
+* Rules referencing CDISC Library pseudo-columns (`library_variable_name`,
+  `library_variable_role`, `library_variable_data_type`) are now reported
+  as unevaluable instead of silently fabricating findings. There is no
+  bundled Library variable metadata, so the documented "not a real column
+  -> literal text" fallback was making those comparisons true for *every*
+  variable - in the conformant and non-conformant case alike. The guard
+  inspects the built dataset rather than a hard-coded rule-type list, so
+  supplying real Library metadata later disables it automatically.
+* Fixed a correctness bug affecting any study with **split domains**: the
+  `"--"` variable-name template expanded to the dataset/file name instead
+  of the `DOMAIN` column's value, so on `lbae.csv` (`DOMAIN=LB`) `--SEQ`
+  became `LBAESEQ`, which is not a column - the condition then quietly
+  became unresolvable rather than checking anything. 251 of the 756
+  bundled rules use a `"--"` template and splitting a large domain across
+  files is routine in real submissions. Associated Persons datasets are
+  handled too (`APQS` -> `QS`). Worth noting the conformance harness shows
+  no change for this fix: its fixtures are almost entirely unsplit
+  datasets where the file name coincidentally equals the `DOMAIN` value,
+  so the harness is structurally blind to it.
+
 * `check_study()` now evaluates seven rule types, not just `"Record Data"`:
   `"Domain Presence Check"`, `"Dataset Metadata Check"`, `"Variable Metadata
   Check"` (and its `"against Library Metadata"` variant), `"Value Check with
