@@ -269,6 +269,24 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
 #' evaluate_rule(rule, dataset, domain = "DM")
 #' @export
 evaluate_rule <- function(rule, dataset_or_study, domain) {
+  # Refuse rules that compare against define.xml. This package has no
+  # define.xml reader, so the define-side pseudo-columns those rules name
+  # (e.g. `define_variable_label`) are simply absent, and
+  # resolve_condition_value()'s documented "not a real column -> literal
+  # text" fallback would silently turn the comparison into
+  # `variable_label != "define_variable_label"` - true for every variable,
+  # in the compliant and non-compliant case alike. That is worse than not
+  # running the rule: it manufactures confident findings out of missing
+  # input. Erroring lets callers record "could not evaluate" (check_study()
+  # already reports these under `$skipped`, since none of them are the
+  # "Record Data" type it runs) rather than a fabricated verdict.
+  if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE))) {
+    stop(
+      "rule type '", rule$rule_type,
+      "' needs define.xml, which coreval does not read",
+      call. = FALSE
+    )
+  }
   study <- as_study(dataset_or_study, domain)
   dataset <- prepare_dataset_for_rule(rule, study, domain)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)

@@ -242,3 +242,26 @@ test_that("is_not_unique_relationship never flags a fully blank pair", {
   check <- list(name = "ETCD", operator = "is_not_unique_relationship", value = "ELEMENT")
   expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, FALSE))
 })
+
+test_that("is_not_unique_set resolves \"--\" prefixes in its grouping columns (CORE-000914)", {
+  # The reference engine's _resolve_prefixes() applies replace_all_prefixes()
+  # to any LIST-valued operator argument, so a comparator like
+  # ["--TESTCD", "USUBJID"] arrives fully resolved. Left raw, the "--"
+  # entries match no real column, are silently dropped, and the uniqueness
+  # key collapses to whatever happened to be literal - a far looser key
+  # that reports masses of spurious duplicates.
+  data <- data.table::data.table(
+    USUBJID = c("S1", "S1", "S2", "S2"),
+    LBTESTCD = c("NA", "K", "NA", "NA"),
+    LBBLFL = c("Y", "Y", "Y", "Y")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(
+    name = "LBBLFL", operator = "is_not_unique_set",
+    value = c("--TESTCD", "USUBJID")
+  )
+  # Resolved key is (LBBLFL, LBTESTCD, USUBJID): only S2's two NA rows
+  # duplicate. Unresolved, the key degrades to (LBBLFL, USUBJID) and would
+  # wrongly flag all four rows.
+  expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, FALSE, TRUE, TRUE))
+})

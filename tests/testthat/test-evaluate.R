@@ -131,3 +131,22 @@ test_that("empty/non_empty use '' for character blanks and NA for numeric", {
   expect_equal(evaluate_check(list(name = "CHR", operator = "empty"), dataset, "TS"), c(FALSE, TRUE))
   expect_equal(evaluate_check(list(name = "NUM", operator = "non_empty"), dataset, "TS"), c(TRUE, FALSE))
 })
+
+test_that("evaluate_rule refuses a define.xml rule instead of fabricating findings", {
+  # coreval has no define.xml reader, so a define-side pseudo-column like
+  # `define_variable_label` is absent, and resolve_condition_value()'s
+  # "not a real column -> literal text" fallback would turn the check into
+  # `variable_label != "define_variable_label"` - true for every variable,
+  # in the compliant and non-compliant case alike. Manufacturing confident
+  # findings from missing input is worse than declining to run.
+  rule <- list(
+    rule_type = "Variable Metadata Check against Define XML",
+    check = list(all = list(list(
+      name = "variable_label", operator = "not_equal_to", value = "define_variable_label"
+    )))
+  )
+  data <- data.table::data.table(STUDYID = "S1")
+  meta <- data.table::data.table(variable = "STUDYID", label = "Study Identifier", type = "Char")
+  study <- list(datasets = list(DM = list(data = data, meta = meta)))
+  expect_error(evaluate_rule(rule, study, "DM"), "define.xml", fixed = TRUE)
+})

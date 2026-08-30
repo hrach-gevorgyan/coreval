@@ -11,7 +11,21 @@ is_blank <- function(x) is.na(x) | (is.character(x) & x == "")
 # own fillna("_NaN_")-before-grouping behavior.
 # Operator: is_not_unique_set - flags rows whose combination of columns duplicates another row's
 register_operator("is_not_unique_set", function(ctx) {
-  cols <- unique(c(ctx$name, ctx$condition$value))
+  # The grouping columns in `condition$value` need the same "--" -> domain
+  # expansion that `ctx$name` already got in evaluate_condition(). The
+  # reference engine's `_resolve_prefixes()` walks EVERY entry of the
+  # operator's argument dict and applies `replace_all_prefixes()` to any
+  # LIST value, so a comparator like ["--TESTCD", "--CAT", "USUBJID"]
+  # arrives as ["LBTESTCD", "LBCAT", "USUBJID"] - never with the "--"
+  # still on it. Left raw, those entries match no real column, get
+  # silently dropped by the filter below, and the uniqueness key collapses
+  # to whatever few columns happened to be literal - a far looser key that
+  # flags huge numbers of rows as duplicates. Confirmed against
+  # CORE-000914/915, where the key degraded to (LBBLFL, USUBJID) and
+  # flagged every baseline-flagged row of any subject with 2+ of them.
+  # (The sibling is_inconsistent_across_dataset already resolves its own
+  # grouping columns this way.)
+  cols <- unique(c(ctx$name, resolve_var_name(ctx$condition$value, ctx$domain)))
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))

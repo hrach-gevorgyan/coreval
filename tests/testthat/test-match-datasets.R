@@ -281,3 +281,29 @@ test_that("apply_relrec_match joins the group-level pattern (both IDVARVAL blank
   expect_equal(joined$data$`RELREC.FAOBJ`, "ERYTHEMA")
   expect_equal(joined$data$.coreval_row_id, 2L)
 })
+
+test_that("a matched column the rule references as \"<Name>.<col>\" is prefixed even without a collision", {
+  # The reference engine prefixes the columns a rule NAMES, collision or
+  # not (dataset_preprocessor.py builds referenced_targets from the rule's
+  # own targets and renames exactly those), and only then lets pandas'
+  # suffixes=("", f".{domain}") handle remaining true collisions. Renaming
+  # solely on collision leaves a referenced-but-non-colliding column under
+  # its bare name, so the rule's "DM.RFPENDTC" finds nothing and
+  # resolve_condition_value() degrades it to a literal string - silently
+  # always-false (CORE-000952 found no violations) or always-true
+  # (CORE-000249 flagged every row).
+  left <- list(data = data.table::data.table(USUBJID = c("S1", "S2"), AESEQ = c(1, 2)), meta = NULL)
+  dm <- data.table::data.table(USUBJID = c("S1", "S2"), RFPENDTC = c("2020-01-01", ""), AGE = c(30, 40))
+  study <- list(datasets = list(DM = list(data = dm, meta = NULL)))
+  rule <- list(check = list(all = list(list(name = "DM.RFPENDTC", operator = "non_empty"))))
+
+  joined <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "AE", rule)
+  expect_true("DM.RFPENDTC" %in% names(joined$data))
+  expect_equal(joined$data$`DM.RFPENDTC`, c("2020-01-01", ""))
+  # a column the rule never references keeps its bare name (no collision)
+  expect_true("AGE" %in% names(joined$data))
+
+  # with no rule supplied, only the collision rule applies (back-compat)
+  plain <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "AE")
+  expect_true("RFPENDTC" %in% names(plain$data))
+})

@@ -38,7 +38,66 @@
 #' @param current_domain Domain code of `dataset`, used to resolve `"--"` key names.
 #' @return `dataset` with the matched columns joined in.
 #' @noRd
-apply_match_dataset <- function(dataset, spec, study, current_domain) {
+#' Collect every `name`/`value` string a Check tree references, plus Output Variables
+#' @param rule A rule record.
+#' @return A character vector of referenced target strings.
+#' @noRd
+collect_rule_targets <- function(rule) {
+  walk <- function(node, acc) {
+    if (is.null(node)) {
+      return(acc)
+    }
+    for (field in c("name", "value")) {
+      v <- node[[field]]
+      if (is.character(v)) {
+        acc <- c(acc, v)
+      }
+    }
+    for (key in c("all", "any", "not")) {
+      sub <- node[[key]]
+      if (!is.null(sub)) {
+        if (is.list(sub) && is.null(names(sub))) {
+          for (item in sub) acc <- walk(item, acc)
+        } else {
+          acc <- walk(sub, acc)
+        }
+      }
+    }
+    acc
+  }
+  declared <- rule$outcome[["Output Variables"]]
+  unique(c(walk(rule$check, character(0)), if (is.character(declared)) declared))
+}
+
+#' Rename a matched dataset's columns that the rule explicitly references as `<Name>.<col>`
+#'
+#' The reference engine prefixes the columns a rule NAMES as
+#' `"<MatchName>.<column>"` before merging, whether or not they collide -
+#' `dataset_preprocessor.py` builds `referenced_targets` from the rule's own
+#' targets that start with `"<domain_name>."`, strips that prefix, and
+#' renames exactly those columns; pandas' `suffixes=("", f".{domain}")`
+#' then handles only the remaining true collisions.
+#' @param right The matched dataset's data (mutated by reference).
+#' @param rule A rule record (or `NULL` to skip).
+#' @param match_name The Match Datasets `Name`.
+#' @param keys Join keys, never renamed.
+#' @return `invisible(NULL)`; `right` is modified in place.
+#' @noRd
+rename_referenced_match_columns <- function(right, rule, match_name, keys) {
+  if (is.null(rule)) {
+    return(invisible(NULL))
+  }
+  targets <- collect_rule_targets(rule)
+  prefix <- paste0(match_name, ".")
+  referenced <- sub(prefix, "", targets[startsWith(targets, prefix)], fixed = TRUE)
+  referenced <- setdiff(intersect(referenced, names(right)), keys)
+  if (length(referenced) > 0) {
+    data.table::setnames(right, referenced, paste0(prefix, referenced))
+  }
+  invisible(NULL)
+}
+
+apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NULL) {
   match_name <- spec$Name
   if (identical(match_name, "RELREC") && is.null(spec$Child)) {
     return(apply_relrec_match(dataset, study, current_domain))
@@ -70,6 +129,22 @@ apply_match_dataset <- function(dataset, spec, study, current_domain) {
 
   left <- data.table::copy(dataset$data)
   right <- data.table::copy(match_dataset$data)
+
+  # Prefix the columns the RULE ITSELF references as "<Name>.<col>" first -
+  # regardless of whether they collide - then let the collision rule below
+  # handle whatever is left, exactly as the reference engine does
+  # (dataset_preprocessor.py renames referenced targets, then pandas'
+  # suffixes=("", f".{domain}") catches the rest). Doing only the collision
+  # half means a referenced column that happens NOT to collide joins in
+  # under its bare name, so the rule's own "DM.RFPENDTC" reference finds no
+  # such column and resolve_condition_value() degrades it to a literal
+  # string comparison - silently always-false (CORE-000952 found nothing)
+  # or always-true (CORE-000249 flagged all 4452 LB rows). This is also the
+  # principled fix for CLAUDE.md's open question 17: it makes the joined
+  # column visible ONLY under its prefixed name, so a bare "--VISITDY
+  # exists" correctly stays FALSE for a domain with no native VISITDY,
+  # without touching exists/not_exists semantics at all.
+  rename_referenced_match_columns(right, rule, match_name, keys)
 
   collide <- intersect(setdiff(names(right), keys), names(left))
   if (length(collide) > 0) {
@@ -238,7 +313,7 @@ apply_match_datasets <- function(dataset, rule, study, current_domain) {
     return(dataset)
   }
   for (spec in rule$match_datasets) {
-    dataset <- apply_match_dataset(dataset, spec, study, current_domain)
+    dataset <- apply_match_dataset(dataset, spec, study, current_domain, rule)
   }
   dataset
 }
