@@ -8,6 +8,14 @@
 \description{
 Reads SDTM datasets (XPT/sas7bdat/CSV) and evaluates CDISC Open Rules (CORE) conformance rules against them, returning findings as a tidy data frame. Rule definitions ship inside the package as data, extracted from the CDISC Open Rules repository. Not affiliated with or endorsed by CDISC, and not a CORE-certified engine.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/hrach-gevorgyan/coreval}
+  \item Report bugs at \url{https://github.com/hrach-gevorgyan/coreval/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Hrach Gevorgyan \email{hrach.gevorgyan@yandex.com} [copyright holder]
 

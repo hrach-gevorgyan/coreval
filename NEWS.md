@@ -1,5 +1,9 @@
 # coreval 0.0.0.9000
 
+* Added `URL`/`BugReports` fields to `DESCRIPTION` pointing at the GitHub
+  repository, and dropped the unused `xml2` `Suggests` dependency (nothing
+  in the package currently calls it).
+
 * Every exported function (`evaluate_rule()`, `read_study()`,
   `check_study()`, `list_rules()`, `rules_version()`, `rules_for_domain()`,
   `sdtm_domain_classes()`) now has a runnable `@examples` block - each
