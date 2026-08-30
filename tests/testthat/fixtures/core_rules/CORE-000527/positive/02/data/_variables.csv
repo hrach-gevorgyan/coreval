@@ -1,0 +1,54 @@
+dataset,variable,label,type,length
+qscg,STUDYID,Study Identifier,Char,12
+qscg,DOMAIN,Domain Abbreviation,Char,4
+qscg,USUBJID,Unique Subject Identifier,Char,8
+qscg,QSSEQ,Sequence Number,Num,8
+qscg,QSTESTCD,Question Short Name,Char,7
+qscg,QSTEST,Question Name,Char,40
+qscg,QSCAT,Category of Question,Char,5
+qscg,QSORRES,Finding in Original Units,Char,23
+qscg,QSSTRESC,Character Result/Finding in Std Format,Char,20
+qscg,QSSTRESN,Numeric Finding in Standard Units,Num,8
+qscg,QSLOBXFL,Last Observation Before Exposure Flag,Char,1
+qscg,VISITNUM,Visit Number,Num,8
+qscg,VISIT,Visit Name,Char,200
+qscg,QSDTC,Date/Time of Finding,Char,10
+qscg,QSDY,Study Day of Finding,Num,8
+qspg,STUDYID,Study Identifier,Char,12
+qspg,DOMAIN,Domain Abbreviation,Char,4
+qspg,USUBJID,Unique Subject Identifier,Char,14
+qspg,QSSEQ,Sequence Number,Num,8
+qspg,QSTESTCD,Question Short Name,Char,7
+qspg,QSTEST,Question Name,Char,40
+qspg,QSCAT,Category of Question,Char,5
+qspg,QSORRES,Finding in Original Units,Char,23
+qspg,QSSTRESC,Character Result/Finding in Std Format,Char,20
+qspg,QSSTRESN,Numeric Finding in Standard Units,Num,8
+qspg,QSLOBXFL,Last Observation Before Exposure Flag,Char,1
+qspg,VISITNUM,Visit Number,Num,8
+qspg,VISIT,Visit Name,Char,200
+qspg,QSDTC,Date/Time of Finding,Char,10
+qspg,QSDY,Study Day of Finding,Num,8
+suppqscg,STUDYID,Study Identifier,Char,12
+suppqscg,RDOMAIN,Related Domain Abbreviation,Char,6
+suppqscg,USUBJID,Unique Subject Identifier,Char,8
+suppqscg,IDVAR,Identifying Variable,Char,200
+suppqscg,IDVARVAL,Identifying Variable Value,Char,200
+suppqscg,QNAM,Qualifier Variable Name,Char,8
+suppqscg,QLABEL,Qualifier Variable Label,Char,40
+suppqscg,QVAL,Data Value,Char,200
+suppqscg,QORIG,Origin,Char,13
+suppqscg,QEVAL,Evaluator,Char,200
+se,STUDYID,Study Identifier,Char,50
+se,DOMAIN,Domain Abbreviation,Char,50
+se,USUBJID,Unique Subject Identifier,Char,50
+se,SESEQ,Sequence Number,Num,8
+se,ETCD,Element Code,Char,50
+se,ELEMENT,Description of Element,Char,50
+se,TAETORD,Planned Order of Element within Arm,Num,8
+se,EPOCH,Epoch,Char,50
+se,SESTDTC,Start Date/Time of Element,Char,50
+se,SEENDTC,End Date/Time of Element,Char,50
+se,SESTDY,Study Day of Start of Element,Num,8
+se,SEENDY,Study Day of End of Element,Num,8
+se,SEUPDES,Description of Unplanned Element,Char,50

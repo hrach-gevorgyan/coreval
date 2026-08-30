@@ -126,3 +126,15 @@ register_operator("suffix_is_contained_by", guarded_op(function(ctx) {
 register_operator("suffix_is_not_contained_by", function(ctx) {
   !get_operator("suffix_is_contained_by")(ctx)
 })
+
+# Extracts a substring from `value` via the condition's `regex` (a single
+# capture group), then checks target != that substring. Confirmed against
+# CORE-000538's real fixtures: "RDOMAIN does_not_equal_string_part
+# regex: .{4}(..).*, value: $dataset_name" extracts characters 5-6 of the
+# dataset name (e.g. "AE" from "SUPPAE") and flags every row where RDOMAIN
+# doesn't match it.
+# Operator: does_not_equal_string_part - target doesn't match a regex-captured substring of value
+register_operator("does_not_equal_string_part", guarded_op(function(ctx) {
+  extracted <- sub(ctx$condition$regex, "\\1", ctx$value, perl = TRUE)
+  ctx$target != extracted
+}))

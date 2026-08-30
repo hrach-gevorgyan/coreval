@@ -75,6 +75,32 @@ test_that("is_inconsistent_across_dataset ignores blank target values when check
   expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, FALSE))
 })
 
+test_that("has_same_values matches CDISC's reference results.csv (CORE-000365)", {
+  # "MHCAT non_empty AND MHCAT has_same_values" - flags every record when
+  # the whole dataset's non-blank MHCAT values are all identical.
+  rule <- .coreval_env$data$rules[["CORE-000365"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000365", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study, domain = "MH")
+    expect_equal(
+      actual,
+      expected_violations_for(file.path(dir, "results", "results.csv"), "MH", nrow(study$datasets$MH$data))
+    )
+  }
+})
+
+test_that("has_same_values is dataset-level: FALSE for every row once >1 distinct non-blank value exists", {
+  data <- data.table::data.table(CAT = c("A", "A", "B"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "CAT", operator = "has_same_values")
+  expect_equal(evaluate_check(check, dataset, "MH"), c(FALSE, FALSE, FALSE))
+
+  data2 <- data.table::data.table(CAT = c("A", "A", "A"))
+  dataset2 <- list(data = data2, meta = NULL)
+  expect_equal(evaluate_check(check, dataset2, "MH"), c(TRUE, TRUE, TRUE))
+})
+
 test_that("present_on_multiple_rows_within matches CDISC's reference results.csv (CORE-000363)", {
   # "DSDECOD present_on_multiple_rows_within: USUBJID" - flags every row
   # whose DSDECOD value appears on more than one row for the same subject.

@@ -79,6 +79,23 @@ register_operator("is_unique_relationship", function(ctx) {
   !get_operator("is_not_unique_relationship")(ctx)
 })
 
+# Dataset-level (like exists/contains_all): does the target column have
+# exactly one distinct non-blank value across the WHOLE dataset? Confirmed
+# against CORE-000365's real fixtures: MHCAT is literally "GENERAL" for
+# every one of 3 records (1 distinct value) -> all 3 flagged; a 12-record
+# fixture with 2 distinct MHCAT values -> none flagged. Recycled to every
+# row like other dataset-level facts (see evaluate.R's "dataset-level exists
+# condition" test), so a sibling non_empty condition still filters out any
+# genuinely blank rows in the same "all:" block.
+# Operator: has_same_values - dataset-level: target has exactly one distinct non-blank value
+register_operator("has_same_values", function(ctx) {
+  if (!ctx$exists) {
+    return(rep(FALSE, ctx$n))
+  }
+  distinct <- unique(ctx$target[!is_blank(ctx$target)])
+  rep(length(distinct) == 1, ctx$n)
+})
+
 # Flags a row whose target VALUE appears on more than one row sharing the
 # same value of the condition's `within` column (e.g. "DSDECOD
 # present_on_multiple_rows_within: USUBJID" - does this subject have more

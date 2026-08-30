@@ -1,0 +1,5 @@
+Filename,Label
+qscg,Clinical Global Impressions
+qspg,Patient Global Impressions
+suppqscg,Supplemental Qualifiers for QSCG
+se,Subject Elements

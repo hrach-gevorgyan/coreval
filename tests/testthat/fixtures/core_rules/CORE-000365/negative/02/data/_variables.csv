@@ -1,0 +1,19 @@
+dataset,variable,label,type,length
+mha,STUDYID,Study Identifier,Char,12
+mha,DOMAIN,Domain Abbreviation,Char,2
+mha,USUBJID,Unique Subject Identifier,Char,8
+mha,MHSEQ,Sequence Number,Num,8
+mha,MHCAT,Category for Medical History,Char,50
+mha,MHTERM,Reported Term for the Medical History,Char,19
+mha,MHEVDTYP,Medical History Event Date Type,Char,13
+mha,MHSTDTC,Start Date/Time of Medical History Event,Char,10
+mha,MHSTDY,Study Day of Start of Observation,Num,8
+mhb,STUDYID,Study Identifier,Char,12
+mhb,DOMAIN,Domain Abbreviation,Char,2
+mhb,USUBJID,Unique Subject Identifier,Char,8
+mhb,MHSEQ,Sequence Number,Num,8
+mhb,MHCAT,Category for Medical History,Char,50
+mhb,MHTERM,Reported Term for the Medical History,Char,19
+mhb,MHEVDTYP,Medical History Event Date Type,Char,13
+mhb,MHSTDTC,Start Date/Time of Medical History Event,Char,10
+mhb,MHSTDY,Study Day of Start of Observation,Num,8

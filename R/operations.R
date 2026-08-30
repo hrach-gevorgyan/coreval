@@ -290,7 +290,11 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
         if (length(allowed) == 0) NULL else scalar_binding(resolve_var_name(allowed, current_domain))
       }
     },
-    extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(tolower(current_domain)) else NULL,
+    # Confirmed against CORE-000538's real fixtures: extract_metadata's
+    # "dataset_name" reports the domain code AS-IS (uppercase, e.g.
+    # "SUPPAE"), unlike the plural dataset_names Operations type (used by
+    # e.g. CORE-000539/540), which is separately confirmed lowercase.
+    extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(current_domain) else NULL,
     dy = compute_dy(op, study, current_dataset),
     NULL
   )

@@ -49,6 +49,31 @@ test_that("prefix_matches_regex/suffix_matches_regex search only the first/last 
   expect_equal(evaluate_check(check2, dataset2, "TS"), c(TRUE, FALSE, FALSE))
 })
 
+test_that("does_not_equal_string_part matches CDISC's reference results.csv (CORE-000538)", {
+  # "RDOMAIN does_not_equal_string_part regex: .{4}(..).*, value: $dataset_name"
+  # extracts characters 5-6 of the dataset name (e.g. "AE" from "SUPPAE")
+  # and flags every row where RDOMAIN doesn't match it.
+  rule <- .coreval_env$data$rules[["CORE-000538"]]
+  for (case in c("negative/01", "negative/02", "negative/03", "positive/01", "positive/02", "positive/03")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000538", case)
+    study <- read_study(file.path(dir, "data"))
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected)
+    }
+  }
+})
+
+test_that("does_not_equal_string_part extracts a regex capture group from value and compares to target", {
+  data <- data.table::data.table(RDOMAIN = c("AE", "CM"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "RDOMAIN", operator = "does_not_equal_string_part", regex = ".{4}(..).*", value = "SUPPAE", value_is_literal = TRUE)
+  expect_equal(evaluate_check(check, dataset, "SUPPAE"), c(FALSE, TRUE))
+})
+
 test_that("contains_all/not_contains_all are dataset-level checks on the column's full value set", {
   data <- data.table::data.table(TSPARMCD = c("AGEMAX", "AGEMIN", "SEXPOP"))
   dataset <- list(data = data, meta = NULL)
