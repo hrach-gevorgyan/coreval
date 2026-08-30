@@ -108,6 +108,42 @@ test_that("assemble_findings reports one finding per group for Sensitivity: Grou
   }
 })
 
+test_that("assemble_findings treats a Domain Presence Check as Dataset-sensitivity regardless of its declared Sensitivity field", {
+  # CORE-000183/CORE-000188 declare "Sensitivity: Record" despite being
+  # Domain Presence Check rules - a whole-study-level FACT (is this domain
+  # present anywhere?) has no per-record concept at all. Every currently-
+  # passing rule of this type declares Sensitivity: Dataset; these two are
+  # authoring inconsistencies, not a genuinely different evaluation shape.
+  data <- data.table::data.table(A = c("X", "Y"))
+  dataset <- list(data = data, meta = NULL)
+  rule <- list(
+    sensitivity = "Record", rule_type = "Domain Presence Check",
+    outcome = list(`Output Variables` = "A")
+  )
+  violations <- c(TRUE, TRUE) # e.g. a dataset-level fact recycled to every row
+  findings <- assemble_findings(rule, dataset, "TS", violations)
+  expect_equal(nrow(findings), 1)
+  expect_true(is.na(findings$Record))
+})
+
+test_that("Domain Presence Check matches CDISC's reference results.csv despite declaring Sensitivity: Record (CORE-000183)", {
+  rule <- .coreval_env$data$rules[["CORE-000183"]]
+  expect_equal(rule$rule_type, "Domain Presence Check")
+  expect_equal(rule$sensitivity, "Record")
+  for (case in c("negative/01", "positive/01", "positive/02")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000183", case)
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual_any <- any(evaluate_rule(rule, study, domain))
+      expected_any <- nrow(results[results$Dataset == domain, ]) > 0 ||
+        nrow(results[results$Dataset == "STUDY", ]) > 0
+      expect_equal(actual_any, expected_any, info = paste(case, domain))
+    }
+  }
+})
+
 test_that("check_study runs end-to-end on a real test case and reports the expected finding", {
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))

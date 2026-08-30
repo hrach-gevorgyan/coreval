@@ -94,7 +94,7 @@ run_case <- function(rule, case_dir) {
 
     expected <- expected_records(results_csv, domain)
 
-    if (identical(rule$sensitivity, "Dataset")) {
+    if (identical(rule$sensitivity, "Dataset") || identical(rule$rule_type, "Domain Presence Check")) {
       actual_any <- any(violations)
       # A whole-study-level rule (e.g. Domain Presence Check's "is DM
       # present anywhere") reports its finding under a "STUDY" sentinel

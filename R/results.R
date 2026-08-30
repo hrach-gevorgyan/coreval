@@ -154,7 +154,15 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   row_id <- dataset$data$.coreval_row_id
   record_of <- function(exploded_row) if (is.null(row_id)) exploded_row else row_id[exploded_row]
 
-  if (identical(rule$sensitivity, "Dataset")) {
+  # A "Domain Presence Check" is inherently a whole-study-level FACT (does
+  # this domain exist anywhere?), never a per-record concept, regardless of
+  # what its own `Sensitivity` field happens to say - confirmed against
+  # every currently-passing rule of this type (all declare Sensitivity:
+  # Dataset), while CORE-000183/CORE-000188 are the only two that instead
+  # (evidently by authoring inconsistency, not intent) say Sensitivity:
+  # Record despite reporting the exact same blank-Record, single-fact shape
+  # under the "STUDY" sentinel dataset.
+  if (identical(rule$sensitivity, "Dataset") || identical(rule$rule_type, "Domain Presence Check")) {
     first_row <- which(violations)[1]
     data.table::data.table(
       Dataset = domain, Record = NA_integer_,
