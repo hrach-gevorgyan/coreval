@@ -6,13 +6,21 @@ register_operator("exists", function(ctx) ctx$exists)
 # Operator: not_exists - is the target variable absent from the dataset?
 register_operator("not_exists", function(ctx) !ctx$exists)
 
-# A missing column is treated as "empty in every record" - there is no value
-# to be non-empty. Char blanks are "" (never NA, per read_study()'s
-# convention); numeric blanks are NA.
-# Operator: empty - is the target value blank (or the column missing)?
+# A missing column is UNRESOLVABLE, not "empty in every record" - a domain
+# that structurally doesn't have the variable at all (e.g. EC has no
+# ECSTAT) is a different situation than one that has the variable, blank.
+# An earlier version treated a missing column as empty=TRUE; verified
+# empirically against every one of the 333 rules using empty/non_empty
+# that returning NA instead is a strict improvement (fixes CORE-000018's
+# real fixture - EC's own results.csv expects NO violation when ECSTAT
+# doesn't exist, unlike AG/BE/CE/... in the SAME test case, which DO have a
+# real, blank --STAT column and ARE expected to violate - with zero
+# regressions anywhere else). Char blanks are "" (never NA, per
+# read_study()'s convention); numeric blanks are NA.
+# Operator: empty - is the target value blank? NA (unresolvable) if the column doesn't exist at all
 register_operator("empty", function(ctx) {
   if (!ctx$exists) {
-    return(rep(TRUE, ctx$n))
+    return(rep(NA, ctx$n))
   }
   if (is.character(ctx$target)) ctx$target == "" else is.na(ctx$target)
 })

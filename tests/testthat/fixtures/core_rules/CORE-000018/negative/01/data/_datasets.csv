@@ -1,0 +1,14 @@
+Filename,Label
+ag,Procedure Agents
+ec,Exposure as Collected
+ex,Exposure
+ml,Meal Data
+pr,Procedures
+su,Substance Use
+ae,Adverse Events
+be,Biospecimen Events
+ce,Clinical Events
+ds,Disposition
+dv,Protocol Deviations
+ho,Healthcare Encounters
+mh,Medical History

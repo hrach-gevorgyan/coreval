@@ -1,0 +1,108 @@
+dataset,variable,label,type,length
+ag,STUDYID,Study Identifier,Char,50
+ag,DOMAIN,Domain Abbreviation,Char,50
+ag,USUBJID,Unique Subject Identifier,Char,50
+ag,AGSEQ,Sequence Number,Num,8
+ag,AGTRT,Reported Agent Name,Char,50
+ag,AGPRESP,AG Pre-Specified,Char,50
+ag,AGOCCUR,AG Occurrence,Char,50
+ag,AGSTAT,Completion Status,Char,50
+cm,STUDYID,Study Identifier,Char,50
+cm,DOMAIN,Domain Abbreviation,Char,50
+cm,USUBJID,Unique Subject Identifier,Char,50
+cm,CMSEQ,Sequence Number,Num,8
+cm,CMTRT,"Reported Name of Drug, Med, or Therapy",Char,50
+cm,CMPRESP,CM Pre-specified,Char,50
+cm,CMOCCUR,CM Occurrence,Char,50
+cm,CMSTAT,Completion Status,Char,50
+ec,STUDYID,Study Identifier,Char,12
+ec,DOMAIN,Domain Abbreviation,Char,2
+ec,USUBJID,Unique Subject Identifier,Char,8
+ec,ECSEQ,Sequence Number,Num,8
+ec,ECTRT,Name of Treatment,Char,10
+ec,ECPRESP,Pre-Specified,Char,1
+ec,ECOCCUR,Occurrence,Char,1
+ex,STUDYID,Study Identifier,Char,12
+ex,DOMAIN,Domain Abbreviation,Char,2
+ex,USUBJID,Unique Subject Identifier,Char,8
+ex,EXSEQ,Sequence Number,Num,8
+ex,EXTRT,Name of Treatment,Char,10
+ex,EXDOSE,Dose,Num,8
+ex,EXDOSU,Dose Units,Char,2
+ml,STUDYID,Study Identifier,Char,50
+ml,DOMAIN,Domain Abbreviation,Char,50
+ml,USUBJID,Unique Subject Identifier,Char,50
+ml,MLSEQ,Sequence Number,Num,8
+ml,MLTRT,Name of Meal,Char,50
+ml,MLPRESP,ML Pre-specified,Char,50
+ml,MLOCCUR,ML Occurrence,Char,50
+ml,MLSTAT,Completion Status,Char,50
+pr,STUDYID,Study Identifier,Char,50
+pr,DOMAIN,Domain Abbreviation,Char,50
+pr,USUBJID,Unique Subject Identifier,Char,50
+pr,PRSEQ,Sequence Number,Num,8
+pr,PRTRT,Reported Name of Procedure,Char,50
+pr,PRPRESP,Pre-specified,Char,50
+pr,PROCCUR,Occurrence,Char,50
+pr,PRSTAT,Completion Status,Char,50
+su,STUDYID,Study Identifier,Char,50
+su,DOMAIN,Domain Abbreviation,Char,50
+su,USUBJID,Unique Subject Identifier,Char,50
+su,SUSEQ,Sequence Number,Num,8
+su,SUTRT,Reported Name of Substance,Char,50
+su,SUPRESP,SU Pre-Specified,Char,50
+su,SUOCCUR,SU Occurrence,Char,50
+su,SUSTAT,Completion Status,Char,50
+ae,STUDYID,Study Identifier,Char,12
+ae,DOMAIN,Domain Abbreviation,Char,2
+ae,USUBJID,Unique Subject Identifier,Char,8
+ae,AESEQ,Sequence Number,Num,8
+ae,AELNKID,Link ID,Char,50
+ae,AETERM,Reported Term for the Adverse Event,Char,200
+ae,AEPRESP,Pre-Specified Adverse Event,Char,50
+be,STUDYID,Study Identifier,Char,50
+be,DOMAIN,Domain Abbreviation,Char,50
+be,USUBJID,Unique Subject Identifier,Char,50
+be,BESEQ,Sequence Number,Num,8
+be,BETERM,Reported Term for the Biospecimen Event,Char,50
+be,BEPRESP,Biospecimen Events Pre-specified,Char,50
+be,BEOCCUR,Biospecimen Events Occurrence,Char,50
+be,BESTAT,Completion Status,Char,50
+ce,STUDYID,Study Identifier,Char,50
+ce,DOMAIN,Domain Abbreviation,Char,50
+ce,USUBJID,Unique Subject Identifier,Char,50
+ce,CESEQ,Sequence Number,Num,8
+ce,CETERM,Reported Term for the Clinical Event,Char,50
+ce,CEPRESP,Clinical Event Pre-specified,Char,50
+ce,CEOCCUR,Clinical Event Occurrence,Char,50
+ce,CESTAT,Completion Status,Char,50
+ds,STUDYID,Study Identifier,Char,12
+ds,DOMAIN,Domain Abbreviation,Char,2
+ds,USUBJID,Unique Subject Identifier,Char,8
+ds,DSSEQ,Sequence Number,Num,8
+ds,DSTERM,Reported Term for the Disposition Event,Char,200
+ds,DSDECOD,Standardized Disposition Term,Char,29
+ds,DSCAT,Category for Disposition Event,Char,18
+ds,DSSCAT,Subcategory for Disposition Event,Char,19
+dv,STUDYID,Study Identifier,Char,50
+dv,DOMAIN,Domain Abbreviation,Char,50
+dv,USUBJID,Unique Subject Identifier,Char,50
+dv,DVSEQ,Sequence Number,Num,8
+dv,DVTERM,Protocol Deviation Term,Char,50
+dv,DVDECOD,Protocol Deviation Coded Term,Char,50
+ho,STUDYID,Study Identifier,Char,50
+ho,DOMAIN,Domain Abbreviation,Char,50
+ho,USUBJID,Unique Subject Identifier,Char,50
+ho,HOSEQ,Sequence Number,Num,8
+ho,HOTERM,Healthcare Encounter Term,Char,50
+ho,HOPRESP,Pre-Specified Healthcare Encounter,Char,50
+ho,HOOCCUR,Healthcare Encounter Occurrence,Char,50
+ho,HOSTAT,Completion Status,Char,50
+mh,STUDYID,Study Identifier,Char,50
+mh,DOMAIN,Domain Abbreviation,Char,50
+mh,USUBJID,Unique Subject Identifier,Char,50
+mh,MHSEQ,Sequence Number,Num,8
+mh,MHTERM,Reported Term for the Medical History,Char,50
+mh,MHPRESP,Medical History Event Pre-Specified,Char,50
+mh,MHOCCUR,Medical History Occurrence,Char,50
+mh,MHSTAT,Completion Status,Char,50
