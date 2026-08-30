@@ -1,0 +1,144 @@
+Authorities:
+  - Organization: CDISC
+    Standards:
+      - Name: SENDIG
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.0
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.0"
+      - Name: SENDIG
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.1
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.1"
+      - Name: SENDIG
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.1.1
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "3.1.1"
+      - Name: SENDIG-DART
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.1
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.1"
+      - Name: SENDIG-DART
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.1.1
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.2"
+      - Name: SENDIG-GENETOX
+        References:
+          - Citations:
+              - Cited Guidance:
+                  Numeric representation of the planned test article dose level. For dose
+                  levels that vary over time within a set, a semicolon-delimited string without spaces can
+                  be used (e.g., 100;150;7). For more complex dosing regimens, sponsor should enter "SEE
+                  PROTOCOL".
+                Document: IG v3.1.1
+                Item: Specification
+                Section: 7.4.2
+            Origin: SEND Conformance Rules
+            Rule Identifier:
+              Id: "SEND240.1"
+              Version: "1"
+            Version: "5.0"
+        Version: "1.0"
+Check:
+  all:
+    - name: TXPARMCD
+      operator: equal_to
+      value:
+        TRTDOS
+        # check whether value is a number
+    - name: TXVAL
+      operator: not_matches_regex
+      value:
+        "[+-]?([0-9]*[.])?[0-9]+$"
+        # check whether a comma-separated list of values
+    - name: TXVAL
+      operator:
+        not_matches_regex
+        # see https://stackoverflow.com/questions/44374088/regex-to-match-comma-separated-numbers-or-stop-full-match-only
+      value: ^(\s*-?\d+(\.\d+)?)(\s*;\s*-?\d+(\.\d+)?)*$
+    - name: TXVAL
+      operator: not_equal_to
+      value: SEE PROTOCOL
+Core:
+  Id: CORE-000576
+  Status: Published
+  Version: "1"
+Description: The value of TRTDOS is either a number, a semicolon-delimited string containing numbers
+  without spaces, or "SEE PROTOCOL" for more complex dosing regimens.
+Executability: Fully Executable
+Outcome:
+  Message: The value of TXVAL for TXPARMCD=TRTDOS is neither a number, a semicolon-delimited string
+    containing numbers without spaces, or "SEE PROTOCOL"
+Rule Type: Record Data
+Scope:
+  Classes:
+    Include:
+      - TRIAL DESIGN
+  Domains:
+    Include:
+      - TX
+Sensitivity: Record

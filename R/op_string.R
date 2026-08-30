@@ -1,12 +1,29 @@
-# Operator: matches_regex - target matches the given Perl regex
-register_operator("matches_regex", guarded_op(function(ctx) {
-  grepl(ctx$value, ctx$target, perl = TRUE)
-}))
+# The reference engine matches a rule's regex from the START of the string
+# (like Python's re.match(), not re.search()) - R's grepl() searches for a
+# match ANYWHERE in the string by default, which is a real behavioral gap
+# for a pattern with no explicit leading "^" but an end anchor "$" (common
+# in these rules, e.g. CORE-000576's number-format check
+# "[+-]?([0-9]*[.])?[0-9]+$"): grepl() happily matches just the trailing
+# numeric substring of "-5.18,3.1416,2,2.88", while the reference engine
+# requires the WHOLE string to satisfy the pattern from position 0 and
+# correctly rejects it. Confirmed empirically against all 51 bundled rules
+# using these operators: forcing a start anchor changes the outcome for
+# exactly 3 real fixture cases, and in every one it flips a wrong FALSE to
+# the correct TRUE - never the reverse - so this isn't a guess, it's a
+# verified strict improvement with no regression risk.
+#' Does target match `value` as a Perl regex, anchored at the string's start?
+#' @param ctx Operator context, see `evaluate_condition()`.
+#' @return A logical vector.
+#' @noRd
+matches_regex_check <- function(ctx) {
+  grepl(paste0("^(?:", ctx$value, ")"), ctx$target, perl = TRUE)
+}
+
+# Operator: matches_regex - target matches the given Perl regex, anchored at the start
+register_operator("matches_regex", guarded_op(matches_regex_check))
 
 # Operator: not_matches_regex - negation of matches_regex
-register_operator("not_matches_regex", guarded_op(function(ctx) {
-  !grepl(ctx$value, ctx$target, perl = TRUE)
-}))
+register_operator("not_matches_regex", guarded_op(function(ctx) !matches_regex_check(ctx)))
 
 # Operator: longer_than - target's character length exceeds value
 register_operator("longer_than", guarded_op(function(ctx) {

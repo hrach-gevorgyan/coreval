@@ -1,0 +1,45 @@
+dataset,variable,label,type,length
+dm,STUDYID,Study Identifier,Char,50
+dm,DOMAIN,Domain Abbreviation,Char,50
+dm,USUBJID,Unique Subject Identifier,Char,50
+dm,SUBJID,Subject Identifier for the Study,Char,50
+dm,RFSTDTC,Subject Reference Start Date/Time,Char,50
+dm,RFENDTC,Subject Reference End Date/Time,Char,50
+dm,RFXSTDTC,Date/Time of First Study Treatment,Char,50
+dm,RFXENDTC,Date/Time of Last Study Treatment,Char,50
+dm,RFICDTC,Date/Time of Informed Consent,Char,50
+dm,RFPENDTC,Date/Time of End of Participation,Char,50
+dm,DTHDTC,Date/Time of Death,Char,50
+dm,DTHFL,Subject Death Flag,Char,50
+dm,SITEID,Study Site Identifier,Char,50
+dm,BRTHDTC,Date/Time of Birth,Char,50
+dm,AGE,Age,Num,50
+dm,AGEU,Age Units,Char,50
+dm,SEX,Sex,Char,50
+dm,RACE,Race,Char,50
+dm,ETHNIC,Ethnicity,Char,50
+dm,ARMCD,Planned Arm Code,Char,50
+dm,ARM,Description of Planned Arm,Char,50
+dm,ACTARMCD,Actual Arm Code,Char,50
+dm,ACTARM,Description of Actual Arm,Char,50
+dm,ARMNRS,Reason Arm and/or Actual Arm is Null,Char,50
+dm,ACTARMUD,Description of Unplanned Actual Arm,Char,50
+dm,COUNTRY,Country,Char,50
+ta,STUDYID,Study Identifier,Char,50
+ta,DOMAIN,Domain Abbreviation,Char,50
+ta,ARMCD,Planned Arm Code,Char,50
+ta,ARM,Description of Planned Arm,Char,50
+ta,TAETORD,Planned Order of Element within Arm,Num,50
+ta,ETCD,Element Code,Char,50
+ta,ELEMENT,Description of Element,Char,50
+ta,TABRANCH,Branch,Char,50
+ta,TATRANS,Transition Rule,Char,50
+ta,EPOCH,Epoch,Char,50
+tx,STUDYID,Study Identifier,Char,50
+tx,DOMAIN,Domain Abbreviation,Char,50
+tx,SETCD,Set Code,Char,8
+tx,SET,Set Description,Char,40
+tx,TXSEQ,Sequence Number,Num,8
+tx,TXPARMCD,Trial Set Parameter Short Name ,Char,8
+tx,TXPARM,Trial Set Parameter ,Char,40
+tx,TXVAL,Trial Set Parameter Value ,Char,100

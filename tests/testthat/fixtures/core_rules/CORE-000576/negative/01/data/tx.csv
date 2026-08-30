@@ -1,0 +1,12 @@
+STUDYID,DOMAIN,SETCD,SET,TXSEQ,TXPARMCD,TXPARM,TXVAL
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",1,ARMCD ,Arm Code,ARM1
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",2,SPGRPCD ,Sponsor-defined Group Code,GRP1
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",3,TCNTRL ,Control Type,Vehicle Control
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily ",4,ARMCD ,Arm Code,ARM2
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily ",5,SPGRPCD ,Sponsor-defined Group Code,GRP2
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily ",6,GRPLBL ,Group Label,Label 2
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",7,TRTDOS,Dose Level,33.5
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",8,TRTDOS,Dose Level,SEE PROTOCOL
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",9,TRTDOS,Dose Level,-5.18;3.1416;2;2.88
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",10,TRTDOS,Dose Level,invalid
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily ",11,TRTDOS,Dose Level,"-5.18,3.1416,2,2.88"

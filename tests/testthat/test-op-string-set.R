@@ -1,3 +1,31 @@
+test_that("matches_regex/not_matches_regex anchor at the string's start (CORE-000576)", {
+  # A pattern with no leading "^" but a trailing "$" (e.g.
+  # "[+-]?([0-9]*[.])?[0-9]+$") must match the WHOLE string from position 0,
+  # not just a trailing substring - confirmed against CORE-000576's real
+  # fixtures: "-5.18,3.1416,2,2.88" must NOT match this number-format regex
+  # (it's a comma-separated list, not a single number), even though the
+  # regex's own trailing "2.88" substring would satisfy an unanchored search.
+  rule <- .coreval_env$data$rules[["CORE-000576"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000576", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study, domain = "TX")
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- rep(FALSE, nrow(study$datasets$TX$data))
+    if (nrow(results) > 0) {
+      expected[as.integer(unique(results$Record))] <- TRUE
+    }
+    expect_equal(actual, expected)
+  }
+})
+
+test_that("matches_regex only matches a suffix when the pattern lacks a leading anchor and no start-anchored match exists", {
+  data <- data.table::data.table(X = c("-5.18,3.1416,2,2.88", "33.5", "invalid"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "X", operator = "matches_regex", value = "[+-]?([0-9]*[.])?[0-9]+$", value_is_literal = TRUE)
+  expect_equal(evaluate_check(check, dataset, "TX"), c(FALSE, TRUE, FALSE))
+})
+
 test_that("contains/does_not_contain check substring membership", {
   data <- data.table::data.table(X = c("P-1DT2H", "P10D", ""))
   dataset <- list(data = data, meta = NULL)

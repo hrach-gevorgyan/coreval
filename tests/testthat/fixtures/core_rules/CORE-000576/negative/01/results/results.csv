@@ -1,0 +1,5 @@
+Dataset,Record,Variable,Value
+TX,10,TXPARMCD,TRTDOS
+TX,10,TXVAL,invalid
+TX,11,TXPARMCD,TRTDOS
+TX,11,TXVAL,"-5.18,3.1416,2,2.88"
