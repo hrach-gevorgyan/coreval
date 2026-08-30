@@ -1,0 +1,49 @@
+dataset,variable,label,type,length
+fa,STUDYID,Study Identifier,Char,12
+fa,DOMAIN,Domain Abbreviation,Char,2
+fa,USUBJID,Unique Subject Identifier,Char,8
+fa,FASEQ,Sequence Number,Num,8
+fa,FALNKGRP,Link Group ID,Char,200
+fa,FATESTCD,Findings About Test Short Name,Char,5
+fa,FATEST,Findings About Test Name,Char,20
+fa,FAOBJ,Object of the Observation,Char,10
+fa,FACAT,Category for Findings About,Char,23
+fa,FAORRES,Result or Finding in Original Units,Char,8
+fa,FASTRESC,Character Result/Finding in Std Format,Char,8
+fa,FALOC,Location of the Finding About,Char,3
+fa,VISITNUM,Visit Number,Num,8
+fa,EPOCH,Epoch,Char,9
+fa,FADTC,Date/Time of Collection,Char,10
+fa,FADY,Study Day of Collection,Num,8
+facm,STUDYID,Study Identifier,Char,12
+facm,DOMAIN,Domain Abbreviation,Char,2
+facm,USUBJID,Unique Subject Identifier,Char,8
+facm,FASEQ,Sequence Number,Num,8
+facm,FALNKGRP,Link Group ID,Char,200
+facm,FATESTCD,Findings About Test Short Name,Char,5
+facm,FATEST,Findings About Test Name,Char,20
+facm,FAOBJ,Object of the Observation,Char,10
+facm,FACAT,Category for Findings About,Char,23
+facm,FAORRES,Result or Finding in Original Units,Char,8
+facm,FASTRESC,Character Result/Finding in Std Format,Char,8
+facm,FALOC,Location of the Finding About,Char,3
+facm,VISITNUM,Visit Number,Num,8
+facm,EPOCH,Epoch,Char,9
+facm,FADTC,Date/Time of Collection,Char,10
+facm,FADY,Study Day of Collection,Num,8
+fa1,STUDYID,Study Identifier,Char,12
+fa1,DOMAIN,Domain Abbreviation,Char,2
+fa1,USUBJID,Unique Subject Identifier,Char,8
+fa1,FASEQ,Sequence Number,Num,8
+fa1,FALNKGRP,Link Group ID,Char,200
+fa1,FATESTCD,Findings About Test Short Name,Char,5
+fa1,FATEST,Findings About Test Name,Char,20
+fa1,FAOBJ,Object of the Observation,Char,10
+fa1,FACAT,Category for Findings About,Char,23
+fa1,FAORRES,Result or Finding in Original Units,Char,8
+fa1,FASTRESC,Character Result/Finding in Std Format,Char,8
+fa1,FALOC,Location of the Finding About,Char,3
+fa1,VISITNUM,Visit Number,Num,8
+fa1,EPOCH,Epoch,Char,9
+fa1,FADTC,Date/Time of Collection,Char,10
+fa1,FADY,Study Day of Collection,Num,8

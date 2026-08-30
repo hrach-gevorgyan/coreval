@@ -260,7 +260,16 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
       scalar_binding(count)
     },
     study_domains = scalar_binding(sort(names(study$datasets))),
-    dataset_names = scalar_binding(sort(tolower(names(study$datasets)))),
+    # Matches the reference engine's own derivation (csv_metadata_reader.py:
+    # dataset_name = Filename.upper() when there's no separate "Dataset
+    # Name" column) - confirmed directly against CORE-000539/CORE-000540's
+    # real fixtures, whose own reported $list_dataset_names values are
+    # UPPERCASE (e.g. "['QS1', 'QSAE']", "['FA', 'FA1', 'FACM']"). An
+    # earlier version used tolower() here - an unverified assumption that
+    # silently broke every use of this binding downstream (e.g.
+    # prefix_is_not_contained_by comparing an uppercase dataset_name
+    # against a lowercase list never matches).
+    dataset_names = scalar_binding(sort(toupper(names(study$datasets)))),
     domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
     domain_label = scalar_binding(if (is.null(ds)) NA_character_ else ds$label),
     required_variables = {

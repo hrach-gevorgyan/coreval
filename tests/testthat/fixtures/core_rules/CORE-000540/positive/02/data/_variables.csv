@@ -1,0 +1,58 @@
+dataset,variable,label,type,length
+cm,STUDYID,Study Identifier,Char,12
+cm,DOMAIN,Domain Abbreviation,Char,2
+cm,USUBJID,Unique Subject Identifier,Char,8
+cm,CMSEQ,Sequence Number,Num,8
+cm,CMTRT,"Reported Name of Drug, Med, or Therapy",Char,200
+cm,CMINDC,Indication,Char,200
+cm,CMDOSE,Dose per Administration,Num,8
+cm,CMDOSU,Dose Units,Char,6
+cm,CMDOSFRQ,Dosing Frequency per Interval,Char,3
+cm,CMROUTE,Route of Administration,Char,24
+cm,EPOCH,Epoch,Char,9
+cm,CMSTDTC,Start Date/Time of Medication,Char,10
+cm,CMENDTC,End Date/Time of Medication,Char,10
+cm,CMSTDY,Study Day of Start of Medication,Num,8
+cm,CMENDY,Study Day of End of Medication,Num,8
+cm,CMENRTPT,End Relative to Reference Time Point,Char,7
+cm,CMENTPT,End Reference Time Point,Char,10
+facm,STUDYID,Study Identifier,Char,12
+facm,DOMAIN,Domain Abbreviation,Char,2
+facm,USUBJID,Unique Subject Identifier,Char,8
+facm,FASEQ,Sequence Number,Num,8
+facm,FALNKGRP,Link Group ID,Char,200
+facm,FATESTCD,Findings About Test Short Name,Char,5
+facm,FATEST,Findings About Test Name,Char,20
+facm,FAOBJ,Object of the Observation,Char,10
+facm,FACAT,Category for Findings About,Char,23
+facm,FAORRES,Result or Finding in Original Units,Char,8
+facm,FASTRESC,Character Result/Finding in Std Format,Char,8
+facm,FALOC,Location of the Finding About,Char,3
+facm,VISITNUM,Visit Number,Num,8
+facm,EPOCH,Epoch,Char,9
+facm,FADTC,Date/Time of Collection,Char,10
+facm,FADY,Study Day of Collection,Num,8
+mh,STUDYID,Study Identifier,Char,12
+mh,DOMAIN,Domain Abbreviation,Char,2
+mh,USUBJID,Unique Subject Identifier,Char,8
+mh,MHSEQ,Sequence Number,Num,8
+mh,MHTERM,Reported Term for the Medical History,Char,19
+mh,MHEVDTYP,Medical History Event Date Type,Char,13
+mh,MHSTDTC,Start Date/Time of Medical History Event,Char,10
+mh,MHSTDY,Study Day of Start of Observation,Num,8
+famh,STUDYID,Study Identifier,Char,12
+famh,DOMAIN,Domain Abbreviation,Char,2
+famh,USUBJID,Unique Subject Identifier,Char,8
+famh,FASEQ,Sequence Number,Num,8
+famh,FALNKGRP,Link Group ID,Char,200
+famh,FATESTCD,Findings About Test Short Name,Char,5
+famh,FATEST,Findings About Test Name,Char,20
+famh,FAOBJ,Object of the Observation,Char,10
+famh,FACAT,Category for Findings About,Char,23
+famh,FAORRES,Result or Finding in Original Units,Char,8
+famh,FASTRESC,Character Result/Finding in Std Format,Char,8
+famh,FALOC,Location of the Finding About,Char,3
+famh,VISITNUM,Visit Number,Num,8
+famh,EPOCH,Epoch,Char,9
+famh,FADTC,Date/Time of Collection,Char,10
+famh,FADY,Study Day of Collection,Num,8

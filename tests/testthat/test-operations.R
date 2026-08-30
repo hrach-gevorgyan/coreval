@@ -254,3 +254,32 @@ test_that("study_domains/dataset_names/variable_exists/domain_is_custom are loca
   expect_false(compute_operation(list(id = "$c", operator = "domain_is_custom"), study, "AE", study$datasets$AE)$value)
   expect_true(compute_operation(list(id = "$c2", operator = "domain_is_custom"), study, "ZZ", study$datasets$ZZ)$value)
 })
+
+test_that("dataset_names is UPPERCASE, matching the reference engine's own Filename.upper() convention", {
+  # An earlier version used tolower() - an unverified assumption, contradicted
+  # directly by CORE-000539/CORE-000540's own reference results.csv, whose
+  # reported $list_dataset_names values are uppercase (e.g. "['QS1', 'QSAE']",
+  # "['FA', 'FA1', 'FACM']") - traced to csv_metadata_reader.py's own
+  # `str(single_match["Filename"]).upper()`.
+  study <- list(datasets = list(qs1 = list(data = data.table::data.table(A = 1), meta = NULL)))
+  expect_equal(compute_operation(list(id = "$d", operator = "dataset_names"), study, "qs1", study$datasets$qs1)$value, "QS1")
+})
+
+test_that("prefix_is_not_contained_by correctly identifies a missing parent domain (CORE-000539/CORE-000540)", {
+  for (id in c("CORE-000539", "CORE-000540")) {
+    rule <- .coreval_env$data$rules[[id]]
+    for (polarity in c("negative", "positive")) {
+      case_dirs <- Sys.glob(test_path("fixtures", "core_rules", id, polarity, "*"))
+      for (dir in case_dirs) {
+        study <- read_study(file.path(dir, "data"))
+        results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+        for (domain in names(study$datasets)) {
+          if (!rule_applies_to_domain(rule, domain)) next
+          actual <- evaluate_rule(rule, study, domain)
+          expected_any <- nrow(results[results$Dataset == domain, ]) > 0
+          expect_equal(any(actual), expected_any, info = paste(id, dir, domain))
+        }
+      }
+    }
+  }
+})
