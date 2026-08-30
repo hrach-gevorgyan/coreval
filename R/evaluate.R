@@ -16,6 +16,76 @@ resolve_var_name <- function(name, domain) {
   )
 }
 
+# A RELREC-joined column name can itself use a "--"-style template, but with
+# "**" instead of the CURRENT domain's code - since the joined columns come
+# from whichever domain RELREC actually paired this row with, which can vary
+# ROW BY ROW (e.g. one FA row's RELREC partner is AE, another's is DS).
+# "RELREC.**TERM" therefore means "this row's own RELREC partner domain's
+# TERM variable" - confirmed against CORE-000744's real fixture, where FA
+# rows linked to different AE records via RELREC report
+# `RELREC.**TERM = "FATIGUE"` (AETERM) for one row and `"INJECTION SITE
+# REACTION"` for another, and `RELREC.**DECOD`/`RELREC.**TRT` (AE has no
+# AEDECOD/AETRT) report the literal text `"Not in dataset"` rather than
+# blank/NA - a real fallback value the reference engine reports, not a
+# missing-data sentinel. The literal "**" in the OUTPUT VARIABLE label is
+# never resolved (results.csv's own Variable column keeps it verbatim) -
+# only the per-row VALUE is domain-substituted.
+#' Is `name` a RELREC-joined "**"-wildcarded variable template (e.g. "RELREC.**TERM")?
+#' @param name A variable name (or vector of them).
+#' @return A logical vector.
+#' @noRd
+is_relrec_wildcard <- function(name) {
+  is.character(name) & grepl("^[^.]+\\.\\*\\*.+$", name)
+}
+
+#' Resolve a RELREC-joined "**"-wildcarded variable template to its per-row values
+#'
+#' Two distinct fallbacks, per the reference engine's own behavior: a row
+#' with NO RELREC partner at all (or whose partner domain's schema simply
+#' doesn't have this variable) resolves to a genuinely BLANK value for
+#' CHECK EVALUATION purposes - confirmed necessary against CORE-000744's
+#' `negative/02` fixture, where FA rows with no RELREC entry at all must
+#' NOT be flagged by `not_equal_to` (a blank target/comparator is a
+#' non-violation per the reference truth table, whereas comparing against a
+#' fabricated non-blank placeholder string would wrongly flag every
+#' unrelated row). `for_display = TRUE` instead reports the reference
+#' engine's own literal `"Not in dataset"` text for a genuinely
+#' schema-missing variable (e.g. AE has no AETRT) - but NOT for a row with
+#' no RELREC partner, since a real violation (and therefore this value ever
+#' being rendered) can't happen on such a row - confirmed against
+#' CORE-000744's own reported Values, which show blank (not "Not in
+#' dataset") for a variable that DOES exist in the partner's schema but
+#' happens to be blank on that particular row (e.g. `RELREC.**DECOD`).
+#' @param name The wildcarded name, e.g. `"RELREC.**TERM"`.
+#' @param dataset The dataset being checked (post RELREC join).
+#' @param for_display Report the reference engine's own `"Not in dataset"`
+#'   text for a schema-missing variable, instead of blank.
+#' @return A character vector, one element per row.
+#' @noRd
+resolve_relrec_wildcard_value <- function(name, dataset, for_display = FALSE) {
+  n <- nrow(dataset$data)
+  missing_text <- if (for_display) "Not in dataset" else ""
+  m <- regmatches(name, regexec("^([^.]+)\\.\\*\\*(.+)$", name))[[1]]
+  prefix <- m[2]
+  suffix <- m[3]
+  domain_col <- paste0(prefix, ".DOMAIN")
+  if (!(domain_col %in% names(dataset$data))) {
+    return(rep(missing_text, n))
+  }
+  row_domains <- toupper(dataset$data[[domain_col]])
+  result <- rep("", n)
+  for (d in unique(stats::na.omit(row_domains))) {
+    idx <- which(row_domains == d)
+    col <- paste0(prefix, ".", d, suffix)
+    result[idx] <- if (col %in% names(dataset$data)) {
+      as.character(dataset$data[[col]][idx])
+    } else {
+      missing_text
+    }
+  }
+  result
+}
+
 # Resolves a condition's comparison target per `value_is_literal`. Returns
 # NULL only if the condition has no `value` at all.
 #
@@ -62,6 +132,9 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
     ref_name <- resolve_var_name(condition$value, domain)
     if (ref_name %in% names(dataset$data)) {
       return(dataset$data[[ref_name]])
+    }
+    if (is_relrec_wildcard(ref_name)) {
+      return(resolve_relrec_wildcard_value(ref_name, dataset))
     }
   }
   condition$value

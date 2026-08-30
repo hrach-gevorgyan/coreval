@@ -180,6 +180,20 @@ apply_relrec_match <- function(dataset, study, current_domain) {
       for (ri in qualifying_idx) {
         key_val <- if (!is_blank(p$IDVARVAL)) p$IDVARVAL else as.character(left[[m$IDVAR]][ri])
         right_idx <- which(as.character(right[[p$IDVAR]]) == key_val)
+        # A GROUP-level relationship (both sides' RELREC row leave USUBJID
+        # blank, common when IDVAR/IDVARVAL alone are meant to identify the
+        # group) still only ever links records of the SAME subject in
+        # practice - RELREC's own IDVAR value (e.g. a shared link-group ID)
+        # is not guaranteed unique across different subjects. Confirmed
+        # against CORE-000744's real fixture: with no subject constraint,
+        # an FA row's FALNKGRP matched an AE row sharing that same numeric
+        # AELNKID under a COMPLETELY DIFFERENT USUBJID, fabricating a bogus
+        # cross-subject relationship. Only applies when RELREC didn't
+        # already pin an explicit partner USUBJID itself (`p$USUBJID`) -
+        # that case already narrows correctly on its own.
+        if (is_blank(p$USUBJID) && "USUBJID" %in% names(right) && "USUBJID" %in% names(left)) {
+          right_idx <- right_idx[as.character(right$USUBJID[right_idx]) == as.character(left$USUBJID[ri])]
+        }
         for (rj in right_idx) {
           right_row <- right[rj, ]
           data.table::setnames(right_row, names(right_row), paste0("RELREC.", names(right_row)))
@@ -190,19 +204,25 @@ apply_relrec_match <- function(dataset, study, current_domain) {
   }
 
   if (length(matched) == 0) {
-    return(dataset)
+    return(list(data = left[0, ], meta = dataset$meta))
   }
+  # Unlike the generic Keys-based join (which keeps every row, since a real
+  # study should have e.g. a DM record for every USUBJID), a RELREC
+  # relationship is itself the thing being checked - a row with NO RELREC
+  # partner at all has nothing to compare, and a rule's Check typically has
+  # no explicit guard for that (unlike e.g. CORE-000757's own defensive
+  # `RELREC.FAOBJ non_empty` condition). Confirmed against CORE-000744's
+  # real fixtures: FA records with no RELREC entry at all must never be
+  # flagged, but a `not_equal_to` comparison against a genuinely blank
+  # comparator is a REAL violation per the reference engine's own truth
+  # table ("Populated" target vs "" comparator -> True) - so a left join
+  # (keeping unmatched rows with blank joined columns) would wrongly flag
+  # them. Dropping unmatched rows entirely (an inner join, matching the
+  # reference engine's own default for this join type) is the only way to
+  # keep them out of consideration; `.coreval_row_id` still lets any
+  # surviving row's violation map back to its correct original Record.
   matched_dt <- data.table::rbindlist(matched, fill = TRUE)
-  matched_ids <- unique(matched_dt$.coreval_row_id)
-  unmatched <- left[!(left$.coreval_row_id %in% matched_ids), ]
-  if (nrow(unmatched) > 0) {
-    right_only_cols <- setdiff(names(matched_dt), names(left))
-    for (col in right_only_cols) {
-      unmatched[[col]] <- matched_dt[[col]][NA_integer_]
-    }
-  }
-  merged <- data.table::rbindlist(list(matched_dt, unmatched), use.names = TRUE, fill = TRUE)
-  merged <- merged[order(merged$.coreval_row_id)]
+  merged <- matched_dt[order(matched_dt$.coreval_row_id)]
   list(data = merged, meta = dataset$meta)
 }
 

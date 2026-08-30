@@ -1,0 +1,5 @@
+Dataset,Record,Variable,Value
+FA,2,FAOBJ,NOT DRUG Z
+FA,2,RELREC.**DECOD,Not in dataset
+FA,2,RELREC.**TERM,Not in dataset
+FA,2,RELREC.**TRT,DRUG Z

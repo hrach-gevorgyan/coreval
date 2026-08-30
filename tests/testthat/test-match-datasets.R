@@ -219,6 +219,30 @@ test_that("a RELREC relationship join matches CDISC's reference results.csv (COR
   }
 })
 
+test_that("a RELREC group-level match with wildcard comparisons matches CDISC's reference results.csv (CORE-000744)", {
+  # FAOBJ compared against RELREC.**TERM/**TRT/**DECOD - the reference
+  # engine's own "**" domain wildcard, resolved per-row to whichever
+  # partner domain RELREC actually joined (here always AE). Exercises two
+  # bugs fixed together: (1) a FA row with NO RELREC partner at all must
+  # not be flagged just because the wildcard's fallback value is blank
+  # (needs an inner join, not a left join, for RELREC matches); (2) a
+  # group-level RELREC pairing (IDVARVAL blank on both sides) must still
+  # only link records of the SAME USUBJID - without that, negative/01's
+  # FALNKGRP-based grouping cross-matched unrelated subjects' AE records.
+  rule <- .coreval_env$data$rules[["CORE-000744"]]
+  for (case in c(
+    "negative/01", "negative/02", "negative/03", "negative/04",
+    "positive/01", "positive/02", "positive/03", "positive/04"
+  )) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000744", case)
+    study <- read_study(file.path(dir, "data"))
+    actual <- which(evaluate_rule(rule, study, domain = "FA"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "FA"])))
+    expect_equal(sort(unname(actual)), expected, info = case)
+  }
+})
+
 test_that("apply_relrec_match joins the record-level pattern (both sides pinned by IDVARVAL)", {
   left <- list(data = data.table::data.table(USUBJID = "S1", CMSEQ = c(1, 2)), meta = NULL)
   fa_data <- data.table::data.table(USUBJID = "S1", FASEQ = c(3, 4), FAOBJ = c("ASPIRIN", "OTHER"))
@@ -230,8 +254,16 @@ test_that("apply_relrec_match joins the record-level pattern (both sides pinned 
     FA = list(data = fa_data, meta = NULL),
     RELREC = list(data = relrec_data, meta = NULL)
   ))
+  # A row with no RELREC partner at all (CMSEQ=2 here) is dropped entirely -
+  # an inner join, not a left join - since a comparison against a genuinely
+  # blank joined value would otherwise be a REAL violation per the
+  # reference engine's own not_equal_to truth table (populated vs blank ->
+  # True), wrongly flagging records that simply have no related record at
+  # all (confirmed against CORE-000744's real fixtures). `.coreval_row_id`
+  # still maps the surviving row back to its original position (1).
   joined <- apply_relrec_match(left, study, "CM")
-  expect_equal(joined$data$`RELREC.FAOBJ`, c("ASPIRIN", NA))
+  expect_equal(joined$data$`RELREC.FAOBJ`, "ASPIRIN")
+  expect_equal(joined$data$.coreval_row_id, 1L)
 })
 
 test_that("apply_relrec_match joins the group-level pattern (both IDVARVAL blank, matched by value)", {
@@ -246,5 +278,6 @@ test_that("apply_relrec_match joins the group-level pattern (both IDVARVAL blank
     RELREC = list(data = relrec_data, meta = NULL)
   ))
   joined <- apply_relrec_match(left, study, "CM")
-  expect_equal(joined$data$`RELREC.FAOBJ`, c(NA, "ERYTHEMA"))
+  expect_equal(joined$data$`RELREC.FAOBJ`, "ERYTHEMA")
+  expect_equal(joined$data$.coreval_row_id, 2L)
 })

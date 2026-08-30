@@ -102,7 +102,8 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   output_vars <- unique(get_output_variables(rule, domain))
   output_vars <- output_vars[
     output_vars %in% names(dataset$data) |
-      (startsWith(output_vars, "$") & output_vars %in% names(bindings))
+      (startsWith(output_vars, "$") & output_vars %in% names(bindings)) |
+      is_relrec_wildcard(output_vars)
   ]
   if (length(output_vars) == 0 || !any(violations)) {
     return(empty_findings())
@@ -135,7 +136,11 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
         elem <- if (is.list(resolved)) resolved[row] else resolved[row]
         return(format_binding_value(elem))
       }
-      x <- dataset$data[[v]][row]
+      x <- if (is_relrec_wildcard(v)) {
+        resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[row]
+      } else {
+        dataset$data[[v]][row]
+      }
       # A missing NUMERIC value's `as.character()` is `NA_character_`, not
       # `""` - this package's own blank contract (see read.R) says a numeric
       # blank is `NA` internally but must report as `""`, matching how a

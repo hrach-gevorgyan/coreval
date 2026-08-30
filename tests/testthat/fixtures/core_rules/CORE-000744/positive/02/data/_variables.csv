@@ -1,0 +1,48 @@
+dataset,variable,label,type,length
+ae,STUDYID,Study Identifier,Char,50
+ae,DOMAIN,Domain Abbreviation,Char,50
+ae,USUBJID,Unique Subject Identifier,Char,50
+ae,AESEQ,Sequence Number,Num,8
+ae,AESPID,Sponsor-Defined Identifier,Char,50
+ae,AETERM,Reported Term for the Adverse Event,Char,50
+ae,AEDECOD,Dictionary-Derived Term,Char,50
+ae,AEBODSYS,Body System or Organ Class,Char,50
+ae,AESEV,Severity/Intensity,Char,50
+ae,AESER,Serious Event,Char,50
+ae,AEACN,Action Taken with Study Treatment,Char,50
+ae,AEREL,Causality,Char,50
+ae,AEOUT,Outcome of Adverse Event,Char,50
+ae,AESCONG,Congenital Anomaly or Birth Defect,Char,50
+ae,AESDISAB,Persist or Signif Disability/Incapacity,Char,50
+ae,AESDTH,Results in Death,Char,50
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,50
+ae,AESLIFE,Is Life Threatening,Char,50
+ae,EPOCH,Epoch,Char,50
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,50
+ae,AEENDTC,End Date/Time of Adverse Event,Char,50
+ae,AESTDY,Study Day of Start of Adverse Event,Num,8
+ae,AEENDY,Study Day of End of Adverse Event,Num,8
+ae,AEENRF,End Relative to Reference Period,Char,50
+fa,STUDYID,Study Identifier,Char,50
+fa,DOMAIN,Domain Abbreviation,Char,50
+fa,USUBJID,Unique Subject Identifier,Char,50
+fa,FASEQ,Sequence Number,Num,8
+fa,FASPID,Sponsor-Defined Identifier,Char,50
+fa,FATESTCD,Var Label,Char,200
+fa,FATEST,Findings About Test Short Name,Char,50
+fa,FAOBJ,Object of the Observation,Char,50
+fa,FACAT,Category for Findings About,Char,50
+fa,FAORRES,Result or Finding in Original Units,Char,50
+fa,FASTRESC,Character Result/Finding in Std Format,Char,50
+fa,FALOC,Location of the Finding About,Char,50
+fa,VISITNUM,Visit Number,Num,8
+fa,EPOCH,Epoch,Char,50
+fa,FADTC,Date/Time of Collection,Char,50
+fa,FADY,Study Day of Collection,Num,8
+relrec,STUDYID,Study Identifier,Char,50
+relrec,RDOMAIN,Related Domain Abbreviation,Char,50
+relrec,USUBJID,Unique Subject Identifier,Char,50
+relrec,IDVAR,Identifying Variable,Char,50
+relrec,IDVARVAL,Identifying Variable Value,Char,50
+relrec,RELTYPE,Relationship Type,Char,50
+relrec,RELID,Relationship Identifier,Char,50
