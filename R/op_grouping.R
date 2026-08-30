@@ -30,7 +30,23 @@ register_operator("is_not_unique_set", function(ctx) {
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))
   }
-  dt <- ctx$dataset$data[, cols, with = FALSE]
+  # A domain SPLIT ACROSS FILES is still one domain: --SEQ must be unique
+  # per subject across lbae.csv AND lbds.csv together, and a value appearing
+  # once in each is a genuine duplicate that is invisible to either file
+  # alone. So the key is built over every sibling file, and only the current
+  # file's slice of the answer is returned - findings are still reported per
+  # physical file, with that file's own record numbers, which is what the
+  # reference does (CORE-000750 expects LBAE and LBDS each flagged
+  # separately).
+  siblings <- split_domain_siblings(ctx)
+  dt <- if (length(siblings) == 0) {
+    ctx$dataset$data[, cols, with = FALSE]
+  } else {
+    data.table::rbindlist(
+      lapply(siblings, function(d) d[, cols, with = FALSE]),
+      use.names = TRUE, fill = TRUE
+    )
+  }
   # The blank sentinel and the between-column separator both use the ASCII
   # Unit Separator (0x1F), which can't appear in ordinary clinical text -
   # a plain "NA" sentinel would collide with a genuine data value of "NA",
@@ -40,8 +56,35 @@ register_operator("is_not_unique_set", function(ctx) {
     ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col))
   })
   key <- do.call(paste, c(normalized, sep = "\x1f"))
-  as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
+  duplicated_any <- as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
+  # Return only this file's rows. rbindlist stacked the siblings in
+  # split_domain_siblings()'s order, which puts the current dataset first.
+  duplicated_any[seq_len(ctx$n)]
 })
+
+# Every dataset the current domain is split across, current one FIRST so a
+# result computed over the stack can be sliced back to this file's rows.
+# Returns an empty list when the domain isn't split, so callers can keep
+# their single-dataset path.
+#' The data.tables of every file a split domain spans, current file first
+#' @param ctx Operator context, see `evaluate_condition()`.
+#' @return A list of data.tables, or an empty list if the domain isn't split.
+#' @noRd
+split_domain_siblings <- function(ctx) {
+  datasets <- ctx$study$datasets
+  if (is.null(datasets) || length(datasets) < 2) {
+    return(list())
+  }
+  unsplit <- dataset_unsplit_name(ctx$dataset, ctx$domain)
+  others <- setdiff(names(datasets), ctx$domain)
+  matching <- others[vapply(others, function(k) {
+    identical(dataset_unsplit_name(datasets[[k]], k), unsplit)
+  }, logical(1))]
+  if (length(matching) == 0) {
+    return(list())
+  }
+  c(list(ctx$dataset$data), lapply(datasets[matching], function(d) d$data))
+}
 
 # Operator: is_unique_set - negation of is_not_unique_set
 register_operator("is_unique_set", function(ctx) {

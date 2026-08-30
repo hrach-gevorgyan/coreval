@@ -59,8 +59,10 @@ run alongside and before a qualified validation system, never instead of one.
   currently ships reference results, so there is no published expected output
   to verify an implementation against. They will be added once that reference
   data exists — shipping unverifiable checks would contradict the rule above.
-* Rules needing a merged view of a domain split across several files are
-  reported as skipped rather than evaluated.
+* Uniqueness checks now span every file a domain is split across, so a value
+  appearing once in each of two files is correctly reported as a duplicate.
+  A few rules that expect findings *merged* under a single dataset name,
+  rather than reported per file, are still skipped.
 * Rules needing CDISC Controlled Terminology *terms* are skipped: that data is
   around 438 MB, which belongs in a separate data package rather than here.
   The CT package dates are bundled, so rules checking that a study cites a real

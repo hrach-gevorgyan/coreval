@@ -255,7 +255,10 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     condition = condition,
     dataset = dataset,
     wildcard = wildcard,
-    domain = domain
+    domain = domain,
+    # Needed by the uniqueness operators, which must see every file a
+    # split domain is spread across - not just the one being checked.
+    study = study
   )
 
   op_fn <- get_operator(condition$operator)

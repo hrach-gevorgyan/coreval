@@ -265,3 +265,49 @@ test_that("is_not_unique_set resolves \"--\" prefixes in its grouping columns (C
   # wrongly flag all four rows.
   expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, FALSE, TRUE, TRUE))
 })
+
+test_that("is_not_unique_set spans every file a split domain is spread across (CORE-000750)", {
+  # A domain split across files is still one domain: --SEQ must be unique
+  # per subject across lbae.csv AND lbds.csv together. A value appearing
+  # once in EACH file is a genuine duplicate that is invisible to either
+  # file on its own. Findings are still reported per physical file with
+  # that file's own record numbers, which is what the reference does.
+  lbae <- list(
+    data = data.table::data.table(
+      DOMAIN = "LB", USUBJID = c("S1", "S1"), LBSEQ = c(4, 5)
+    ),
+    meta = NULL
+  )
+  lbds <- list(
+    data = data.table::data.table(
+      DOMAIN = "LB", USUBJID = c("S1", "S1"), LBSEQ = c(4, 9)
+    ),
+    meta = NULL
+  )
+  study <- list(datasets = list(LBAE = lbae, LBDS = lbds))
+  check <- list(name = "LBSEQ", operator = "is_not_unique_set", value = c("DOMAIN", "USUBJID"))
+
+  # LBSEQ 4 appears in both files -> duplicate; 5 and 9 are unique.
+  expect_equal(evaluate_check(check, lbae, "LBAE", study = study), c(TRUE, FALSE))
+  expect_equal(evaluate_check(check, lbds, "LBDS", study = study), c(TRUE, FALSE))
+
+  # Without the sibling, neither row is a duplicate - which is exactly the
+  # answer that made this bug invisible.
+  solo <- list(datasets = list(LBAE = lbae))
+  expect_equal(evaluate_check(check, lbae, "LBAE", study = solo), c(FALSE, FALSE))
+})
+
+test_that("split_domain_siblings only groups files sharing a DOMAIN, current file first", {
+  lbae <- list(data = data.table::data.table(DOMAIN = "LB", X = 1), meta = NULL)
+  lbds <- list(data = data.table::data.table(DOMAIN = "LB", X = 2), meta = NULL)
+  ae <- list(data = data.table::data.table(DOMAIN = "AE", X = 3), meta = NULL)
+  study <- list(datasets = list(LBAE = lbae, LBDS = lbds, AE = ae))
+
+  sibs <- split_domain_siblings(list(study = study, dataset = lbae, domain = "LBAE"))
+  expect_length(sibs, 2)
+  expect_equal(sibs[[1]]$X, 1) # current file first, so results slice back correctly
+  expect_equal(sibs[[2]]$X, 2) # AE is a different domain and excluded
+
+  # An unsplit domain returns nothing, so callers keep their simple path.
+  expect_length(split_domain_siblings(list(study = study, dataset = ae, domain = "AE")), 0)
+})
