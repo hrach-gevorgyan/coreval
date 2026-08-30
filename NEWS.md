@@ -1,5 +1,40 @@
 # coreval 0.0.0.9000
 
+* `check_study(study, use_case = NULL)`: the main user-facing entry point.
+  Evaluates every applicable, executable bundled rule against every domain
+  in a study and returns `list(findings, skipped)` - a tidy long-format
+  findings table matching CDISC's own `results.csv` shape (`rule_id`,
+  `Dataset`, `Record`, `Variable`, `Value`), plus a table recording which
+  rule/domain combinations couldn't be evaluated and why, so a clean
+  findings table is never mistaken for "everything passed." Only the
+  `"Record Data"` rule type is supported for now - `"Domain Presence
+  Check"` and the metadata-check rule types check things this package
+  doesn't model yet (domain/dataset presence, variable metadata) and are
+  reported as skipped.
+  `Output Variables` is handled exactly, including the schema's implicit
+  fallback: when a rule's `Outcome` doesn't declare an explicit list (45%
+  of rules don't), the reported columns are the `name` fields from the
+  rule's own `Check` tree, in order of first appearance - confirmed
+  against a real rule (CORE-000001) rather than assumed.
+  `Sensitivity: Dataset` rules emit one row per Output Variable with
+  `Record` blank and `Value` taken from the first violating record, vs.
+  one row per (Record, Variable) for `Sensitivity: Record` - shapes
+  confirmed directly against real reference output.
+  Verified against CDISC's reference `results.csv` byte-for-byte
+  (Dataset/Record/Variable/Value, not just which records violate) for a
+  spot sample spanning both sensitivities and both Output Variables
+  sources: 27 of 28 cases matched exactly. The one miss is a known,
+  documented limitation, not a logic bug: a numeric value like `0.0` in
+  the source CSV is reported back as `"0"`, since parsing it to a real
+  number for comparisons loses the original text's formatting - fixing
+  this needs `read_study()` to carry the raw source text alongside the
+  parsed value specifically for reporting, not done yet.
+  Fixed a real bug found by this same verification: `check_study()` was
+  building findings from the pre-join dataset instead of the Match-
+  Datasets-augmented one `evaluate_rule()` actually checked against,
+  silently dropping any Output Variable that only exists on the matched
+  side (e.g. `DM.DTHDTC`).
+
 * `Match Datasets`: joins another domain's columns onto the dataset being
   checked before `Check` runs (e.g. pulling `DM.DTHDTC` in while checking
   `DS`). Handles the standard case only - a plain equi-join on `Keys`

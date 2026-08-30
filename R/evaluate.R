@@ -125,23 +125,38 @@ evaluate_check <- function(check, dataset, domain, bindings = list()) {
 #'   Operations binding) is treated as "not a confirmed violation."
 #' @export
 evaluate_rule <- function(rule, dataset_or_study, domain) {
-  if (!is.null(dataset_or_study$datasets)) {
-    study <- dataset_or_study
-    dataset <- study$datasets[[domain]]
-  } else {
-    dataset <- dataset_or_study
-    study <- list(datasets = stats::setNames(list(dataset), domain))
-  }
-
-  dataset <- apply_match_datasets(dataset, rule, study, domain)
-
-  bindings <- if (!is.null(rule$operations)) {
-    compute_operation_bindings(rule, study, domain, dataset)
-  } else {
-    list()
-  }
+  study <- as_study(dataset_or_study, domain)
+  dataset <- prepare_dataset_for_rule(rule, study, domain)
+  bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
 
   result <- evaluate_check(rule$check, dataset, domain, bindings)
   result[is.na(result)] <- FALSE
   result
+}
+
+# Normalizes either a single dataset (list(data, meta)) or a full study
+# (list(datasets, ...)) into a study, so callers can pass whichever they
+# have without evaluate_rule() itself needing two code paths downstream.
+as_study <- function(dataset_or_study, domain) {
+  if (!is.null(dataset_or_study$datasets)) {
+    dataset_or_study
+  } else {
+    list(datasets = stats::setNames(list(dataset_or_study), domain))
+  }
+}
+
+# The dataset actually used for evaluation: the current domain's data with
+# Match Datasets joins applied. Exposed so check_study() can build findings
+# from the SAME augmented dataset evaluate_rule() checked against - using
+# the un-joined dataset there would silently drop any Output Variable that
+# only exists on the matched side (e.g. DM.DTHDTC).
+prepare_dataset_for_rule <- function(rule, study, domain) {
+  apply_match_datasets(study$datasets[[domain]], rule, study, domain)
+}
+
+operation_bindings_for_rule <- function(rule, study, domain, dataset) {
+  if (is.null(rule$operations)) {
+    return(list())
+  }
+  compute_operation_bindings(rule, study, domain, dataset)
 }

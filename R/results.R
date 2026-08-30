@@ -1,0 +1,162 @@
+# Collects the `name` fields referenced in a Check tree, in order of first
+# appearance, excluding `$`-prefixed Operations bindings (those aren't real
+# dataset columns). Used as the fallback Output Variables set when a rule's
+# Outcome doesn't specify one explicitly - confirmed against a real rule
+# (CORE-000001 has no `Output Variables`, and its reference results.csv
+# lists exactly its two Check condition names, in Check order: IECAT then
+# IEORRES).
+collect_check_names <- function(check, names_seen = character(0)) {
+  if (is.null(check)) {
+    return(names_seen)
+  }
+  if (!is.null(check$name) && is.character(check$name) && !startsWith(check$name, "$")) {
+    if (!(check$name %in% names_seen)) {
+      names_seen <- c(names_seen, check$name)
+    }
+  }
+  for (key in c("all", "any", "not")) {
+    sub <- check[[key]]
+    if (!is.null(sub)) {
+      if (is.list(sub) && is.null(names(sub))) {
+        for (item in sub) names_seen <- collect_check_names(item, names_seen)
+      } else {
+        names_seen <- collect_check_names(sub, names_seen)
+      }
+    }
+  }
+  names_seen
+}
+
+# The exact, ordered set of columns a rule's findings should report -
+# getting this wrong (wrong set OR wrong order) fails a differential test
+# even when the underlying violation logic is correct.
+get_output_variables <- function(rule, domain) {
+  declared <- rule$outcome[["Output Variables"]]
+  raw <- if (!is.null(declared)) declared else collect_check_names(rule$check)
+  resolve_var_name(raw, domain)
+}
+
+empty_findings <- function() {
+  data.table::data.table(
+    Dataset = character(0), Record = integer(0),
+    Variable = character(0), Value = character(0)
+  )
+}
+
+# Assembles one rule's findings for one dataset into the long format used by
+# CDISC's own results.csv: one row per (Record, Variable), or for
+# Sensitivity: Dataset rules, one row per Variable with Record blank (NA)
+# and Value taken from the first violating record - the shape confirmed
+# directly against real reference output (e.g. CORE-000864).
+assemble_findings <- function(rule, dataset, domain, violations) {
+  output_vars <- unique(get_output_variables(rule, domain))
+  output_vars <- output_vars[output_vars %in% names(dataset$data)]
+  if (length(output_vars) == 0 || !any(violations)) {
+    return(empty_findings())
+  }
+
+  # Known limitation: a numeric value is reformatted via as.character() here,
+  # which loses the source text's original formatting (e.g. "0.0" in the
+  # source CSV becomes R double 0, printed back as "0", not "0.0"). Fixing
+  # this needs read_study() to carry the raw source text alongside the
+  # parsed numeric value specifically for reporting - not done yet.
+  value_at <- function(row) {
+    vapply(output_vars, function(v) as.character(dataset$data[[v]][row]), character(1))
+  }
+
+  if (identical(rule$sensitivity, "Dataset")) {
+    first_row <- which(violations)[1]
+    data.table::data.table(
+      Dataset = domain, Record = NA_integer_,
+      Variable = output_vars, Value = value_at(first_row)
+    )
+  } else {
+    rows <- which(violations)
+    data.table::rbindlist(lapply(rows, function(r) {
+      data.table::data.table(Dataset = domain, Record = r, Variable = output_vars, Value = value_at(r))
+    }))
+  }
+}
+
+#' Check an SDTM study against CDISC Open Rules
+#'
+#' Evaluates every applicable, executable bundled rule against every domain
+#' present in `study`, and returns findings in the same long format as
+#' CDISC's own reference `results.csv`: one row per (Dataset, Record,
+#' Variable) for Record-sensitivity rules, or one row per (Dataset,
+#' Variable) with `Record` blank for Dataset-sensitivity rules.
+#'
+#' Only the `"Record Data"` rule type is currently supported - the other
+#' rule types (`"Domain Presence Check"`, `"Variable Metadata Check"`, ...)
+#' check things this package doesn't model yet (e.g. whether a domain is
+#' present in the study at all, or metadata about variables rather than
+#' their values) and are skipped, along with any rule using an operator,
+#' `Operations` type, or `Match Datasets` join this package doesn't
+#' implement.
+#'
+#' @param study A study object from [read_study()].
+#' @param use_case Optional use case (e.g. `"INDH"`) to further filter
+#'   which rules apply, as in [rules_for_domain()].
+#' @return A list with two elements:
+#'   * `findings`: a [data.table::data.table()] with columns `rule_id`,
+#'     `Dataset`, `Record`, `Variable`, `Value` - one row per violation
+#'     (or per Dataset-sensitivity summary row).
+#'   * `skipped`: a data.table with columns `rule_id`, `domain`, `reason`,
+#'     recording which rule/domain combinations could not be evaluated and
+#'     why (e.g. an unimplemented operator) - so a clean findings table is
+#'     never mistaken for "everything passed."
+#' @export
+check_study <- function(study, use_case = NULL) {
+  domains <- names(study$datasets)
+  all_findings <- list()
+  all_skipped <- list()
+
+  for (domain in domains) {
+    rules_here <- rules_for_domain(domain, use_case = use_case)
+    for (rule_id in rules_here$id) {
+      rule <- .coreval_env$data$rules[[rule_id]]
+      if (!identical(rule$rule_type, "Record Data")) {
+        all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = domain,
+          reason = paste0("unsupported rule type: ", rule$rule_type)
+        )
+        next
+      }
+      outcome <- tryCatch(
+        {
+          dataset <- prepare_dataset_for_rule(rule, study, domain)
+          bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
+          violations <- evaluate_check(rule$check, dataset, domain, bindings)
+          violations[is.na(violations)] <- FALSE
+          list(dataset = dataset, violations = violations)
+        },
+        error = function(e) e
+      )
+      if (inherits(outcome, "error")) {
+        all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = domain,
+          reason = paste("evaluation failed:", conditionMessage(outcome))
+        )
+        next
+      }
+      findings <- assemble_findings(rule, outcome$dataset, domain, outcome$violations)
+      if (nrow(findings) > 0) {
+        findings$rule_id <- rule_id
+        all_findings[[length(all_findings) + 1]] <- findings
+      }
+    }
+  }
+
+  findings <- if (length(all_findings) > 0) {
+    data.table::rbindlist(all_findings)[, c("rule_id", "Dataset", "Record", "Variable", "Value")]
+  } else {
+    cbind(rule_id = character(0), empty_findings())
+  }
+  skipped <- if (length(all_skipped) > 0) {
+    data.table::rbindlist(all_skipped)
+  } else {
+    data.table::data.table(rule_id = character(0), domain = character(0), reason = character(0))
+  }
+
+  list(findings = findings, skipped = skipped)
+}
