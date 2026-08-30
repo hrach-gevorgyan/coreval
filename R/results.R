@@ -100,11 +100,19 @@ group_first_violations <- function(dataset, violations, grouping_vars, domain) {
 #' @noRd
 assemble_findings <- function(rule, dataset, domain, violations, bindings = list()) {
   output_vars <- unique(get_output_variables(rule, domain))
-  output_vars <- output_vars[
-    output_vars %in% names(dataset$data) |
-      (startsWith(output_vars, "$") & output_vars %in% names(bindings)) |
-      is_relrec_wildcard(output_vars)
-  ]
+  # An Output Variable that isn't a real column of THIS domain's dataset
+  # (e.g. "POOLID" for a rule whose Check covers both USUBJID- and
+  # POOLID-keyed domains, or a domain simply lacking a variable another
+  # domain has) is still reported - as the reference engine's own literal
+  # text "Not in dataset" - not silently dropped from the findings row.
+  # Confirmed against CORE-000750's real fixture: AE's findings report
+  # `USUBJID = "Not in dataset"` (AE is POOLID-keyed) right alongside
+  # CM's findings reporting `POOLID = "Not in dataset"` (CM is
+  # USUBJID-keyed) for the exact same rule. An unresolvable `$`-prefixed
+  # Operations binding is the one exception that's still dropped entirely,
+  # since a binding either resolves for the whole rule or doesn't exist as
+  # a concept at all.
+  output_vars <- output_vars[!startsWith(output_vars, "$") | output_vars %in% names(bindings)]
   if (length(output_vars) == 0 || !any(violations)) {
     return(empty_findings())
   }
@@ -138,6 +146,8 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       }
       x <- if (is_relrec_wildcard(v)) {
         resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[row]
+      } else if (!(v %in% names(dataset$data))) {
+        return("Not in dataset")
       } else {
         dataset$data[[v]][row]
       }

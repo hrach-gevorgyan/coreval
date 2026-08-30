@@ -67,6 +67,23 @@ test_that("assemble_findings reports a missing numeric Output Variable as blank,
   expect_equal(findings$Value[findings$Variable == "N"], "")
 })
 
+test_that("assemble_findings reports a real, non-$-binding Output Variable absent from this domain as \"Not in dataset\" (CORE-000750)", {
+  # A rule scoped to "Domains: Include: ALL" can have Output Variables that
+  # only exist for SOME of those domains (e.g. USUBJID- vs POOLID-keyed
+  # domains) - the reference engine still reports a row for every declared
+  # Output Variable, with the literal text "Not in dataset" for one that
+  # isn't a real column here, rather than silently dropping it. Confirmed
+  # against CORE-000750's real fixture: AE's findings report
+  # `USUBJID = "Not in dataset"` (AE is POOLID-keyed) right alongside CM's
+  # findings reporting `POOLID = "Not in dataset"` (CM is USUBJID-keyed).
+  data <- data.table::data.table(AESEQ = c(2, 2), POOLID = c("CDISC001", "CDISC001"))
+  dataset <- list(data = data, meta = NULL)
+  rule <- list(sensitivity = "Record", outcome = list(`Output Variables` = c("AESEQ", "POOLID", "USUBJID")))
+  findings <- assemble_findings(rule, dataset, "AE", c(TRUE, TRUE))
+  expect_equal(findings$Value[findings$Record == 1 & findings$Variable == "USUBJID"], "Not in dataset")
+  expect_equal(findings$Value[findings$Record == 1 & findings$Variable == "POOLID"], "CDISC001")
+})
+
 test_that("group_first_violations collapses per-row violations to one flagged row per group (CORE-000888)", {
   # SETCD groups SET1(1-4)/SET2(5-7)/SET3(8): only SET2 and SET3 violate,
   # every row within a violating group shares the same result (the check is
