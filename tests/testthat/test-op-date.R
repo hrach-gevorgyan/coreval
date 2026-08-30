@@ -104,6 +104,19 @@ test_that("invalid_duration rejects a comma used as a component separator", {
   expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, TRUE, FALSE))
 })
 
+test_that("is_complete_date's result carries no names (vapply() over a character vector defaults to USE.NAMES = TRUE)", {
+  # Bug: vapply(ctx$target, ...) with a character ctx$target and no
+  # USE.NAMES = FALSE names the result by the date strings themselves - a
+  # cosmetic issue that nonetheless makes identical()/expect_equal() see a
+  # named vs. unnamed vector as unequal even when every value matches.
+  data <- data.table::data.table(X = c("2024-03-15", "2024-03"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "X", operator = "is_complete_date")
+  result <- evaluate_check(check, dataset, "TS")
+  expect_equal(result, c(TRUE, FALSE))
+  expect_null(names(result))
+})
+
 test_that("is_valid_date_str validates real calendar dates, not just regex shape", {
   expect_false(is_valid_date_str("2023-02-30"))
   expect_true(is_valid_date_str("2023-02-28"))

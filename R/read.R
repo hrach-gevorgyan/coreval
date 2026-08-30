@@ -110,7 +110,13 @@ build_dataset_from_csv <- function(path, fname, variables_csv) {
   )
   col_classes <- col_classes[lengths(col_classes) > 0]
 
-  dt <- data.table::fread(file.path(path, paste0(fname, ".csv")), colClasses = col_classes)
+  # fread()'s default na.strings = "NA" would silently turn a genuine CDISC
+  # null-flavor value like TSVALNF = "NA" (real, meaningful text - "Not
+  # Applicable") into R's NA, which fill_char_blanks() then rewrites to ""
+  # for character columns - indistinguishable from an actually blank field.
+  # Numeric columns don't need na.strings at all: fread already parses a
+  # genuinely blank numeric field as NA on its own.
+  dt <- data.table::fread(file.path(path, paste0(fname, ".csv")), colClasses = col_classes, na.strings = character(0))
 
   fill_char_blanks(dt)
 

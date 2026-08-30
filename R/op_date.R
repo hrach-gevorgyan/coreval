@@ -287,13 +287,20 @@ register_operator("is_complete_date", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
+  # USE.NAMES = FALSE matters: vapply()'s default names a character-vector
+  # input by its OWN VALUES, so without this the result (and everything
+  # downstream that combines it via `evaluate_check()`'s `&`/`|`/`!`) would
+  # carry the date strings themselves as names on a plain logical vector -
+  # cosmetic, but `identical()` (used by the conformance harness and by
+  # strict equality tests) treats a named vs. unnamed vector as unequal even
+  # when every value matches.
   vapply(ctx$target, function(x) {
     if (is.na(x) || x == "") {
       return(FALSE)
     }
     precision <- detect_precision_one(x)
     !is.na(precision) && precision >= 2L
-  }, logical(1))
+  }, logical(1), USE.NAMES = FALSE)
 })
 
 # Operator: is_incomplete_date - negation of is_complete_date
