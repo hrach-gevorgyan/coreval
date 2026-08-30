@@ -26,7 +26,7 @@ register_operator("is_not_unique_set", function(ctx) {
     ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col))
   })
   key <- do.call(paste, c(normalized, sep = "\x1f"))
-  as.vector(ave(seq_along(key), key, FUN = length)) > 1
+  as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
 })
 
 # Operator: is_unique_set - negation of is_not_unique_set
@@ -77,6 +77,37 @@ register_operator("is_not_unique_relationship", function(ctx) {
 # Operator: is_unique_relationship - negation of is_not_unique_relationship
 register_operator("is_unique_relationship", function(ctx) {
   !get_operator("is_not_unique_relationship")(ctx)
+})
+
+# Flags a row whose target VALUE appears on more than one row sharing the
+# same value of the condition's `within` column (e.g. "DSDECOD
+# present_on_multiple_rows_within: USUBJID" - does this subject have more
+# than one row with this same DSDECOD value?). Confirmed against
+# CORE-000363's real fixtures: a subject with two "INFORMED CONSENT
+# OBTAINED" DSDECOD rows has BOTH rows flagged by this operator alone (the
+# rule's other AND-ed conditions then narrow down which subject actually
+# violates the full rule).
+#' Shared "target value duplicated within a group" check for present(_)_on_multiple_rows_within
+#' @param ctx Operator context, see `evaluate_condition()`.
+#' @return A logical vector.
+#' @noRd
+present_on_multiple_rows_within_check <- function(ctx) {
+  within_col <- resolve_var_name(ctx$condition$within, ctx$domain)
+  if (!ctx$exists || !(within_col %in% names(ctx$dataset$data))) {
+    return(rep(FALSE, ctx$n))
+  }
+  group <- ctx$dataset$data[[within_col]]
+  normalize <- function(x) ifelse(is_blank(x), "\x1fBLANK\x1f", as.character(x))
+  key <- paste(normalize(group), normalize(ctx$target), sep = "\x1f")
+  as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
+}
+
+# Operator: present_on_multiple_rows_within - target's value appears on >1 row sharing the same `within` value
+register_operator("present_on_multiple_rows_within", present_on_multiple_rows_within_check)
+
+# Operator: not_present_on_multiple_rows_within - negation of present_on_multiple_rows_within
+register_operator("not_present_on_multiple_rows_within", function(ctx) {
+  !present_on_multiple_rows_within_check(ctx)
 })
 
 # Flags a row whose target value is inconsistent with other rows sharing the

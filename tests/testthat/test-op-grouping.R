@@ -75,6 +75,34 @@ test_that("is_inconsistent_across_dataset ignores blank target values when check
   expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, FALSE))
 })
 
+test_that("present_on_multiple_rows_within matches CDISC's reference results.csv (CORE-000363)", {
+  # "DSDECOD present_on_multiple_rows_within: USUBJID" - flags every row
+  # whose DSDECOD value appears on more than one row for the same subject.
+  rule <- .coreval_env$data$rules[["CORE-000363"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000363", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- evaluate_rule(rule, study, domain = "DS")
+    expect_equal(
+      actual,
+      expected_violations_for(file.path(dir, "results", "results.csv"), "DS", nrow(study$datasets$DS$data))
+    )
+  }
+})
+
+test_that("present_on_multiple_rows_within/not_present_on_multiple_rows_within flag the right rows", {
+  data <- data.table::data.table(
+    USUBJID = c("S1", "S1", "S1", "S2"),
+    DSDECOD = c("A", "A", "B", "A")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "DSDECOD", operator = "present_on_multiple_rows_within", within = "USUBJID")
+  expect_equal(evaluate_check(check, dataset, "DS"), c(TRUE, TRUE, FALSE, FALSE))
+
+  check2 <- list(name = "DSDECOD", operator = "not_present_on_multiple_rows_within", within = "USUBJID")
+  expect_equal(evaluate_check(check2, dataset, "DS"), c(FALSE, FALSE, TRUE, TRUE))
+})
+
 test_that("is_not_unique_set treats blanks as a real, matching value when grouping", {
   data <- data.table::data.table(A = c("", "", "X"), B = c("Y", "Y", "Y"))
   dataset <- list(data = data, meta = NULL)
