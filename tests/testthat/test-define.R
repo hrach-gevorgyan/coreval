@@ -181,3 +181,34 @@ test_that("a rule referencing CDISC Library pseudo-columns is refused, not fabri
   dataset$data$library_variable_label <- "Study Identifier"
   expect_silent(assert_referenced_metadata_available(rule, dataset))
 })
+
+test_that("library_* columns are omitted for a CUSTOM domain, but present for a known one", {
+  # A custom domain (one no standard defines) has nothing to be judged
+  # against: comparing its variables to the generic Model would flag every
+  # sponsor-specific variable as the wrong type. The reference draws the
+  # same distinction explicitly. Confirmed against CORE-001082, whose XY
+  # fixture expects no findings at all.
+  meta <- data.table::data.table(
+    variable = c("STUDYID", "XYFOO"),
+    label = c("Study Identifier", "Sponsor Thing"),
+    type = c("Char", "Char")
+  )
+  real <- list(data = data.table::data.table(STUDYID = "S", XYFOO = "x"), meta = meta)
+  study <- list(standard = list(product = "SDTMIG", version = "3-4"))
+
+  custom <- build_variable_metadata_dataset(real, NULL, "XY", study)
+  expect_false("library_variable_data_type" %in% names(custom$data))
+
+  # A known domain gets the columns, and a variable the IG doesn't
+  # enumerate still resolves through the SDTM Model.
+  lb_meta <- data.table::data.table(
+    variable = c("LBSEQ", "LBCHENDY"),
+    label = c("Sequence Number", "Change End Study Day"),
+    type = c("Num", "Num")
+  )
+  lb <- list(data = data.table::data.table(LBSEQ = 1, LBCHENDY = 2), meta = lb_meta)
+  known <- build_variable_metadata_dataset(lb, NULL, "LB", study)
+  expect_true("library_variable_data_type" %in% names(known$data))
+  # LBSEQ from the IG, LBCHENDY from the Model's --CHENDY template.
+  expect_equal(known$data$library_variable_data_type, c("Num", "Num"))
+})

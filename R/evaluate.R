@@ -600,8 +600,32 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
   # (library_variable_label, library_variable_role, ...). A variable the
   # Library doesn't know about gets NA rather than being dropped - "not in
   # the standard at all" is itself something rules look for.
-  if (!is.null(study)) {
+  # A CUSTOM domain (one no standard defines, e.g. a sponsor's "XY") is
+  # deliberately left without library_* columns, so a rule needing them is
+  # reported as unevaluable for that domain rather than answered. There is
+  # no standard to judge its variables against: comparing them to the
+  # generic Model would flag every sponsor-specific variable as having the
+  # wrong type. The reference draws the same distinction explicitly
+  # (`is_custom_domain`). Confirmed against CORE-001082, whose XY fixture
+  # expects no findings at all.
+  is_custom <- !is.null(domain) &&
+    !(toupper(domain) %in% .coreval_env$domain_classes$domain)
+
+  if (!is.null(study) && !is_custom) {
+    # Always present the library_* columns, even when nothing resolves, so
+    # a rule referencing them can be evaluated (and correctly find nothing)
+    # rather than being refused outright. A known domain the Implementation
+    # Guide happens not to enumerate still resolves through the Model below.
+    n_vars <- length(meta$variable)
+    blank <- rep(NA_character_, n_vars)
+    data$library_variable_name <- blank
+    data$library_variable_label <- blank
+    data$library_variable_role <- blank
+    data$library_variable_data_type <- blank
+    data$library_variable_core <- blank
+
     lib <- library_variables_for(study, domain)
+    i <- rep(NA_integer_, n_vars)
     if (nrow(lib) > 0) {
       lib <- lib[!duplicated(lib$variable), ]
       i <- match(meta$variable, lib$variable)
@@ -610,23 +634,23 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
       data$library_variable_role <- lib$role[i]
       data$library_variable_data_type <- lib$type[i]
       data$library_variable_core <- lib$core[i]
+    }
 
-      # Fall back to the SDTM Model for anything the IG's per-domain list
-      # doesn't enumerate. The Model's generic "--" templates cover many
-      # legitimate sponsor variables (LBCHENDY from "--CHENDY"), and without
-      # this they look undefined rather than being checked against the type
-      # the Model specifies. Only fills gaps - the IG always wins where it
-      # has an entry.
-      model <- model_variables_for(domain, real_dataset)
-      if (nrow(model) > 0) {
-        m <- match(meta$variable, model$variable)
-        fill <- is.na(i) & !is.na(m)
-        if (any(fill)) {
-          data$library_variable_name[fill] <- model$variable[m[fill]]
-          data$library_variable_label[fill] <- model$label[m[fill]]
-          data$library_variable_role[fill] <- model$role[m[fill]]
-          data$library_variable_data_type[fill] <- model$type[m[fill]]
-        }
+    # Fall back to the SDTM Model for anything the IG's per-domain list
+    # doesn't enumerate. The Model's generic "--" templates cover many
+    # legitimate sponsor variables (LBCHENDY from "--CHENDY"), and without
+    # this they look undefined rather than being checked against the type
+    # the Model specifies. Only fills gaps - the IG always wins where it
+    # has an entry.
+    model <- model_variables_for(domain, real_dataset)
+    if (nrow(model) > 0) {
+      m <- match(meta$variable, model$variable)
+      fill <- is.na(i) & !is.na(m)
+      if (any(fill)) {
+        data$library_variable_name[fill] <- model$variable[m[fill]]
+        data$library_variable_label[fill] <- model$label[m[fill]]
+        data$library_variable_role[fill] <- model$role[m[fill]]
+        data$library_variable_data_type[fill] <- model$type[m[fill]]
       }
     }
   }
