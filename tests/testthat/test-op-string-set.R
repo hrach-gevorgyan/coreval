@@ -132,3 +132,15 @@ test_that("contains_all/not_contains_all are dataset-level checks on the column'
   )
   expect_equal(evaluate_check(check2, dataset, "TS"), rep(TRUE, 3))
 })
+
+test_that("contains_all/not_contains_all are NA (unresolvable), not a forced FALSE/TRUE, when value is unresolvable", {
+  # Bug: contains_all() hard-coded FALSE for an unresolvable (NULL) value -
+  # e.g. a $required_variables binding that returns NULL for a non-SDTMIG
+  # study. Its negation, not_contains_all, then came out TRUE (a
+  # fabricated violation) instead of staying unresolvable. Confirmed
+  # against CORE-000355's real fixture.
+  data <- data.table::data.table(TSPARMCD = c("AGEMAX", "AGEMIN"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "TSPARMCD", operator = "not_contains_all", value = "$unresolvable")
+  expect_equal(evaluate_check(check, dataset, "TS", bindings = list()), rep(NA, 2))
+})

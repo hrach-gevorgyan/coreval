@@ -251,6 +251,31 @@ test_that("expected_variables matches CDISC's reference results.csv (CORE-000334
   }
 })
 
+test_that("not_contains_all against an unresolvable $required_variables binding is NA, not a forced violation (CORE-000355)", {
+  # Bug: contains_all() hard-coded FALSE when its value was unresolvable
+  # (NULL) - e.g. $required_variables against a SENDIG-declared study,
+  # which sdtmig_variables_for() deliberately refuses to guess for. Its
+  # negation, not_contains_all, then came out TRUE (a fabricated
+  # violation) for every domain the rule couldn't actually evaluate.
+  # CORE-000355's own AE/LB/TA domains (all resolvable, all genuinely
+  # compliant) now correctly report no violation; only EX still mismatches,
+  # because it's genuinely missing a required SENDIG variable that this
+  # package has no SENDIG variable-metadata to detect (a separate, already
+  # documented gap - see sdtmig_variables_for()'s own docs).
+  rule <- .coreval_env$data$rules[["CORE-000355"]]
+  for (case in c("negative/01", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000355", case)
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in setdiff(names(study$datasets), "EX")) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual_any <- any(evaluate_rule(rule, study, domain))
+      expected_any <- nrow(results[results$Dataset == domain, ]) > 0
+      expect_equal(actual_any, expected_any, info = paste(case, domain))
+    }
+  }
+})
+
 test_that("sdtmig_variables_for resolves SUPPxx datasets via the SUPPQUAL template", {
   study <- list(standard = list(product = "SDTMIG", version = "3-4"))
   vars <- sdtmig_variables_for(study, "SUPPAE", "Exp")

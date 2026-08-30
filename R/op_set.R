@@ -21,11 +21,20 @@ register_operator("is_contained_by", guarded_op(membership_check))
 register_operator("is_not_contained_by", guarded_op(function(ctx) !membership_check(ctx)))
 
 # Dataset-level (scalar, like exists/not_exists): does the target column's
-# set of values contain ALL of the expected values?
+# set of values contain ALL of the expected values? An unresolvable
+# `value` (e.g. $required_variables against a non-SDTMIG study, which
+# sdtmig_variables_for() deliberately returns NULL for rather than
+# guessing) must stay NA (unresolvable), not hard-code to FALSE - a NULL
+# value is never a legitimate "the set of required values is empty" fact
+# (that case is a real, empty character(0) vector instead, which
+# `all(character(0) %in% target)` already handles correctly as
+# vacuously TRUE). Confirmed against CORE-000355's real fixture: coding
+# unresolvable as FALSE made not_contains_all's negation wrongly TRUE
+# (a "violation") for a domain this rule can't actually evaluate.
 # Operator: contains_all - dataset-level: target column's values cover all of value
 register_operator("contains_all", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
-    return(FALSE)
+    return(NA)
   }
   all(ctx$value %in% ctx$target)
 })

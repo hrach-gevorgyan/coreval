@@ -9,4 +9,3 @@
 ^CLAUDE\.md$
 ^\.claude$
 ^NOTICE\.md$
-^tests/testthat/fixtures/.*/\.env$

@@ -130,12 +130,28 @@ read_study_test_case <- function(path) {
 # face (e.g. CORE-000355's own EX fixture is SENDIG 3.1, not SDTMIG). Library
 # metadata operators (required_variables, expected_variables, ...) need this
 # to pick the right per-standard table rather than silently assuming SDTMIG.
-#' Parse a CORE test case's `.env` file into a standard/version pair
-#' @param path Study directory (may or may not contain `.env`).
-#' @return `list(product, version)`, both `NA_character_` if `.env` is absent/unparseable.
+#
+# Also checks `_env` (leading underscore, no dot) as a fallback: this
+# package's own bundled test fixtures (tests/testthat/fixtures/) rename
+# their copies of upstream's `.env` files to `_env`, since R CMD check
+# flags shipped dot-files as "most likely included in error" - excluding
+# them via .Rbuildignore instead (tried first) silently broke every
+# fixture-based test that depends on the declared standard, since a
+# missing `.env` looks identical to "no declaration, default to SDTMIG"
+# (confirmed via CORE-000355: with .env excluded, its SENDIG-declared AE
+# fixture was silently evaluated as SDTMIG instead, masking the real
+# behavior the test exists to verify). A real CDISC CORE test-case
+# directory (e.g. a fresh upstream clone) always uses `.env`; `_env` is
+# purely this package's own packaging workaround.
+#' Parse a CORE test case's `.env` (or `_env`) file into a standard/version pair
+#' @param path Study directory (may or may not contain `.env`/`_env`).
+#' @return `list(product, version)`, both `NA_character_` if absent/unparseable.
 #' @noRd
 read_env_standard <- function(path) {
   env_path <- file.path(path, ".env")
+  if (!file.exists(env_path)) {
+    env_path <- file.path(path, "_env")
+  }
   if (!file.exists(env_path)) {
     return(list(product = NA_character_, version = NA_character_))
   }
