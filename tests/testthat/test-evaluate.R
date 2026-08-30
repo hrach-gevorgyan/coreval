@@ -150,3 +150,15 @@ test_that("evaluate_rule refuses a define.xml rule instead of fabricating findin
   study <- list(datasets = list(DM = list(data = data, meta = meta)))
   expect_error(evaluate_rule(rule, study, "DM"), "define.xml", fixed = TRUE)
 })
+
+test_that("resolve_var_name keeps its character type for a zero-length input", {
+  # ifelse() returns logical(0), not character(0), for an empty input -
+  # with nothing to test it never inspects the yes/no branches to learn
+  # their type. That silently changed this function's return type and
+  # errored several frames later inside startsWith(). Reachable for real:
+  # a rule declaring no Output Variables whose Check references only
+  # `$`-bound Operations bindings (CORE-000893) produces exactly that
+  # empty set, which crashed check_study() on any study with a TX domain.
+  expect_identical(resolve_var_name(character(0), "TX"), character(0))
+  expect_identical(resolve_var_name(c("--SEQ", "USUBJID"), "AE"), c("AESEQ", "USUBJID"))
+})

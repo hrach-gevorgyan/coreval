@@ -171,3 +171,42 @@ test_that("check_study runs end-to-end on a real test case and reports the expec
   expect_equal(nrow(ie_findings), 6) # 3 records x 2 output variables
   expect_setequal(unique(ie_findings$Record), 1:3)
 })
+
+test_that("check_study evaluates the metadata rule types, not just Record Data", {
+  # These rule types each need a different "one row" model, all of which
+  # prepare_dataset_for_rule() already builds and the conformance harness
+  # verifies against CDISC's reference output. check_study() used to run
+  # only "Record Data", so ~29 rules that demonstrably work were silently
+  # unavailable through the package's main entry point.
+  expect_true(rule_type_is_supported("Record Data"))
+  expect_true(rule_type_is_supported("Domain Presence Check"))
+  expect_true(rule_type_is_supported("Dataset Metadata Check"))
+  expect_true(rule_type_is_supported("Variable Metadata Check"))
+  expect_true(rule_type_is_supported("Value Check with Variable Metadata"))
+
+  # Anything comparing against define.xml stays out: with no define.xml
+  # reader, evaluating one manufactures findings from missing input.
+  expect_false(rule_type_is_supported("Variable Metadata Check against Define XML"))
+  expect_false(rule_type_is_supported("Domain Presence Check against Define XML"))
+  expect_false(rule_type_is_supported("Define Item Metadata Check against Library Metadata"))
+  expect_false(rule_type_is_supported(NULL))
+})
+
+test_that("check_study reports a Domain Presence Check once, under the STUDY sentinel", {
+  # It asks one question about the whole study ("is DM present?"), so it
+  # must not be re-answered under every domain its scope matches. The
+  # reference results.csv uses `STUDY,,DM,Not in dataset` - confirmed
+  # against CORE-000581/CORE-000183's own fixtures.
+  dir <- test_path("fixtures", "core_rules", "CORE-000183", "negative", "01")
+  skip_if_not(dir.exists(file.path(dir, "data")))
+  study <- read_study(file.path(dir, "data"))
+  res <- check_study(study)
+
+  dpc_ids <- unique(res$findings$rule_id[res$findings$Dataset == "STUDY"])
+  expect_true(length(dpc_ids) > 0)
+  for (id in dpc_ids) {
+    # exactly one Dataset value for this rule, and it is the sentinel
+    expect_equal(unique(res$findings$Dataset[res$findings$rule_id == id]), "STUDY")
+  }
+  expect_true(all(is.na(res$findings$Record[res$findings$Dataset == "STUDY"])))
+})

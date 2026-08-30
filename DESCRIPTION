@@ -12,6 +12,7 @@ License: MIT + file LICENSE
 URL: https://github.com/hrach-gevorgyan/coreval
 BugReports: https://github.com/hrach-gevorgyan/coreval/issues
 Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
 Imports:
     data.table,

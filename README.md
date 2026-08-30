@@ -6,13 +6,46 @@ coreval is an R package that evaluates CDISC Open Rules (CORE) conformance rules
 
 **Status:** Phases 0-9 of the development plan are implemented: rule
 extraction, `read_study()`, `rules_for_domain()`, the `Check`-tree evaluator
-(~35 operators, including dates and grouping), the `Operations` pipeline,
+(~60 operators, including dates and grouping), the `Operations` pipeline,
 `Match Datasets` joins, and `check_study()` as the main user-facing entry
-point. A conformance harness (`tests/conformance/run_conformance.R`) tracks
-pass rate against CDISC's own reference data as coverage grows - see
-[NEWS.md](NEWS.md) for the current numbers and known limitations.
+point.
 
 Not affiliated with or endorsed by CDISC. Not a CORE-certified conformance engine.
+
+## Conformance
+
+coreval ships 756 rules and is verified by a harness
+(`tests/conformance/run_conformance.R`) that runs every one of them against
+CDISC's own positive/negative reference test cases and compares which records
+each rule flags. Current results:
+
+| Slice | Pass rate |
+|---|---|
+| Published rules, Fully Executable, **with reference output to compare against** | **474 / 500 (94.8%)** |
+| Published rules, Fully Executable, including those with no reference output | 474 / 543 (87.3%) |
+| All Fully Executable rules (Published + Deprecated + FDA draft) | 582 / 722 (80.6%) |
+
+Two denominators are reported deliberately, because the difference is not a
+quality signal:
+
+- **81 rules ship no reference output at all** — upstream provides either no
+  `positive/`/`negative/` fixtures, or fixture data with no accompanying
+  `results/`. These cannot pass or fail, so counting them as failures
+  understates real conformance by roughly ten points.
+- **Deprecated and draft rules are a lower-value pool** whose bundled fixtures
+  predate current engine conventions. Several were verified to number records
+  counting the CSV header row — one cites record 5 in a four-row file — so
+  they are presumed stale until shown otherwise.
+
+Of the remaining Published failures, essentially all are triaged: confirmed
+stale fixtures (a fixture's own reported values contradict its own data),
+rules permanently requiring CDISC Library metadata or a define.xml reader
+that this package deliberately does not have, or acknowledged open bugs in
+the upstream reference engine. Rules that cannot be evaluated are reported as
+skipped with a reason — never as a pass, and never as a fabricated finding.
+
+Not a CORE-certified engine: these numbers describe agreement with CDISC's
+published reference data, not certification.
 
 ## Installation
 

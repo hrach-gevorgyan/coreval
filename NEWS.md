@@ -1,5 +1,84 @@
 # coreval 0.0.0.9000
 
+* `check_study()` now evaluates seven rule types, not just `"Record Data"`:
+  `"Domain Presence Check"`, `"Dataset Metadata Check"`, `"Variable Metadata
+  Check"` (and its `"against Library Metadata"` variant), `"Value Check with
+  Variable Metadata"`, and `"Value Check with Dataset Metadata"`. The
+  machinery for these already existed and was verified against CDISC's
+  reference output by the conformance harness, but the package's main entry
+  point refused to run them - roughly 29 working rules were silently
+  unavailable to users. A `"Domain Presence Check"` asks one question about
+  the whole study, so it is now answered once and reported under the
+  sentinel `Dataset` value `"STUDY"` rather than repeated under every domain
+  its scope matches - matching the reference output exactly
+  (`STUDY,,DM,Not in dataset`).
+* Rule types that compare against a define.xml are now refused outright
+  rather than evaluated. With no define.xml reader, the define-side
+  pseudo-columns those rules name are simply absent, and the documented
+  "not a real column -> literal text" fallback turned CORE-000507's check
+  into `variable_label != "define_variable_label"` - true for every
+  variable, in the compliant and non-compliant fixture alike. Manufacturing
+  confident findings out of missing input is worse than declining to run;
+  these are now reported as skipped, with a reason.
+* Fixed a crash in `check_study()`: `ifelse()` returns `logical(0)`, not
+  `character(0)`, for a zero-length input, so a rule that declares no
+  `Output Variables` and whose `Check` references only `$`-bound
+  `Operations` bindings (e.g. CORE-000893) produced a logical where a
+  character was required, which then failed several frames later. Reachable on any
+  real study containing a TX domain.
+* An `Output Variable` that isn't a column of the domain being checked is
+  now reported as the reference engine's own literal text
+  `"Not in dataset"` rather than silently dropped from the findings row -
+  confirmed against CORE-000750, where the same rule reports
+  `USUBJID = "Not in dataset"` for a POOLID-keyed domain and
+  `POOLID = "Not in dataset"` for a USUBJID-keyed one.
+
+* Operator and join fixes, each traced to the pinned reference engine
+  source and confirmed by a full 756-rule sweep with zero regressions:
+  * `contains_all`/`not_contains_all` attached their verdict to every row.
+    The reference returns a *length-1* pandas Series (`convert_to_series()`
+    on a bare bool), not a broadcast one, and index alignment then fills
+    the remaining rows with `FALSE` - so the verdict lands on record 1
+    alone. Operators that genuinely mean "every row" broadcast explicitly;
+    these do not, and upstream's own unit test pins the scalar shape.
+  * `is_not_unique_set` never resolved `"--"` prefixes in its grouping
+    columns, so those entries matched no column, were silently dropped, and
+    the uniqueness key collapsed to whatever happened to be literal -
+    reporting masses of phantom duplicates.
+  * `Match Datasets` renamed only *colliding* matched columns to
+    `"<Name>.<col>"`. The reference renames the columns the rule itself
+    references, collision or not, so a referenced-but-non-colliding column
+    joined in under its bare name and the rule's own `DM.RFPENDTC`
+    reference degraded into a literal-string comparison - silently
+    always-false or always-true.
+  * An `Operations` `filter` value ending in `&` is a prefix wildcard, not
+    a literal (`QNAM: RACE&` matches `RACE1`, `RACEOTH`, ...). Read
+    literally it matched nothing, silently collapsing a `record_count` to
+    zero and inverting the rule's verdict. Blank values now fold to a
+    non-match, matching the reference's `na=False`.
+  * `matches_regex`/`not_matches_regex` now exempt a blank target from
+    format validation, for both operators independently - the reference
+    gates both on `notna()`, so a missing value is not a formatting
+    violation.
+  * RELREC joins: `"**"` domain wildcards (e.g. `RELREC.**TERM`, meaning
+    the partner domain's own `TERM` variable) are resolved per row instead
+    of being treated as unresolvable literal text; a group-level RELREC
+    pairing no longer cross-matches records belonging to different
+    subjects; and a row with no RELREC partner is dropped rather than kept
+    with blank joined columns, which a `not_equal_to` check would otherwise
+    count as a real violation.
+
+* The conformance harness accepts rule IDs after the upstream directory to
+  run just those rules, turning a five-minute full sweep into a two-second
+  check while iterating on a fix. A targeted run deliberately does not
+  rewrite `scoreboard.csv`, so the committed scoreboard can never be
+  silently truncated to a handful of rules.
+* Conformance now reported against two denominators, because the difference
+  is not a quality signal: 474/500 (94.8%) of Published, Fully Executable
+  rules that ship reference output to compare against, versus 582/722
+  (80.6%) of all Fully Executable rules. 81 rules ship no reference output
+  at all and can neither pass nor fail. See the README for the breakdown.
+
 * Rule extraction widened from SDTMIG-only to also pull SENDIG (base +
   SENDIG-AR/DART/GENETOX extensions) and TIG rules from the same upstream
   `cdisc-open-rules` clone (507 -> 756 bundled rules); ADaMIG's much larger

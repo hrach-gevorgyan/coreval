@@ -32,11 +32,18 @@ Variable) for Record-sensitivity rules, or one row per (Dataset,
 Variable) with \code{Record} blank for Dataset-sensitivity rules.
 }
 \details{
-Only the \code{"Record Data"} rule type is currently supported - the other
-rule types (\code{"Domain Presence Check"}, \code{"Variable Metadata Check"}, ...)
-check things this package doesn't model yet (e.g. whether a domain is
-present in the study at all, or metadata about variables rather than
-their values) and are skipped, along with any rule using an operator,
+Seven rule types are evaluated: \code{"Record Data"}, \code{"Domain Presence Check"}, \code{"Dataset Metadata Check"}, \code{"Variable Metadata Check"} (and its
+\code{"against Library Metadata"} variant), \code{"Value Check with Variable Metadata"}, and \code{"Value Check with Dataset Metadata"}. Each models a
+different notion of "one row" - a record, the study, the dataset, a
+variable, or a (record, variable) pair - and a \code{"Domain Presence Check"}
+asks one question about the whole study, so it is answered once and
+reported under the sentinel \code{Dataset} value \code{"STUDY"} rather than
+repeated for every domain it applies to.
+
+Rule types that compare against a define.xml are NOT evaluated: this
+package has no define.xml reader, and running one anyway would
+manufacture findings out of missing input rather than report nothing.
+Those are reported in \verb{$skipped}, as is any rule using an operator,
 \code{Operations} type, or \verb{Match Datasets} join this package doesn't
 implement.
 }

@@ -9,6 +9,18 @@
 #' @return The resolved variable name.
 #' @noRd
 resolve_var_name <- function(name, domain) {
+  # ifelse() returns logical(0) - NOT character(0) - for a zero-length
+  # input, since with nothing to test it never looks at the yes/no
+  # branches to learn their type. That silently changes this function's
+  # return type for an empty name list, and the logical(0) then errors out
+  # of the next startsWith() several frames away. Reachable in practice:
+  # a rule that declares no Output Variables and whose Check references
+  # only `$`-bound Operations bindings (e.g. CORE-000893) yields exactly
+  # that empty set, which used to crash check_study() on any study
+  # containing the matching domain.
+  if (length(name) == 0) {
+    return(character(0))
+  }
   ifelse(
     startsWith(name, "--"),
     paste0(toupper(domain), substr(name, 3, nchar(name))),

@@ -31,13 +31,6 @@
 # first SE match would grab the wrong record. `.coreval_row_id` tracks each
 # exploded row's original row, so downstream code (evaluate_rule(),
 # assemble_findings()) can collapse back to one result per original record.
-#' Left-join one Match Datasets spec's columns onto a dataset
-#' @param dataset The dataset being checked (`list(data, meta)`).
-#' @param spec One Match Datasets spec (`Name`, `Keys`, optional `Child`).
-#' @param study Full study object.
-#' @param current_domain Domain code of `dataset`, used to resolve `"--"` key names.
-#' @return `dataset` with the matched columns joined in.
-#' @noRd
 #' Collect every `name`/`value` string a Check tree references, plus Output Variables
 #' @param rule A rule record.
 #' @return A character vector of referenced target strings.
@@ -97,6 +90,15 @@ rename_referenced_match_columns <- function(right, rule, match_name, keys) {
   invisible(NULL)
 }
 
+#' Left-join one Match Datasets spec's columns onto a dataset
+#' @param dataset The dataset being checked (`list(data, meta)`).
+#' @param spec One Match Datasets spec (`Name`, `Keys`, optional `Child`).
+#' @param study Full study object.
+#' @param current_domain Domain code of `dataset`, used to resolve `"--"` key names.
+#' @param rule The rule being evaluated, used to prefix the matched columns it
+#'   references as `"<Name>.<col>"`; `NULL` applies collision-renaming only.
+#' @return `dataset` with the matched columns joined in.
+#' @noRd
 apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NULL) {
   match_name <- spec$Name
   if (identical(match_name, "RELREC") && is.null(spec$Child)) {
