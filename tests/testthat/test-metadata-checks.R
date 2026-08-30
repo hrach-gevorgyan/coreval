@@ -31,6 +31,27 @@ test_that("Variable Metadata Check evaluates one row per variable, not per recor
   expect_true(any(actual)) # AEDECOD00 (9 chars) exceeds the 8-char limit
 })
 
+test_that("a 'Variable Metadata Check against Library Metadata' rule still gets the per-variable dataset shape (CORE-000902)", {
+  # rule_type is "Variable Metadata Check against Library Metadata", not
+  # plain "Variable Metadata Check" - but this specific rule's Check only
+  # needs the LOCAL get_model_column_order Operations binding (no real
+  # CDISC Library data at all). An earlier version of
+  # prepare_dataset_for_rule() matched rule_type by exact string, sending
+  # this rule down the ordinary record-level path instead, where its
+  # pseudo-field `variable_name` isn't a real column - silently resolving
+  # to "no violation" instead of actually evaluating the rule.
+  rule <- .coreval_env$data$rules[["CORE-000902"]]
+  expect_equal(rule$rule_type, "Variable Metadata Check against Library Metadata")
+  for (case in c("negative/01", "negative/02", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000902", case)
+    study <- read_study(file.path(dir, "data"))
+    actual <- which(evaluate_rule(rule, study, "VS"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "VS"])))
+    expect_equal(sort(unname(actual)), expected, info = case)
+  }
+})
+
 test_that("Variable Metadata Check resolves a literal array value (CORE-000376)", {
   rule <- .coreval_env$data$rules[["CORE-000376"]]
   for (case in c("negative", "positive")) {

@@ -243,15 +243,29 @@ as_study <- function(dataset_or_study, domain) {
 prepare_dataset_for_rule <- function(rule, study, domain) {
   dataset <- study$datasets[[domain]]
   # rule$rule_type is often absent on rules built directly in tests/by
-  # callers (defaults to the ordinary record-level path) - identical()
-  # rather than switch() so a NULL/missing rule_type never errors.
-  if (identical(rule$rule_type, "Variable Metadata Check")) {
+  # callers (defaults to the ordinary record-level path) - %in% a vector of
+  # exact strings, rather than switch(), so a NULL/missing rule_type never
+  # errors. The "against Library Metadata"/"against Define XML" suffixed
+  # variants describe what metadata SOURCE the Check compares against, not
+  # a different "what is one row" shape - a rule can be plain "Variable
+  # Metadata Check" or "... against Library Metadata" and still need the
+  # exact same one-row-per-variable dataset (confirmed against CORE-000902:
+  # its Check only needs the LOCAL get_model_column_order Operations
+  # binding, no CDISC Library data at all, despite the "against Library
+  # Metadata" label - an earlier version's exact-string match sent it down
+  # the ordinary record-level path instead, where its pseudo-field
+  # `variable_name` doesn't exist as a real column, silently resolving to
+  # "no violation" rather than actually evaluating the rule).
+  if (isTRUE(rule$rule_type %in% c(
+    "Variable Metadata Check", "Variable Metadata Check against Library Metadata",
+    "Variable Metadata Check against Define XML"
+  ))) {
     return(build_variable_metadata_dataset(dataset))
   }
   if (identical(rule$rule_type, "Dataset Metadata Check")) {
     return(build_dataset_metadata_dataset(dataset, domain))
   }
-  if (identical(rule$rule_type, "Value Check with Variable Metadata")) {
+  if (isTRUE(rule$rule_type %in% c("Value Check with Variable Metadata", "Value Check with Dataset Metadata"))) {
     return(build_variable_value_check_dataset(dataset))
   }
   apply_match_datasets(dataset, rule, study, domain)
