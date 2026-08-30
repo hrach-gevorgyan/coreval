@@ -161,3 +161,35 @@ test_that("read_study reads a directory of XPT files with the same semantics", {
   expect_equal(dm$meta[variable == "AGE", type], "Num")
   expect_equal(dm$meta[variable == "SEX", type], "Char")
 })
+
+test_that("read_env_standard tolerates an empty value, a blank line and a comment", {
+  # A blank value ("VERSION=") is legitimate and common. strsplit() drops the
+  # trailing empty piece, so such a line yields a length-1 vector - and
+  # returning NULL for it made vapply reject a zero-length result and abort
+  # the ENTIRE study read over one blank field. Any real study whose .env
+  # left a value empty would fail to load at all.
+  dir <- tempfile("coreval_env_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+
+  writeLines(c("PRODUCT=ADAMIG", "VERSION="), file.path(dir, ".env"))
+  std <- read_env_standard(dir)
+  expect_equal(std$product, "ADAMIG")
+  expect_true(is.na(std$version))
+
+  # Blank lines and comments carry no "=" at all and must be ignored rather
+  # than parsed as a malformed assignment.
+  writeLines(
+    c("# study standard", "", "PRODUCT=sdtmig", "VERSION=3-4", ""),
+    file.path(dir, ".env")
+  )
+  std2 <- read_env_standard(dir)
+  expect_equal(std2$product, "SDTMIG")
+  expect_equal(std2$version, "3-4")
+
+  # A file with nothing assignable is "no declared standard", not an error.
+  writeLines(c("# nothing here", ""), file.path(dir, ".env"))
+  std3 <- read_env_standard(dir)
+  expect_true(is.na(std3$product))
+  expect_true(is.na(std3$version))
+})

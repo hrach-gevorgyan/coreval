@@ -156,9 +156,23 @@ read_env_standard <- function(path) {
     return(list(product = NA_character_, version = NA_character_))
   }
   lines <- readLines(env_path, warn = FALSE)
+  # Only lines that actually assign something. A blank line, a comment, or a
+  # stray heading has no "=" at all, and strsplit() would yield a one-element
+  # piece for it.
+  lines <- lines[grepl("=", lines, fixed = TRUE)]
+  if (length(lines) == 0) {
+    return(list(product = NA_character_, version = NA_character_))
+  }
   kv <- strsplit(lines, "=", fixed = TRUE)
   keys <- toupper(trimws(vapply(kv, function(x) x[1], character(1))))
-  vals <- trimws(vapply(kv, function(x) if (length(x) >= 2) paste(x[-1], collapse = "="), character(1)))
+  # An EMPTY value ("VERSION=") is legitimate and common - strsplit drops the
+  # trailing empty piece, so such a line yields a length-1 vector. Returning
+  # NULL there (as `if` without `else` does) made vapply reject a zero-length
+  # result and abort the ENTIRE study read over one blank field, rather than
+  # reporting that one field as absent.
+  vals <- trimws(vapply(kv, function(x) {
+    if (length(x) >= 2) paste(x[-1], collapse = "=") else NA_character_
+  }, character(1)))
   list(
     product = toupper(vals[match("PRODUCT", keys)]),
     version = vals[match("VERSION", keys)]
