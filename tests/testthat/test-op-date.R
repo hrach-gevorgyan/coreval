@@ -8,21 +8,60 @@ expected_violations_for <- function(results_csv_path, dataset_name, n) {
   out
 }
 
-test_that("invalid_date rejects a syntactically-shaped but calendar-invalid date (Feb 30)", {
-  # CORE-000505: TSVAL invalid_date. "2023-02-30" matches the date regex's
-  # shape (day 3[01]|0[1-9]|[12][0-9] doesn't know which months have 30
-  # days) but isn't a real calendar date - the reference engine's isoparse
-  # rejects it. An earlier version of is_valid_date_str() only checked
-  # regex shape and missed this.
+test_that("invalid_date rejects a syntactically-shaped but calendar-invalid date (Feb 30), and a day without a month", {
+  # CORE-000505: TSVAL invalid_date.
+  #   negative/01, positive/01: "2023-02-30" matches the date regex's shape
+  #     (day 3[01]|0[1-9]|[12][0-9] doesn't know which months have 30 days)
+  #     but isn't a real calendar date - the reference engine's isoparse
+  #     rejects it. An earlier version of is_valid_date_str() only checked
+  #     regex shape and missed this.
+  #   negative/02, positive/02: "2003-20" (a single dash, no uncertainty
+  #     marker) matches the regex's shape too - "20" fits the DAY pattern,
+  #     with the month group simply skipped - but isoparse can't parse
+  #     "year-day" with no month, and the reference engine only falls back
+  #     to the loose shape check for a string that actually contains an
+  #     uncertainty marker ("/", "--", "-:"), which this one doesn't. An
+  #     earlier version of is_valid_date_str() had no such gate at all.
   rule <- .coreval_env$data$rules[["CORE-000505"]]
-  for (case in c("negative", "positive")) {
-    dir <- test_path("fixtures", "core_rules", "CORE-000505", case, "01")
+  for (case in c("negative/01", "positive/01", "negative/02", "positive/02")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000505", case)
     study <- read_study(file.path(dir, "data"))
     actual <- evaluate_rule(rule, study$datasets$TS, domain = "TS")
     expect_equal(
       actual,
-      expected_violations_for(file.path(dir, "results", "results.csv"), "TS", nrow(study$datasets$TS$data))
+      expected_violations_for(file.path(dir, "results", "results.csv"), "TS", nrow(study$datasets$TS$data)),
+      info = case
     )
+  }
+})
+
+test_that("is_valid_date_str rejects a component skipped without an explicit uncertainty marker", {
+  expect_false(is_valid_date_str("2003-20")) # single dash, day without month
+  expect_true(is_valid_date_str("2024---15")) # "--" marks month as an explicit, known-missing placeholder
+  expect_true(is_valid_date_str("2024-03"))
+  expect_true(is_valid_date_str("2024-03-15"))
+})
+
+test_that("invalid_duration's negative flag is a per-operator parameter, not a generic result negation (CORE-000730/CORE-000731)", {
+  # `negative: true` in these rules' Check ("TSVAL negative: true, operator:
+  # invalid_duration") means "allow a negative duration sign", per
+  # upstream's own comment - NOT "negate the whole condition result". An
+  # earlier version of evaluate_condition() also generically negated the
+  # result whenever `negative: true` was set, double-negating
+  # invalid_duration's own already-negative-aware result and silently
+  # flagging a perfectly valid duration like "P40Y" as invalid.
+  for (id in c("CORE-000730", "CORE-000731")) {
+    rule <- .coreval_env$data$rules[[id]]
+    for (case in c("negative", "positive")) {
+      dir <- test_path("fixtures", "core_rules", id, case, "01")
+      study <- read_study(file.path(dir, "data"))
+      actual <- evaluate_rule(rule, study$datasets$TS, domain = "TS")
+      expect_equal(
+        actual,
+        expected_violations_for(file.path(dir, "results", "results.csv"), "TS", nrow(study$datasets$TS$data)),
+        info = paste(id, case)
+      )
+    }
   }
 })
 

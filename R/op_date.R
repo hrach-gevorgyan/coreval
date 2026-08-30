@@ -44,13 +44,23 @@ days_in_month <- function(year, month) {
   c(31, ifelse(leap, 29, 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)[month]
 }
 
-# The regex only checks shape (e.g. "2023-02-30" matches the day pattern
-# 3[01]|0[1-9]|[12][0-9] fine). For fully-specified, non-"uncertain" dates,
-# the reference engine additionally runs Python's `isoparse`, which DOES
-# validate the real calendar (rejects Feb 30) - matched here explicitly,
-# since R has no equivalent one-line "does this exist" datetime parser.
-# Partial/uncertain dates skip this (there's no fixed calendar to validate
-# against a placeholder component).
+# The regex only checks SHAPE, not real validity - and its shape is looser
+# than intended in two ways for a non-"uncertain" string (one with no "/",
+# "--", or "-:"): it accepts a calendar-impossible date like "2023-02-30"
+# (day pattern 3[01]|0[1-9]|[12][0-9] doesn't know which months have 30
+# days), and - because the month and day groups are independently optional -
+# it also accepts a component being silently SKIPPED with only a single
+# dash (e.g. "2003-20" matches as year="2003" + day="20" with month simply
+# absent, since "20" fits the day pattern `[12][0-9]` fine). The reference
+# engine avoids both: for a non-uncertain string it runs Python's
+# `isoparse` first, which validates the real calendar AND refuses to skip a
+# component without an explicit uncertainty marker; only when isoparse
+# fails AND the string genuinely contains one of those markers does it fall
+# back to the regex-only shape check (confirmed against CORE-000505's real
+# fixture: "2003-20" - single dash, no uncertainty marker - is invalid,
+# while "2024---15" - the "-" is a literal placeholder for a missing
+# month - is valid). Both real-calendar and no-skip-without-uncertainty are
+# checked here explicitly, since R has no one-line `isoparse` equivalent.
 #' Validate (partial) ISO 8601 date strings, including a real calendar check for full dates
 #' @param x Character vector of date strings.
 #' @return A logical vector.
@@ -65,6 +75,9 @@ is_valid_date_str <- function(x) {
       y <- suppressWarnings(as.integer(components[["year"]]))
       m <- suppressWarnings(as.integer(components[["month"]]))
       d <- suppressWarnings(as.integer(components[["day"]]))
+      if (!is.na(d) && is.na(m)) {
+        return(FALSE) # day without month is only legal via an explicit uncertainty marker
+      }
       if (is.na(y) || is.na(m) || is.na(d)) {
         return(TRUE) # nothing to validate at this precision
       }
