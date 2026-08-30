@@ -19,8 +19,8 @@ case's \code{.env} file - both \code{NA} for a real XPT-based study (no \code{.e
 }
 \description{
 Detects whether \code{path} is a directory of XPT datasets (a real study) or a
-CORE test-case \verb{data/} directory (\code{.env} + \verb{_datasets.csv} +
-\verb{_variables.csv} + one CSV per dataset), and reads either into the same
+CORE test-case \verb{data/} directory (\verb{_variables.csv} + one CSV per dataset,
+usually also \code{.env} and \verb{_datasets.csv}), and reads either into the same
 internal representation, so the evaluator never has to know which one it
 got.
 }

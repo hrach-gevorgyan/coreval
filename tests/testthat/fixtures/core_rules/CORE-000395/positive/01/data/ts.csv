@@ -1,0 +1,60 @@
+STUDYID,DOMAIN,TSSEQ,TSGRPID,TSPARMCD,TSPARM,TSVAL,TSVALNF,TSVALCD,TSVCDREF,TSVCDVER
+CDISC-TEST,TS,1,,ACTSUB,Actual Number of Subjects,100,,,,
+CDISC-TEST,TS,2,,ADAPT,Adaptive Design,N,,C49487,CDISC,2018-12-21
+CDISC-TEST,TS,3,,ADDON,Added on to Existing Treatments,N,,C49487,CDISC,2018-12-21
+CDISC-TEST,TS,4,,AGEMAX,Planned Maximum Age of Subjects,P64Y,,,ISO 8601,
+CDISC-TEST,TS,5,,AGEMIN,Planned Minimum Age of Subjects,P18Y,,,ISO 8601,
+CDISC-TEST,TS,6,,COMPTRT,Comparative Treatment Name,METFORMIN,,9100L32L2N,UNII,
+CDISC-TEST,TS,7,,CTAUG,CDISC Therapeutic Area User Guide,Diabetes Therapeutic Area User Guide v1.0,,,,
+CDISC-TEST,TS,8,,CTAUG,CDISC Therapeutic Area User Guide,Diabetes Therapeutic Area User Guide v1.0 - Supplement for ADaM,,,,
+CDISC-TEST,TS,9,DCUT1,DCUTDESC,Data Cutoff Description,DATABASE LOCK,,,,
+CDISC-TEST,TS,10,DCUT1,DCUTDTC,Data Cutoff Date,2019-11-01,,,ISO 8601,
+CDISC-TEST,TS,11,,EXTTIND,Extension Trial Indicator,,NA,,CDISC,2018-12-21
+CDISC-TEST,TS,12,,FCNTRY,Planned Country of Investigational Sites,France,,FRA,ISO 3166,
+CDISC-TEST,TS,13,,FCNTRY,Planned Country of Investigational Sites,Japan,,JPN,ISO 3166,
+CDISC-TEST,TS,14,,FCNTRY,Planned Country of Investigational Sites,United States,,USA,ISO 3166,
+CDISC-TEST,TS,15,,FDATCHSP,FDA Technical Specification,v4.3 (March 2019),,,,
+CDISC-TEST,TS,16,,HLTSUBJI,Healthy Subject Indicator,N,,C49487,CDISC,2018-12-21
+CDISC-TEST,TS,17,,INDIC,Trial Disease/Condition Indication,Diabetes mellitus type 2 (disorder),,44054006,SNOMED,
+CDISC-TEST,TS,18,,INTMODEL,Intervention Model,PARALLEL,,C82639,CDISC,2018-12-21
+CDISC-TEST,TS,19,,INTTYPE,Intervention Type,DRUG,,C1909,CDISC,2018-12-21
+CDISC-TEST,TS,20,,LENGTH,Trial Length,P26W,,,ISO 8601,
+CDISC-TEST,TS,21,,NARMS,Planned Number of Arms,2,,,,
+CDISC-TEST,TS,22,,NCOHORT,Number of Groups/Cohorts,,NA,,,
+CDISC-TEST,TS,23,,OBJPRIM,Trial Primary Objective,"Time to first occurrence of MACE+, a composite endpoint consisting of: CV death, nonfatal MI, nonfatal stroke, or hospitalization for unstable angina",,,,
+CDISC-TEST,TS,24,,OBJSEC,Trial Secondary Objective,Time from randomisation to all cause death,,,,
+CDISC-TEST,TS,25,,OUTMSPRI,Primary Outcome Measure,Mean Change from Baseline in HBa1C (%). Time frame: after 26 weeks.,,,,
+CDISC-TEST,TS,26,,OUTMSPRI,Primary Outcome Measure,Proportion of Subject with HBa1C < 7% (Count). Time frame: after 26 weeks.,,,,
+CDISC-TEST,TS,27,,PCLAS,Pharmacologic Class,Insulin,,N0000175944,NDF-RT,
+CDISC-TEST,TS,28,,PDPSTIND,Pediatric Postmarket Study Indicator,,NA,,CDISC,2018-12-21
+CDISC-TEST,TS,29,,PDSTIND,Pediatric Study Indicator,,NA,,CDISC,2018-12-21
+CDISC-TEST,TS,30,,PIPIND,Pediatric Investigation Plan Indicator,,NA,,CDISC,2018-12-21
+CDISC-TEST,TS,31,,PLANSUB,Planned Number of Subjects,100,,,,
+CDISC-TEST,TS,32,,RANDOM,Trial is Randomized,Y,,C49488,CDISC,2018-12-21
+CDISC-TEST,TS,33,,RANDQT,Randomization Quotient,0.5,,,,
+CDISC-TEST,TS,34,,RDIND,Rare Disease Indicator,N,,C49487,CDISC,2018-12-21
+CDISC-TEST,TS,35,,REGID,Registry Identifier,2019-123456-42,,,EUDRAC,
+CDISC-TEST,TS,36,,REGID,Registry Identifier,NCT12345678,,,CLINICALTRIALS.GOV,
+CDISC-TEST,TS,37,,RLPSCRIT,Relapse Criteria,,NA,,,
+CDISC-TEST,TS,38,,SDTIGVER,SDTM IG Version,3.2,,,,
+CDISC-TEST,TS,39,,SDTMVER,SDTM Version,1.4,,,,
+CDISC-TEST,TS,40,,SENDTC,Study End Date,2019-10-15,,,ISO 8601,
+CDISC-TEST,TS,41,,SEXPOP,Sex of Participants,BOTH,,C49636,CDISC,2018-12-21
+CDISC-TEST,TS,42,,SPONSOR,Clinical Study Sponsor,cdisc360.org,,000000000,DUNS,
+CDISC-TEST,TS,43,,SSTDTC,Study Start Date,2019-01-01,,,ISO 8601,
+CDISC-TEST,TS,44,,STOPRULE,Study Stop Rules,NONE,,,,
+CDISC-TEST,TS,45,,STYPE,Study Type,INTERVENTIONAL,,C98388,CDISC,2018-12-21
+CDISC-TEST,TS,46,,TBLIND,Trial Blinding Schema,SINGLE BLIND,,C28233,CDISC,2018-12-21
+CDISC-TEST,TS,47,,TCNTRL,Control Type,ACTIVE,,C49649,CDISC,2018-12-21
+CDISC-TEST,TS,48,,TDIGRP,Diagnosis Group,Diabetes mellitus (disorder),,73211009,SNOMED,
+CDISC-TEST,TS,49,,THERAREA,Therapeutic Area,DIABETES MELLITUS,,,,
+CDISC-TEST,TS,50,,TINDTP,Trial Intent Type,TREATMENT,,C49656,CDISC,2018-12-21
+CDISC-TEST,TS,51,,TITLE,Trial Title,A trial comparing cardiovascular safety of human insulin versus metformin in subjects with type 2 diabetes at high risk of cardiovascular events,,,,
+CDISC-TEST,TS,52,,TPHASE,Trial Phase Classification,PHASE III TRIAL,,C15602,CDISC,2018-12-21
+CDISC-TEST,TS,53,,TRT,Investigational Therapy or Treatment,INSULIN HUMAN,,1Y17CTI5SR,UNII,
+CDISC-TEST,TS,54,,TTYPE,Trial Type,EFFICACY,,C49666,CDISC,2018-12-21
+CDISC-TEST,TS,55,,TTYPE,Trial Type,MULTICENTRE,,,CDISC,2018-12-21
+CDISC-TEST,TS,56,,TTYPE,Trial Type,MULTINATIONAL,,,CDISC,2018-12-21
+CDISC-TEST,TS,57,,TTYPE,Trial Type,SAFETY,,C49667,CDISC,2018-12-21
+CDISC-TEST,TS,58,,TTYPE,Trial Type,TREAT-TO-TARGET,,,CDISC,2018-12-21
+CDISC-TEST,TS,59,,STCAT,Category,test,,,,

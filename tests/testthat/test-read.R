@@ -76,6 +76,66 @@ test_that("read_study's standard is NA/NA when .env is absent (a real XPT study,
   expect_true(is.na(study$standard$version))
 })
 
+test_that("read_study infers the dataset list from _variables.csv when _datasets.csv is absent", {
+  # A handful of real CORE test cases (e.g. CORE-000395's SENDIG fixtures)
+  # ship _variables.csv and the per-dataset CSVs but no _datasets.csv
+  # manifest at all.
+  dir <- tempfile("coreval_nomanifest_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("dataset,variable,label,type,length\nTS,STUDYID,Study Identifier,Char,10", file.path(dir, "_variables.csv"))
+  writeLines("STUDYID\nABC", file.path(dir, "ts.csv"))
+  study <- read_study(dir)
+  expect_equal(names(study$datasets), "TS")
+  expect_equal(study$datasets$TS$data$STUDYID, "ABC")
+  expect_true(is.na(study$datasets$TS$label))
+})
+
+test_that("evaluate_rule matches CDISC's reference results.csv for a fixture with no _datasets.csv (CORE-000395)", {
+  rule <- .coreval_env$data$rules[["CORE-000395"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000395", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    actual <- which(evaluate_rule(rule, study, "TS"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    expected <- sort(unique(as.integer(results$Record[results$Dataset == "TS"])))
+    expect_equal(sort(unname(actual)), expected)
+  }
+})
+
+test_that("read_study doesn't crash the whole study when one dataset has zero _variables.csv rows", {
+  # A dataset can be listed in _datasets.csv with zero matching rows in
+  # _variables.csv at all (a real upstream data gap, confirmed for
+  # CORE-000094's own "ec" dataset) - fread() errors on an empty-but-typed
+  # colClasses list, which used to crash the ENTIRE study read.
+  dir <- tempfile("coreval_notypes_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("Filename,Label\ndm,Demographics\nec,Exposure as Collected", file.path(dir, "_datasets.csv"))
+  writeLines("dataset,variable,label,type,length\nDM,USUBJID,Subject,Char,20", file.path(dir, "_variables.csv"))
+  writeLines("USUBJID\n1", file.path(dir, "dm.csv"))
+  writeLines("USUBJID,ECTRT\n1,DRUGX", file.path(dir, "ec.csv")) # no _variables.csv rows for EC at all
+  study <- read_study(dir)
+  expect_equal(sort(names(study$datasets)), c("DM", "EC"))
+  expect_equal(study$datasets$EC$data$ECTRT, "DRUGX") # auto-detected type, still readable
+  expect_equal(nrow(study$datasets$EC$meta), 0)
+})
+
+test_that("evaluate_rule matches CDISC's reference results.csv for a fixture with an untyped dataset (CORE-000094)", {
+  rule <- .coreval_env$data$rules[["CORE-000094"]]
+  for (case in c("negative", "positive")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000094", case, "01")
+    study <- read_study(file.path(dir, "data"))
+    results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected)
+    }
+  }
+})
+
 test_that("read_study reads a directory of XPT files with the same semantics", {
   dir <- tempfile("coreval_xpt_")
   dir.create(dir)

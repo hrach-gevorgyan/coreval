@@ -1,0 +1,86 @@
+dataset,variable,label,type,length
+ag,STUDYID,Study Identifier,Char,50
+ag,DOMAIN,Domain Abbreviation,Char,50
+ag,USUBJID,Unique Subject Identifier,Char,50
+ag,AGSEQ,Sequence Number,Num,8
+ag,AGTRT,Reported Agent Name,Char,50
+ag,AGPRESP,AG Pre-Specified,Char,50
+ag,AGOCCUR,AG Occurrence,Char,50
+ag,AGDOSE,Dose per Administration,Num,50
+ag,AGDOSTXT,Dose Description,Char,50
+ag,AGDOSU,Dose Units,Char,50
+ag,AGROUTE,Route of Administration,Char,50
+ag,VISIT,Visit Name,Char,50
+ag,AGENDTC,End Date/Time of Agent,Char,50
+cm,STUDYID,Study Identifier,Char,50
+cm,DOMAIN,Domain Abbreviation,Char,50
+cm,USUBJID,Unique Subject Identifier,Char,50
+cm,CMSEQ,Sequence Number,Num,8
+cm,CMTRT,"Reported Name of Drug, Med, or Therapy",Char,50
+cm,CMDOSE,Dose per Administration,Num,8
+cm,CMDOSTXT,Dose Description,Char,50
+cm,CMDOSU,Dose Units,Char,50
+cm,CMDOSFRQ,Dosing Frequency per Interval,Char,50
+cm,CMSTDTC,Start Date/Time of Medication,Char,50
+cm,CMENDTC,End Date/Time of Medication,Char,50
+ex,STUDYID,Study Identifier,Char,50
+ex,DOMAIN,Domain Abbreviation,Char,50
+ex,USUBJID,Unique Subject Identifier,Char,50
+ex,EXSEQ,Sequence Number,Num,8
+ex,EXLNKID,Link ID,Char,50
+ex,EXTRT,Name of Treatment,Char,50
+ex,EXDOSE,Dose,Num,8
+ex,EXDOSTXT,Dose Description,Char,50
+ex,EXDOSU,Dose Units,Char,50
+ex,EXDOSFRM,Dose Form,Char,50
+ex,EXDOSFRQ,Dosing Frequency per Interval,Char,50
+ex,EXROUTE,Route of Administration,Char,50
+ex,EXSTDTC,Start Date/Time of Treatment,Char,50
+ex,EXENDTC,End Date/Time of Treatment,Char,50
+ex,EXSTDY,Study Day of Start of Treatment,Num,8
+ex,EXENDY,Study Day of End of Treatment,Num,8
+ml,STUDYID,Study Identifier,Char,50
+ml,DOMAIN,Domain Abbreviation,Char,50
+ml,USUBJID,Unique Subject Identifier,Char,50
+ml,MLSEQ,Sequence Number,Num,8
+ml,MLTRT,Name of Meal,Char,50
+ml,MLCAT,Category for Meal,Char,50
+ml,MLPRESP,ML Pre-specified,Char,50
+ml,MLOCCUR,ML Occurrence,Char,50
+ml,MLDOSE,Dose,Num,8
+ml,MLDOSTXT,Dose Description,Char,50
+ml,MLDOSU,Dose Units,Char,50
+ml,MLDTC,Date/Time of Collection,Char,50
+ml,MLSTDTC,Start Date/Time of Meal,Char,50
+ml,MLENDTC,End Date/Time of Meal,Char,50
+ml,RELMIDS,Temporal Relation to Milestone Instance,Char,50
+ml,MIDS,Disease Milestone Instance Name,Char,50
+ml,MIDSDTC,Disease Milestone Instance Date/Time,Char,50
+pr,STUDYID,Study Identifier,Char,50
+pr,DOMAIN,Domain Abbreviation,Char,50
+pr,USUBJID,Unique Subject Identifier,Char,50
+pr,PRSEQ,Sequence Number,Num,8
+pr,PRTRT,Reported Name of Procedure,Char,50
+pr,PRDOSE,Dose,Num,8
+pr,PRDOSTXT,Dose Description,Char,50
+pr,PRDOSU,Dose Units,Char,50
+pr,PRLOC,Location of Procedure,Char,50
+pr,PRLAT,Laterality,Char,50
+pr,PRSTDTC,Start Date/Time of Procedure,Char,50
+pr,PRENDTC,End Date/Time of Procedure,Char,50
+su,STUDYID,Study Identifier,Char,50
+su,DOMAIN,Domain Abbreviation,Char,50
+su,USUBJID,Unique Subject Identifier,Char,50
+su,SUSEQ,Sequence Number,Num,8
+su,SUTRT,Reported Name of Substance,Char,50
+su,SUCAT,Category for Substance Use,Char,50
+su,SUDOSE,Substance Use Consumption,Num,8
+su,SUDOSTXT,Substance Use Consumption Text,Char,50
+su,SUDOSU,Consumption Units,Char,50
+su,SUDOSFRQ,Use Frequency Per Interval,Char,50
+su,SUSTDTC,Start Date/Time of Substance Use,Char,50
+su,SUENDTC,End Date/Time of Substance Use,Char,50
+su,SUSTTPT,Start Reference Time Point,Char,50
+su,SUSTRTPT,Start Relative to Reference Time Point,Char,50
+su,SUENTPT,End Reference Time Point,Char,50
+su,SUENRTPT,End Relative to Reference Time Point,Char,50

@@ -1,8 +1,8 @@
 #' Read a study into coreval's internal representation
 #'
 #' Detects whether `path` is a directory of XPT datasets (a real study) or a
-#' CORE test-case `data/` directory (`.env` + `_datasets.csv` +
-#' `_variables.csv` + one CSV per dataset), and reads either into the same
+#' CORE test-case `data/` directory (`_variables.csv` + one CSV per dataset,
+#' usually also `.env` and `_datasets.csv`), and reads either into the same
 #' internal representation, so the evaluator never has to know which one it
 #' got.
 #'
@@ -30,7 +30,7 @@
 #' unlink(dir, recursive = TRUE)
 #' @export
 read_study <- function(path) {
-  if (file.exists(file.path(path, "_datasets.csv"))) {
+  if (file.exists(file.path(path, "_variables.csv"))) {
     read_study_test_case(path)
   } else {
     read_study_xpt(path)
@@ -85,12 +85,25 @@ build_dataset_from_xpt <- function(raw) {
 }
 
 #' Read a CORE test-case `data/` directory into the internal study representation
-#' @param path Directory containing `_datasets.csv`, `_variables.csv`, and one CSV per dataset.
+#' @param path Directory containing `_variables.csv`, one CSV per dataset,
+#'   and (usually) `_datasets.csv`.
 #' @return A study list, see [read_study()].
 #' @noRd
 read_study_test_case <- function(path) {
-  datasets_csv <- data.table::fread(file.path(path, "_datasets.csv"), colClasses = "character")
   variables_csv <- data.table::fread(file.path(path, "_variables.csv"), colClasses = "character")
+
+  # A handful of real CORE test cases ship `_variables.csv` and the per-
+  # dataset CSVs but no `_datasets.csv` manifest at all (confirmed against
+  # e.g. CORE-000395's own fixtures) - fall back to the dataset names
+  # `_variables.csv` itself declares, with no Label available (nothing else
+  # names one).
+  datasets_csv_path <- file.path(path, "_datasets.csv")
+  datasets_csv <- if (file.exists(datasets_csv_path)) {
+    data.table::fread(datasets_csv_path, colClasses = "character")
+  } else {
+    fnames <- unique(variables_csv$dataset)
+    data.table::data.table(Filename = fnames, Label = NA_character_)
+  }
 
   datasets <- lapply(seq_len(nrow(datasets_csv)), function(i) {
     build_dataset_from_csv(path, datasets_csv$Filename[i], variables_csv, datasets_csv$Label[i])
@@ -151,10 +164,22 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   # trailing whitespace from character fields - destroying exactly the kind
   # of data-quality defect CORE conformance rules exist to catch (e.g.
   # CORE-000867's "text variable must not have leading spaces").
-  dt <- data.table::fread(
-    file.path(path, paste0(fname, ".csv")), colClasses = col_classes,
+  #
+  # A dataset can be listed in _datasets.csv with zero matching rows in
+  # _variables.csv at all (a real upstream data gap, confirmed for
+  # CORE-000094's own "ec" dataset) - fread() errors on an empty-but-typed
+  # colClasses list ("colClasses is type list but has no names"), which
+  # would otherwise crash the ENTIRE study read over one broken domain.
+  # Falling back to auto-detected types for just that one dataset is the
+  # only option when upstream's own type declarations are simply absent.
+  fread_args <- list(
+    file.path(path, paste0(fname, ".csv")),
     na.strings = character(0), strip.white = FALSE
   )
+  if (length(col_classes) > 0) {
+    fread_args$colClasses <- col_classes
+  }
+  dt <- do.call(data.table::fread, fread_args)
 
   fill_char_blanks(dt)
 

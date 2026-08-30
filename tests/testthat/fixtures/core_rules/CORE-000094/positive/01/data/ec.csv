@@ -1,0 +1,8 @@
+,,,,,,,,,,,,,,,,
+Study Identifier,Domain Abbreviation,Unique Subject Identifier,Sequence Number,Link ID,Name of Treatment,Pre-Specified,Occurrence,Reason for Occur Value,Dose,Dose Description,Dose Units,Dose Form,Start Date/Time of Treatment,End Date/Time of Treatment,Study Day of Start of Treatment,Study Day of End of Treatment
+Char,Char,Char,Num,Char,Char,Char,Char,Char,Num,Char,Char,Char,Char,Char,Num,Num
+50,50,50,8,50,50,50,50,50,8,50,50,50,50,50,8,8
+ABC,EC,ABC1001,1,A2-20110114,BOTTLE A,Y,Y,,,2-3,TABLET,QD,2011-01-14 00:00:00,2011-01-28 00:00:00,1,15
+ABC,EC,ABC2001,1,A2-20110114,BOTTLE A,Y,Y,,2,,TABLET,QD,2011-01-14 00:00:00,2011-01-23 00:00:00,1,10
+ABC,EC,ABC2001,2,A0-20110124,BOTTLE A,Y,N,PATIENT MISTAKE,,,TABLET,QD,2011-01-24 00:00:00,2011-01-24 00:00:00,11,11
+ABC,EC,ABC2001,3,A2-20110125,BOTTLE A,Y,Y,,2,,TABLET,QD,2011-01-25 00:00:00,2011-01-28 00:00:00,12,15
