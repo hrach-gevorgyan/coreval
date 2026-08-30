@@ -17,4 +17,7 @@ utils::globalVariables(".N")
 
   domain_classes_path <- system.file("extdata", "sdtm_domain_classes.rds", package = pkgname)
   .coreval_env$domain_classes <- readRDS(domain_classes_path)
+
+  model_variables_path <- system.file("extdata", "sdtm_model_variables.rds", package = pkgname)
+  .coreval_env$model_variables <- readRDS(model_variables_path)
 }

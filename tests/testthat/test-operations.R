@@ -144,6 +144,35 @@ test_that("read_study captures each dataset's own label", {
   expect_equal(study$datasets$DM$label, "Demographics")
 })
 
+test_that("get_model_column_order matches CDISC's reference results.csv (CORE-000550)", {
+  # "variable_name is_not_contained_by $allowed_variables" - $allowed_variables
+  # is the full set of variable names the SDTM Model allows for the domain's
+  # observation class (including inherited base-class variables).
+  rule <- .coreval_env$data$rules[["CORE-000550"]]
+  for (case in c("negative/01", "positive/01")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000550", case)
+    study <- read_study(file.path(dir, "data"))
+    for (domain in c("AE", "EG", "LB")) { # DM/APEG need IG-specific (not Model) variable data - not covered here
+      if (!(domain %in% names(study$datasets)) || !rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected)
+    }
+  }
+})
+
+test_that("get_model_column_order returns NULL (unresolvable) for a class with no modeled variables", {
+  # Special-Purpose/Relationship/Trial Design/Study Reference classes have
+  # no generic class-level variable list in the Model - each domain in them
+  # (DM, RELREC, TA, ...) defines its own bespoke variables instead. An
+  # empty allowed-set would make is_not_contained_by flag every variable.
+  study <- list(datasets = list(DM = list(data = data.table::data.table(A = 1), meta = NULL)))
+  op <- list(domain = "DM", id = "$allowed", operator = "get_model_column_order")
+  binding <- compute_operation(op, study, "DM", study$datasets$DM)
+  expect_null(binding)
+})
+
 test_that("study_domains/dataset_names/variable_exists/domain_is_custom are local, no Library needed", {
   study <- list(datasets = list(
     AE = list(data = data.table::data.table(AETERM = "X", AESCAN = "Y"), meta = NULL),

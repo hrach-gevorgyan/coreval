@@ -225,6 +225,25 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     dataset_names = scalar_binding(sort(tolower(names(study$datasets)))),
     domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
     domain_label = scalar_binding(if (is.null(ds)) NA_character_ else ds$label),
+    get_model_column_order = {
+      cls <- domain_class(current_domain)
+      if (is.na(cls)) {
+        NULL
+      } else {
+        # Normalize "-" vs " " (e.g. model class "Special-Purpose" vs
+        # sdtm_domain_classes.rds's "SPECIAL PURPOSE") before comparing.
+        normalize_class <- function(x) toupper(gsub("-", " ", x, fixed = TRUE))
+        model_class <- normalize_class(.coreval_env$model_variables$class)
+        allowed <- .coreval_env$model_variables$variable[model_class == normalize_class(cls)]
+        # Some classes (Special-Purpose, Relationship, Trial Design, Study
+        # Reference) have NO generic class-level variable list in the Model
+        # at all - each domain in them (DM, RELREC, TA, TI, ...) defines its
+        # own bespoke variables instead. An empty `allowed` set would make
+        # "is_not_contained_by" trivially flag every single variable as
+        # disallowed, which is wrong - NULL (unresolvable) is honest instead.
+        if (length(allowed) == 0) NULL else scalar_binding(resolve_var_name(allowed, current_domain))
+      }
+    },
     extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(tolower(current_domain)) else NULL,
     dy = compute_dy(op, study, current_dataset),
     NULL

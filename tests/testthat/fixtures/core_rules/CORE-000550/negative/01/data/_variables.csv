@@ -1,0 +1,89 @@
+dataset,variable,label,type,length
+dm,STUDYID,Study Identifier,Char,50
+dm,DOMAIN,Domain Abbreviation,Char,50
+dm,USUBJID,Unique Subject Identifier,Char,50
+dm,ARMCDXX,Planned Arm Code,Char,50
+dm,ARM,Description of Planned Arm,Char,50
+dm,ACTARMCD,Actual Arm Code,Char,50
+dm,ACTARM,Description of Actual Arm,Char,50
+dm,ARMNRS,Reason Arm and/or Actual Arm is Null,Char,50
+dm,ACTARMUD,Description of Unplanned Actual Arm,Char,50
+dm,RFSTDTC,Subject Reference Start Date/Time,Char,10
+eg,STUDYID,Study Identifier,Char,50
+eg,DOMAIN,Domain Abbreviation,Char,50
+eg,USUBJID,Unique Subject Identifier,Char,50
+eg,EGSEQ,Sequence Number,Num,3
+eg,EGTESTCD,ECG Test or Examination Short Name,Char,8
+eg,EGTEST,"ECG Test or
+Examination
+Name",Char,40
+eg,XEGBEATNO,ECG Beat Number,Num,2
+eg,EGORRES,"Result or
+Finding in
+Original Units",Char,20
+eg,EGORRESU,Original Units,Char,5
+ae,STUDYID,Study Identifier,Char,50
+ae,DOMAIN,Domain Abbreviation,Char,50
+ae,USUBJID,Unique Subject Identifier,Char,50
+ae,AESEQ,Sequence Number,Num,8
+ae,AETERM,Reported Term for the Adverse Event,Char,50
+ae,AEMODIFY,Modified Reported Term,Char,50
+ae,AEDECOD,Dictionary-Derived Term,Char,50
+ae,AEBODSYS,Body System or Organ Class,Char,50
+ae,AESEV,Severity/Intensity,Char,50
+ae,AESER,Serious Event,Char,50
+ae,AEACN,Action Taken with Study Treatment,Char,50
+ae,AEREL,Causality,Char,50
+ae,AEOUT,Outcome of Adverse Event,Char,50
+ae,AESCONG,Congenital Anomaly or Birth Defect,Char,50
+ae,AESDISAB,Persist or Signif Disability/Incapacity,Char,50
+ae,AESDTH,Results in Death,Char,50
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,50
+ae,AESLIFE,Is Life Threatening,Char,50
+ae,EPOCH,Epoch,Char,50
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,50
+ae,AEENDTC,End Date/Time of Adverse Event,Char,50
+ae,AESTDYXX,Study Day of Start of Adverse Event,Num,8
+ae,AEENDY,Study Day of End of Adverse Event,Num,8
+ae,AEENRF,End Relative to Reference Period,Char,50
+lb,STUDYID,Study Identifier,Char,10
+lb,DOMAIN,Domain Abbreviation,Char,2
+lb,USUBJID,Unique Subject Identifier,Char,14
+lb,LBSEQ,Sequence Number,Num,8
+lb,LBSPIDXX,Sponsor-Defined Identifier,Char,4
+lb,LBTESTCD,Lab Test or Examination Short Name,Char,8
+lb,LBTEST,Lab Test or Examination Name,Char,25
+lb,LBCAT,Category for Lab Test,Char,18
+lb,LBORRES,Result or Finding in Original Units,Char,6
+lb,LBORRESU,Original Units,Char,8
+lb,LBORNRLO,Reference Range Lower Limit in Orig Unit,Char,1
+lb,LBORNRHI,Reference Range Upper Limit in Orig Unit,Char,1
+lb,LBSTRESC,Character Result/Finding in Std Format,Char,6
+lb,LBSTRESN,Numeric Result/Finding in Standard Units,Num,8
+lb,LBSTRESU,Standard Units,Char,8
+lb,LBSTNRLO,Reference Range Lower Limit-Std Units,Num,8
+lb,LBSTNRHI,Reference Range Upper Limit-Std Units,Num,8
+lb,LBNRIND,Reference Range Indicator,Char,1
+lb,LBLOINC,LOINC Code,Char,7
+lb,LBSPEC,Specimen Type,Char,5
+lb,LBBLFL,Baseline Flag,Char,1
+lb,EPOCH,Epoch,Char,9
+lb,VISITNUM,Visit Number,Num,8
+lb,VISIT,Visit Name,Char,18
+lb,LBDTC,Date/Time of Specimen Collection,Char,10
+lb,LBDY,Study Day of Specimen Collection,Num,8
+apeg,STUDYID,Study Identifier,Char,50
+apeg,DOMAIN,Domain Abbreviation,Char,50
+apeg,APID,Associated Persons Identifier ,Char,50
+apeg,EGSEQ,Sequence Number,Num,3
+apeg,RSUBJID,Related Subject,Char,50
+apeg,SREL,"Subject, Device or Study Relationship",Char,50
+apeg,EGTESTCD,ECG Test or Examination Short Name,Char,8
+apeg,EGTEST,"ECG Test or
+Examination
+Name",Char,40
+apeg,XEGBEATNO,ECG Beat Number,Num,2
+apeg,EGORRES,"Result or
+Finding in
+Original Units",Char,20
+apeg,EGORRESU,Original Units,Char,5
