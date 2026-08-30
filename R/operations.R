@@ -396,6 +396,19 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     # metadata key (e.g. role == "Timing"). Distinct from
     # get_column_order_from_library, which reads the Implementation Guide's
     # per-domain list rather than the abstract Model's per-class one.
+    # Which CT package versions CDISC actually published, as the ISO dates
+    # a study's own TSVCDVER would cite. Only the DATES are bundled, not the
+    # terminology itself (see data-raw/ct_packages.R) - which is all this
+    # operation needs, and is why the operations that need the terms
+    # themselves stay unimplemented.
+    valid_codelist_dates = {
+      tbl <- .coreval_env$ct_packages
+      types <- toupper(op$ct_package_types %||% op$ct_package_type %||% character(0))
+      if (length(types) > 0) {
+        tbl <- tbl[tbl$package_type %in% types, ]
+      }
+      if (nrow(tbl) == 0) NULL else scalar_binding(sort(unique(tbl$package_date)))
+    },
     get_model_filtered_variables = {
       rows <- filter_metadata_rows(model_variables_for(current_domain, current_dataset), op)
       if (nrow(rows) == 0) NULL else scalar_binding(rows$variable)

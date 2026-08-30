@@ -61,6 +61,10 @@ run alongside and before a qualified validation system, never instead of one.
   data exists — shipping unverifiable checks would contradict the rule above.
 * Rules needing a merged view of a domain split across several files are
   reported as skipped rather than evaluated.
+* Rules needing CDISC Controlled Terminology *terms* are skipped: that data is
+  around 438 MB, which belongs in a separate data package rather than here.
+  The CT package dates are bundled, so rules checking that a study cites a real
+  terminology version do run.
 * Values are reported as parsed, so a source value of `0.0` is reported as `0`.
 * Not a CORE-certified engine. These results describe agreement with CDISC's
   published reference data, not certification.

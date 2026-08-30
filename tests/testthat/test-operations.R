@@ -423,3 +423,29 @@ test_that("a \"&\" prefix-wildcard filter matches CDISC's reference results.csv 
     expect_equal(sort(unname(actual)), expected, info = case)
   }
 })
+
+test_that("valid_codelist_dates lists CDISC's published CT package dates, filtered by type", {
+  # Only the package DATES are bundled, not the terminology - the full CT
+  # term data is ~438 MB, which is a separate data package's problem. The
+  # dates are all this operation needs: CORE-000761 flags a TS record whose
+  # TSVCDVER cites a CT version CDISC never published.
+  study <- list(datasets = list(TS = list(data = data.table::data.table(X = 1), meta = NULL)))
+  op <- list(operator = "valid_codelist_dates", id = "$valid_dates", ct_package_types = "SDTM")
+  b <- compute_operation(op, study, "TS", study$datasets$TS)
+  dates <- resolve_binding(b, study$datasets$TS)
+
+  expect_true(length(dates) > 10)
+  expect_true(all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", dates)))
+  expect_false(is.unsorted(dates))
+
+  # SDTM and SEND happen to share release dates - CDISC publishes them
+  # together - so this asserts both resolve, not that they differ.
+  op_send <- utils::modifyList(op, list(ct_package_types = "SEND"))
+  send_dates <- resolve_binding(compute_operation(op_send, study, "TS", study$datasets$TS), study$datasets$TS)
+  expect_true(length(send_dates) > 10)
+
+  # An unknown type resolves to nothing rather than silently falling back
+  # to every date, which would make the check vacuously pass.
+  op_bad <- utils::modifyList(op, list(ct_package_types = "NOT-A-STANDARD"))
+  expect_null(compute_operation(op_bad, study, "TS", study$datasets$TS))
+})

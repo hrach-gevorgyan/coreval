@@ -271,7 +271,7 @@ with CDISC's own results on **479 of 502 — about 95%**.
 |---|---|
 | Published rules with reference data — **the meaningful number** | **479 / 502 (95%)** |
 | All published rules, including those with nothing to compare against | 479 / 543 (88%) |
-| Every bundled rule, including deprecated and draft | 587 / 722 (81%) |
+| Every bundled rule, including deprecated and draft | 588 / 722 (81%) |
 
 **81 rules ship no reference data at all.** CDISC publishes the rule but no
 examples, so there's nothing to compare against — they can't pass *or* fail.

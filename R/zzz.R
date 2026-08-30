@@ -23,4 +23,7 @@ utils::globalVariables(".N")
 
   library_variables_path <- system.file("extdata", "library_variables.rds", package = pkgname)
   .coreval_env$library_variables <- readRDS(library_variables_path)
+
+  ct_packages_path <- system.file("extdata", "ct_packages.rds", package = pkgname)
+  .coreval_env$ct_packages <- readRDS(ct_packages_path)
 }
