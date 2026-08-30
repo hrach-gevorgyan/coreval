@@ -1,0 +1,39 @@
+dataset,variable,label,type,length
+ae,STUDYID,Study Identifier,Char,12
+ae,DOMAIN,Domain Abbreviation,Char,2
+ae,USUBJID,Unique Subject Identifier,Char,8
+ae,AESEQ,Sequence Number,Num,8
+ae,AELNKID,Link ID,Char,50
+ae,AETERM,Reported Term for the Adverse Event,Char,200
+ae,AELLT,Lowest Level Term,Char,1
+ae,AELLTCD,Lowest Level Term Code,Char,1
+ae,AEDECOD,Dictionary-Derived Term,Char,1
+ae,AEPTCD,Preferred Term Code,Char,1
+ae,AEHLT,High Level Term,Char,1
+ae,AEHLTCD,High Level Term Code,Char,1
+ae,AEHLGT,High Level Group Term,Char,1
+ae,AEHLGTCD,High Level Group Term Code,Char,1
+ae,AESCAT,Subcategory for Adverse Event,Char,50
+ae,AEBODSYS,Body System or Organ Class,Char,1
+ae,AEBDSYCD,Body System or Organ Class Code,Char,1
+ae,AESOC,Primary System Organ Class,Char,1
+ae,AESOCCD,Primary System Organ Class Code,Char,1
+ae,AESEV,Severity/Intensity,Char,8
+ae,AESER,Serious Event,Char,1
+ae,AEACN,Action Taken with Study Treatment,Char,16
+ae,AEREL,Causality,Char,16
+ae,AEOUT,Outcome of Adverse Event,Char,32
+ae,AESCAN,Involves Cancer,Char,1
+ae,AESCONG,Congenital Anomaly or Birth Defect,Char,1
+ae,AESDISAB,Persist or Signif Disability/Incapacity,Char,1
+ae,AESDTH,Results in Death,Char,1
+ae,AESHOSP,Requires or Prolongs Hospitalization,Char,1
+ae,AESLIFE,Is Life Threatening,Char,1
+ae,AESOD,Occurred with Overdose,Char,1
+ae,EPOCH,Epoch,Char,9
+ae,AESTDTC,Start Date/Time of Adverse Event,Char,10
+ae,AEENDTC,End Date/Time of Adverse Event,Char,10
+ae,AESTDY,Study Day of Start of Adverse Event,Num,8
+ae,AEENDY,Study Day of End of Adverse Event,Num,8
+ae,AEENRTPT,End Relative to Reference Time Point,Char,7
+ae,AEENTPT,End Reference Time Point,Char,10

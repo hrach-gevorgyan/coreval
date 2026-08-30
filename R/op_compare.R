@@ -33,7 +33,18 @@ compare_op <- function(fn) {
       target <- canonicalize_numeric_string(target)
       value <- canonicalize_numeric_string(value)
     }
-    fn(target, value)
+    result <- fn(target, value)
+    # Clinical-data equality convention: two BLANK values are never
+    # "equal" and never "not equal" to each other - both resolve to FALSE,
+    # matching the reference engine's own truth table (`_check_equality`/
+    # `_check_inequality` in check_operators/dataframe_operators.py: "''
+    # or null" vs "'' or null" -> False for BOTH operators). Confirmed
+    # against CORE-000195's real fixture: a row with AESCAT and AEDECOD
+    # both blank must NOT be flagged by equal_to_case_insensitive, even
+    # though "" == "" is naturally TRUE in R.
+    both_blank <- is_blank(ctx$target) & is_blank(ctx$value)
+    result[both_blank] <- FALSE
+    result
   }
 }
 

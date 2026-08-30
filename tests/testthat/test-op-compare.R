@@ -44,6 +44,34 @@ test_that("type_insensitive makes not_equal_to compare numeric-looking values by
   expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, TRUE))
 })
 
+test_that("equal_to/equal_to_case_insensitive treat two blank values as never equal (CORE-000195)", {
+  # The reference engine's own truth table: equal_to("" or null, "" or
+  # null) -> False, even though "" == "" is naturally TRUE in R. Confirmed
+  # against CORE-000195's real fixture: a row with AESCAT and AEDECOD both
+  # blank must not be flagged by "--SCAT equal_to_case_insensitive --DECOD".
+  data <- data.table::data.table(A = c("", "X", "x"), B = c("", "X", "X"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "A", operator = "equal_to_case_insensitive", value = "B")
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, TRUE, TRUE))
+})
+
+test_that("equal_to_case_insensitive matches CDISC's reference results.csv (CORE-000195)", {
+  rule <- .coreval_env$data$rules[["CORE-000195"]]
+  for (case in c("negative", "positive")) {
+    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000195", case, "*"))
+    for (dir in cases) {
+      study <- read_study(file.path(dir, "data"))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      for (domain in names(study$datasets)) {
+        if (!rule_applies_to_domain(rule, domain)) next
+        actual <- which(evaluate_rule(rule, study, domain))
+        expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+        expect_equal(sort(unname(actual)), expected, info = paste(dir, domain))
+      }
+    }
+  }
+})
+
 test_that("not_equal_to matches CDISC's reference results.csv across all domains (CORE-000542)", {
   rule <- .coreval_env$data$rules[["CORE-000542"]]
   for (case in c("negative", "positive")) {
