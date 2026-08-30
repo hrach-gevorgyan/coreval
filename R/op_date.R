@@ -75,18 +75,23 @@ is_valid_date_str <- function(x) {
   valid
 }
 
-date_group_names <- c("year", "month", "day", "hour", "minute", "second", "microsecond")
+date_group_names <- c("year", "month", "day", "hour", "minute", "second", "microsecond", "timezone")
 
-# Extracts the 7 precision components for one date string, falling back from
-# the primary group to the interval/time-only group (matching the reference
-# engine's `match.group("year") or match.group("interval_year")` chain).
-# Returns a named character vector; "-", "", or unmatched all mean missing.
-#' Extract the 7 precision components (year..microsecond) from one date string
+# Extracts the 7 precision components plus a timezone offset for one date
+# string. The primary group (year..microsecond) is always used as-is - a
+# component missing from the PRIMARY date must stay missing, never borrowed
+# from the "/"-interval second date (e.g. "2024-01/2024-06" has month
+# precision from its own "01", not day/whatever the second date "06" happens
+# to specify; falling back per-component mixed fields from two different
+# dates into one). The interval/time-only groups are only used as a whole
+# when the primary date didn't match anything at all (a bare interval like
+# "/2024-06" with no first date, or a time-only string).
+#' Extract the 7 precision components (year..microsecond) plus timezone from one date string
 #' @param x A single date string.
 #' @return A named character vector, `NA` for missing components.
 #' @noRd
 extract_date_components_one <- function(x) {
-  empty <- stats::setNames(rep(NA_character_, 7), date_group_names)
+  empty <- stats::setNames(rep(NA_character_, 8), date_group_names)
   if (is.na(x) || x == "" || !grepl(date_regex, x, perl = TRUE)) {
     return(empty)
   }
@@ -101,23 +106,45 @@ extract_date_components_one <- function(x) {
     }
     substr(x, starts[1, idx], starts[1, idx] + lens[1, idx] - 1)
   }
-  fallback <- function(primary, interval, timeonly = NULL) {
-    v <- get_group(primary)
-    if (is.na(v) && !is.null(interval)) v <- get_group(interval)
-    if (is.na(v) && !is.null(timeonly)) v <- get_group(timeonly)
-    v
-  }
-  components <- c(
-    year = fallback("year", "iyear"),
-    month = fallback("month", "imonth"),
-    day = fallback("day", "iday"),
-    hour = fallback("hour", "ihour", "tohour"),
-    minute = fallback("minute", "iminute", "tominute"),
-    second = fallback("second", "isecond", "tosecond"),
-    microsecond = fallback("microsecond", "imicrosecond", "tomicrosecond")
+  primary <- c(
+    year = get_group("year"), month = get_group("month"), day = get_group("day"),
+    hour = get_group("hour"), minute = get_group("minute"), second = get_group("second"),
+    microsecond = get_group("microsecond"), timezone = get_group("timezone")
   )
-  components[components %in% c("-", "")] <- NA_character_
-  components
+  if (all(is.na(primary))) {
+    interval <- c(
+      year = get_group("iyear"), month = get_group("imonth"), day = get_group("iday"),
+      hour = get_group("ihour"), minute = get_group("iminute"), second = get_group("isecond"),
+      microsecond = get_group("imicrosecond"), timezone = get_group("itimezone")
+    )
+    if (!all(is.na(interval))) {
+      primary <- interval
+    } else {
+      primary <- c(
+        year = NA_character_, month = NA_character_, day = NA_character_,
+        hour = get_group("tohour"), minute = get_group("tominute"), second = get_group("tosecond"),
+        microsecond = get_group("tomicrosecond"), timezone = get_group("totimezone")
+      )
+    }
+  }
+  primary[primary %in% c("-", "")] <- NA_character_
+  primary
+}
+
+# Offset in minutes to SUBTRACT from a timezone-qualified local wall-clock
+# time to get true UTC (e.g. "+02:00" means local time is 2 hours ahead of
+# UTC, so UTC = local - 120 minutes). `NA`/`"Z"` both mean no adjustment.
+#' Parse a date string's timezone component into a UTC offset in minutes
+#' @param tz A single timezone string (`NA`, `"Z"`, or `"+HH:MM"`/`"-HH:MM"`), or `NA`.
+#' @return A single numeric offset in minutes (0 if absent or `"Z"`).
+#' @noRd
+tz_offset_minutes <- function(tz) {
+  if (is.na(tz) || tz == "" || tz == "Z") {
+    return(0)
+  }
+  sign <- if (startsWith(tz, "-")) -1 else 1
+  parts <- strsplit(substring(tz, 2), ":", fixed = TRUE)[[1]]
+  sign * (as.numeric(parts[1]) * 60 + as.numeric(parts[2]))
 }
 
 date_precision_defaults <- c(year = 1970, month = 1, day = 1, hour = 0, minute = 0, second = 0, microsecond = 0)
@@ -154,18 +181,19 @@ detect_precision_one <- function(x) {
 # compared at the resolution both actually specify.
 #' Parse one date string to POSIXct, filling/truncating to a given precision
 #' @param x A single date string.
-#' @param precision Optional precision index to truncate to (see [detect_precision_one()]).
+#' @param precision Optional precision index to truncate to (see `detect_precision_one()`).
 #' @return A `POSIXct` value.
 #' @noRd
 parse_date_one <- function(x, precision = NA_integer_) {
   components <- extract_date_components_one(x)
-  values <- vapply(seq_along(date_group_names), function(i) {
-    nm <- date_group_names[i]
+  date_fields <- date_group_names[date_group_names != "timezone"]
+  values <- vapply(seq_along(date_fields), function(i) {
+    nm <- date_fields[i]
     keep <- is.na(precision) || (i - 1L) <= precision
     if (keep && !is.na(components[[nm]])) as.numeric(components[[nm]]) else date_precision_defaults[[nm]]
   }, numeric(1))
-  names(values) <- date_group_names
-  tryCatch(
+  names(values) <- date_fields
+  dt <- tryCatch(
     ISOdatetime(
       values[["year"]], values[["month"]], values[["day"]],
       values[["hour"]], values[["minute"]], values[["second"]] + values[["microsecond"]] / 1e6,
@@ -173,6 +201,16 @@ parse_date_one <- function(x, precision = NA_integer_) {
     ),
     error = function(e) as.POSIXct(NA)
   )
+  # A timezone offset (e.g. "+02:00") describes the wall-clock time just
+  # parsed as LOCAL to that offset, not UTC - without this adjustment, two
+  # otherwise-identical instants recorded in different zones would compare
+  # as unequal (or in the wrong order) purely because of the offset text.
+  # Only applied when hour-or-finer precision is actually being compared -
+  # a bare offset with no time component to anchor it is meaningless.
+  if (!is.na(dt) && !is.na(components[["timezone"]]) && (is.na(precision) || precision >= 3L)) {
+    dt <- dt - tz_offset_minutes(components[["timezone"]]) * 60
+  }
+  dt
 }
 
 # Precision-aware comparison of two (possibly partial) date strings, per the
@@ -222,7 +260,7 @@ compare_dates_one <- function(target, comparator, op) {
   )
 }
 
-#' Build a date-comparison operator from a [compare_dates_one()] op code
+#' Build a date-comparison operator from a `compare_dates_one()` op code
 #' @param op One of `"eq"`, `"ne"`, `"gt"`, `"lt"`, `"ge"`, `"le"`.
 #' @return An operator function of `ctx`.
 #' @noRd
@@ -253,7 +291,11 @@ register_operator("is_complete_date", function(ctx) {
     return(rep(FALSE, ctx$n))
   }
   vapply(ctx$target, function(x) {
-    !is.na(x) && x != "" && !is.na(detect_precision_one(x)) && detect_precision_one(x) >= 2L
+    if (is.na(x) || x == "") {
+      return(FALSE)
+    }
+    precision <- detect_precision_one(x)
+    !is.na(precision) && precision >= 2L
   }, logical(1))
 })
 
@@ -272,11 +314,14 @@ register_operator("invalid_date", function(ctx) {
 
 # ISO 8601 duration: P[n]Y[n]M[n]D[T[n]H[n]M[n]S] or P[n]W, optionally
 # negative when the condition allows it (`negative: true`/absent means only
-# a bare "-" prefix variant is accepted too).
+# a bare "-" prefix variant is accepted too). A comma is only legal INSIDE a
+# single component as a decimal separator (e.g. "P1,5Y") - it never separates
+# components ("P1Y,2M" is not valid ISO 8601), so there is no `[,]?` between
+# the component groups themselves.
 duration_regex_positive <- paste0(
-  "^P(?!$)(?:(?:(\\d+(?:[.,]\\d*)?Y)?[,]?(\\d+(?:[.,]\\d*)?M)?[,]?",
-  "(\\d+(?:[.,]\\d*)?D)?[,]?(T(?=\\d)(?:(\\d+(?:[.,]\\d*)?H)?[,]?",
-  "(\\d+(?:[.,]\\d*)?M)?[,]?(\\d+(?:[.,]\\d*)?S)?)?)?)|(\\d+(?:[.,]\\d*)?W))$"
+  "^P(?!$)(?:(?:(\\d+(?:[.,]\\d*)?Y)?(\\d+(?:[.,]\\d*)?M)?",
+  "(\\d+(?:[.,]\\d*)?D)?(T(?=\\d)(?:(\\d+(?:[.,]\\d*)?H)?",
+  "(\\d+(?:[.,]\\d*)?M)?(\\d+(?:[.,]\\d*)?S)?)?)?)|(\\d+(?:[.,]\\d*)?W))$"
 )
 duration_regex_negative <- paste0("^[-]?", substring(duration_regex_positive, 2))
 

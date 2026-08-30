@@ -111,6 +111,34 @@ test_that("evaluate_rule collapses an exploded join back to one result per origi
   expect_equal(evaluate_rule(rule, study, "SV"), c(TRUE, TRUE))
 })
 
+test_that("apply_match_dataset never matches a blank/NA key against another blank/NA key", {
+  # Bug: base merge() treats NA (and "" as an ordinary string) as a
+  # matchable value by default - a blank USUBJID on both sides would
+  # fabricate a match instead of correctly getting NA for every joined-in
+  # column, the same as any other genuinely unmatched key.
+  left <- list(data = data.table::data.table(USUBJID = c("S1", "", NA_character_)), meta = NULL)
+  right_data <- data.table::data.table(USUBJID = c("S1", "", NA_character_), DTHFL = c("Y", "N", "N"))
+  study <- list(datasets = list(DM = list(data = right_data, meta = NULL)))
+
+  joined <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "SV")
+  joined$data <- joined$data[order(joined$data$.coreval_row_id)]
+  expect_equal(nrow(joined$data), 3)
+  expect_equal(joined$data$DTHFL[1], "Y") # a genuine key still matches
+  expect_true(is.na(joined$data$DTHFL[2])) # blank key: no fabricated match
+  expect_true(is.na(joined$data$DTHFL[3])) # NA key: no fabricated match
+})
+
+test_that("apply_match_dataset handles an all-valid-key dataset without erroring on the empty blank branch", {
+  # Regression for a fix-of-a-fix: when there are zero blank-key rows,
+  # assigning a length-1 NA into a zero-row data.table used to error
+  # ("replacement has 1 row, data has 0").
+  left <- list(data = data.table::data.table(USUBJID = c("S1", "S2")), meta = NULL)
+  right_data <- data.table::data.table(USUBJID = c("S1", "S2"), DTHFL = c("Y", "N"))
+  study <- list(datasets = list(DM = list(data = right_data, meta = NULL)))
+  joined <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "SV")
+  expect_equal(joined$data$DTHFL, c("Y", "N"))
+})
+
 test_that("apply_match_dataset refuses Child/RELREC/SUPP joins rather than guess", {
   left <- list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
   study <- list(datasets = list())

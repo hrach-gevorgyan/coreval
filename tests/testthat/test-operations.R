@@ -89,6 +89,32 @@ test_that("compute_operation: record_count grouped joins back per-row via resolv
   expect_equal(resolved, c(1, 1, 0))
 })
 
+test_that("compute_dy returns NA (not a crash) for a USUBJID with no matching DM record", {
+  # Bug: `rfstdtc_by_subject[[usubjid[i]]]` on an atomic named vector errors
+  # ("subscript out of bounds") for a name that isn't present, instead of
+  # returning NULL like list indexing would - crashing the whole `dy`
+  # computation for the entire dataset instead of yielding NA for that row.
+  study <- list(datasets = list(
+    DM = list(data = data.table::data.table(USUBJID = "S1", RFSTDTC = "2024-01-01"), meta = NULL),
+    AE = list(data = data.table::data.table(USUBJID = c("S1", "S2"), AESTDTC = c("2024-01-05", "2024-01-05")), meta = NULL)
+  ))
+  op <- list(domain = "AE", id = "$dy", name = "AESTDTC", operator = "dy")
+  binding <- compute_operation(op, study, "AE", study$datasets$AE)
+  expect_equal(binding$kind, "per_row")
+  expect_equal(binding$value, c(5, NA_real_))
+})
+
+test_that("resolve_binding does not collide grouped-join keys across a multi-column boundary", {
+  # Bug: pasting group columns together with no separator lets ("1", "23")
+  # and ("12", "3") key to the same string "123", joining the wrong group's
+  # aggregate onto a row.
+  ds_data <- data.table::data.table(A = c("1", "12"), B = c("23", "3"))
+  study <- list(datasets = list(DS = list(data = ds_data, meta = NULL)))
+  table <- data.table::data.table(A = c("1", "12"), B = c("23", "3"), .value = c(10, 20))
+  binding <- grouped_binding(c("A", "B"), table, ".value")
+  expect_equal(resolve_binding(binding, study$datasets$DS), c(10, 20))
+})
+
 test_that("study_domains/dataset_names/variable_exists/domain_is_custom are local, no Library needed", {
   study <- list(datasets = list(
     AE = list(data = data.table::data.table(AETERM = "X", AESCAN = "Y"), meta = NULL),

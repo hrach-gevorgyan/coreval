@@ -56,6 +56,17 @@ test_that("assemble_findings returns an empty table when nothing violates", {
   expect_equal(names(findings), c("Dataset", "Record", "Variable", "Value"))
 })
 
+test_that("assemble_findings reports a missing numeric Output Variable as blank, not the text \"NA\"", {
+  # Bug: as.character(NA_real_) is NA_character_, not "" - this package's
+  # own blank contract says a missing numeric value must report as "",
+  # matching how a missing character column already reports.
+  data <- data.table::data.table(A = c("X", "Y"), N = c(1, NA_real_))
+  dataset <- list(data = data, meta = NULL)
+  rule <- list(sensitivity = "Record", outcome = list(`Output Variables` = c("A", "N")))
+  findings <- assemble_findings(rule, dataset, "TS", c(FALSE, TRUE))
+  expect_equal(findings$Value[findings$Variable == "N"], "")
+})
+
 test_that("check_study runs end-to-end on a real test case and reports the expected finding", {
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))

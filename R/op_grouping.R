@@ -17,10 +17,15 @@ register_operator("is_not_unique_set", function(ctx) {
     return(rep(FALSE, ctx$n))
   }
   dt <- ctx$dataset$data[, cols, with = FALSE]
+  # The blank sentinel and the between-column separator both use the ASCII
+  # Unit Separator (0x1F), which can't appear in ordinary clinical text -
+  # a plain "NA" sentinel would collide with a genuine data value of "NA",
+  # and pasting columns together with no separator at all would collide
+  # across column boundaries (e.g. ("1","23") vs ("12","3")).
   normalized <- lapply(dt, function(col) {
-    ifelse(is_blank(col), "NA", as.character(col))
+    ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col))
   })
-  key <- do.call(paste, c(normalized, sep = ""))
+  key <- do.call(paste, c(normalized, sep = "\x1f"))
   as.vector(ave(seq_along(key), key, FUN = length)) > 1
 })
 

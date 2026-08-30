@@ -72,6 +72,38 @@ test_that("date comparisons truncate both sides to their common precision", {
   expect_false(compare_dates_one("2024", "2024-01-01", "eq"))
 })
 
+test_that("date comparisons apply the timezone offset instead of discarding it", {
+  # Bug: the timezone component was parsed by the regex but never extracted
+  # or applied - "10:00+02:00" (= 08:00 UTC) and "08:00Z" were compared as
+  # if both were 10:00 and 08:00 wall-clock, giving a wrong ordering.
+  # "2024-01-01T10:00:00+02:00" is truly 08:00 UTC = same instant as
+  # "2024-01-01T08:00:00Z".
+  expect_true(compare_dates_one("2024-01-01T10:00:00+02:00", "2024-01-01T08:00:00Z", "eq"))
+  expect_false(compare_dates_one("2024-01-01T10:00:00+02:00", "2024-01-01T09:00:00Z", "eq"))
+  expect_true(compare_dates_one("2024-01-01T10:00:00+02:00", "2024-01-01T09:00:00Z", "lt"))
+  expect_true(compare_dates_one("2024-01-01T06:00:00-02:00", "2024-01-01T09:00:00Z", "lt"))
+})
+
+test_that("a bare year/month date does not borrow precision or value from a '/'-interval's second date", {
+  # Bug: extract_date_components_one() fell back to the interval ("i...")
+  # group per-component, so a primary date missing e.g. day precision would
+  # incorrectly borrow the SECOND date's day/month/year from across the "/".
+  # "2024-01/2024-06" must report month precision (from its own "01"), not
+  # mix in "06" from the second date.
+  expect_equal(detect_precision_one("2024-01/2024-06"), 1L)
+  expect_true(compare_dates_one("2024-01/2024-06", "2024-02", "lt"))
+})
+
+test_that("invalid_duration rejects a comma used as a component separator", {
+  # Bug: the duration regex allowed an optional comma BETWEEN components
+  # (e.g. "P1Y,2M"), but ISO 8601 only allows a comma as a decimal
+  # separator WITHIN one component (e.g. "P1,5Y").
+  data <- data.table::data.table(X = c("P1Y2M3D", "P1Y,2M", "P1,5Y"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "X", operator = "invalid_duration")
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, TRUE, FALSE))
+})
+
 test_that("is_valid_date_str validates real calendar dates, not just regex shape", {
   expect_false(is_valid_date_str("2023-02-30"))
   expect_true(is_valid_date_str("2023-02-28"))

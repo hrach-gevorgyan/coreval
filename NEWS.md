@@ -1,5 +1,55 @@
 # coreval 0.0.0.9000
 
+* Nine correctness bugs found by an independent adversarial code review of
+  every operator/operations/join implementation, each confirmed with a
+  concrete reproducible failing example before being fixed:
+  * `compare_op()` (`R/op_compare.R`): the four ordinal comparison
+    operators (`less_than`, `less_than_or_equal_to`, `greater_than`,
+    `greater_than_or_equal_to`) had no numeric/character coercion, so R
+    silently did a lexicographic STRING comparison whenever a numeric
+    target was compared against a numeric-looking string value (e.g. a
+    quoted YAML literal `"65"`) - `greater_than(9, "65")` returned `TRUE`.
+    Now coerces the string side to numeric first when it parses cleanly.
+  * `is_not_unique_set` (`R/op_grouping.R`): the blank-value sentinel was
+    the literal text `"NA"`, colliding with a genuine data value of "NA";
+    and multi-column keys were pasted together with no separator,
+    colliding across column boundaries (`("1","23")` vs `("12","3")`).
+    Both now use the ASCII Unit Separator (`\x1f`).
+  * `compute_dy()` (`R/operations.R`): a USUBJID with no matching `DM`
+    record crashed the entire `dy` computation ("subscript out of bounds")
+    instead of yielding `NA` for just that row - `[[` on an atomic named
+    vector errors on a missing name, unlike list indexing.
+  * `resolve_binding()` (`R/operations.R`): grouped-join keys were pasted
+    with no separator, the same cross-column collision as above. Now uses
+    `\x1f`.
+  * `apply_match_dataset()` (`R/match_datasets.R`): a blank/NA join key
+    matched another row's blank/NA key (base `merge()`'s default
+    behavior), fabricating matches for a real SDTM data defect (e.g. two
+    rows with a missing `USUBJID`). Rows with a blank key are now excluded
+    from the merge and always get `NA` for the joined-in columns.
+  * `op_date.R`'s timezone offset (e.g. `+02:00`) was parsed by the regex
+    but never extracted or applied, so two identical instants recorded in
+    different zones compared as unequal/misordered. Now converted to a
+    true UTC adjustment before comparison.
+  * `op_date.R`'s `"/"`-interval date format (e.g. `"2024-01/2024-06"`)
+    cross-contaminated precision and value: a primary date missing a
+    component fell back to the SECOND date's (interval) component instead
+    of staying genuinely missing. Now the interval group is only used as a
+    whole when the primary date matched nothing at all.
+  * `op_date.R`'s ISO 8601 duration regex accepted an illegal comma
+    SEPARATING components (`"P1Y,2M"`) - a comma is only legal as a
+    decimal point WITHIN one component (`"P1,5Y"`). Fixed.
+  * `assemble_findings()`'s `value_at()` (`R/results.R`) reported a missing
+    numeric Output Variable as the literal text `"NA"` instead of `""`,
+    breaking the package's own blank-value contract (numeric blank = `NA`
+    internally, `""` when reported - matching how a missing character
+    column already reports).
+
+  All nine are covered by new regression tests
+  (`test-op-compare.R`, plus additions to `test-op-grouping.R`,
+  `test-operations.R`, `test-match-datasets.R`, `test-op-date.R`,
+  `test-results.R`).
+
 * A `Match Datasets` one-to-many join (e.g. CORE-000097: `SV` matched with
   `SE`, which has multiple time-windowed records per subject) was
   incorrectly deduplicated to "keep the first match per row." Confirmed

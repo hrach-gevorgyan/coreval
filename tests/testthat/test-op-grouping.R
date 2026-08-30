@@ -81,6 +81,26 @@ test_that("is_not_unique_relationship flags a value paired with both a real valu
   expect_equal(evaluate_check(check, dataset, "TS"), c(TRUE, TRUE, FALSE))
 })
 
+test_that("is_not_unique_set does not collide the blank sentinel with a real value of the text \"NA\"", {
+  # Bug: an earlier version used the literal string "NA" as its blank
+  # sentinel, which collided with a genuine data value of "NA" - a row
+  # with a real "NA" value and a row with an actual blank would be treated
+  # as duplicates of each other even though they aren't.
+  data <- data.table::data.table(A = c("NA", "", "X"), B = c("Y", "Y", "Y"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "A", operator = "is_not_unique_set", value = "B")
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, FALSE, FALSE))
+})
+
+test_that("is_not_unique_set does not collide keys across a multi-column boundary", {
+  # Bug: pasting columns together with no separator lets ("1", "23") and
+  # ("12", "3") both collapse to the same key "123".
+  data <- data.table::data.table(A = c("1", "12"), B = c("23", "3"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "A", operator = "is_not_unique_set", value = "B")
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, FALSE))
+})
+
 test_that("is_not_unique_relationship never flags a fully blank pair", {
   data <- data.table::data.table(ETCD = c("", "A"), ELEMENT = c("", "X"))
   dataset <- list(data = data, meta = NULL)

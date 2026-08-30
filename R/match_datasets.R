@@ -69,7 +69,28 @@ apply_match_dataset <- function(dataset, spec, study, current_domain) {
   if (!(".coreval_row_id" %in% names(left))) {
     left$.coreval_row_id <- seq_len(nrow(left))
   }
-  merged <- merge(left, right, by = keys, all.x = TRUE, allow.cartesian = TRUE)
+
+  # A blank/missing key must never match another blank/missing key - unlike
+  # base R/data.table merge, which treats NA (and "" as an ordinary string)
+  # as an otherwise-matchable value. A blank USUBJID is a data defect, not
+  # a legitimate join target; merging it against another row's blank
+  # USUBJID would fabricate a match. Rows with a blank key are excluded
+  # from the merge and get NA for every joined-in column instead, matching
+  # what a left join against a genuinely missing key should produce.
+  is_key_blank <- Reduce(`|`, lapply(keys, function(k) is_blank(left[[k]])))
+  left_valid <- left[!is_key_blank]
+  left_blank <- left[is_key_blank]
+
+  merged_valid <- merge(left_valid, right, by = keys, all.x = TRUE, allow.cartesian = TRUE)
+
+  if (nrow(left_blank) > 0) {
+    right_only_cols <- setdiff(names(right), keys)
+    for (col in right_only_cols) {
+      left_blank[[col]] <- right[[col]][NA_integer_]
+    }
+  }
+
+  merged <- data.table::rbindlist(list(merged_valid, left_blank), use.names = TRUE, fill = TRUE)
   merged <- merged[order(merged$.coreval_row_id)]
 
   list(data = merged, meta = dataset$meta)

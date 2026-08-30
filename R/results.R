@@ -65,7 +65,7 @@ empty_findings <- function() {
 #' @param rule A rule record.
 #' @param dataset The dataset that was checked (post Match Datasets joins).
 #' @param domain Domain code.
-#' @param violations Logical vector from [evaluate_check()], one element per row.
+#' @param violations Logical vector from `evaluate_check()`, one element per row.
 #' @return A [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
 #' @noRd
 assemble_findings <- function(rule, dataset, domain, violations) {
@@ -81,7 +81,16 @@ assemble_findings <- function(rule, dataset, domain, violations) {
   # this needs read_study() to carry the raw source text alongside the
   # parsed numeric value specifically for reporting - not done yet.
   value_at <- function(row) {
-    vapply(output_vars, function(v) as.character(dataset$data[[v]][row]), character(1))
+    vapply(output_vars, function(v) {
+      x <- dataset$data[[v]][row]
+      # A missing NUMERIC value's `as.character()` is `NA_character_`, not
+      # `""` - this package's own blank contract (see read.R) says a numeric
+      # blank is `NA` internally but must report as `""`, matching how a
+      # missing character column already reports (its blank is already
+      # `""`, never `NA`). Left uncorrected, a violation on a row with a
+      # missing numeric Output Variable would emit the literal text "NA".
+      if (is.na(x)) "" else as.character(x)
+    }, character(1))
   }
 
   # A Match Datasets join can explode one original row into several (see

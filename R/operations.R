@@ -120,8 +120,17 @@ compute_dy <- function(op, study, current_dataset) {
   usubjid <- current_dataset$data$USUBJID
   day <- vapply(seq_len(n), function(i) {
     tv <- target_vals[i]
-    rf <- rfstdtc_by_subject[[usubjid[i]]]
-    if (is.null(rf) || is.na(rf) || rf == "" || is.na(tv) || tv == "" ||
+    # `[[` on an atomic named vector errors ("subscript out of bounds") for
+    # a name that isn't present - unlike list indexing, it never returns
+    # NULL - so a USUBJID with no DM record (a real data-quality issue this
+    # package exists to catch) would crash the whole operation instead of
+    # yielding NA for just that row.
+    rf <- if (!is.na(usubjid[i]) && usubjid[i] %in% names(rfstdtc_by_subject)) {
+      rfstdtc_by_subject[[usubjid[i]]]
+    } else {
+      NA_character_
+    }
+    if (is.na(rf) || rf == "" || is.na(tv) || tv == "" ||
       !is_valid_date_str(tv) || !is_valid_date_str(rf)) {
       return(NA_real_)
     }
@@ -245,7 +254,7 @@ compute_operation_bindings <- function(rule, study, current_domain, current_data
 # caller (resolve_condition_value / operators) decides how to use it; this
 # just performs the grouped join when needed.
 #' Resolve an Operations binding to a per-row value (or leave a scalar set as-is)
-#' @param binding A binding from [compute_operation()], or `NULL`.
+#' @param binding A binding from `compute_operation()`, or `NULL`.
 #' @param dataset The dataset the binding is being applied to.
 #' @return The scalar/set value, a per-row vector, or (for a grouped binding) the joined values.
 #' @noRd
@@ -264,7 +273,10 @@ resolve_binding <- function(binding, dataset) {
   if (!all(group_cols %in% names(dataset$data))) {
     return(rep(NA, nrow(dataset$data)))
   }
-  key_of <- function(dt) do.call(paste, c(lapply(group_cols, function(c) dt[[c]]), sep = ""))
+  # Separator must be unlikely to appear in real data - concatenating
+  # multi-column keys with no separator at all collides across column
+  # boundaries (e.g. ("1","23") and ("12","3") would both key to "123").
+  key_of <- function(dt) do.call(paste, c(lapply(group_cols, function(c) dt[[c]]), sep = "\x1f"))
   row_keys <- key_of(dataset$data)
   table_keys <- key_of(binding$table)
   idx <- match(row_keys, table_keys)
