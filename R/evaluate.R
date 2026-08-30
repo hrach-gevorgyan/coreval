@@ -72,9 +72,14 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
 #' @param dataset The dataset being checked.
 #' @param domain Domain code, used to resolve `"--"` templates.
 #' @param bindings Operations bindings for the current rule.
+#' @param study Full study object, needed only to resolve a Domain Presence
+#'   Check's pseudo-field `name` (a bare domain code) against which datasets
+#'   the STUDY has - `NULL` when unavailable (e.g. a unit test constructing
+#'   a bare `list(data, meta)`), in which case such a condition falls back
+#'   to the ordinary "not a real column" behavior.
 #' @return A logical vector (recycled from scalar for dataset-level operators).
 #' @noRd
-evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
+evaluate_condition <- function(condition, dataset, domain, bindings = list(), study = NULL) {
   if (is.character(condition$name) && startsWith(condition$name, "$")) {
     binding <- bindings[[condition$name]]
     name <- condition$name
@@ -84,6 +89,16 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
     name <- resolve_var_name(condition$name, domain)
     exists <- name %in% names(dataset$data)
     target <- if (exists) dataset$data[[name]] else NULL
+
+    # Domain Presence Check rules use `exists`/`not_exists` with `name` set
+    # to a bare domain code (e.g. "DM", "ADSL", "SUPPDM") - a question about
+    # what datasets the STUDY has, not a column in the dataset currently
+    # being checked. Only takes over when the ordinary column lookup found
+    # nothing, so a dataset that (implausibly) has a real column literally
+    # named e.g. "DM" still wins.
+    if (!exists && !is.null(study) && condition$operator %in% c("exists", "not_exists")) {
+      exists <- toupper(name) %in% toupper(names(study$datasets))
+    }
   }
 
   ctx <- list(
@@ -114,22 +129,24 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list()) {
 #' @param dataset The dataset being checked.
 #' @param domain Domain code, used to resolve `"--"` templates.
 #' @param bindings Operations bindings for the current rule.
+#' @param study Full study object, passed through to `evaluate_condition()`
+#'   (see its docs) - `NULL` when unavailable.
 #' @return A per-row logical vector; `TRUE` means the record violates the rule.
 #' @noRd
-evaluate_check <- function(check, dataset, domain, bindings = list()) {
+evaluate_check <- function(check, dataset, domain, bindings = list(), study = NULL) {
   if (!is.null(check$name) && !is.null(check$operator)) {
-    return(evaluate_condition(check, dataset, domain, bindings))
+    return(evaluate_condition(check, dataset, domain, bindings, study))
   }
   if (!is.null(check$all)) {
-    parts <- lapply(check$all, evaluate_check, dataset = dataset, domain = domain, bindings = bindings)
+    parts <- lapply(check$all, evaluate_check, dataset = dataset, domain = domain, bindings = bindings, study = study)
     return(Reduce(`&`, parts))
   }
   if (!is.null(check$any)) {
-    parts <- lapply(check$any, evaluate_check, dataset = dataset, domain = domain, bindings = bindings)
+    parts <- lapply(check$any, evaluate_check, dataset = dataset, domain = domain, bindings = bindings, study = study)
     return(Reduce(`|`, parts))
   }
   if (!is.null(check$not)) {
-    return(!evaluate_check(check$not, dataset, domain, bindings))
+    return(!evaluate_check(check$not, dataset, domain, bindings, study))
   }
   stop("Unrecognized Check node: ", paste(names(check), collapse = ", "))
 }
@@ -163,7 +180,7 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
   dataset <- prepare_dataset_for_rule(rule, study, domain)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
 
-  result <- evaluate_check(rule$check, dataset, domain, bindings)
+  result <- evaluate_check(rule$check, dataset, domain, bindings, study)
   result[is.na(result)] <- FALSE
   collapse_exploded_violations(dataset, result)
 }

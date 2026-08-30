@@ -180,7 +180,7 @@ check_study <- function(study, use_case = NULL) {
         {
           dataset <- prepare_dataset_for_rule(rule, study, domain)
           bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
-          violations <- evaluate_check(rule$check, dataset, domain, bindings)
+          violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
           violations[is.na(violations)] <- FALSE
           list(dataset = dataset, violations = violations)
         },

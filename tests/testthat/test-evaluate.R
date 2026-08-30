@@ -79,6 +79,27 @@ test_that("exists/not_exists are dataset-level facts (a scalar), not per-row", {
   expect_true(evaluate_check(list(name = "B", operator = "not_exists"), dataset, "TS"))
 })
 
+test_that("exists/not_exists resolve a Domain Presence Check's bare domain-code name against the study", {
+  # "name: DM, operator: not_exists" in a Domain Presence Check asks whether
+  # the DM dataset is present anywhere in the study, not whether a column
+  # literally named "DM" exists in the dataset currently being checked.
+  study_without_dm <- list(datasets = list(AE = list(data = data.table::data.table(A = "X"), meta = NULL)))
+  expect_true(evaluate_check(list(name = "DM", operator = "not_exists"), study_without_dm$datasets$AE, "AE", study = study_without_dm))
+  expect_false(evaluate_check(list(name = "DM", operator = "exists"), study_without_dm$datasets$AE, "AE", study = study_without_dm))
+
+  study_with_dm <- list(datasets = list(
+    AE = list(data = data.table::data.table(A = "X"), meta = NULL),
+    DM = list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
+  ))
+  expect_false(evaluate_check(list(name = "DM", operator = "not_exists"), study_with_dm$datasets$AE, "AE", study = study_with_dm))
+
+  # Without a study (e.g. a bare unit test dataset), falls back to the
+  # ordinary "is this a real column" behavior rather than erroring.
+  data <- data.table::data.table(A = "X")
+  dataset <- list(data = data, meta = NULL)
+  expect_true(evaluate_check(list(name = "DM", operator = "not_exists"), dataset, "AE"))
+})
+
 test_that("a dataset-level exists condition recycles correctly when combined with a row-level one", {
   data <- data.table::data.table(A = c("X", "Y", "X"))
   dataset <- list(data = data, meta = NULL)
