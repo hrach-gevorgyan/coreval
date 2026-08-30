@@ -15,20 +15,10 @@ membership_check <- function(ctx) {
 }
 
 # Operator: is_contained_by - target's value is a member of value
-register_operator("is_contained_by", function(ctx) {
-  if (!ctx$exists || is.null(ctx$value)) {
-    return(rep(NA, ctx$n))
-  }
-  membership_check(ctx)
-})
+register_operator("is_contained_by", guarded_op(membership_check))
 
 # Operator: is_not_contained_by - negation of is_contained_by
-register_operator("is_not_contained_by", function(ctx) {
-  if (!ctx$exists || is.null(ctx$value)) {
-    return(rep(NA, ctx$n))
-  }
-  !membership_check(ctx)
-})
+register_operator("is_not_contained_by", guarded_op(function(ctx) !membership_check(ctx)))
 
 # Dataset-level (scalar, like exists/not_exists): does the target column's
 # set of values contain ALL of the expected values?

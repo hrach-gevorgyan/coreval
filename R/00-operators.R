@@ -18,3 +18,20 @@ get_operator <- function(name) {
   }
   get(name, envir = .operator_registry, inherits = FALSE)
 }
+
+#' Build an operator that returns NA when the target/value don't exist, otherwise runs `fn(ctx)`
+#'
+#' Most operators share the exact same "can't evaluate this row" guard
+#' (`!ctx$exists || is.null(ctx$value)` -> `NA` for every row); this factory
+#' centralizes it so each operator only needs to supply its actual logic.
+#' @param fn Function of `ctx` returning a logical vector, called only once the guard passes.
+#' @return An operator function of `ctx`.
+#' @noRd
+guarded_op <- function(fn) {
+  function(ctx) {
+    if (!ctx$exists || is.null(ctx$value)) {
+      return(rep(NA, ctx$n))
+    }
+    fn(ctx)
+  }
+}

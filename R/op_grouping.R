@@ -52,19 +52,13 @@ register_operator("is_not_unique_relationship", function(ctx) {
 
   find_violations <- function(key_vals, val_vals) {
     blank_key <- is_blank(key_vals)
-    keys <- unique(key_vals[!blank_key])
-    violated <- character(0)
-    for (k in keys) {
-      vals <- val_vals[!blank_key & key_vals == k]
+    grouped <- split(val_vals[!blank_key], key_vals[!blank_key])
+    violated <- vapply(grouped, function(vals) {
       blank_v <- is_blank(vals)
       distinct_nonblank <- unique(vals[!blank_v])
-      inconsistent <- length(distinct_nonblank) > 1 ||
-        (length(distinct_nonblank) >= 1 && any(blank_v))
-      if (inconsistent) {
-        violated <- c(violated, as.character(k))
-      }
-    }
-    violated
+      length(distinct_nonblank) > 1 || (length(distinct_nonblank) >= 1 && any(blank_v))
+    }, logical(1))
+    names(grouped)[violated]
   }
 
   violated_targets <- find_violations(pairs$t, pairs$c)

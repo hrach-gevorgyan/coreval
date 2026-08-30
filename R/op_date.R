@@ -265,14 +265,11 @@ compare_dates_one <- function(target, comparator, op) {
 #' @return An operator function of `ctx`.
 #' @noRd
 date_compare_op <- function(op) {
-  function(ctx) {
-    if (!ctx$exists || is.null(ctx$value)) {
-      return(rep(NA, ctx$n))
-    }
+  guarded_op(function(ctx) {
     vapply(seq_len(ctx$n), function(i) {
       compare_dates_one(ctx$target[i], ctx$value[i], op)
     }, logical(1))
-  }
+  })
 }
 
 # Operators: partial-date-aware comparisons (date_equal_to, date_not_equal_to,

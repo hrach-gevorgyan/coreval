@@ -26,6 +26,19 @@ read_study <- function(path) {
   }
 }
 
+#' Rewrite `NA` to `""` for every character column of a data.table, in place
+#' @param dt A data.table, mutated by reference.
+#' @return `invisible(NULL)`; `dt` is modified in place.
+#' @noRd
+fill_char_blanks <- function(dt) {
+  for (v in names(dt)) {
+    if (is.character(dt[[v]])) {
+      data.table::set(dt, j = v, value = ifelse(is.na(dt[[v]]), "", dt[[v]]))
+    }
+  }
+  invisible(NULL)
+}
+
 #' Read a directory of XPT datasets into the internal study representation
 #' @param path Directory containing `.xpt` files.
 #' @return A study list, see [read_study()].
@@ -48,11 +61,7 @@ build_dataset_from_xpt <- function(raw) {
     if (is.null(lbl)) NA_character_ else lbl
   }, character(1))
 
-  for (v in names(dt)) {
-    if (is.character(dt[[v]])) {
-      data.table::set(dt, j = v, value = ifelse(is.na(dt[[v]]), "", dt[[v]]))
-    }
-  }
+  fill_char_blanks(dt)
 
   meta <- data.table::data.table(
     variable = names(dt),
@@ -96,11 +105,7 @@ build_dataset_from_csv <- function(path, fname, variables_csv) {
 
   dt <- data.table::fread(file.path(path, paste0(fname, ".csv")), colClasses = col_classes)
 
-  for (v in names(dt)) {
-    if (is.character(dt[[v]])) {
-      data.table::set(dt, j = v, value = ifelse(is.na(dt[[v]]), "", dt[[v]]))
-    }
-  }
+  fill_char_blanks(dt)
 
   meta <- data.table::data.table(
     variable = vmeta$variable,

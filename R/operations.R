@@ -140,6 +140,26 @@ compute_dy <- function(op, study, current_dataset) {
   per_row_binding(day)
 }
 
+#' Compute a max_date/max or min_date Operations binding
+#' @param dt The domain's data.table (or `NULL`).
+#' @param op One Operations spec entry.
+#' @param want_max If `TRUE`, pick the maximum date per group/overall; otherwise the minimum.
+#' @return A binding (see `scalar_binding()`/`grouped_binding()`), or `NULL` if it can't be computed.
+#' @noRd
+date_extreme_binding <- function(dt, op, want_max) {
+  if (is.null(dt) || !(op$name %in% names(dt))) {
+    return(NULL)
+  }
+  filtered <- apply_operation_filter(dt, op$filter)
+  picker <- function(x) pick_date(x, want_max = want_max)
+  if (is.null(op$group)) {
+    scalar_binding(picker(filtered[[op$name]]))
+  } else {
+    agg <- compute_group_agg(filtered, op$group, op$name, picker)
+    if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
+  }
+}
+
 #' Compute one Operations spec entry into a binding
 #' @param op One Operations spec entry.
 #' @param study Full study object.
@@ -190,32 +210,8 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
       }
     },
     max_date = ,
-    max = {
-      if (is.null(dt) || !(op$name %in% names(dt))) {
-        return(NULL)
-      }
-      filtered <- apply_operation_filter(dt, op$filter)
-      picker <- function(x) pick_date(x, want_max = TRUE)
-      if (is.null(op$group)) {
-        scalar_binding(picker(filtered[[op$name]]))
-      } else {
-        agg <- compute_group_agg(filtered, op$group, op$name, picker)
-        if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
-      }
-    },
-    min_date = {
-      if (is.null(dt) || !(op$name %in% names(dt))) {
-        return(NULL)
-      }
-      filtered <- apply_operation_filter(dt, op$filter)
-      picker <- function(x) pick_date(x, want_max = FALSE)
-      if (is.null(op$group)) {
-        scalar_binding(picker(filtered[[op$name]]))
-      } else {
-        agg <- compute_group_agg(filtered, op$group, op$name, picker)
-        if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
-      }
-    },
+    max = date_extreme_binding(dt, op, want_max = TRUE),
+    min_date = date_extreme_binding(dt, op, want_max = FALSE),
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
     variable_exists = if (is.null(dt)) scalar_binding(FALSE) else scalar_binding(resolve_var_name(op$name, domain) %in% names(dt)),
     variable_count = {
