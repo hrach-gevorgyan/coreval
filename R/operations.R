@@ -134,7 +134,7 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   if (is.null(dm) || !("RFSTDTC" %in% names(dm$data)) || !("USUBJID" %in% names(current_dataset$data))) {
     return(per_row_binding(rep(NA_character_, n)))
   }
-  target_name <- resolve_var_name(op$name, current_domain)
+  target_name <- resolve_var_name(op$name, dataset_wildcard(current_dataset, current_domain))
   if (!(target_name %in% names(current_dataset$data))) {
     return(per_row_binding(rep(NA_character_, n)))
   }
@@ -274,11 +274,11 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     max = date_extreme_binding(dt, op, want_max = TRUE),
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
-    variable_exists = if (is.null(dt)) scalar_binding(FALSE) else scalar_binding(resolve_var_name(op$name, domain) %in% names(dt)),
+    variable_exists = if (is.null(dt)) scalar_binding(FALSE) else scalar_binding(resolve_var_name(op$name, dataset_wildcard(ds, domain)) %in% names(dt)),
     variable_count = {
       target <- op$name
       count <- sum(vapply(names(study$datasets), function(dn) {
-        resolve_var_name(target, dn) %in% names(study$datasets[[dn]]$data)
+        resolve_var_name(target, dataset_wildcard(study$datasets[[dn]], dn)) %in% names(study$datasets[[dn]]$data)
       }, logical(1)))
       scalar_binding(count)
     },
@@ -319,7 +319,11 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
         # own bespoke variables instead. An empty `allowed` set would make
         # "is_not_contained_by" trivially flag every single variable as
         # disallowed, which is wrong - NULL (unresolvable) is honest instead.
-        if (length(allowed) == 0) NULL else scalar_binding(resolve_var_name(allowed, current_domain))
+        if (length(allowed) == 0) {
+          NULL
+        } else {
+          scalar_binding(resolve_var_name(allowed, dataset_wildcard(current_dataset, current_domain)))
+        }
       }
     },
     # Confirmed against CORE-000538's real fixtures: extract_metadata's

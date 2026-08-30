@@ -98,7 +98,7 @@ empty_findings <- function() {
 #' @noRd
 group_first_violations <- function(dataset, violations, grouping_vars, domain) {
   violating_idx <- which(violations)
-  resolved <- resolve_var_name(grouping_vars, domain)
+  resolved <- resolve_var_name(grouping_vars, dataset_wildcard(dataset, domain))
   resolved <- resolved[resolved %in% names(dataset$data)]
   if (length(resolved) == 0 || length(violating_idx) == 0) {
     return(violating_idx)
@@ -126,7 +126,7 @@ group_first_violations <- function(dataset, violations, grouping_vars, domain) {
 #' @return A [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
 #' @noRd
 assemble_findings <- function(rule, dataset, domain, violations, bindings = list()) {
-  output_vars <- unique(get_output_variables(rule, domain))
+  output_vars <- unique(get_output_variables(rule, dataset_wildcard(dataset, domain)))
   # An Output Variable that isn't a real column of THIS domain's dataset
   # (e.g. "POOLID" for a rule whose Check covers both USUBJID- and
   # POOLID-keyed domains, or a domain simply lacking a variable another

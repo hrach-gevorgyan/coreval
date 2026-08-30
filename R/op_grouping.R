@@ -25,7 +25,7 @@ register_operator("is_not_unique_set", function(ctx) {
   # flagged every baseline-flagged row of any subject with 2+ of them.
   # (The sibling is_inconsistent_across_dataset already resolves its own
   # grouping columns this way.)
-  cols <- unique(c(ctx$name, resolve_var_name(ctx$condition$value, ctx$domain)))
+  cols <- unique(c(ctx$name, resolve_var_name(ctx$condition$value, ctx$wildcard)))
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))
@@ -123,7 +123,7 @@ register_operator("has_same_values", function(ctx) {
 #' @return A logical vector.
 #' @noRd
 present_on_multiple_rows_within_check <- function(ctx) {
-  within_col <- resolve_var_name(ctx$condition$within, ctx$domain)
+  within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
   if (!ctx$exists || !(within_col %in% names(ctx$dataset$data))) {
     return(rep(FALSE, ctx$n))
   }
@@ -196,7 +196,7 @@ register_operator("is_inconsistent_across_dataset", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  cols <- resolve_var_name(ctx$condition$value, ctx$domain)
+  cols <- resolve_var_name(ctx$condition$value, ctx$wildcard)
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))

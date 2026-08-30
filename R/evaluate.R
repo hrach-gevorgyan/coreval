@@ -3,9 +3,53 @@
 # different use of "--" than the Domains scope wildcard (`SUPP--` etc.) -
 # there it means "prefix match"; here it means "this domain's code goes
 # here."
+# What a "--" template actually expands to. NOT the dataset/file name: the
+# reference engine uses `wildcard_replacement = ap_suffix or domain or ""`,
+# where `domain` is the DOMAIN COLUMN's own value
+# (sdtm_dataset_metadata.py), and its documented table spells out the
+# consequence - a domain SPLIT ACROSS FILES (`QSX`, `QSXX`, both carrying
+# `DOMAIN=QS`) expands `--` to `QS` for every one of them, and an
+# Associated Persons dataset `APQS` expands to its `QS` suffix.
+#
+# Using the file name instead silently mis-resolves every "--" template on
+# a split dataset (`lbae.csv` with `DOMAIN=LB` gave `LBAESEQ`, not
+# `LBSEQ`), so the column simply doesn't exist and the condition quietly
+# evaluates to "unresolvable" rather than checking anything. 251 of the 756
+# bundled rules use a "--" template, and splitting a large domain across
+# files is routine in real submissions, so this is a correctness bug well
+# beyond the conformance fixtures.
+#
+# Deliberate deviation: the reference yields `""` when there is no DOMAIN
+# column (SUPP/RELREC datasets), which would turn `--SEQ` into the bare
+# `SEQ`. Falling back to the dataset name instead keeps the previous
+# behaviour for those and never fabricates a bare, prefix-less column name.
+#' The value a `"--"` variable-name template expands to for a dataset
+#' @param dataset The dataset being checked (`list(data, meta)`), or `NULL`.
+#' @param domain The dataset's key/file name, used as the fallback.
+#' @return A single string to substitute for `"--"`.
+#' @noRd
+dataset_wildcard <- function(dataset, domain) {
+  up <- toupper(domain)
+  # An Associated Persons dataset (APQS) expands to the domain it is
+  # associated with (QS), which is its own name minus the "AP" prefix.
+  if (startsWith(up, "AP") && nchar(up) > 2 && !startsWith(up, "APID")) {
+    return(substr(up, 3, nchar(up)))
+  }
+  dom_col <- dataset$data[["DOMAIN"]]
+  if (!is.null(dom_col) && length(dom_col) > 0) {
+    first <- as.character(dom_col[1])
+    if (!is.na(first) && nzchar(first)) {
+      return(toupper(first))
+    }
+  }
+  up
+}
+
 #' Substitute a domain code into a `"--"`-prefixed variable name template
 #' @param name Variable name, possibly starting with `"--"`.
-#' @param domain Domain code to substitute.
+#' @param domain The value to substitute for `"--"`. Pass
+#'   `dataset_wildcard()`'s result, not a raw dataset/file name - the two
+#'   differ for a split or Associated Persons dataset.
 #' @return The resolved variable name.
 #' @noRd
 resolve_var_name <- function(name, domain) {
@@ -176,13 +220,18 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
 #' @return A logical vector (recycled from scalar for dataset-level operators).
 #' @noRd
 evaluate_condition <- function(condition, dataset, domain, bindings = list(), study = NULL) {
+  # "--" expands to the DOMAIN column's value, not the dataset/file name -
+  # see dataset_wildcard(). Computed once here and carried on ctx so every
+  # operator resolving its own column names (op_grouping, op_sequence, ...)
+  # uses the same expansion.
+  wildcard <- dataset_wildcard(dataset, domain)
   if (is.character(condition$name) && startsWith(condition$name, "$")) {
     binding <- bindings[[condition$name]]
     name <- condition$name
     exists <- !is.null(binding)
     target <- if (exists) resolve_binding(binding, dataset) else NULL
   } else {
-    name <- resolve_var_name(condition$name, domain)
+    name <- resolve_var_name(condition$name, wildcard)
     exists <- name %in% names(dataset$data)
     target <- if (exists) dataset$data[[name]] else NULL
 
@@ -201,10 +250,11 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     name = name,
     exists = exists,
     target = target,
-    value = resolve_condition_value(condition, dataset, domain, bindings),
+    value = resolve_condition_value(condition, dataset, wildcard, bindings),
     n = nrow(dataset$data),
     condition = condition,
     dataset = dataset,
+    wildcard = wildcard,
     domain = domain
   )
 

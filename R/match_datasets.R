@@ -124,7 +124,7 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # violations for a domain this rule can't actually evaluate that way. If
   # any key is missing from either side, the whole join is unresolvable for
   # this domain - skip it entirely rather than degrading to a looser one.
-  keys <- resolve_var_name(spec$Keys, current_domain)
+  keys <- resolve_var_name(spec$Keys, dataset_wildcard(dataset, current_domain))
   if (!all(keys %in% names(dataset$data)) || !all(keys %in% names(match_dataset$data))) {
     return(dataset)
   }

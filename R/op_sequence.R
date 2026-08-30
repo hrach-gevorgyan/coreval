@@ -22,8 +22,8 @@ register_operator("does_not_have_next_corresponding_record", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
     return(rep(FALSE, ctx$n))
   }
-  within_col <- resolve_var_name(ctx$condition$within, ctx$domain)
-  ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$domain)
+  within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
+  ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$wildcard)
   dt <- ctx$dataset$data
   if (!all(c(within_col, ordering_col) %in% names(dt))) {
     return(rep(FALSE, ctx$n))
@@ -60,7 +60,7 @@ register_operator("empty_within_except_last_row", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
     return(rep(FALSE, ctx$n))
   }
-  ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$domain)
+  ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$wildcard)
   dt <- ctx$dataset$data
   if (!(ordering_col %in% names(dt))) {
     return(rep(FALSE, ctx$n))
@@ -157,9 +157,9 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  within_col <- resolve_var_name(ctx$condition$within, ctx$domain)
+  within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
   spec <- ctx$condition$value[[1]]
-  sort_col <- resolve_var_name(spec$name, ctx$domain)
+  sort_col <- resolve_var_name(spec$name, ctx$wildcard)
   dt <- ctx$dataset$data
   if (!all(c(within_col, sort_col) %in% names(dt))) {
     return(rep(FALSE, ctx$n))

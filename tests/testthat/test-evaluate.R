@@ -162,3 +162,46 @@ test_that("resolve_var_name keeps its character type for a zero-length input", {
   expect_identical(resolve_var_name(character(0), "TX"), character(0))
   expect_identical(resolve_var_name(c("--SEQ", "USUBJID"), "AE"), c("AESEQ", "USUBJID"))
 })
+
+test_that("a \"--\" template expands to the DOMAIN column's value, not the file name", {
+  # The reference engine's wildcard_replacement is
+  # `ap_suffix or <DOMAIN column value>`, and its own documented table
+  # shows a domain SPLIT ACROSS FILES (QSX, QSXX - both carrying
+  # DOMAIN=QS) expanding "--" to QS for every one of them. Using the file
+  # name instead silently mis-resolves every "--" template on a split
+  # dataset: lbae.csv with DOMAIN=LB gave LBAESEQ, which is not a column,
+  # so the condition quietly became unresolvable rather than checking
+  # anything. 251 of the bundled rules use a "--" template and splitting a
+  # large domain across files is routine, so this reached well beyond the
+  # conformance fixtures.
+  split_a <- list(
+    data = data.table::data.table(DOMAIN = c("LB", "LB"), LBSEQ = c(1, 2)),
+    meta = NULL
+  )
+  expect_equal(dataset_wildcard(split_a, "LBAE"), "LB")
+  expect_equal(resolve_var_name("--SEQ", dataset_wildcard(split_a, "LBAE")), "LBSEQ")
+  # and end to end, the condition now actually resolves
+  expect_equal(
+    evaluate_check(list(name = "--SEQ", operator = "non_empty"), split_a, "LBAE"),
+    c(TRUE, TRUE)
+  )
+
+  # An unsplit dataset is unaffected: name and DOMAIN agree.
+  plain <- list(data = data.table::data.table(DOMAIN = "AE", AESEQ = 1), meta = NULL)
+  expect_equal(dataset_wildcard(plain, "AE"), "AE")
+
+  # An Associated Persons dataset expands to the domain it is associated
+  # with (APQS -> QS), per the reference's ap_suffix.
+  ap <- list(data = data.table::data.table(APID = "1", QSSEQ = 1), meta = NULL)
+  expect_equal(dataset_wildcard(ap, "APQS"), "QS")
+
+  # No DOMAIN column (RELREC, SUPPxx): fall back to the dataset's own name
+  # rather than the reference's "", which would yield a bare, prefix-less
+  # column name like "SEQ".
+  no_domain <- list(data = data.table::data.table(X = 1), meta = NULL)
+  expect_equal(dataset_wildcard(no_domain, "RELREC"), "RELREC")
+
+  # A blank DOMAIN value also falls back rather than producing "".
+  blank_domain <- list(data = data.table::data.table(DOMAIN = "", X = 1), meta = NULL)
+  expect_equal(dataset_wildcard(blank_domain, "AE"), "AE")
+})
