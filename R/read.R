@@ -14,9 +14,10 @@
 #'
 #' @param path Directory path.
 #' @return A study object: `list(datasets = <named list of domain ->
-#'   list(data, meta)>, define = NULL, ct = NULL)`. Each `data` is a
+#'   list(data, meta, label)>, define = NULL, ct = NULL)`. Each `data` is a
 #'   [data.table::data.table()]; each `meta` is a data.table with columns
-#'   `variable`, `label`, `type`.
+#'   `variable`, `label`, `type`; `label` is the dataset's own label (e.g.
+#'   `"Adverse Events"`), or `NA` if unavailable.
 #' @examples
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)
@@ -76,7 +77,8 @@ build_dataset_from_xpt <- function(raw) {
     type = vapply(dt, function(col) if (is.character(col)) "Char" else "Num", character(1))
   )
 
-  list(data = dt, meta = meta)
+  dataset_label <- attr(raw, "label")
+  list(data = dt, meta = meta, label = if (is.null(dataset_label)) NA_character_ else dataset_label)
 }
 
 #' Read a CORE test-case `data/` directory into the internal study representation
@@ -87,8 +89,8 @@ read_study_test_case <- function(path) {
   datasets_csv <- data.table::fread(file.path(path, "_datasets.csv"), colClasses = "character")
   variables_csv <- data.table::fread(file.path(path, "_variables.csv"), colClasses = "character")
 
-  datasets <- lapply(datasets_csv$Filename, function(fname) {
-    build_dataset_from_csv(path, fname, variables_csv)
+  datasets <- lapply(seq_len(nrow(datasets_csv)), function(i) {
+    build_dataset_from_csv(path, datasets_csv$Filename[i], variables_csv, datasets_csv$Label[i])
   })
   names(datasets) <- toupper(datasets_csv$Filename)
 
@@ -99,9 +101,10 @@ read_study_test_case <- function(path) {
 #' @param path Study directory.
 #' @param fname Dataset filename (without extension).
 #' @param variables_csv Parsed `_variables.csv` table.
-#' @return `list(data, meta)`, see [read_study()].
+#' @param dataset_label This dataset's `_datasets.csv` `Label` value.
+#' @return `list(data, meta, label)`, see [read_study()].
 #' @noRd
-build_dataset_from_csv <- function(path, fname, variables_csv) {
+build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = NA_character_) {
   vmeta <- variables_csv[toupper(variables_csv$dataset) == toupper(fname), ]
 
   col_classes <- list(
@@ -133,5 +136,5 @@ build_dataset_from_csv <- function(path, fname, variables_csv) {
     type = vmeta$type
   )
 
-  list(data = dt, meta = meta)
+  list(data = dt, meta = meta, label = dataset_label)
 }

@@ -224,6 +224,7 @@ compute_operation <- function(op, study, current_domain, current_dataset) {
     study_domains = scalar_binding(sort(names(study$datasets))),
     dataset_names = scalar_binding(sort(tolower(names(study$datasets)))),
     domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
+    domain_label = scalar_binding(if (is.null(ds)) NA_character_ else ds$label),
     extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(tolower(current_domain)) else NULL,
     dy = compute_dy(op, study, current_dataset),
     NULL

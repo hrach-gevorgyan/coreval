@@ -10,9 +10,10 @@ read_study(path)
 \item{path}{Directory path.}
 }
 \value{
-A study object: \verb{list(datasets = <named list of domain -> list(data, meta)>, define = NULL, ct = NULL)}. Each \code{data} is a
+A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define = NULL, ct = NULL)}. Each \code{data} is a
 \code{\link[data.table:data.table]{data.table::data.table()}}; each \code{meta} is a data.table with columns
-\code{variable}, \code{label}, \code{type}.
+\code{variable}, \code{label}, \code{type}; \code{label} is the dataset's own label (e.g.
+\code{"Adverse Events"}), or \code{NA} if unavailable.
 }
 \description{
 Detects whether \code{path} is a directory of XPT datasets (a real study) or a

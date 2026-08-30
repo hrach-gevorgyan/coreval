@@ -115,6 +115,35 @@ test_that("resolve_binding does not collide grouped-join keys across a multi-col
   expect_equal(resolve_binding(binding, study$datasets$DS), c(10, 20))
 })
 
+test_that("domain_label matches CDISC's reference results.csv (CORE-000219)", {
+  # "--SCAT equal_to_case_insensitive $domain_label" - the dataset's own
+  # label (from _datasets.csv's Label column / an XPT dataset label), not
+  # a per-variable label.
+  rule <- .coreval_env$data$rules[["CORE-000219"]]
+  for (case in c("negative/01", "negative/02", "positive/01", "positive/02")) {
+    dir <- test_path("fixtures", "core_rules", "CORE-000219", case)
+    study <- read_study(file.path(dir, "data"))
+    for (domain in names(study$datasets)) {
+      if (!rule_applies_to_domain(rule, domain)) next
+      actual <- which(evaluate_rule(rule, study, domain))
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
+      expect_equal(sort(unname(actual)), expected)
+    }
+  }
+})
+
+test_that("read_study captures each dataset's own label", {
+  dir <- tempfile("coreval_label_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("Filename,Label\ndm,Demographics", file.path(dir, "_datasets.csv"))
+  writeLines("dataset,variable,label,type,length\nDM,USUBJID,Subject,Char,20", file.path(dir, "_variables.csv"))
+  writeLines("USUBJID\n1", file.path(dir, "dm.csv"))
+  study <- read_study(dir)
+  expect_equal(study$datasets$DM$label, "Demographics")
+})
+
 test_that("study_domains/dataset_names/variable_exists/domain_is_custom are local, no Library needed", {
   study <- list(datasets = list(
     AE = list(data = data.table::data.table(AETERM = "X", AESCAN = "Y"), meta = NULL),

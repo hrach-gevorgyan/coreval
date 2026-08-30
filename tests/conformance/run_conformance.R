@@ -124,7 +124,7 @@ run_case <- function(rule, case_dir) {
 implemented_operations <- c(
   "distinct", "record_count", "max_date", "max", "min_date",
   "get_column_order_from_dataset", "variable_exists", "variable_count",
-  "study_domains", "dataset_names", "domain_is_custom", "extract_metadata", "dy"
+  "study_domains", "dataset_names", "domain_is_custom", "domain_label", "extract_metadata", "dy"
 )
 
 run_rule <- function(rule) {
