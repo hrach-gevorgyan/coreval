@@ -1,0 +1,5 @@
+Dataset,Record,Variable,Value
+TX,5,$txparmcd,"['SPGRPCD', 'PLANFSUBxxx', 'ARMCD']"
+TX,5,SETCD,SET2
+TX,8,$txparmcd,['PLANF']
+TX,8,SETCD,SET3

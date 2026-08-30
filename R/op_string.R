@@ -46,9 +46,22 @@ any_value_match <- function(target, values, match_fn) {
 }
 
 # target contains the literal substring `value` (value can be a vector -
-# matches if target contains ANY of them).
-# Operator: contains - target contains any of value as a literal substring
+# matches if target contains ANY of them). A `$`-bound grouped `distinct`
+# Operation (e.g. CORE-000888's `$txparmcd`) resolves to a LIST target - one
+# SET of values per row, not one string - so this means something different
+# there: "is value an exact MEMBER of the row's set", not a substring
+# search. Confirmed against CORE-000888/CORE-000993's real fixtures: a
+# group whose set contains only "PLANFSUBxxx" (not the exact string
+# "PLANFSUB") is reported as NOT containing PLANFSUB - a substring match
+# would wrongly say it does (the whole point of the underlying rule is that
+# a near-miss variable name like "PLANFSUBxxx" doesn't count as the real
+# "PLANFSUB").
+# Operator: contains - target contains any of value (substring for a plain
+# string target, exact set membership for a `distinct`-Operation SET target)
 register_operator("contains", guarded_op(function(ctx) {
+  if (is.list(ctx$target)) {
+    return(vapply(ctx$target, function(t) any(ctx$value %in% t), logical(1)))
+  }
   any_value_match(ctx$target, ctx$value, function(t, v) grepl(v, t, fixed = TRUE))
 }))
 

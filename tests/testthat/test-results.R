@@ -67,6 +67,47 @@ test_that("assemble_findings reports a missing numeric Output Variable as blank,
   expect_equal(findings$Value[findings$Variable == "N"], "")
 })
 
+test_that("group_first_violations collapses per-row violations to one flagged row per group (CORE-000888)", {
+  # SETCD groups SET1(1-4)/SET2(5-7)/SET3(8): only SET2 and SET3 violate,
+  # every row within a violating group shares the same result (the check is
+  # driven by a grouped `distinct` binding, constant per group) - the
+  # reference reports exactly one finding per violating group, at its
+  # first row: record 5 for SET2, record 8 for SET3.
+  rule <- .coreval_env$data$rules[["CORE-000888"]]
+  dir <- test_path("fixtures", "core_rules", "CORE-000888", "negative", "01")
+  study <- read_study(file.path(dir, "data"))
+  dataset <- prepare_dataset_for_rule(rule, study, "TX")
+  bindings <- operation_bindings_for_rule(rule, study, "TX", dataset)
+  violations <- evaluate_check(rule$check, dataset, "TX", bindings, study)
+  actual <- group_first_violations(dataset, violations, rule$grouping_variables, "TX")
+
+  results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+  expected <- sort(unique(as.integer(results$Record[results$Dataset == "TX"])))
+  expect_equal(sort(actual), expected)
+})
+
+test_that("assemble_findings reports one finding per group for Sensitivity: Group, including a $-bound set Output Variable (CORE-000888/CORE-000993)", {
+  for (id in c("CORE-000888", "CORE-000993")) {
+    rule <- .coreval_env$data$rules[[id]]
+    for (case in c("negative/01", "positive/01")) {
+      dir <- test_path("fixtures", "core_rules", id, case)
+      study <- read_study(file.path(dir, "data"))
+      dataset <- prepare_dataset_for_rule(rule, study, "TX")
+      bindings <- operation_bindings_for_rule(rule, study, "TX", dataset)
+      violations <- evaluate_check(rule$check, dataset, "TX", bindings, study)
+      violations[is.na(violations)] <- FALSE
+      findings <- assemble_findings(rule, dataset, "TX", violations, bindings)
+
+      results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
+      expected_records <- sort(unique(as.integer(results$Record[results$Dataset == "TX"])))
+      expect_equal(sort(unique(findings$Record)), expected_records, info = paste(id, case))
+      if (nrow(findings) > 0) {
+        expect_setequal(findings$Variable, c("SETCD", "$txparmcd"))
+      }
+    }
+  }
+})
+
 test_that("check_study runs end-to-end on a real test case and reports the expected finding", {
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))

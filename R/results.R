@@ -56,21 +56,54 @@ empty_findings <- function() {
   )
 }
 
+# A rule's `Grouping_Variables` field (only present for Sensitivity: Group
+# rules, e.g. CORE-000888's "SETCD") collapses one finding per GROUP rather
+# than per record - confirmed against CORE-000888's real fixtures: a
+# 3-record SETCD group where every record shares the same (grouped-binding-
+# derived) violation result reports exactly ONE finding, at the group's
+# first violating row.
+#' Collapse per-row violations to one flagged row per distinct `grouping_vars` group
+#' @param dataset The dataset that was checked.
+#' @param violations Logical vector, one element per row.
+#' @param grouping_vars Raw (possibly `"--"`-templated) grouping column name(s).
+#' @param domain Domain code, used to resolve `"--"` templates.
+#' @return An integer vector of row indices: the first violating row of each distinct group.
+#' @noRd
+group_first_violations <- function(dataset, violations, grouping_vars, domain) {
+  violating_idx <- which(violations)
+  resolved <- resolve_var_name(grouping_vars, domain)
+  resolved <- resolved[resolved %in% names(dataset$data)]
+  if (length(resolved) == 0 || length(violating_idx) == 0) {
+    return(violating_idx)
+  }
+  key <- do.call(paste, c(lapply(resolved, function(v) dataset$data[[v]]), sep = "\x1f"))[violating_idx]
+  violating_idx[!duplicated(key)]
+}
+
 # Assembles one rule's findings for one dataset into the long format used by
 # CDISC's own results.csv: one row per (Record, Variable), or for
 # Sensitivity: Dataset rules, one row per Variable with Record blank (NA)
 # and Value taken from the first violating record - the shape confirmed
-# directly against real reference output (e.g. CORE-000864).
+# directly against real reference output (e.g. CORE-000864). Sensitivity:
+# Group rules (see group_first_violations()) report the same
+# one-row-per-(Record, Variable) shape as ordinary Record-sensitivity, just
+# collapsed to one Record per group first.
 #' Assemble one rule's findings for one dataset into the long results.csv format
 #' @param rule A rule record.
 #' @param dataset The dataset that was checked (post Match Datasets joins).
 #' @param domain Domain code.
 #' @param violations Logical vector from `evaluate_check()`, one element per row.
+#' @param bindings Operations bindings for the rule (see `operation_bindings_for_rule()`),
+#'   needed only when a `$`-prefixed Operations binding is itself declared as an
+#'   Output Variable (e.g. CORE-000888's `$txparmcd`).
 #' @return A [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
 #' @noRd
-assemble_findings <- function(rule, dataset, domain, violations) {
+assemble_findings <- function(rule, dataset, domain, violations, bindings = list()) {
   output_vars <- unique(get_output_variables(rule, domain))
-  output_vars <- output_vars[output_vars %in% names(dataset$data)]
+  output_vars <- output_vars[
+    output_vars %in% names(dataset$data) |
+      (startsWith(output_vars, "$") & output_vars %in% names(bindings))
+  ]
   if (length(output_vars) == 0 || !any(violations)) {
     return(empty_findings())
   }
@@ -80,8 +113,28 @@ assemble_findings <- function(rule, dataset, domain, violations) {
   # source CSV becomes R double 0, printed back as "0", not "0.0"). Fixing
   # this needs read_study() to carry the raw source text alongside the
   # parsed numeric value specifically for reporting - not done yet.
+  #
+  # A second, separate known limitation: a `$`-prefixed Output Variable
+  # bound to a `distinct` Operations set (e.g. CORE-000888's `$txparmcd`)
+  # is reported here as a sorted Python-list-repr string
+  # (e.g. "['ARMCD', 'PLANFSUBxxx', 'SPGRPCD']"). The reference engine's own
+  # set iteration order is Python's, which is not alphabetical and not
+  # reproducible from R - so this can format correctly (right elements)
+  # without matching the reference's exact element ORDER byte-for-byte.
+  format_binding_value <- function(x) {
+    if (is.list(x)) x <- x[[1]]
+    if (length(x) != 1) {
+      return(paste0("[", paste(sprintf("'%s'", x), collapse = ", "), "]"))
+    }
+    if (is.na(x)) "" else as.character(x)
+  }
   value_at <- function(row) {
     vapply(output_vars, function(v) {
+      if (startsWith(v, "$")) {
+        resolved <- resolve_binding(bindings[[v]], dataset)
+        elem <- if (is.list(resolved)) resolved[row] else resolved[row]
+        return(format_binding_value(elem))
+      }
       x <- dataset$data[[v]][row]
       # A missing NUMERIC value's `as.character()` is `NA_character_`, not
       # `""` - this package's own blank contract (see read.R) says a numeric
@@ -108,7 +161,11 @@ assemble_findings <- function(rule, dataset, domain, violations) {
       Variable = output_vars, Value = value_at(first_row)
     )
   } else {
-    exploded_rows <- which(violations)
+    exploded_rows <- if (identical(rule$sensitivity, "Group") && !is.null(rule$grouping_variables)) {
+      group_first_violations(dataset, violations, rule$grouping_variables, domain)
+    } else {
+      which(violations)
+    }
     records <- record_of(exploded_rows)
     keep <- !duplicated(records) # one finding per original record
     exploded_rows <- exploded_rows[keep]
@@ -182,7 +239,7 @@ check_study <- function(study, use_case = NULL) {
           bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
           violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
           violations[is.na(violations)] <- FALSE
-          list(dataset = dataset, violations = violations)
+          list(dataset = dataset, violations = violations, bindings = bindings)
         },
         error = function(e) e
       )
@@ -193,7 +250,7 @@ check_study <- function(study, use_case = NULL) {
         )
         next
       }
-      findings <- assemble_findings(rule, outcome$dataset, domain, outcome$violations)
+      findings <- assemble_findings(rule, outcome$dataset, domain, outcome$violations, outcome$bindings)
       if (nrow(findings) > 0) {
         findings$rule_id <- rule_id
         all_findings[[length(all_findings) + 1]] <- findings

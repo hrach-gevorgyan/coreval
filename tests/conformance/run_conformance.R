@@ -108,6 +108,15 @@ run_case <- function(rule, case_dir) {
           domain, expected_any, actual_any
         )))
       }
+    } else if (identical(rule$sensitivity, "Group") && !is.null(rule$grouping_variables)) {
+      dataset <- study$datasets[[domain]]
+      actual <- group_first_violations(dataset, violations, rule$grouping_variables, domain)
+      if (!identical(sort(actual), sort(expected))) {
+        return(list(status = "FAIL", reason = sprintf(
+          "[%s] Group-sensitivity record mismatch: expected {%s}, got {%s}",
+          domain, paste(expected, collapse = ","), paste(actual, collapse = ",")
+        )))
+      }
     } else {
       actual <- which(violations)
       if (!identical(sort(actual), sort(expected))) {

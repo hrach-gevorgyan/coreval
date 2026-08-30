@@ -130,6 +130,7 @@ extract_one <- function(path, source) {
     executability = d$Executability,
     rule_type = d[["Rule Type"]],
     sensitivity = d$Sensitivity,
+    grouping_variables = d[["Grouping_Variables"]],
     standards = matched_standards,
     authorities = authorities,
     scope = d$Scope,

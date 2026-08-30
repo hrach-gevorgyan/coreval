@@ -1,0 +1,8 @@
+STUDYID,DOMAIN,SETCD,SET,TXSEQ,TXPARMCD,TXPARM,TXVAL
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily",1,ARMCD,Arm Code,ZAN_LOW
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily",2,SPGRPCD,Sponsor-defined Group Code,GRP1
+CDISCPILOT01,TX,SET1,"Control Group, Vehicle Control once daily",3,PLANMSUB,Planned Number of Male Subjects ,22
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily",4,ARMCD,Arm Code,ZAN_HIGH
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily",5,SPGRPCD,Sponsor-defined Group Code,GRP2
+CDISCPILOT01,TX,SET2,"Low-Dose Group, 100 mg/kg Drug a once daily",6,PLANMSUB,Planned Number of Male Subjects ,44
+CDISCPILOT01,TX,SET3,"Another Low-Dose Group, 100 mg/kg Drug a once daily",6,PLANMSUB,Planned Number of Male Subjects ,33

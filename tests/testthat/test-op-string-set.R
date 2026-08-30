@@ -102,6 +102,20 @@ test_that("does_not_equal_string_part extracts a regex capture group from value 
   expect_equal(evaluate_check(check, dataset, "SUPPAE"), c(FALSE, TRUE))
 })
 
+test_that("contains/does_not_contain use exact set membership (not substring search) against a list target", {
+  # A `$`-bound grouped `distinct` Operations binding resolves to a LIST
+  # target (one set of values per row). "contains" there means "value is a
+  # member of the row's set" - confirmed against CORE-000888/CORE-000993's
+  # real fixtures: a set containing only "PLANFSUBxxx" is NOT considered to
+  # contain "PLANFSUB" (a substring match would wrongly say it does).
+  ctx <- list(
+    target = list(c("ARMCD", "PLANFSUBxxx", "SPGRPCD"), c("ARMCD", "PLANFSUB")),
+    value = "PLANFSUB", exists = TRUE, n = 2
+  )
+  expect_equal(get_operator("contains")(ctx), c(FALSE, TRUE))
+  expect_equal(get_operator("does_not_contain")(ctx), c(TRUE, FALSE))
+})
+
 test_that("contains_all/not_contains_all are dataset-level checks on the column's full value set", {
   data <- data.table::data.table(TSPARMCD = c("AGEMAX", "AGEMIN", "SEXPOP"))
   dataset <- list(data = data, meta = NULL)

@@ -1,5 +1,46 @@
 # coreval 0.0.0.9000
 
+* Rule extraction widened from SDTMIG-only to also pull SENDIG (base +
+  SENDIG-AR/DART/GENETOX extensions) and TIG rules from the same upstream
+  `cdisc-open-rules` clone (507 -> 756 bundled rules); ADaMIG's much larger
+  `Unpublished/ADAMIG` draft folder was deliberately NOT pulled in - every
+  one of its rules has test data but zero reference `results.csv`, so
+  nothing there can be verified, unlike every other tier extracted.
+* Added 19 SEND/SEND-extension domains (BW, BG, CL, FW, MA, OM, PM, TF, TX,
+  POOLDEF, SJ, IC, PY, FM, FX, TT, TP, AC, GV) to `sdtm_domain_classes.rds`,
+  machine-extracted from `cdisc-rules-engine`'s bundled `standards_details.pkl`.
+* Added `inst/extdata/sdtmig_variables.rds` (per-SDTMIG-version, per-domain
+  Core designation + ordinal, all 5 versions 3.1.2-3.4) and
+  `inst/extdata/sdtm_model_variables.rds` (per SDTM Model observation class,
+  the full set of variables the abstract Model allows), both machine-
+  extracted from `cdisc-rules-engine`'s bundled, offline, MIT-licensed
+  pickle caches - not a live API call. These back three new `Operations`
+  types: `required_variables`, `expected_variables`, `get_model_column_order`.
+* `read_study()` now captures a CORE test case's `.env` file
+  (`PRODUCT`/`VERSION`) as `study$standard`, and no longer assumes every
+  fixture is SDTMIG-flavored just because its rule looks that way (e.g.
+  CORE-000355's EX fixture is actually SENDIG 3.1). Also fixed two crashes
+  on real fixtures: format detection now checks for `_variables.csv`
+  instead of `_datasets.csv` (some fixtures ship no `_datasets.csv`
+  manifest at all), and a dataset with zero matching rows in
+  `_variables.csv` no longer crashes the whole study read.
+* `matches_regex`/`not_matches_regex` now anchor at the string's start
+  (like Python's `re.match()`), not R's default unanchored `grepl()` search
+  - verified across all 51 affected rules to be a strict improvement with
+  no regressions.
+* Added a `target_is_not_sorted_by` operator (partial-ISO-8601-aware pairwise
+  date ordering within a group) and several grouping/presence operators:
+  `has_same_values`, `present_on_multiple_rows_within`,
+  `not_present_on_multiple_rows_within`, `inconsistent_enumerated_columns`,
+  `does_not_have_next_corresponding_record`, `empty_within_except_last_row`,
+  `does_not_equal_string_part`.
+* Added support for `Sensitivity: Group` rules (e.g. CORE-000888,
+  CORE-000993): one finding is now reported per violating group (from the
+  rule's `Grouping_Variables` field) at the group's first violating row,
+  instead of one per record. Along the way, fixed `contains`/
+  `does_not_contain` to use exact set membership (not substring search)
+  when the target is a `$`-bound grouped `distinct` Operations binding
+  (a list of values per row) rather than a plain string.
 * Added `URL`/`BugReports` fields to `DESCRIPTION` pointing at the GitHub
   repository, and dropped the unused `xml2` `Suggests` dependency (nothing
   in the package currently calls it).
