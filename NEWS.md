@@ -158,7 +158,7 @@ qualified validation tool, never instead of it.
   in `inst/COPYRIGHTS`. cdisc-open-rules is MIT licensed, and MIT requires the
   copyright and permission notice to accompany substantial portions of the
   work - coreval bundles 756 extracted rules and CDISC standards metadata, but
-  the notice lived only in `NOTICE.md`, which is Rbuildignored and so never
+  the notice lived only in `NOTICE.md`, which is excluded from the build and so never
   reached anyone who installed the package. A test now guards it.
 * `evaluate_rule()` is no longer exported. It returned a raw logical vector,
   needed a rule record fetched from package internals, and had no story a user

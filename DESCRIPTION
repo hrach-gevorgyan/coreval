@@ -16,6 +16,11 @@ Description: Finds CDISC conformance problems in clinical trial data without
     a pass. Meant as a quick first pass before a qualified validation system,
     never as a replacement for one. An independent project: not affiliated
     with or endorsed by CDISC, and not a CORE-certified conformance engine.
+Copyright: Hrach Gevorgyan holds the copyright in this package's own code.
+    The bundled rule definitions and CDISC standards metadata under
+    inst/extdata are derived from cdisc-org/cdisc-open-rules, copyright CDISC,
+    and are used under its MIT license. See inst/COPYRIGHTS for the full
+    notice and for which files that covers.
 License: MIT + file LICENSE
 URL: https://github.com/hrach-gevorgyan/coreval
 BugReports: https://github.com/hrach-gevorgyan/coreval/issues
