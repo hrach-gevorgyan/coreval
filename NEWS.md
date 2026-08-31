@@ -47,9 +47,15 @@ qualified validation tool, never instead of it.
   `Notes` columns for you to fill in, so "expected, see protocol deviation log"
   lives next to the finding instead of in another document. Both tables are
   written every time; pass `tracking = FALSE` to leave the extra columns out.
-* **Look at the rules themselves** with `list_rules()`, `rules_for_domain()` and
-  `rules_version()` — including which CDISC commit they came from and how much
-  each rule can be trusted.
+* **Look up a rule you were shown** with `rule_info("CORE-000547")`. The report
+  gives you a rule id; this tells you what it checks, in words, without leaving
+  R. `list_rules()` now carries the same `issue` text for every rule, alongside
+  `rules_for_domain()` and `rules_version()`.
+* **`summary()`** gives the counts in three lines, for a script or a quick
+  "did that fix help?", and returns them as a row you can log.
+* **`filter_findings()`** narrows a result by triage, dataset, rule or
+  variable, and returns a result - so it still prints as a readable report,
+  and says it is a subset rather than passing for the whole picture.
 * A **Getting started** vignette walks through all of it, on a small study built
   as you read, so it runs without any data of your own.
 

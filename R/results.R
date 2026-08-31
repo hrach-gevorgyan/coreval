@@ -397,6 +397,25 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   })
   names(plans) <- domains
 
+  # How much the standard filter cost. Scoping is right - a SENDIG rule has
+  # nothing to say about an SDTM study - but it is not free, and CDISC's own
+  # coverage is uneven: the general "--DTC must be valid ISO 8601" rule
+  # (CORE-000547) is published for SENDIG and TIG but NOT for SDTMIG, whose
+  # only equivalents are TSVAL-specific or deprecated. So declaring SDTMIG
+  # genuinely stops a malformed date being reported. That must never be
+  # silent, so the count is carried and the report prints it.
+  excluded <- 0L
+  if (!is.null(declared)) {
+    wider <- lapply(domains, function(d) {
+      rules_for_domain(
+        d,
+        use_case = use_case, dataset = study$datasets[[d]],
+        standard = NULL, include_deprecated = include_deprecated
+      )$id
+    })
+    excluded <- sum(lengths(wider)) - sum(lengths(plans))
+  }
+
   # A big study still takes long enough that silence reads as a hang, and
   # people reach for Ctrl-C. Off when not interactive, so test and script
   # output stays clean; `options(coreval.progress = FALSE)` turns it off.
@@ -532,6 +551,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     class = "coreval_result",
     checks_run = n_ran,
     domains = domains,
-    standard = declared
+    standard = declared,
+    excluded_by_standard = excluded
   )
 }

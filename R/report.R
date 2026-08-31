@@ -409,6 +409,12 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
     width, g
   )
 
+  if (isTRUE(attr(x, "filtered"))) {
+    cat("
+(filtered - this is a subset of the full result)
+")
+  }
+
   n_problems <- length(unique(paste(f$Dataset, f$rule_id)))
   n_records <- if (nrow(f) == 0) 0L else nrow(unique(f[, c("Dataset", "Record")]))
 
@@ -486,6 +492,19 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
   if (is.null(attr(x, "standard"))) {
     cat("\nNo standard declared, so rules from every standard ran.\n")
     cat("  Narrow with  standard = \"SDTMIG\"  (or \"SENDIG\", \"TIG\", ...)\n")
+  } else {
+    # Never silent about what scoping cost. CDISC's own coverage is uneven -
+    # the general "--DTC must be valid ISO 8601" rule is published for SENDIG
+    # and TIG but NOT for SDTMIG, whose only equivalents are TSVAL-specific or
+    # deprecated - so narrowing can genuinely stop a real defect being
+    # reported. The reader has to be able to see that happened.
+    dropped <- attr(x, "excluded_by_standard")
+    if (!is.null(dropped) && dropped > 0) {
+      cat("\nScoped to ", attr(x, "standard"), ": ", dropped,
+        " rules belonging to other standards were not run.\n",
+        sep = ""
+      )
+    }
   }
 
   cat("\n")

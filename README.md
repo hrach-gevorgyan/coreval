@@ -301,11 +301,52 @@ the extra columns.
 
 ## Recipes
 
+**What does CORE-000547 actually mean?**
+
+```r
+rule_info("CORE-000547")
+#> id           issue                                              standard
+#> CORE-000547  Variable value is not in correct ISO 8601 date ...  SENDIG, TIG
+```
+
+The report gives you a rule id; this tells you what it checks without leaving R.
+
+**Just the things that are definitely wrong**
+
+```r
+filter_findings(result, triage = "wrong value")
+```
+
+Returns a result, so it prints as a report. Also takes `dataset`, `rule` and
+`variable`.
+
+**A three-line summary, for a script**
+
+```r
+summary(result)
+#> 5 problems across 4 records  (111 checks ran, 21 could not)
+#>   wrong value       2
+#>   missing required  1
+#>   missing optional  2
+```
+
 **Which rules even apply to AE?**
 
 ```r
 rules_for_domain("AE")
 ```
+
+**Only the rules for my standard**
+
+```r
+result <- check_dataset(dm, standard = "SDTMIG")
+```
+
+Worth knowing: this genuinely narrows what runs, and the report tells you how
+many rules it set aside. CDISC's coverage is uneven — the general "dates must be
+valid ISO 8601" rule is published for SENDIG and TIG but **not** for SDTMIG — so
+narrowing can mean a real problem stops being reported. Leave `standard`
+unset if you would rather see everything.
 
 **Only the fully-vetted rules, no drafts**
 
