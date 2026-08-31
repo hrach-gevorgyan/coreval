@@ -2,7 +2,7 @@
 % Please edit documentation in R/check_dataset.R
 \name{check_dataset}
 \alias{check_dataset}
-\title{Quickly check one dataset against CDISC Open Rules}
+\title{Check one dataset, without needing a study folder}
 \usage{
 check_dataset(
   x,
@@ -13,44 +13,49 @@ check_dataset(
 )
 }
 \arguments{
-\item{x}{A data frame (or \code{\link[data.table:data.table]{data.table::data.table()}}), or a path to one
+\item{x}{A data frame (or \code{\link[data.table:data.table]{data.table::data.table()}}), or the path to one
 \code{.xpt}, \code{.sas7bdat} or \code{.csv} file.}
 
-\item{domain}{Two-letter domain code, e.g. \code{"AE"}. When \code{NULL} (the
-default) it is taken from the data's own \code{DOMAIN} column, falling back to
-the file name. Pass it explicitly when neither is right.}
+\item{domain}{Two-letter domain code, e.g. \code{"AE"}. Left as \code{NULL}, coreval
+takes it from your \code{DOMAIN} column, or the file name if there isn't one -
+so \code{ae1.xpt} from a split dataset is still checked as \code{AE}. Set it
+yourself if that guess is wrong.}
 
-\item{standard}{Optionally the standard the data claims to follow, e.g.
-\code{"SDTMIG"} or \code{"SENDIG"}. Rules that compare against CDISC Library
-metadata need this; without it they are skipped rather than guessed at.}
+\item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
+\code{"SENDIG"}. Rules that compare your variables against CDISC Library
+metadata need to know this; without it they are skipped rather than
+guessed at.}
 
 \item{version}{The standard's version, e.g. \code{"3-4"}.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}), as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
 }
 \value{
-The same shape as \code{\link[=check_study]{check_study()}}: \code{list(findings, skipped)}, so
-\code{\link[=write_findings]{write_findings()}} works on it unchanged.
+\code{list(findings, skipped)} - the same shape \code{\link[=check_study]{check_study()}} returns,
+so \code{\link[=write_findings]{write_findings()}} works on it unchanged.
 }
 \description{
-The counterpart to \code{\link[=check_study]{check_study()}}, for when you are writing the code that
-builds a domain and want to know what is wrong with it now, without
-assembling a whole study folder first. Takes a data frame you already have
-in memory, or the path to a single file.
+For when you are writing the code that builds a domain and want to know
+what is wrong with it right now. Give it the data frame you already have
+open, or the path to a single file.
 }
-\section{What this can and cannot see}{
+\section{What it cannot check on its own}{
 
-A rule that needs another dataset - anything joining \code{DM}, \verb{SUPP--},
-\code{RELREC}, or reading a value out of another domain - \strong{cannot be answered
-from one dataset}, and is reported in \verb{$skipped} with the domain it would
-have needed. It is never evaluated against the missing columns, because that
-would invent findings rather than report them. The same applies to rules
-comparing against a define.xml.
+Plenty of CDISC rules compare one dataset against another - an adverse event
+date against the subject's reference dates in \code{DM}, a visit against the trial
+design. Hand over a single dataset and those questions cannot be answered.
 
-So a short \verb{$findings} table here does \strong{not} mean the dataset is clean; it
-can equally mean many rules could not run. Read \verb{$skipped}, and run
-\code{\link[=check_study]{check_study()}} on the full folder before drawing conclusions. This is a
-fast first pass, not a verdict.
+coreval does not guess. Those rules are skipped, and \verb{$skipped} names the
+dataset each one wanted. Running them anyway would compare your data against
+columns that are not there and report problems that do not exist.
+
+Most rules still run - across AE, DM, LB and VS, 76-84\% of the applicable
+ones work on a single dataset. But the ones that cannot are the cross-dataset
+checks, which are often the ones that matter.
+
+\strong{So a short \verb{$findings} table here does not mean the data is clean.} It is
+a quick first pass, not a verdict. Run \code{\link[=check_study]{check_study()}} on the whole folder
+before drawing conclusions.
 }
 
 \examples{

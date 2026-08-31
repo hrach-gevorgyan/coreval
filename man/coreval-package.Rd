@@ -6,37 +6,39 @@
 \alias{coreval-package}
 \title{coreval: Evaluate CDISC Open Rules (CORE) Conformance Against Clinical Trial Data}
 \description{
-Checks clinical trial datasets against the CDISC Open Rules (CORE) conformance rules and returns the findings as a tidy data frame, so data issues can be found and fixed early rather than late. Intended as a fast, local, unqualified pre-check that runs alongside - never instead of - a qualified validation system. Reads study data from transport ('XPT'), 'SAS' and comma-separated files, and reads a Define-XML file when one is present. Covers rules for the SDTM, SEND and TIG standards across their published versions. Rule definitions are bundled as data, extracted at build time from a pinned commit of the CDISC Open Rules repository, so checking a study needs no internet connection, no API key and no external service. Rules that cannot be evaluated are reported as skipped, with a reason, rather than silently passing. An independent project: not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
+Finds CDISC conformance problems in clinical trial data without leaving R. Check a single dataset while you are still writing the code that builds it, or a whole study folder once it exists, and get the findings back as a tidy data frame pointing at the exact row and variable. Reads transport ('XPT'), 'SAS' and comma-separated files, plus Define-XML when present, and covers rules for the SDTM, SEND and TIG standards. The rules are bundled inside the package, so nothing is downloaded and your data never leaves your machine: no internet, no API key, no account. When a rule cannot be checked - because it needs a dataset you did not supply, for instance - it is reported as skipped with the reason, never counted as a pass. Meant as a quick first pass before a qualified validation system, never as a replacement for one. An independent project: not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
 }
 \details{
-\code{coreval} checks clinical trial datasets against the CDISC Open Rules (CORE)
-and returns the findings as a tidy data frame. It is meant to be run early
-and often, while the code that produces the data is still being written, so
-that problems are found when they are cheap to fix.
+coreval finds CDISC conformance problems in clinical trial data without
+leaving R. Run it early and often, while you are still writing the code that
+produces the data, so problems turn up while they are cheap to fix.
 
-Start with \code{vignette("coreval")}. The usual path through the package is
-\code{\link[=read_study]{read_study()}} to load a study directory, then \code{\link[=check_study]{check_study()}} to evaluate
-every applicable rule, then \code{\link[=write_findings]{write_findings()}} to export the result.
+Two ways in, depending on what you have:
+\itemize{
+\item \code{\link[=check_dataset]{check_dataset()}} - one dataset, either a data frame you already have open
+or a single file. Use this while writing code.
+\item \code{\link[=read_study]{read_study()}} then \code{\link[=check_study]{check_study()}} - a whole study folder. Use this once
+the datasets exist, since the cross-dataset rules need everything present.
+}
 
-\code{\link[=check_study]{check_study()}} returns two tables, and both matter. \verb{$findings} holds the
-rule violations. \verb{$skipped} holds the rules that could \strong{not} be evaluated,
-each with a reason. A short \verb{$findings} table on its own is ambiguous — it
-can mean clean data, or it can mean many rules never ran — so read \verb{$skipped}
-before concluding anything.
+Either way you get back two tables, and \strong{both matter}. \verb{$findings} is what
+is wrong. \verb{$skipped} is what could not be checked, with a reason for each. An
+empty \verb{$findings} can mean clean data \emph{or} rules that never ran, and those
+look identical if you only read the first table.
+
+\code{\link[=write_findings]{write_findings()}} saves both to Excel or CSV. \code{vignette("coreval")} walks
+through all of it.
 }
 \section{Status}{
 
-\strong{coreval is an independent, personal open-source project.} It is not a
-CDISC product, is not affiliated with or endorsed by CDISC, and is not
-qualified or validated software. It evaluates a copy of the publicly
-published CDISC Open Rules, bundled as data from a pinned upstream commit,
-so that checking a study needs no internet connection, no API key and no
-external service.
+\strong{coreval is a personal open-source project.} It is not a CDISC product, is
+not affiliated with or endorsed by CDISC, and is not qualified or validated
+software. The rules are bundled inside the package, so nothing is downloaded
+and your data never leaves your machine: no internet, no API key, no account.
 
-Every result is an \emph{indication}, not a certification. A qualified validation
-system and your own review remain the authority on whether data is
-submittable. Nothing here removes that step; it only makes that step find
-less.
+Treat every result as a hint, not a verdict. A qualified validation system
+and your own review are still what decide whether data is good to submit.
+coreval does not remove that step - it just leaves that step less to find.
 }
 
 \seealso{

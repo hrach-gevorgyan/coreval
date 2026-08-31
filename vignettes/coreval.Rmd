@@ -11,35 +11,91 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-## What this is for
+If you build SDTM datasets, you know the loop: write code, export, upload to a
+validation tool, wait, read the report, work out which line of code caused each
+finding, fix, repeat.
 
-If you prepare clinical trial data for submission, you already have a way to
-check it for conformance. It probably involves exporting transport files,
-uploading them somewhere, waiting, reading a report, and copying findings back
-to the code that produced them. Then you fix one thing and do it again.
+Hardly any of that time is spent *fixing* things. It goes on **finding out
+what's broken**.
 
-`coreval` collapses the *discovery* half of that loop into a function call that
-runs where your code already lives. It is a fast, local, **unqualified**
-pre-check: something to run while you are still writing the code, so that the
-formal validation run has less to find.
+coreval does the finding part on your machine, in seconds. You still run your
+qualified tool before you submit — you just arrive with a lot less for it to
+find.
 
-It does not replace a qualified validation system, and it isn't trying to.
-
-> **coreval is an independent, personal open-source project.** It is not a
-> CDISC product, is not affiliated with or endorsed by CDISC, and is not
-> qualified or validated software. It evaluates a copy of the publicly
-> published CDISC Open Rules so you can catch problems early and cheaply. Every
-> result it gives you is an *indication*, not a certification — your qualified
-> tool and your own review remain the authority on whether data is submittable.
+> coreval is a personal open-source project. It's not a CDISC product, isn't
+> affiliated with or endorsed by CDISC, and isn't qualified or validated
+> software. Treat every result as a hint, not a verdict. Your qualified tool
+> and your own review are still what decide whether data is good to go.
 
 ```{r setup}
 library(coreval)
 ```
 
-## A worked example
+## Start with one dataset
 
-Everything below runs against a small study built on the fly, so you can
-execute this vignette without any data of your own.
+This is the one you'll use most while writing code. You have a data frame;
+check it.
+
+```{r one-dataset}
+ae <- data.frame(
+  STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1", "S2"),
+  AESEQ = c(1, 2, 1), AETERM = c("Headache", "Nausea", "Rash"),
+  AESTDTC = c("2024-01-10", "2024-02-30", "2024-01-12"),
+  AEENDTC = c("2024-01-12", "2024-02-01", "")
+)
+
+result <- check_dataset(ae)
+```
+
+Look at row 2: `2024-02-30`. February never has 30 days. Did it notice?
+
+```{r one-dataset-date}
+result$findings[result$findings$Value == "2024-02-30", ]
+```
+
+Yes — row 2, `AESTDTC`, flagged by `CORE-000547`, the rule that says date
+variables have to hold real dates.
+
+You can pass a file instead of a data frame — `.xpt`, `.sas7bdat` or `.csv`:
+
+```{r one-dataset-file, eval = FALSE}
+result <- check_dataset("ae.xpt")
+```
+
+coreval works out the domain from your `DOMAIN` column, or from the file name if
+there isn't one. A split dataset in `ae1.xpt` still gets checked as `AE`. If it
+guesses wrong, just say so: `check_dataset(ae, domain = "AE")`.
+
+### What it couldn't check, and why that matters
+
+Lots of CDISC rules compare **one dataset against another** — an adverse event
+date against the subject's reference dates in `DM`, a visit against the trial
+design. Give coreval a single dataset and those questions simply can't be
+answered.
+
+coreval won't guess. It skips them and tells you what it wanted:
+
+```{r one-dataset-skips}
+cross <- result$skipped[grepl("was not supplied", result$skipped$reason), ]
+nrow(cross)
+head(unique(cross$reason), 3)
+```
+
+If it ran those anyway, it would be comparing your data against columns that
+aren't there, and reporting problems that don't exist. Saying nothing is better
+than making something up.
+
+Most rules do still run — across AE, DM, LB and VS, 76–84% of the applicable
+ones work on a single dataset. But the ones that can't are the cross-dataset
+checks, and those are often the ones you care about.
+
+**So a short findings list here doesn't mean your data is clean.** It's a quick
+first pass, not a verdict.
+
+## Then check the whole study
+
+Once the datasets exist as files, point coreval at the folder. Here's a small
+one, built on the fly so this vignette runs without any data of your own:
 
 ```{r build-study}
 dir <- tempfile("coreval_demo_")
@@ -51,153 +107,82 @@ dm <- data.frame(
   AGE = c(34, 61, 47), AGEU = c("YEARS", "YEARS", ""),
   SEX = c("M", "F", "F")
 )
-ae <- data.frame(
-  STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1", "S2"),
-  AESEQ = c(1, 2, 1), AETERM = c("Headache", "Nausea", "Rash"),
-  AESTDTC = c("2024-01-10", "2024-02-30", "2024-01-12"),
-  AEENDTC = c("2024-01-12", "2024-02-01", "")
-)
 
 haven::write_xpt(dm, file.path(dir, "dm.xpt"))
 haven::write_xpt(ae, file.path(dir, "ae.xpt"))
 ```
 
-Note `AESTDTC` on the second adverse event: `2024-02-30` is not a real date.
-
-### 1. Read the study
-
-`read_study()` takes a **folder**, not a single file, and reads every dataset in
-it.
+`read_study()` wants a **folder**, not a file, and reads everything in it:
 
 ```{r read}
 study <- read_study(dir)
 names(study$datasets)
 ```
 
-Reading the whole folder at once matters: many rules compare *across* datasets,
-so a rule checking an adverse event date against the subject's reference dates
-in `DM` can only work if both are present.
+That's the point of reading it all at once — now the cross-dataset rules have
+both halves to work with. If there's a Define-XML in the folder, coreval finds
+it and uses it (that needs the `xml2` package).
 
-If a Define-XML file sits in the folder it is picked up automatically, and the
-rules that compare your data against what Define declares become available.
-That needs the `xml2` package.
-
-### 2. Run the checks
+Then one call does the rest:
 
 ```{r check}
-result <- check_study(study)
+study_result <- check_study(study)
 ```
 
-One call runs every rule that applies to each dataset, plus the cross-dataset
-and whole-study rules.
+## Reading the results
 
-### 3. Read the findings
+You get two tables back, and you want to look at both.
 
-There is one row per *(dataset, record, variable)*:
+### What's wrong
 
-| Column | Meaning |
+```{r findings-head}
+head(study_result$findings)
+```
+
+One row per problem, pointing straight at it:
+
+| Column | What it tells you |
 |---|---|
 | `rule_id` | which CDISC rule fired |
 | `Dataset` | which dataset, or `STUDY` for whole-study checks |
-| `Record` | row number in that dataset, counting from 1 |
-| `Variable` | the variable the rule reports on |
-| `Value` | what was actually there |
+| `Record` | row number, counting from 1 |
+| `Variable` | the variable being complained about |
+| `Value` | what was actually in there |
 
-The impossible date we planted is in there. `Record` counts from 1 in the
-dataset as read, so it points straight at the offending row:
+Two things that surprise people at first. Findings come in rule order, not
+worst-first. And `Not in dataset` under `Value` means the rule wanted a variable
+you don't have — which is usually exactly the finding.
 
-```{r findings-date}
-result$findings[result$findings$Value == "2024-02-30", ]
-```
-
-`CORE-000547` is the ISO 8601 rule: date variables must hold real dates, and
-there is no 30 February.
-
-Findings arrive in rule order, not severity order, and a small study still
-trips a fair number of rules — mostly about variables that a real submission
-would have and this three-row demo does not:
-
-```{r findings-head}
-head(result$findings)
-
-nrow(result$findings)
-length(unique(result$findings$rule_id))
-```
-
-`Not in dataset` in `Value` means the rule reports on a variable this dataset
-does not have, which is itself usually the finding.
-
-Because it is a plain data frame, narrowing it needs nothing special — one
-dataset, one rule, or only the record-level findings:
+It's a plain data frame, so slice it however you like:
 
 ```{r findings-filter}
-f <- result$findings
+f <- study_result$findings
 head(f[f$Dataset == "DM", ])
-head(f[!is.na(f$Record), ])
+sort(table(f$rule_id), decreasing = TRUE)[1:3]
 ```
 
-### 4. Always look at what was skipped
+### What couldn't be checked
 
 ```{r skipped}
-head(result$skipped)
+head(study_result$skipped)
 ```
 
-This is the step people forget. A short findings table can mean your data is
-clean, or it can mean a lot of rules never ran — and those look identical if you
-only read `findings`. A rule `coreval` cannot evaluate is always reported here
-with a reason, never counted as a pass.
+**This is the table people skip, and it's the one that bites.** An empty
+findings table means one of two things: your data is clean, or a lot of rules
+never ran. Those look identical if you only read the findings. coreval always
+shows you both, with a reason for every rule it couldn't run.
 
-### 5. Export it
+### Saving it
 
 ```{r export, eval = FALSE}
-write_findings(result, "issues.xlsx")  # one workbook, two sheets
-write_findings(result, "issues.csv")   # issues.csv + issues_skipped.csv
+write_findings(study_result, "issues.xlsx")  # one workbook, two sheets
+write_findings(study_result, "issues.csv")   # issues.csv + issues_skipped.csv
 ```
 
-Both tables are always written, for the reason above. Excel output needs the
-`writexl` package.
+Both tables get written every time, for the reason just above. Excel output
+needs the `writexl` package.
 
-## Checking one dataset while you write it
-
-Everything above assumes a study folder. That is the right shape once a study
-exists, but it is the wrong shape while you are still writing the code that
-produces a single domain. `check_dataset()` takes the data frame you already
-have:
-
-```{r one-dataset}
-ae_only <- data.frame(
-  STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1"),
-  AESEQ = c(1, 2), AETERM = c("Headache", "Nausea"),
-  AESTDTC = c("2024-01-10", "2024-02-30")
-)
-
-quick <- check_dataset(ae_only)
-quick$findings[quick$findings$Value == "2024-02-30", ]
-```
-
-It accepts a path to a single `.xpt`, `.sas7bdat` or `.csv` file too. The domain
-is read from the `DOMAIN` column, falling back to the file name, so `ae1.xpt`
-from a split dataset is still checked as `AE`; pass `domain =` to override.
-
-The important part is what it refuses to do. A rule that needs another dataset
-cannot be answered from one, so it is **not run** — it is reported with the
-domain it would have needed:
-
-```{r one-dataset-skips}
-cross <- quick$skipped[grepl("was not supplied", quick$skipped$reason), ]
-nrow(cross)
-head(unique(cross$reason), 3)
-```
-
-Evaluating those anyway would compare against columns that are absent and
-report findings built out of nothing, which is worse than saying nothing.
-
-Most rules still run — across AE, DM, LB and VS, 76–84% of the applicable rules
-execute on the dataset alone. But the ones that cannot are precisely the
-cross-dataset checks, so treat this as a fast first pass, not a verdict, and run
-`check_study()` on the whole folder before concluding anything.
-
-## Working with the rule set
+## The rule set
 
 ```{r rules}
 rules_version()
@@ -207,35 +192,28 @@ nrow(rules)
 table(rules$source)
 ```
 
-`rules_version()` is the exact upstream commit the bundled rules came from —
-worth recording alongside results.
+`rules_version()` is the exact CDISC commit the bundled rules came from — worth
+writing down next to your results.
 
-Not every rule carries equal weight. `source` distinguishes fully-vetted
-published rules from deprecated and draft ones; see `NOTICE.md` for what each
-means.
+Not every rule carries the same weight. `source` separates fully-vetted
+published rules from deprecated and draft ones; `NOTICE.md` explains each.
 
 ```{r rules-for-domain}
 ae_rules <- rules_for_domain("AE")
 nrow(ae_rules)
 ```
 
-## Some things worth knowing
-
-**Findings are a plain data frame.** Filter, count and join them however you
-normally would.
-
-```{r summarise}
-sort(table(result$findings$rule_id), decreasing = TRUE)[1:3]
-```
+## Two last things
 
 **Nothing leaves your machine.** No internet, no API key, no account. The rules
 and the standards metadata are bundled inside the package.
 
-**It is a floor, not a ceiling.** `coreval` agrees with CDISC's own reference
-results on about 95% of the published rules that ship reference data — but that
-data is mostly simple, single-file datasets, so agreement is a lower bound on
-correctness rather than a quality score. Run your qualified tool before you
-submit.
+**Think of the accuracy number as a floor.** coreval agrees with CDISC's own
+reference results on about 95% of the published rules that ship reference data.
+But that reference data is mostly small, single-file datasets, so it doesn't
+exercise much of what real submissions do. Agreement is a lower bound on
+correctness, not a quality score — which is why the advice stays the same: run
+your qualified tool before you submit.
 
 ```{r cleanup, include = FALSE}
 unlink(dir, recursive = TRUE)

@@ -163,38 +163,43 @@ infer_domain <- function(dataset, path = NULL) {
   NULL
 }
 
-#' Quickly check one dataset against CDISC Open Rules
+#' Check one dataset, without needing a study folder
 #'
-#' The counterpart to [check_study()], for when you are writing the code that
-#' builds a domain and want to know what is wrong with it now, without
-#' assembling a whole study folder first. Takes a data frame you already have
-#' in memory, or the path to a single file.
+#' For when you are writing the code that builds a domain and want to know
+#' what is wrong with it right now. Give it the data frame you already have
+#' open, or the path to a single file.
 #'
-#' @section What this can and cannot see:
-#' A rule that needs another dataset - anything joining `DM`, `SUPP--`,
-#' `RELREC`, or reading a value out of another domain - **cannot be answered
-#' from one dataset**, and is reported in `$skipped` with the domain it would
-#' have needed. It is never evaluated against the missing columns, because that
-#' would invent findings rather than report them. The same applies to rules
-#' comparing against a define.xml.
+#' @section What it cannot check on its own:
+#' Plenty of CDISC rules compare one dataset against another - an adverse event
+#' date against the subject's reference dates in `DM`, a visit against the trial
+#' design. Hand over a single dataset and those questions cannot be answered.
 #'
-#' So a short `$findings` table here does **not** mean the dataset is clean; it
-#' can equally mean many rules could not run. Read `$skipped`, and run
-#' [check_study()] on the full folder before drawing conclusions. This is a
-#' fast first pass, not a verdict.
+#' coreval does not guess. Those rules are skipped, and `$skipped` names the
+#' dataset each one wanted. Running them anyway would compare your data against
+#' columns that are not there and report problems that do not exist.
 #'
-#' @param x A data frame (or [data.table::data.table()]), or a path to one
+#' Most rules still run - across AE, DM, LB and VS, 76-84% of the applicable
+#' ones work on a single dataset. But the ones that cannot are the cross-dataset
+#' checks, which are often the ones that matter.
+#'
+#' **So a short `$findings` table here does not mean the data is clean.** It is
+#' a quick first pass, not a verdict. Run [check_study()] on the whole folder
+#' before drawing conclusions.
+#'
+#' @param x A data frame (or [data.table::data.table()]), or the path to one
 #'   `.xpt`, `.sas7bdat` or `.csv` file.
-#' @param domain Two-letter domain code, e.g. `"AE"`. When `NULL` (the
-#'   default) it is taken from the data's own `DOMAIN` column, falling back to
-#'   the file name. Pass it explicitly when neither is right.
-#' @param standard Optionally the standard the data claims to follow, e.g.
-#'   `"SDTMIG"` or `"SENDIG"`. Rules that compare against CDISC Library
-#'   metadata need this; without it they are skipped rather than guessed at.
+#' @param domain Two-letter domain code, e.g. `"AE"`. Left as `NULL`, coreval
+#'   takes it from your `DOMAIN` column, or the file name if there isn't one -
+#'   so `ae1.xpt` from a split dataset is still checked as `AE`. Set it
+#'   yourself if that guess is wrong.
+#' @param standard The standard the data follows, e.g. `"SDTMIG"` or
+#'   `"SENDIG"`. Rules that compare your variables against CDISC Library
+#'   metadata need to know this; without it they are skipped rather than
+#'   guessed at.
 #' @param version The standard's version, e.g. `"3-4"`.
 #' @param use_case Optional use case (e.g. `"INDH"`), as in [rules_for_domain()].
-#' @return The same shape as [check_study()]: `list(findings, skipped)`, so
-#'   [write_findings()] works on it unchanged.
+#' @return `list(findings, skipped)` - the same shape [check_study()] returns,
+#'   so [write_findings()] works on it unchanged.
 #' @examples
 #' ae <- data.frame(
 #'   STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),

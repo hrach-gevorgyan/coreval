@@ -3,20 +3,19 @@ Title: Evaluate CDISC Open Rules (CORE) Conformance Against Clinical Trial Data
 Version: 0.0.0.9000
 Authors@R:
     person("Hrach", "Gevorgyan", email = "hrach.gevorgyan@yandex.com", role = c("aut", "cre", "cph"))
-Description: Checks clinical trial datasets against the CDISC Open Rules
-    (CORE) conformance rules and returns the findings as a tidy data frame,
-    so data issues can be found and fixed early rather than late. Intended
-    as a fast, local, unqualified pre-check that runs alongside - never
-    instead of - a qualified validation system. Reads study data from
-    transport ('XPT'), 'SAS' and comma-separated files, and reads a
-    Define-XML file when one is present. Covers rules for the SDTM, SEND and
-    TIG standards across their published versions. Rule definitions are
-    bundled as data, extracted at build time from a pinned commit of the
-    CDISC Open Rules repository, so checking a study needs no internet
-    connection, no API key and no external service. Rules that cannot be
-    evaluated are reported as skipped, with a reason, rather than silently
-    passing. An independent project: not affiliated with or endorsed by
-    CDISC, and not a CORE-certified conformance engine.
+Description: Finds CDISC conformance problems in clinical trial data without
+    leaving R. Check a single dataset while you are still writing the code
+    that builds it, or a whole study folder once it exists, and get the
+    findings back as a tidy data frame pointing at the exact row and variable.
+    Reads transport ('XPT'), 'SAS' and comma-separated files, plus Define-XML
+    when present, and covers rules for the SDTM, SEND and TIG standards. The
+    rules are bundled inside the package, so nothing is downloaded and your
+    data never leaves your machine: no internet, no API key, no account. When
+    a rule cannot be checked - because it needs a dataset you did not supply,
+    for instance - it is reported as skipped with the reason, never counted as
+    a pass. Meant as a quick first pass before a qualified validation system,
+    never as a replacement for one. An independent project: not affiliated
+    with or endorsed by CDISC, and not a CORE-certified conformance engine.
 License: MIT + file LICENSE
 URL: https://github.com/hrach-gevorgyan/coreval
 BugReports: https://github.com/hrach-gevorgyan/coreval/issues

@@ -2,7 +2,7 @@
 % Please edit documentation in R/results.R
 \name{check_study}
 \alias{check_study}
-\title{Check an SDTM study against CDISC Open Rules}
+\title{Check a whole study against CDISC Open Rules}
 \usage{
 check_study(study, use_case = NULL)
 }
@@ -13,40 +13,35 @@ check_study(study, use_case = NULL)
 which rules apply, as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
 }
 \value{
-A list with two elements:
+Two tables, and both are worth reading:
 \itemize{
-\item \code{findings}: a \code{\link[data.table:data.table]{data.table::data.table()}} with columns \code{rule_id},
-\code{Dataset}, \code{Record}, \code{Variable}, \code{Value} - one row per violation
-(or per Dataset-sensitivity summary row).
-\item \code{skipped}: a data.table with columns \code{rule_id}, \code{domain}, \code{reason},
-recording which rule/domain combinations could not be evaluated and
-why (e.g. an unimplemented operator) - so a clean findings table is
-never mistaken for "everything passed."
+\item \code{findings} - what is wrong. Columns \code{rule_id}, \code{Dataset}, \code{Record},
+\code{Variable}, \code{Value}, one row per problem. \verb{Not in dataset} under \code{Value}
+means the rule wanted a variable you do not have, which is usually the
+finding itself.
+\item \code{skipped} - what could not be checked, with a \code{reason} for each. Read
+this one: an empty \code{findings} table can mean clean data \emph{or} rules that
+never ran, and they look identical otherwise.
 }
 }
 \description{
-Evaluates every applicable, executable bundled rule against every domain
-present in \code{study}, and returns findings in the same long format as
-CDISC's own reference \code{results.csv}: one row per (Dataset, Record,
-Variable) for Record-sensitivity rules, or one row per (Dataset,
-Variable) with \code{Record} blank for Dataset-sensitivity rules.
+Runs every rule that applies to every dataset in the study, including the
+ones that compare datasets against each other. Use this once the datasets
+exist as files; to check a single dataset while you are still writing the
+code that builds it, see \code{\link[=check_dataset]{check_dataset()}}.
 }
 \details{
-Each rule type models a different notion of "one row" - a record, the
-study, the dataset, a variable, or a (record, variable) pair. A
-\code{"Domain Presence Check"} asks one question about the whole study, so it is
-answered once and reported under the sentinel \code{Dataset} value \code{"STUDY"}
-rather than repeated for every domain it applies to.
+Findings come back one row per (dataset, record, variable), pointing at the
+exact spot. Some rules ask about a dataset as a whole rather than a
+particular row - those leave \code{Record} blank. A few ask about the study as a
+whole, such as "is DM present at all?"; those are answered once and reported
+under \code{Dataset = "STUDY"} rather than repeated for every domain.
 
-Rules comparing against a define.xml ARE evaluated when the study has one
-and the \code{xml2} package is installed. Without both, they are skipped with a
-reason rather than run against absent columns, which would manufacture
-findings out of missing input. The same applies to any rule using an
-operator, \code{Operations} type, or \verb{Match Datasets} join this package does not
-implement.
-
-To check a single dataset while you are still writing the code that builds
-it, see \code{\link[=check_dataset]{check_dataset()}}.
+Rules comparing against a define.xml do run, as long as the study has one and
+the \code{xml2} package is installed. Without both, they are skipped with a reason
+instead of being run against columns that are not there, which would report
+problems that do not exist. The same goes for any rule needing an operator or
+join coreval does not implement yet.
 }
 \examples{
 \donttest{

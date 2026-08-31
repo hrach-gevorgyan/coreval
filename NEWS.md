@@ -1,81 +1,75 @@
 # coreval 0.0.0.9000
 
-First development version. Not yet released; the API may still change.
+First development version. Not released yet, and the API may still change.
 
-An independent project — not affiliated with or endorsed by CDISC, and not a
-CORE-certified engine. It is a fast, local, **unqualified** pre-check meant to
-run alongside and before a qualified validation system, never instead of one.
+A personal open-source project — not affiliated with or endorsed by CDISC, and
+not a CORE-certified engine. It's a quick local check to run *before* your
+qualified validation tool, never instead of it.
 
-## What it does
+## What you can do with it
 
-* `read_study()` reads a study from a folder of transport (`.xpt`), SAS or CSV
-  datasets, and picks up a Define-XML (2.0 or 2.1) file if one is present.
-* `check_study()` runs every applicable bundled rule against every dataset and
-  returns findings as a tidy data frame — one row per (dataset, record,
-  variable) — alongside a table of what could not be checked and why.
-* `check_dataset()` checks a **single** dataset — a data frame you already have
-  in memory, or one `.xpt`/`.sas7bdat`/`.csv` file — without assembling a study
-  folder first, for the programmer writing the code that builds a domain. The
-  domain is read from the `DOMAIN` column, falling back to the file name. Rules
-  needing another dataset are reported as skipped, naming the domain they
-  wanted, rather than evaluated against columns that are not there.
-* `write_findings()` saves the result to Excel (one workbook, two sheets) or
-  CSV (two files), so findings can be shared with people who don't use R or
-  attached to data-review documentation. Both the findings and the skipped
-  table are always written — a short findings table can mean clean data or
-  many skipped rules, and those look identical otherwise.
-* A `Getting started` vignette walks through reading a study, running the
-  checks, reading both result tables and exporting them, using a small study
-  built on the fly so it runs without any data of your own.
-* `list_rules()`, `rules_for_domain()` and `rules_version()` expose the bundled
-  rule set itself, including which upstream commit it came from and how much
+* **Check one dataset** with `check_dataset()` — a data frame you already have
+  open, or a single `.xpt`, `.sas7bdat` or `.csv` file. No study folder needed.
+  This is the one for when you're mid-way through writing the code that builds a
+  domain. coreval works out the domain from your `DOMAIN` column, or the file
+  name. Rules that need a dataset you didn't supply are skipped and say so,
+  rather than being run against columns that aren't there.
+* **Check a whole study** with `read_study()` on a folder, then `check_study()`.
+  It reads XPT, SAS and CSV, and picks up Define-XML (2.0 or 2.1) if it's there.
+  Reading everything at once is what makes the cross-dataset rules work.
+* **See what's wrong** in a tidy data frame — one row per problem, with the
+  dataset, row number, variable and the value that was actually there.
+* **See what couldn't be checked**, always, in a second table with a reason for
+  each. An empty findings table can mean clean data *or* rules that never ran,
+  and those look identical otherwise.
+* **Save it** with `write_findings()` to Excel (one workbook, two sheets) or CSV
+  (two files), to share with people who don't use R or to attach to your
+  data-review documentation. Both tables are written every time.
+* **Look at the rules themselves** with `list_rules()`, `rules_for_domain()` and
+  `rules_version()` — including which CDISC commit they came from and how much
   each rule can be trusted.
+* A **Getting started** vignette walks through all of it, on a small study built
+  as you read, so it runs without any data of your own.
 
-## Coverage
+## What's covered
 
-* CDISC Library variable metadata is bundled for SDTM, SEND, ADaM and TIG
-  (Core designation, ordinal, label, role and data type), together with the
-  SDTM Model's class variables. Rules that compare a dataset's own variable
-  metadata against the standard's can therefore be evaluated rather than
-  skipped, and SEND studies resolve against SEND metadata instead of being
-  refused. Extracted at build time from the offline cache that CDISC's own
-  rules engine ships; no CDISC API is contacted at build or run time.
-* 756 rules bundled as data, covering the SDTM, SEND and TIG standards across
-  their published versions, extracted at build time from a pinned commit of
-  CDISC Open Rules. Checking a study needs no internet connection and no API
-  key.
-* Around 60 rule operators, including partial-date comparison (SDTM dates are
-  legitimately incomplete, such as `2024-03`), grouping and uniqueness checks,
-  and set membership.
-* The `Operations` pipeline (pre-computed values a rule's checks refer to),
-  `Match Datasets` joins including RELREC relationships, SUPP/SQ
-  supplemental qualifiers and parent-child joins, and seven rule types spanning record-level, dataset,
-  variable-metadata and domain-presence checks.
+* **756 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is
+  downloaded — no internet, no API key, no account, and your data stays put.
+* **Around 60 rule operators**, including comparison of partial dates (SDTM
+  dates are legitimately incomplete, like `2024-03`), grouping and uniqueness
+  checks, and set membership.
+* **Cross-dataset joins** — RELREC relationships, SUPP/SQ supplemental
+  qualifiers, and parent-child joins — plus the `Operations` pipeline that
+  pre-computes values rules refer to.
+* **CDISC Library variable metadata** for SDTM, SEND, ADaM and TIG, so rules
+  comparing your variables against the standard's can actually run, and SEND
+  studies are checked against SEND metadata rather than refused. Taken at build
+  time from the offline cache CDISC's own engine ships with; no CDISC API is
+  contacted, ever.
 
-## Correctness
+## How much you can trust it
 
-* Verified by replaying CDISC's own reference test cases and comparing flagged
-  records one by one. Currently agrees with CDISC on 488 of 511 published,
-  fully executable rules that ship reference data (about 95%). See the README
-  for the other denominators and what they mean.
-* A rule that cannot be evaluated is always reported as skipped, with a reason,
-  rather than counted as a pass — so a clean findings table means what it
-  appears to mean.
+* Checked by replaying CDISC's own reference test cases and comparing flagged
+  records one by one. It currently agrees with CDISC on **488 of 511** published,
+  fully executable rules that ship reference data — about 95%. The README
+  explains the other denominators and why there's more than one.
+* A rule that can't be evaluated is always reported as skipped, with a reason,
+  never counted as a pass.
 
-## Known limitations
+## What it can't do yet
 
-* **ADaM rules are not included yet.** CDISC publishes 197 of them, but none
-  currently ships reference results, so there is no published expected output
-  to verify an implementation against. They will be added once that reference
-  data exists — shipping unverifiable checks would contradict the rule above.
-* Uniqueness checks now span every file a domain is split across, so a value
-  appearing once in each of two files is correctly reported as a duplicate.
-  A few rules that expect findings *merged* under a single dataset name,
-  rather than reported per file, are still skipped.
-* Rules needing CDISC Controlled Terminology *terms* are skipped: that data is
-  around 438 MB, which belongs in a separate data package rather than here.
-  The CT package dates are bundled, so rules checking that a study cites a real
-  terminology version do run.
-* Values are reported as parsed, so a source value of `0.0` is reported as `0`.
-* Not a CORE-certified engine. These results describe agreement with CDISC's
-  published reference data, not certification.
+* **No ADaM rules.** CDISC publishes 197 of them, but none currently ships
+  reference results, so there's no published expected output to check an
+  implementation against. Including them would mean asking you to trust checks
+  nobody has verified. They go in as soon as that data exists.
+* **No Controlled Terminology term lists.** That data runs to roughly 438 MB and
+  belongs in a separate package. The CT package *dates* are bundled, so rules
+  checking that a study cites a real terminology version do run.
+* **Split domains** are handled for uniqueness — a value appearing once in each
+  of two files is correctly reported as a duplicate. A few rules that expect
+  findings merged under one dataset name, rather than reported per file, are
+  still skipped.
+* **Numbers are reported as parsed**, so a source value of `0.0` comes back
+  as `0`.
+* **Not a CORE-certified engine.** These figures describe agreement with CDISC's
+  published reference data. They aren't certification.

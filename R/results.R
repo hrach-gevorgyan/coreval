@@ -237,41 +237,36 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   }
 }
 
-#' Check an SDTM study against CDISC Open Rules
+#' Check a whole study against CDISC Open Rules
 #'
-#' Evaluates every applicable, executable bundled rule against every domain
-#' present in `study`, and returns findings in the same long format as
-#' CDISC's own reference `results.csv`: one row per (Dataset, Record,
-#' Variable) for Record-sensitivity rules, or one row per (Dataset,
-#' Variable) with `Record` blank for Dataset-sensitivity rules.
+#' Runs every rule that applies to every dataset in the study, including the
+#' ones that compare datasets against each other. Use this once the datasets
+#' exist as files; to check a single dataset while you are still writing the
+#' code that builds it, see [check_dataset()].
 #'
-#' Each rule type models a different notion of "one row" - a record, the
-#' study, the dataset, a variable, or a (record, variable) pair. A
-#' `"Domain Presence Check"` asks one question about the whole study, so it is
-#' answered once and reported under the sentinel `Dataset` value `"STUDY"`
-#' rather than repeated for every domain it applies to.
+#' Findings come back one row per (dataset, record, variable), pointing at the
+#' exact spot. Some rules ask about a dataset as a whole rather than a
+#' particular row - those leave `Record` blank. A few ask about the study as a
+#' whole, such as "is DM present at all?"; those are answered once and reported
+#' under `Dataset = "STUDY"` rather than repeated for every domain.
 #'
-#' Rules comparing against a define.xml ARE evaluated when the study has one
-#' and the `xml2` package is installed. Without both, they are skipped with a
-#' reason rather than run against absent columns, which would manufacture
-#' findings out of missing input. The same applies to any rule using an
-#' operator, `Operations` type, or `Match Datasets` join this package does not
-#' implement.
-#'
-#' To check a single dataset while you are still writing the code that builds
-#' it, see [check_dataset()].
+#' Rules comparing against a define.xml do run, as long as the study has one and
+#' the `xml2` package is installed. Without both, they are skipped with a reason
+#' instead of being run against columns that are not there, which would report
+#' problems that do not exist. The same goes for any rule needing an operator or
+#' join coreval does not implement yet.
 #'
 #' @param study A study object from [read_study()].
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
 #'   which rules apply, as in [rules_for_domain()].
-#' @return A list with two elements:
-#'   * `findings`: a [data.table::data.table()] with columns `rule_id`,
-#'     `Dataset`, `Record`, `Variable`, `Value` - one row per violation
-#'     (or per Dataset-sensitivity summary row).
-#'   * `skipped`: a data.table with columns `rule_id`, `domain`, `reason`,
-#'     recording which rule/domain combinations could not be evaluated and
-#'     why (e.g. an unimplemented operator) - so a clean findings table is
-#'     never mistaken for "everything passed."
+#' @return Two tables, and both are worth reading:
+#'   * `findings` - what is wrong. Columns `rule_id`, `Dataset`, `Record`,
+#'     `Variable`, `Value`, one row per problem. `Not in dataset` under `Value`
+#'     means the rule wanted a variable you do not have, which is usually the
+#'     finding itself.
+#'   * `skipped` - what could not be checked, with a `reason` for each. Read
+#'     this one: an empty `findings` table can mean clean data *or* rules that
+#'     never ran, and they look identical otherwise.
 #' @examples
 #' \donttest{
 #' dir <- tempfile("coreval_study_")
