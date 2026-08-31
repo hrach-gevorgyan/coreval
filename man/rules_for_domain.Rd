@@ -9,6 +9,7 @@ rules_for_domain(
   use_case = NULL,
   dataset = NULL,
   standard = NULL,
+  version = NULL,
   include_deprecated = FALSE
 )
 }
@@ -30,6 +31,11 @@ are neither narrowed nor widened.}
 or \code{"SENDIG"}. Rules are matched against it EXACTLY, so a \code{"SENDIG"}
 study does not pick up \code{"SENDIG-DART"} rules. Left \code{NULL}, rules from
 every standard apply.}
+
+\item{version}{The standard's version, e.g. \code{"3.4"} (or \code{"3-4"}). Only used
+alongside \code{standard}. Rules are written per Implementation Guide version -
+408 SDTMIG rules exist for 3.2 against 445 for 3.4 - so without this a 3.2
+study is measured against rules written for 3.4.}
 
 \item{include_deprecated}{Include rules CDISC has deprecated. \code{FALSE} by
 default: a deprecated rule has a published replacement, so running both

@@ -176,6 +176,10 @@ sdtm_domain_classes <- function() {
 #'   or `"SENDIG"`. Rules are matched against it EXACTLY, so a `"SENDIG"`
 #'   study does not pick up `"SENDIG-DART"` rules. Left `NULL`, rules from
 #'   every standard apply.
+#' @param version The standard's version, e.g. `"3.4"` (or `"3-4"`). Only used
+#'   alongside `standard`. Rules are written per Implementation Guide version -
+#'   408 SDTMIG rules exist for 3.2 against 445 for 3.4 - so without this a 3.2
+#'   study is measured against rules written for 3.4.
 #' @param include_deprecated Include rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
@@ -186,7 +190,8 @@ sdtm_domain_classes <- function() {
 #' nrow(ae_rules)
 #' @export
 rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
-                             standard = NULL, include_deprecated = FALSE) {
+                             standard = NULL, version = NULL,
+                             include_deprecated = FALSE) {
   rules <- .coreval_env$data$rules
   keep <- vapply(
     rules, rule_applies_to_domain, logical(1),
@@ -206,6 +211,21 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
     keep <- keep & vapply(
       rules, function(r) want %in% toupper(r$standards), logical(1)
     )
+
+    # Narrow further to the Implementation Guide VERSION when one is given.
+    # Rules are written per version: 408 SDTMIG rules exist for 3.2 against
+    # 445 for 3.4, and 86 apply to exactly one version. Without this a study
+    # on 3.2 is measured against rules written for a guide it does not follow.
+    #
+    # A CORE test case writes its version as "3-4" in .env while the rules say
+    # "3.4", so the separator is normalised rather than requiring the caller
+    # to know which form to use.
+    if (!is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)) {
+      want_pair <- toupper(paste(standard, gsub("-", ".", version, fixed = TRUE)))
+      keep <- keep & vapply(
+        rules, function(r) want_pair %in% toupper(r$standard_versions), logical(1)
+      )
+    }
   }
 
   # Deprecated rules have been superseded by a published replacement, so

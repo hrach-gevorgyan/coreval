@@ -125,6 +125,27 @@ extract_one <- function(path, source) {
 
   matched_standards <- standards[standards %in% want_standards]
 
+  # Which VERSION of each standard the rule was written for. Upstream states
+  # it per Standards entry ("Name: SDTMIG" / "Version: 3.4"), and it was being
+  # discarded along with everything else except the name.
+  #
+  # It matters: of the SDTMIG rules, 86 apply to exactly one IG version and
+  # 116 to two - 487 exist for 3.2 against 538 for 3.4. Without this, a study
+  # on SDTMIG 3.2 is measured against rules written for 3.4.
+  #
+  # Stored as "NAME VERSION" pairs so a study declaring both can be matched
+  # with one %in%, and a study declaring only the standard still matches on
+  # `standards` alone.
+  standard_versions <- unique(unlist(lapply(d$Authorities, function(a) {
+    lapply(a$Standards, function(s) {
+      if (!(s$Name %in% want_standards) || is.null(s$Version)) {
+        return(NULL)
+      }
+      paste(s$Name, as.character(s$Version))
+    })
+  }), use.names = FALSE))
+  standard_versions <- as.character(standard_versions[!vapply(standard_versions, is.null, logical(1))])
+
   authorities <- unique(unlist(lapply(d$Authorities, function(a) {
     std_names <- vapply(a$Standards, function(s) s$Name, character(1))
     if (any(std_names %in% want_standards)) a$Organization else NA_character_
@@ -200,6 +221,7 @@ extract_one <- function(path, source) {
     sensitivity = d$Sensitivity,
     grouping_variables = d[["Grouping_Variables"]],
     standards = matched_standards,
+    standard_versions = standard_versions,
     authorities = authorities,
     scope = d$Scope,
     check = d$Check,

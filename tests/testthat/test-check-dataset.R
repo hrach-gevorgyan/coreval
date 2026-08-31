@@ -309,3 +309,55 @@ test_that("the report says when no standard was declared", {
   named <- paste(capture.output(print(check_dataset(dm, standard = "SDTMIG"))), collapse = "\n")
   expect_false(grepl("No standard declared", named))
 })
+
+test_that("declaring an IG version narrows further than the standard alone", {
+  # Rules are written per Implementation Guide version: 408 SDTMIG rules exist
+  # for 3.2 against 445 for 3.4, and 86 apply to exactly one version. Without
+  # this a 3.2 study is measured against rules written for a guide it does not
+  # follow. `version=` was accepted and ignored, the same way `standard=` was.
+  n_rules <- function(...) nrow(rules_for_domain("DM", ...))
+
+  any_version <- n_rules(standard = "SDTMIG")
+  v32 <- n_rules(standard = "SDTMIG", version = "3.2")
+  v34 <- n_rules(standard = "SDTMIG", version = "3.4")
+
+  expect_lt(v32, any_version)
+  expect_lt(v34, any_version)
+  # The guide grew, so a later version carries more rules.
+  expect_lt(v32, v34)
+
+  # A CORE test case writes "3-4" in its .env while the rules say "3.4"; the
+  # caller should not have to know which form to use.
+  expect_equal(
+    n_rules(standard = "SDTMIG", version = "3-4"),
+    n_rules(standard = "SDTMIG", version = "3.4")
+  )
+
+  # Version without a standard does nothing: "3.4" alone is ambiguous across
+  # SDTMIG, SENDIG-DART and the rest.
+  expect_equal(n_rules(version = "3.4"), n_rules())
+})
+
+test_that("check_dataset passes the declared version through to scoping", {
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
+    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
+    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  )
+  ran <- function(r) attr(r, "checks_run") + nrow(r$skipped)
+
+  expect_lt(
+    ran(check_dataset(dm, standard = "SDTMIG", version = "3.2")),
+    ran(check_dataset(dm, standard = "SDTMIG"))
+  )
+})
+
+test_that("every rule records which IG versions it was written for", {
+  rules <- .coreval_env$data$rules
+  expect_true(all(vapply(rules, function(r) length(r$standard_versions) > 0, logical(1))))
+
+  # The pair is "NAME VERSION", so one %in% answers both questions.
+  v <- rules[["CORE-000189"]]$standard_versions
+  expect_true("SDTMIG 3.4" %in% v)
+  expect_true(all(grepl("^(SDTMIG|SENDIG|TIG|ADaMIG)", v)))
+})

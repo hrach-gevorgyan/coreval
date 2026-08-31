@@ -349,11 +349,14 @@ summary(result)
 rules_for_domain("AE")
 ```
 
-**Only the rules for my standard**
+**Only the rules for my standard and IG version**
 
 ```r
-result <- check_dataset(dm, standard = "SDTMIG")
+result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
 ```
+
+Rules are written per Implementation Guide version, so this genuinely narrows
+what runs — for DM: 132 rules for SDTMIG generally, 94 for 3.2, 130 for 3.4.
 
 Worth knowing: this genuinely narrows what runs, and the report tells you how
 many rules it set aside. CDISC's coverage is uneven — the general "dates must be

@@ -388,11 +388,16 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   if (length(declared) != 1 || is.na(declared) || !nzchar(declared)) {
     declared <- NULL
   }
+  declared_version <- study$standard$version
+  if (length(declared_version) != 1 || is.na(declared_version) || !nzchar(declared_version)) {
+    declared_version <- NULL
+  }
   plans <- lapply(domains, function(d) {
     rules_for_domain(
       d,
       use_case = use_case, dataset = study$datasets[[d]],
-      standard = declared, include_deprecated = include_deprecated
+      standard = declared, version = declared_version,
+      include_deprecated = include_deprecated
     )$id
   })
   names(plans) <- domains

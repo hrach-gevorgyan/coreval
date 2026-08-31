@@ -129,6 +129,13 @@ qualified validation tool, never instead of it.
   Declaring it now halves the rules and more than halves the reported problems,
   losing no real coverage. Matched exactly, so a `SENDIG` study does not pick
   up `SENDIG-DART` rules.
+* **Rules are scoped to the Implementation Guide VERSION too**, when you
+  declare one: `check_dataset(dm, standard = "SDTMIG", version = "3.4")`. Rules
+  are written per version - 408 SDTMIG rules exist for 3.2 against 445 for 3.4,
+  and 86 apply to exactly one version - so without this a 3.2 study is measured
+  against rules written for a guide it does not follow. `"3-4"` and `"3.4"` are
+  both accepted, since CORE test cases write the first and the rules the
+  second.
 * **Deprecated rules are no longer run** unless you ask for them with
   `include_deprecated = TRUE`. A deprecated rule has a published replacement,
   so running both reports the same defect twice.
