@@ -17,40 +17,37 @@ check_dataset(dm)
 ```
 
 ```
-── coreval — DM ────────────────────────────────────────────────────────
+── coreval — DM ────────────────────────────────────────────────────────────
 
-12 problems across 6 records  (204 checks ran)
+9 problems across 6 records  (167 checks ran)
 
-  wrong value         5   the data breaks the rule - start here
+  wrong value         4   the data breaks the rule - start here
   missing required    2   the standard requires it
-  missing optional    5   often legitimate: not collected, screen failure, ...
+  missing optional    3   often legitimate: not collected, screen failure, ...
 
 [wrong value]
 Variable value is not in correct ISO 8601 date or datetime format
   2 records · RFSTDTC
     row 4     RFSTDTC = "2024-13-01"
     row 3     RFSTDTC = (empty)
-    CORE-000547
+    CORE-000547  · also SEND66, SEND67, SEND68, ...
 
 [wrong value]
 AGEU is missing when AGE is provided.
   1 record · AGE, AGEU
     row 3     AGE = "47", AGEU = (empty)
-    CORE-000189
+    CORE-000189  · also CG0665, TIG0699
 
-[missing required]
-At least one required variable is missing from dataset
-  1 record
-    missing required variables: SUBJID, SITEID, COUNTRY
-    CORE-000355
+  ... and 7 more here. See result$findings for all of them.
 
-  ... and 9 more problems. See result$findings for all of them.
-
-────────────────────────────────────────────────────────────────────────
-65 checks could not run.
-  49 need other datasets (AE, AG, CE, CM, DD, DS, ...)
+────────────────────────────────────────────────────────────────────────────
+45 checks could not run.
+  30 need other datasets (AE, AG, CM, DD, DS, EX, ...)
      → run check_study() on the whole folder to cover these
-  16 need a define.xml
+  15 need a define.xml
+
+No standard declared, so rules from every standard ran.
+  Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
 
 Fix what you can, then run this again.
 To track the rest:  write_findings(result, "issues.xlsx")
@@ -277,11 +274,16 @@ Those look identical if you only read `findings`. coreval always shows you both.
 ### Saving it, and tracking what you didn't fix
 
 ```r
-write_findings(result, "issues.xlsx")   # one workbook, two sheets
-write_findings(result, "issues.csv")    # issues.csv + issues_skipped.csv
+write_findings(result, "issues.xlsx")   # one workbook, several sheets
+write_findings(result, "issues.csv")    # issues.csv + siblings
 ```
 
-Both tables get written, every time, for the reason above.
+You get `findings`, `skipped`, an `about` sheet, and `truncated` if any rule
+matched more records than were kept. Both tables get written every time, for
+the reason above — and `about` carries the provenance **with the file**: which
+standard it was scoped to, how many checks ran, whether it was filtered before
+export, and whether any counts were capped. A shared spreadsheet outlives the
+console session that made it, and whoever opens it can't see what you saw.
 
 The file has three empty columns — `Status`, `Owner`, `Notes` — for you to fill
 in once it's open. Not every finding is a bug you'll fix: some are expected, some

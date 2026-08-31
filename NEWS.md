@@ -42,11 +42,17 @@ qualified validation tool, never instead of it.
 * **See what couldn't be checked**, always, in a second table with a reason for
   each. An empty findings table can mean clean data *or* rules that never ran,
   and those look identical otherwise.
-* **Save it and track it** with `write_findings()` to Excel (one workbook, two
-  sheets) or CSV (two files). The file carries empty `Status`, `Owner` and
-  `Notes` columns for you to fill in, so "expected, see protocol deviation log"
-  lives next to the finding instead of in another document. Both tables are
-  written every time; pass `tracking = FALSE` to leave the extra columns out.
+* **Save it and track it** with `write_findings()` to Excel or CSV. You get
+  `findings`, `skipped`, an `about` sheet and - when a rule matched more
+  records than were kept - `truncated`. The file carries empty `Status`,
+  `Owner` and `Notes` columns for you to fill in, so "expected, see protocol
+  deviation log" lives next to the finding instead of in another document.
+  Pass `tracking = FALSE` to leave those out.
+* **Provenance travels with the exported file.** `about` records which
+  standard the run was scoped to, how many checks ran, whether the result was
+  filtered before export, and whether any counts were capped. A shared
+  spreadsheet outlives the console session that made it, and whoever opens it
+  cannot otherwise tell that it is partial.
 * **Cross-refer to Pinnacle 21.** Every rule now carries the legacy
   conformance-rule ids it descends from - `CG0665`, `SEND66`, `TIG0699`,
   `FB0801` - which are the ids P21 and the published Conformance Rules

@@ -107,6 +107,9 @@ summary.coreval_result <- function(object, ...) {
   per_problem <- unique(f[, c("Dataset", "rule_id", "triage")])
   counts <- table(factor(per_problem$triage, levels = TRIAGE_LEVELS))
 
+  truncated <- object$truncated
+  n_capped <- if (is.null(truncated)) 0L else nrow(truncated)
+
   out <- data.table::data.table(
     problems = nrow(per_problem),
     records = if (nrow(f) == 0) 0L else nrow(unique(f[, c("Dataset", "Record")])),
@@ -114,15 +117,32 @@ summary.coreval_result <- function(object, ...) {
     missing_required = as.integer(counts[["missing required"]]),
     missing_optional = as.integer(counts[["missing optional"]]),
     checks_run = attr(object, "checks_run") %||% NA_integer_,
-    could_not_run = nrow(object$skipped)
+    could_not_run = nrow(object$skipped),
+    # `records` counts what was KEPT. Where a rule matched more records than
+    # max_records allowed, that number is a floor rather than the truth, and
+    # presenting a floor as a total is exactly the quiet under-reporting this
+    # package exists to avoid.
+    capped_rules = n_capped
   )
 
   cat(
     out$problems, if (out$problems == 1) " problem" else " problems",
     " across ", out$records, if (out$records == 1) " record" else " records",
+    if (n_capped > 0) " or more" else "",
     "  (", out$checks_run, " checks ran, ", out$could_not_run, " could not)\n",
     sep = ""
   )
+  if (isTRUE(attr(object, "filtered"))) {
+    cat("  (filtered - a subset of the full result)\n")
+  }
+  if (n_capped > 0) {
+    cat(
+      "  ", n_capped, if (n_capped == 1) " problem affects" else " problems affect",
+      " more records than were kept (up to ", max(truncated$records_found),
+      ") - see $truncated\n",
+      sep = ""
+    )
+  }
   for (lvl in TRIAGE_LEVELS) {
     n <- as.integer(counts[[lvl]])
     if (n > 0) cat(sprintf("  %-17s %d\n", lvl, n))

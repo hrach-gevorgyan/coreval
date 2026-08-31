@@ -96,8 +96,9 @@ pick_date <- function(x, want_max) {
   if (length(x) == 0) {
     return(NA_character_)
   }
-  precisions <- vapply(x, detect_precision_one, integer(1))
-  values <- vapply(seq_along(x), function(i) as.numeric(parse_date_one(x[i], precisions[i])), numeric(1))
+  # Vectorised, like compute_dy(): the scalar wrappers re-ran the date regex
+  # once per element.
+  values <- as.numeric(parse_date(x, detect_precision(x)))
   x[if (want_max) which.max(values) else which.min(values)]
 }
 
@@ -138,28 +139,37 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   if (!(target_name %in% names(current_dataset$data))) {
     return(per_row_binding(rep(NA_character_, n)))
   }
-  rfstdtc_by_subject <- stats::setNames(dm$data$RFSTDTC, dm$data$USUBJID)
-  target_vals <- current_dataset$data[[target_name]]
+  target_vals <- as.character(current_dataset$data[[target_name]])
   usubjid <- current_dataset$data$USUBJID
-  day <- vapply(seq_len(n), function(i) {
-    tv <- target_vals[i]
-    # `[[` on an atomic named vector errors ("subscript out of bounds") for
-    # a name that isn't present - unlike list indexing, it never returns
-    # NULL - so a USUBJID with no DM record (a real data-quality issue this
-    # package exists to catch) would crash the whole operation instead of
-    # yielding NA for just that row.
-    rf <- if (!is.na(usubjid[i]) && usubjid[i] %in% names(rfstdtc_by_subject)) {
-      rfstdtc_by_subject[[usubjid[i]]]
-    } else {
-      NA_character_
+
+  # Each subject's reference start date, looked up for every row at once.
+  # match() on a name that is absent gives NA rather than erroring, so a
+  # USUBJID with no DM record - a real data-quality problem this package
+  # exists to catch - yields NA for that row instead of crashing the whole
+  # operation, which is what `[[` on a named atomic vector would do.
+  rf <- dm$data$RFSTDTC[match(usubjid, dm$data$USUBJID)]
+  rf <- as.character(rf)
+
+  # Vectorised for the same reason op_date.R is: this ran per row, calling the
+  # SCALAR date wrappers, so the date regex was re-run twice for every row of
+  # every domain for every rule needing --DY. It was 84% of a whole
+  # check_study().
+  usable <- !is.na(rf) & nzchar(rf) & !is.na(target_vals) & nzchar(target_vals)
+  day <- rep(NA_real_, n)
+  if (any(usable)) {
+    idx <- which(usable)
+    ok <- is_valid_date_str(target_vals[idx]) & is_valid_date_str(rf[idx])
+    idx <- idx[ok]
+    if (length(idx) > 0) {
+      delta <- as.numeric(difftime(
+        parse_date(target_vals[idx]), parse_date(rf[idx]),
+        units = "days"
+      ))
+      # Study day has no zero: the day before the reference date is -1, the
+      # reference date itself is day 1.
+      day[idx] <- ifelse(delta < 0, delta, delta + 1)
     }
-    if (is.na(rf) || rf == "" || is.na(tv) || tv == "" ||
-      !is_valid_date_str(tv) || !is_valid_date_str(rf)) {
-      return(NA_real_)
-    }
-    delta_days <- as.numeric(difftime(parse_date_one(tv), parse_date_one(rf), units = "days"))
-    if (delta_days < 0) delta_days else delta_days + 1
-  }, numeric(1))
+  }
   per_row_binding(day)
 }
 

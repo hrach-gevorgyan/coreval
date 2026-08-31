@@ -18,10 +18,13 @@ test_that("write_findings writes both tables to CSV, not just the findings", {
   out <- file.path(dir, "issues.csv")
   written <- write_findings(result, out)
 
-  expect_length(written, 2)
+  # findings, skipped, and an `about` file carrying provenance. `truncated`
+  # joins them only when a rule actually matched more records than were kept.
+  expect_length(written, 3)
   expect_true(all(file.exists(written)))
-  # skipped lands in a sibling file, with the suffix before the extension
+  # each lands in a sibling file, with the suffix before the extension
   expect_equal(basename(written[2]), "issues_skipped.csv")
+  expect_equal(basename(written[3]), "issues_about.csv")
 
   back <- data.table::fread(written[1])
   expect_equal(back$rule_id, "CORE-000001")

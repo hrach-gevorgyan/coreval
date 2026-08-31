@@ -162,3 +162,81 @@ test_that("the report shows the legacy ids, and guidance only when asked", {
   expect_match(verbose, "Variable Qualifier of AGE", fixed = TRUE)
   expect_true(nchar(verbose) > nchar(plain))
 })
+
+test_that("an exported file carries its own provenance", {
+  # A shared spreadsheet outlives the console session that made it. Whoever
+  # opens it cannot see that a rule matched 300 records and 10 were kept, or
+  # that the result was filtered before export - so the file has to say.
+  n <- 300
+  big <- data.frame(
+    STUDYID = "S1", DOMAIN = "LB", USUBJID = sprintf("%03d", seq_len(n) %% 50),
+    LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
+    stringsAsFactors = FALSE
+  )
+  capped <- check_dataset(big, max_records = 10)
+  dir <- tempfile("coreval_prov_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  paths <- write_findings(capped, file.path(dir, "issues.csv"))
+  expect_true(any(grepl("_about", paths)))
+  expect_true(any(grepl("_truncated", paths)))
+
+  about <- data.table::fread(grep("_about", paths, value = TRUE), colClasses = "character")
+  val <- function(item) about$value[about$item == item]
+  expect_equal(val("is this a subset of the full result?"), "no")
+  expect_equal(as.integer(val("rules whose records were capped")), nrow(capped$truncated))
+  expect_equal(
+    as.integer(val("most records a capped rule really found")),
+    max(capped$truncated$records_found)
+  )
+  # The real count must be in the file, not just the kept one.
+  expect_gt(as.integer(val("most records a capped rule really found")), 10)
+
+  # A filtered export says so, since the rows alone cannot show it.
+  filtered <- filter_findings(capped, triage = "wrong value")
+  p2 <- write_findings(filtered, file.path(dir, "filt.csv"))
+  about2 <- data.table::fread(grep("_about", p2, value = TRUE), colClasses = "character")
+  expect_match(
+    about2$value[about2$item == "is this a subset of the full result?"], "YES"
+  )
+})
+
+test_that("summary does not present a capped count as the true one", {
+  n <- 300
+  big <- data.frame(
+    STUDYID = "S1", DOMAIN = "LB", USUBJID = sprintf("%03d", seq_len(n) %% 50),
+    LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
+    stringsAsFactors = FALSE
+  )
+  capped <- check_dataset(big, max_records = 10)
+  out <- capture.output(s <- summary(capped))
+  joined <- paste(out, collapse = "\n")
+
+  expect_gt(s$capped_rules, 0)
+  # "12 records" alone would be a floor presented as a total.
+  expect_match(joined, "or more")
+  expect_match(joined, "more records than were kept")
+  expect_match(joined, as.character(max(capped$truncated$records_found)))
+
+  # And an uncapped result says none of that.
+  small <- check_dataset(big, max_records = Inf)
+  plain <- paste(capture.output(summary(small)), collapse = "\n")
+  expect_false(grepl("or more", plain))
+})
+
+test_that("filtering everything away does not claim the data is clean", {
+  ae <- data.frame(
+    STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
+    AESEQ = c(1, 2), AETERM = c("H", "R"),
+    AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
+  )
+  result <- check_dataset(ae)
+  none <- filter_findings(result, rule = "CORE-000001")
+  out <- paste(capture.output(print(none)), collapse = "\n")
+
+  expect_match(out, "No findings match this filter")
+  # "Nothing to fix" would be a lie: the findings were filtered away, not
+  # absent, and the data is no cleaner than before the filter.
+  expect_false(grepl("Nothing to fix", out))
+})

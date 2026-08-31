@@ -468,7 +468,11 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   n_problems <- length(unique(paste(f$Dataset, f$rule_id)))
   n_records <- if (nrow(f) == 0) 0L else nrow(unique(f[, c("Dataset", "Record")]))
 
-  if (nrow(f) == 0) {
+  if (nrow(f) == 0 && isTRUE(attr(x, "filtered"))) {
+    # "Nothing to fix" would be a lie here: findings were filtered away, not
+    # absent. The data is no cleaner than it was before the filter.
+    cat("\nNo findings match this filter.\n")
+  } else if (nrow(f) == 0) {
     cat("\nNothing to fix in the ", ran, " checks that ran.\n", sep = "")
   } else {
     cat(
