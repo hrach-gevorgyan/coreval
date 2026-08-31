@@ -1,0 +1,167 @@
+---
+title: "Getting started with coreval"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with coreval}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## What this is for
+
+If you prepare clinical trial data for submission, you already have a way to
+check it for conformance. It probably involves exporting transport files,
+uploading them somewhere, waiting, reading a report, and copying findings back
+to the code that produced them. Then you fix one thing and do it again.
+
+`coreval` collapses the *discovery* half of that loop into a function call that
+runs where your code already lives. It is a fast, local, **unqualified**
+pre-check: something to run while you are still writing the code, so that the
+formal validation run has less to find.
+
+It does not replace a qualified validation system, and it isn't trying to.
+
+```{r setup}
+library(coreval)
+```
+
+## A worked example
+
+Everything below runs against a small study built on the fly, so you can
+execute this vignette without any data of your own.
+
+```{r build-study}
+dir <- tempfile("coreval_demo_")
+dir.create(dir)
+
+dm <- data.frame(
+  STUDYID = "DEMO", DOMAIN = "DM", USUBJID = c("S1", "S2", "S3"),
+  RFSTDTC = c("2024-01-05", "2024-01-06", ""),
+  AGE = c(34, 61, 47), AGEU = c("YEARS", "YEARS", ""),
+  SEX = c("M", "F", "F")
+)
+ae <- data.frame(
+  STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1", "S2"),
+  AESEQ = c(1, 2, 1), AETERM = c("Headache", "Nausea", "Rash"),
+  AESTDTC = c("2024-01-10", "2024-02-30", "2024-01-12"),
+  AEENDTC = c("2024-01-12", "2024-02-01", "")
+)
+
+haven::write_xpt(dm, file.path(dir, "dm.xpt"))
+haven::write_xpt(ae, file.path(dir, "ae.xpt"))
+```
+
+Note `AESTDTC` on the second adverse event: `2024-02-30` is not a real date.
+
+### 1. Read the study
+
+`read_study()` takes a **folder**, not a single file, and reads every dataset in
+it.
+
+```{r read}
+study <- read_study(dir)
+names(study$datasets)
+```
+
+Reading the whole folder at once matters: many rules compare *across* datasets,
+so a rule checking an adverse event date against the subject's reference dates
+in `DM` can only work if both are present.
+
+If a Define-XML file sits in the folder it is picked up automatically, and the
+rules that compare your data against what Define declares become available.
+That needs the `xml2` package.
+
+### 2. Run the checks
+
+```{r check}
+result <- check_study(study)
+```
+
+One call runs every rule that applies to each dataset, plus the cross-dataset
+and whole-study rules.
+
+### 3. Read the findings
+
+```{r findings}
+head(result$findings)
+```
+
+One row per *(dataset, record, variable)*, so you can go straight to the
+offending row in the source:
+
+| Column | Meaning |
+|---|---|
+| `rule_id` | which CDISC rule fired |
+| `Dataset` | which dataset, or `STUDY` for whole-study checks |
+| `Record` | row number in that dataset, counting from 1 |
+| `Variable` | the variable the rule reports on |
+| `Value` | what was actually there |
+
+### 4. Always look at what was skipped
+
+```{r skipped}
+head(result$skipped)
+```
+
+This is the step people forget. A short findings table can mean your data is
+clean, or it can mean a lot of rules never ran — and those look identical if you
+only read `findings`. A rule `coreval` cannot evaluate is always reported here
+with a reason, never counted as a pass.
+
+### 5. Export it
+
+```{r export, eval = FALSE}
+write_findings(result, "issues.xlsx")  # one workbook, two sheets
+write_findings(result, "issues.csv")   # issues.csv + issues_skipped.csv
+```
+
+Both tables are always written, for the reason above. Excel output needs the
+`writexl` package.
+
+## Working with the rule set
+
+```{r rules}
+rules_version()
+
+rules <- list_rules()
+nrow(rules)
+table(rules$source)
+```
+
+`rules_version()` is the exact upstream commit the bundled rules came from —
+worth recording alongside results.
+
+Not every rule carries equal weight. `source` distinguishes fully-vetted
+published rules from deprecated and draft ones; see `NOTICE.md` for what each
+means.
+
+```{r rules-for-domain}
+ae_rules <- rules_for_domain("AE")
+nrow(ae_rules)
+```
+
+## Some things worth knowing
+
+**Findings are a plain data frame.** Filter, count and join them however you
+normally would.
+
+```{r summarise}
+sort(table(result$findings$rule_id), decreasing = TRUE)[1:3]
+```
+
+**Nothing leaves your machine.** No internet, no API key, no account. The rules
+and the standards metadata are bundled inside the package.
+
+**It is a floor, not a ceiling.** `coreval` agrees with CDISC's own reference
+results on about 95% of the published rules that ship reference data — but that
+data is mostly simple, single-file datasets, so agreement is a lower bound on
+correctness rather than a quality score. Run your qualified tool before you
+submit.
+
+```{r cleanup, include = FALSE}
+unlink(dir, recursive = TRUE)
+```

@@ -18,6 +18,9 @@ run alongside and before a qualified validation system, never instead of one.
   attached to data-review documentation. Both the findings and the skipped
   table are always written — a short findings table can mean clean data or
   many skipped rules, and those look identical otherwise.
+* A `Getting started` vignette walks through reading a study, running the
+  checks, reading both result tables and exporting them, using a small study
+  built on the fly so it runs without any data of your own.
 * `list_rules()`, `rules_for_domain()` and `rules_version()` expose the bundled
   rule set itself, including which upstream commit it came from and how much
   each rule can be trusted.
