@@ -53,6 +53,27 @@ qualified validation tool, never instead of it.
 * A **Getting started** vignette walks through all of it, on a small study built
   as you read, so it runs without any data of your own.
 
+## Speed
+
+* Checking is **6-18x faster**. The date operators ran one row at a time,
+  calling `grepl()`/`regexpr()` per value on functions that are vectorised in
+  R; and findings were assembled one `data.table` per violating record. Both
+  are now done in one pass. A 10 000-row dataset went from 37 seconds to 2, and
+  50 000 rows from ~3 minutes to 12 seconds, with byte-identical results.
+* A progress bar appears for long checks when running interactively, so a slow
+  study no longer looks like a hang. `options(coreval.progress = FALSE)` turns
+  it off; it is already off in scripts.
+
+## Fixed
+
+* `days_in_month()` was wrong for vector input: it built its lookup table with
+  `c(31, ifelse(leap, 29, 28), 31, ...)`, which produces one element per YEAR
+  rather than one per month, so for n years the table was 11 + n long and every
+  month from March onwards read the wrong slot. Correct for a single value and
+  wrong for a column - which the old per-row date code hid completely.
+  `"2003-11-31"` was rejected when checked alone and accepted when checked as
+  part of a column.
+
 ## What's covered
 
 * **756 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is

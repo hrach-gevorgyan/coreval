@@ -216,3 +216,24 @@ test_that("check_study reports a Domain Presence Check once, under the STUDY sen
   }
   expect_true(all(is.na(res$findings$Record[res$findings$Dataset == "STUDY"])))
 })
+
+test_that("progress reporting is off by default in scripts and never changes the result", {
+  # A long check that prints nothing reads as a hang. But the bar must not
+  # appear in test or script output, and must not alter what is returned.
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
+    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
+    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  )
+  silent <- capture.output(quiet <- check_dataset(dm), type = "output")
+  expect_length(silent, 0)
+
+  withr_opt <- getOption("coreval.progress")
+  options(coreval.progress = TRUE)
+  on.exit(options(coreval.progress = withr_opt), add = TRUE)
+  noisy_out <- capture.output(noisy <- check_dataset(dm), type = "output")
+  expect_true(length(noisy_out) > 0)
+
+  expect_identical(quiet$findings, noisy$findings)
+  expect_identical(quiet$skipped, noisy$skipped)
+})

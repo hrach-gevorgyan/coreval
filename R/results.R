@@ -236,12 +236,26 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     keep <- !duplicated(records) # one finding per original record
     exploded_rows <- exploded_rows[keep]
     records <- records[keep]
-    data.table::rbindlist(lapply(seq_along(exploded_rows), function(i) {
-      data.table::data.table(
-        Dataset = domain, Record = records[i],
-        Variable = output_vars, Value = value_at(exploded_rows[i])
-      )
-    }))
+    if (length(exploded_rows) == 0) {
+      return(empty_findings())
+    }
+
+    # One data.table for the whole set, not one per violating record. The
+    # per-record version allocated a data.table per row and rbindlist'ed
+    # thousands of them, which was over half the remaining runtime of a
+    # check once the date operators stopped dominating.
+    #
+    # value_at() returns one value per output variable, so stacking those
+    # columns gives a matrix of (variable x record). Reading it in column
+    # order yields record 1's variables, then record 2's - exactly the order
+    # rep(records, each =) and rep(output_vars, times =) produce.
+    values <- vapply(exploded_rows, value_at, character(length(output_vars)))
+    data.table::data.table(
+      Dataset = domain,
+      Record = rep(records, each = length(output_vars)),
+      Variable = rep(output_vars, times = length(exploded_rows)),
+      Value = as.vector(values)
+    )
   }
 }
 
@@ -316,9 +330,30 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   # dataset name.
   study_level_done <- character(0)
 
+  # Worked out up front so the progress bar knows the total, and so the rule
+  # list is not recomputed per domain.
+  plans <- lapply(domains, function(d) {
+    rules_for_domain(d, use_case = use_case, dataset = study$datasets[[d]])$id
+  })
+  names(plans) <- domains
+
+  # A big study still takes long enough that silence reads as a hang, and
+  # people reach for Ctrl-C. Off when not interactive, so test and script
+  # output stays clean; `options(coreval.progress = FALSE)` turns it off.
+  show_progress <- isTRUE(getOption("coreval.progress", interactive())) &&
+    sum(lengths(plans)) > 0
+  if (show_progress) {
+    pb <- utils::txtProgressBar(min = 0, max = sum(lengths(plans)), style = 3)
+    on.exit(close(pb), add = TRUE)
+    done <- 0L
+  }
+
   for (domain in domains) {
-    rules_here <- rules_for_domain(domain, use_case = use_case, dataset = study$datasets[[domain]])
-    for (rule_id in rules_here$id) {
+    for (rule_id in plans[[domain]]) {
+      if (show_progress) {
+        done <- done + 1L
+        utils::setTxtProgressBar(pb, done)
+      }
       rule <- .coreval_env$data$rules[[rule_id]]
       if (!rule_type_is_supported(rule$rule_type)) {
         all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(

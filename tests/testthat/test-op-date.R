@@ -163,3 +163,53 @@ test_that("is_valid_date_str validates real calendar dates, not just regex shape
   expect_false(is_valid_date_str("2023-02-29")) # not a leap year
   expect_true(is_valid_date_str("2024---15")) # uncertain dates skip calendar check
 })
+
+test_that("days_in_month is correct for vectors, not just single values", {
+  # The one-liner it replaced built its lookup table with
+  # `c(31, ifelse(leap, 29, 28), 31, ...)`, which yields ONE element per year
+  # instead of one per month - so for n years the table was 11 + n long and
+  # every month from March on indexed the wrong slot. Correct for a single
+  # value, wrong for a column, and the per-row date operators hid it.
+  expect_equal(
+    days_in_month(c(2003, 2004, 2003, 2024, 1900, 2000), c(11, 2, 2, 2, 2, 2)),
+    c(30, 29, 28, 29, 28, 29)
+  )
+  # Century rule both ways, since that is where a naive leap test fails.
+  expect_equal(days_in_month(1900, 2), 28)
+  expect_equal(days_in_month(2000, 2), 29)
+})
+
+test_that("the vectorised date helpers agree with checking one value at a time", {
+  # The vectorised path must be a pure speed change. "2003-11-31" is the case
+  # that caught the days_in_month bug: valid-looking, and November has 30 days.
+  v <- c(
+    "2003-11-31", "2003-02-31", "2004-02-29", "2003-02-28", "2024-02-30",
+    "2003-20", "2023-02-30", "2024---15", "2024-03", "2024", "", NA,
+    "2024-01-10T08:30:00", "2024-01-10T08:30:00+02:00", "not-a-date"
+  )
+  one_at_a_time <- vapply(v, function(z) is_valid_date_str(z), logical(1), USE.NAMES = FALSE)
+  expect_equal(is_valid_date_str(v), one_at_a_time)
+
+  expect_equal(
+    detect_precision(v),
+    vapply(v, detect_precision_one, integer(1), USE.NAMES = FALSE)
+  )
+
+  # And the comparison operator itself, pairwise against its scalar form.
+  a <- c("2024-01-10", "2024-01-10", "2024", "2024-01-10", "")
+  b <- c("2024-01-11", "2024-01-10", "2024-01-01", "", "2024-01-10")
+  for (op in c("eq", "ne", "gt", "lt", "ge", "le")) {
+    expect_equal(
+      compare_dates(a, b, op),
+      vapply(seq_along(a), function(i) compare_dates_one(a[i], b[i], op), logical(1)),
+      info = op
+    )
+  }
+})
+
+test_that("the date helpers survive empty and all-missing input", {
+  expect_equal(is_valid_date_str(character(0)), logical(0))
+  expect_equal(detect_precision(character(0)), integer(0))
+  expect_equal(compare_dates(character(0), character(0), "eq"), logical(0))
+  expect_equal(is_valid_date_str(c(NA_character_, NA_character_)), c(FALSE, FALSE))
+})
