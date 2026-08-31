@@ -14,7 +14,7 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   # Same column contract as check_study(), so write_findings() works on either.
   expect_equal(
     names(result$findings),
-    c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+    c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
   )
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 

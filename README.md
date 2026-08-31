@@ -21,21 +21,28 @@ check_dataset(dm)
 
 12 problems across 6 records  (204 checks ran)
 
+  wrong value         5   the data breaks the rule - start here
+  missing required    2   the standard requires it
+  missing optional    5   often legitimate: not collected, screen failure, ...
+
+[wrong value]
 Variable value is not in correct ISO 8601 date or datetime format
   2 records · RFSTDTC
-    row 3      RFSTDTC = (empty)
-    row 4      RFSTDTC = "2024-13-01"
+    row 4     RFSTDTC = "2024-13-01"
+    row 3     RFSTDTC = (empty)
     CORE-000547
 
+[wrong value]
 AGEU is missing when AGE is provided.
   1 record · AGE, AGEU
-    row 3      AGE = "47"
+    row 3     AGE = "47", AGEU = (empty)
     CORE-000189
 
-SUBJID is not unique within study
-  4 records · SUBJID
-    not in the dataset: SUBJID
-    CORE-000186
+[missing required]
+At least one required variable is missing from dataset
+  1 record
+    missing required variables: SUBJID, SITEID, COUNTRY
+    CORE-000355
 
   ... and 9 more problems. See result$findings for all of them.
 
@@ -52,6 +59,31 @@ To track the rest:  write_findings(result, "issues.xlsx")
 It tells you **what's wrong in words**, which rows, which variables, and the
 actual values. No export, no upload, no waiting, no looking rule numbers up in
 a PDF.
+
+### About that ordering
+
+**CDISC Open Rules carry no severity field.** I checked the source — there's
+nothing like Pinnacle 21's Notes / Minor / Major / Critical. That's P21's own
+layer, not CDISC's, so coreval can't report a CDISC severity and won't invent
+one.
+
+What it does instead is separate the findings that are *definitely* wrong from
+the ones that might be perfectly fine:
+
+| | What it means |
+|---|---|
+| **wrong value** | Your data contains something that breaks the rule — a month of 13, a value outside its codelist, two variables contradicting each other. Nothing about your study explains these away. **Start here.** |
+| **missing required** | Something the standard marks Required isn't there. |
+| **missing optional** | Something Expected or Permissible is absent, or a value is blank. Often legitimate — a screen-failure subject with no reference dates, a variable your raw data doesn't carry yet. |
+
+That last row is the point. An empty `RFSTDTC` is not the same kind of problem
+as `RFSTDTC = "2024-13-01"`, and sorting by "how many rows are affected" puts
+them in the wrong order. coreval sorts by this first, row count second — and
+within a problem, it shows you the row with the real bad value before the row
+that's merely empty.
+
+This is coreval's own triage, not a regulatory grading. It's a `triage` column
+on every finding, so you can sort by it in the spreadsheet too.
 
 ---
 

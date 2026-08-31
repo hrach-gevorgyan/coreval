@@ -232,3 +232,87 @@ test_that("n limits problems per dataset, not across the whole study", {
   # Each dataset that had more than one problem says so separately.
   expect_gt(length(grep("more here", out)), 1)
 })
+
+test_that("triage separates values that are wrong from things merely absent", {
+  # The distinction that governs what you look at first. A month of 13 is
+  # never right. An empty RFSTDTC may be a screen-failure subject, or raw data
+  # you have not received - coreval cannot know, and must not pretend to.
+  result <- check_dataset(demo_dm())
+  expect_true("triage" %in% names(result$findings))
+  expect_true(all(result$findings$triage %in% TRIAGE_LEVELS))
+
+  iso <- result$findings[result$findings$rule_id == "CORE-000547", ]
+  expect_equal(unique(iso$triage), "wrong value")
+})
+
+test_that("finding_triage classifies from the finding itself", {
+  wrong <- data.table::data.table(
+    Variable = "RFSTDTC", Value = "2024-13-01", issue = "bad date"
+  )
+  expect_equal(finding_triage(wrong), "wrong value")
+
+  # A required variable set that is short: the binding the rule used says
+  # "required" outright, so no guessing from wording is needed.
+  req <- data.table::data.table(
+    Variable = c("$required_variables", "$dataset_variables"),
+    Value = c("['A']", "['B']"), issue = "at least one required variable"
+  )
+  expect_equal(finding_triage(req), "missing required")
+
+  exp <- data.table::data.table(
+    Variable = c("$expected_variables", "$dataset_variables"),
+    Value = c("['A']", "['B']"), issue = "at least one expected variable"
+  )
+  expect_equal(finding_triage(exp), "missing optional")
+
+  # A variable simply absent, with nothing marking it required, is the
+  # lowest tier - it may be entirely legitimate for this study.
+  absent <- data.table::data.table(
+    Variable = "EPOCH", Value = "Not in dataset", issue = "EPOCH is missing"
+  )
+  expect_equal(finding_triage(absent), "missing optional")
+
+  # A blank value is absent, not wrong.
+  blank <- data.table::data.table(
+    Variable = "RFSTDTC", Value = "", issue = "no value"
+  )
+  expect_equal(finding_triage(blank), "missing optional")
+})
+
+test_that("the report leads with wrong values, not with things merely absent", {
+  result <- check_dataset(demo_dm())
+  out <- capture.output(print(result))
+
+  # The summary names each tier with a plain-language hint.
+  expect_match(paste(out, collapse = "\n"), "wrong value\\s+\\d+\\s+the data breaks the rule")
+  expect_match(paste(out, collapse = "\n"), "often legitimate")
+
+  # Every "wrong value" problem is printed before any "missing optional" one.
+  first_wrong <- grep("[wrong value]", out, fixed = TRUE)[1]
+  first_optional <- grep("[missing optional]", out, fixed = TRUE)[1]
+  expect_lt(first_wrong, first_optional)
+})
+
+test_that("within a problem, the record holding a real bad value is shown first", {
+  # RFSTDTC is empty on one row and "2024-13-01" on another. Showing the empty
+  # one first leads with the row that might be perfectly fine and buries the
+  # one that certainly is not - the complaint that prompted triage.
+  result <- check_dataset(demo_dm())
+  out <- capture.output(print(result))
+  iso_block <- out[grep("ISO 8601", out)[1]:length(out)]
+  bad <- grep("2024-13-01", iso_block)[1]
+  empty <- grep("RFSTDTC = \\(empty\\)", iso_block)[1]
+  skip_if(is.na(empty))
+  expect_lt(bad, empty)
+})
+
+test_that("triage survives export, so a spreadsheet can be sorted by it", {
+  result <- check_dataset(demo_dm())
+  dir <- tempfile("coreval_triage_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  paths <- write_findings(result, file.path(dir, "issues.csv"))
+  back <- data.table::fread(paths[1], colClasses = "character")
+  expect_true("triage" %in% names(back))
+  expect_true(all(back$triage %in% TRIAGE_LEVELS))
+})

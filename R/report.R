@@ -96,6 +96,66 @@ binding_gap <- function(sets) {
   list(label = binding_label(want_name), missing = gap)
 }
 
+#' Triage levels, most worth your attention first
+#'
+#' CDISC Open Rules carry NO severity field - checked against the pinned
+#' upstream source, where the only `level:` key is an Operations setting for
+#' codelist lookups. Pinnacle 21's Notes/Minor/Major/Critical is P21's own
+#' layer, not CDISC's, so coreval cannot report a CDISC severity and will not
+#' invent one.
+#'
+#' What it can do is separate the findings that are unambiguously wrong from
+#' the ones that may be perfectly fine, which is the distinction that actually
+#' governs what you look at first:
+#'
+#' * `"wrong value"` - the data contains something that breaks the rule: a
+#'   month of 13, a value outside its codelist, two variables that contradict
+#'   each other. Nothing about your study explains these away.
+#' * `"missing required"` - something CDISC marks Required is absent.
+#' * `"missing optional"` - something Expected or Permissible is absent, or a
+#'   value is simply blank. Often legitimate: a screen-failure subject with no
+#'   reference dates, a variable your raw data does not carry yet.
+#'
+#' This is coreval's own ordering, derived from the findings themselves. It is
+#' not a regulatory judgement and does not map onto anyone's severity scale.
+#'
+#' @format A character vector, highest priority first.
+#' @noRd
+TRIAGE_LEVELS <- c("wrong value", "missing required", "missing optional")
+
+#' Work out which triage level a rule's findings belong to
+#'
+#' @param sub Findings for one rule in one dataset.
+#' @param rule The rule record, used only to tell Required from Expected when
+#'   the finding is about a set of variables rather than a value.
+#' @return One of `TRIAGE_LEVELS`.
+#' @noRd
+finding_triage <- function(sub, rule = NULL) {
+  real <- sub[!startsWith(sub$Variable, "$"), ]
+
+  # Something is present and breaks the rule. This is the only class where
+  # the data itself is the evidence, so it comes first.
+  if (nrow(real) > 0 && any(real$Value != "Not in dataset" & nzchar(real$Value))) {
+    return("wrong value")
+  }
+
+  # Nothing is present. Whether that matters depends on whether the standard
+  # calls it Required - and for the rules that compare variable sets, the
+  # binding the rule itself used says so outright.
+  binds <- sub$Variable[startsWith(sub$Variable, "$")]
+  if (any(grepl("required", binds, ignore.case = TRUE))) {
+    return("missing required")
+  }
+  if (any(grepl("expected|permissible", binds, ignore.case = TRUE))) {
+    return("missing optional")
+  }
+  msg <- if (is.null(rule)) sub$issue[1] else rule_message(rule)
+  if (isTRUE(grepl("required", msg, ignore.case = TRUE))) {
+    return("missing required")
+  }
+  "missing optional"
+}
+
 #' Characters used to lay out the report
 #'
 #' The box-drawing characters have to be escapes: R CMD check refuses
@@ -135,6 +195,14 @@ describe_cells <- function(cell) {
   # nothing. Variables reported as absent are dropped: when
   # `AESTDTC = 2024-02-30` is the finding, `AGE = Not in dataset` beside it is
   # noise.
+  # Real values first, then blanks, then absent variables. The value that
+  # actually breaks the rule is the one worth showing, and a valid-looking
+  # neighbour shown in its place is what makes a report untrustworthy.
+  weight <- ifelse(
+    cell$Value == "Not in dataset", 3L,
+    ifelse(nzchar(cell$Value), 1L, 2L)
+  )
+  cell <- cell[order(weight), ]
   pick <- which(cell$Value != "Not in dataset")
   if (length(pick) == 0) pick <- 1L
   cell <- cell[utils::head(pick, 3), ]
@@ -163,17 +231,23 @@ describe_cells <- function(cell) {
 describe_problems <- function(f, n, rows, width, g) {
   key <- paste(f$Dataset, f$rule_id)
   groups <- unique(key)
-  # Worst first: the problem touching the most records is the one to look at.
+  # Triage first, record count second. Ordering purely by "how many records"
+  # puts a variable that is simply absent - which may be entirely legitimate
+  # for this study - above a date with a month of 13, which never is.
+  rank <- vapply(groups, function(grp) {
+    as.integer(match(f$triage[key == grp][1], TRIAGE_LEVELS))
+  }, integer(1))
+  rank[is.na(rank)] <- length(TRIAGE_LEVELS) + 1L
   sizes <- vapply(groups, function(grp) {
     nrow(unique(f[key == grp, c("Dataset", "Record")]))
   }, integer(1))
-  groups <- groups[order(-sizes)]
+  groups <- groups[order(rank, -sizes)]
 
   for (grp in utils::head(groups, n)) {
     sub <- f[key == grp, ]
     n_rec <- nrow(unique(sub[, c("Dataset", "Record")]))
 
-    cat("\n")
+    cat("\n[", sub$triage[1], "]\n", sep = "")
     for (ln in wrap_lines(sub$issue[1], width - 2, 2)) cat(ln, "\n", sep = "")
 
     # `$`-prefixed names are coreval's own internal Operations bindings, not
@@ -218,6 +292,15 @@ describe_problems <- function(f, n, rows, width, g) {
         # A dataset-level finding: no row number to point at, just values.
         cat("    ", describe_cells(real), "\n", sep = "")
       } else {
+        # Records holding an actual offending value first. Showing "row 3
+        # RFSTDTC = (empty)" above "row 4 RFSTDTC = 2024-13-01" leads with the
+        # one that might be perfectly legitimate and buries the one that
+        # certainly is not.
+        rec_weight <- vapply(recs, function(r) {
+          vals <- real$Value[!is.na(real$Record) & real$Record == r]
+          if (any(nzchar(vals) & vals != "Not in dataset")) 1L else 2L
+        }, integer(1))
+        recs <- recs[order(rec_weight, recs)]
         shown <- utils::head(recs, rows)
         for (r in shown) {
           text <- describe_cells(real[!is.na(real$Record) & real$Record == r, ])
@@ -328,6 +411,23 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
       "  (", ran, " checks ran)\n",
       sep = ""
     )
+
+    # What kind of problems, before any detail. CDISC ships no severity, so
+    # this is coreval's own split - and the note says as much, because a
+    # reader who mistakes it for a regulatory grading would draw the wrong
+    # conclusion from "missing optional".
+    per_problem <- unique(f[, c("Dataset", "rule_id", "triage")])
+    counts <- table(factor(per_problem$triage, levels = TRIAGE_LEVELS))
+    cat("\n")
+    for (lvl in TRIAGE_LEVELS) {
+      if (counts[[lvl]] == 0) next
+      hint <- switch(lvl,
+        "wrong value" = "the data breaks the rule - start here",
+        "missing required" = "the standard requires it",
+        "missing optional" = "often legitimate: not collected, screen failure, ..."
+      )
+      cat(sprintf("  %-17s %3d   %s\n", lvl, counts[[lvl]], hint))
+    }
   }
 
   if (nrow(f) > 0 && one_dataset) {

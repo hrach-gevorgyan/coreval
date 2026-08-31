@@ -385,6 +385,11 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         # 8601 date or datetime format" tells you what to do; "CORE-000547"
         # does not - and it was being thrown away.
         findings$issue <- rule_message(rule)
+        # Which findings deserve attention first. Not a CDISC severity - the
+        # rules carry none - but the distinction that governs triage: a value
+        # that is present and wrong is a bug, while a value that is absent may
+        # be perfectly legitimate for this study.
+        findings$triage <- finding_triage(findings, rule)
         all_findings[[length(all_findings) + 1]] <- findings
       }
     }
@@ -392,11 +397,14 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
 
   findings <- if (length(all_findings) > 0) {
     data.table::rbindlist(all_findings)[
-      , c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+      , c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
     ]
   } else {
-    cbind(empty_findings(), issue = character(0), rule_id = character(0))[
-      , c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+    cbind(
+      empty_findings(),
+      issue = character(0), triage = character(0), rule_id = character(0)
+    )[
+      , c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
     ]
   }
   skipped <- if (length(all_skipped) > 0) {

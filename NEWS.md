@@ -23,6 +23,15 @@ qualified validation tool, never instead of it.
   that caused it and the rule number at the end. The same description is on
   every row of `$findings` as an `issue` column, so a rule number is never the
   only thing you get.
+* **Findings are triaged**, so the ones that are definitely wrong come first.
+  CDISC Open Rules carry no severity field — Pinnacle 21's Notes/Minor/Major/
+  Critical is P21's own layer, not CDISC's — so coreval does not report one and
+  does not invent one. What it does is separate `wrong value` (your data breaks
+  the rule: a month of 13, a value outside its codelist) from `missing required`
+  and `missing optional` (often legitimate — a screen-failure subject, a
+  variable your raw data does not carry yet). Sorting by row count alone put
+  those in the wrong order. It is a `triage` column on every finding, so a
+  spreadsheet can be sorted by it too.
 * **A whole-study report is grouped by dataset**, with a summary of which
   dataset has the most problems before any detail, so you can see where the
   trouble is at a glance. `print(result, n = 20, rows = 5)` shows more.

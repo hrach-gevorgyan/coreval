@@ -51,8 +51,25 @@ result
 ```
 
 Each problem is described in words, with the rows and values that caused it, and
-the rule number at the end in case you want to look it up. The worst offenders
-come first, so the top of the report is where to start.
+the rule number at the end in case you want to look it up.
+
+The tag on each problem is worth understanding. CDISC Open Rules carry no
+severity field - Pinnacle 21's Notes/Minor/Major/Critical is P21's own layer,
+not CDISC's - so coreval does not report one and will not invent one. What it
+does instead is separate the findings that are definitely wrong from the ones
+that may be fine:
+
+* `wrong value` - the data contains something that breaks the rule, like a
+  month of 13. Nothing about your study explains it away. Start here.
+* `missing required` - something the standard marks Required is absent.
+* `missing optional` - something Expected is absent, or a value is blank. Often
+  legitimate: a screen-failure subject with no reference dates, a variable your
+  raw data does not carry yet.
+
+Problems are ordered by that first and by how many records they touch second,
+and within a problem the record holding a real offending value is shown before
+one that is merely empty. It is also a `triage` column on every finding, so you
+can sort a spreadsheet by it.
 
 When you want the rows themselves — to filter or count — they are in
 `result$findings`, with the same description in an `issue` column:
@@ -148,15 +165,16 @@ One row per problem, pointing straight at it:
 
 | Column | What it tells you |
 |---|---|
-| `rule_id` | which CDISC rule fired |
 | `Dataset` | which dataset, or `STUDY` for whole-study checks |
 | `Record` | row number, counting from 1 |
 | `Variable` | the variable being complained about |
 | `Value` | what was actually in there |
+| `issue` | what's wrong, in words |
+| `triage` | `wrong value`, `missing required` or `missing optional` |
+| `rule_id` | the CDISC rule, if you want to look it up |
 
-Two things that surprise people at first. Findings come in rule order, not
-worst-first. And `Not in dataset` under `Value` means the rule wanted a variable
-you don't have — which is usually exactly the finding.
+One thing that surprises people: `Not in dataset` under `Value` means the rule
+wanted a variable you don't have — which is usually exactly the finding.
 
 It's a plain data frame, so slice it however you like:
 
