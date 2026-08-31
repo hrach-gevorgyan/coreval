@@ -83,12 +83,46 @@ test_that("read_study infers the dataset list from _variables.csv when _datasets
   dir <- tempfile("coreval_nomanifest_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  # Note the case difference, which is deliberate and load-bearing: the
+  # declared dataset is `TS` while the file is `ts.csv`. See the dedicated
+  # test below for why that combination is the interesting one.
   writeLines("dataset,variable,label,type,length\nTS,STUDYID,Study Identifier,Char,10", file.path(dir, "_variables.csv"))
   writeLines("STUDYID\nABC", file.path(dir, "ts.csv"))
   study <- read_study(dir)
   expect_equal(names(study$datasets), "TS")
   expect_equal(study$datasets$TS$data$STUDYID, "ABC")
   expect_true(is.na(study$datasets$TS$label))
+})
+
+test_that("a dataset CSV is found when the declared name's case differs from the file", {
+  # A study declares a dataset's name in `_datasets.csv`/`_variables.csv` in
+  # whatever case upstream used; the file beside it carries its own. Declaring
+  # `TS` and shipping `ts.csv` is legal and happens.
+  #
+  # This was a real bug that CI caught and no local run could: building the
+  # path as paste0(fname, ".csv") assumes the cases match. Windows and macOS
+  # are case-insensitive by default, so opening "TS.csv" just returns ts.csv
+  # and the assumption is invisible. Linux is case-sensitive, so fread()
+  # hard-errors and takes the entire study read down with it - which is also
+  # what CRAN's own build machines would have hit.
+  #
+  # Asserting via file.exists() would prove nothing here, since that call is
+  # itself case-insensitive on this machine. Compare the BASENAME instead:
+  # that is an ordinary string comparison, so this test fails on every
+  # platform if the resolution regresses.
+  dir <- tempfile("coreval_case_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines("STUDYID\nABC", file.path(dir, "ts.csv"))
+
+  expect_equal(basename(dataset_csv_path(dir, "TS")), "ts.csv")
+  expect_equal(basename(dataset_csv_path(dir, "Ts")), "ts.csv")
+  expect_equal(basename(dataset_csv_path(dir, "ts")), "ts.csv")
+
+  # A genuinely absent dataset must still yield the plain expected path, so
+  # fread() reports "does not exist" for the name actually asked for rather
+  # than something surprising.
+  expect_equal(basename(dataset_csv_path(dir, "DM")), "DM.csv")
 })
 
 test_that("evaluate_rule matches CDISC's reference results.csv for a fixture with no _datasets.csv (CORE-000395)", {

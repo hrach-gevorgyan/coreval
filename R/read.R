@@ -179,6 +179,46 @@ read_env_standard <- function(path) {
   )
 }
 
+#' Locate a dataset's CSV, tolerating a case difference in the declared name
+#'
+#' A dataset's NAME comes from `_datasets.csv`'s `Filename` or, when that
+#' manifest is absent, from `_variables.csv`'s `dataset` column - in whatever
+#' case upstream happened to write it. The FILE beside them carries its own
+#' case. The two need not agree: a study can declare `TS` and ship `ts.csv`.
+#'
+#' `read_xpt_dir()` has always matched case-insensitively
+#' (`list.files(ignore.case = TRUE)`); this applies the same rule to the CSV
+#' path, which assumed the declared case matched the file exactly. On a
+#' case-insensitive filesystem (Windows, and macOS by default) that assumption
+#' is invisible, because opening `TS.csv` simply returns `ts.csv`. On a
+#' case-sensitive one (Linux, so also CRAN's build machines) it is a hard
+#' `fread()` error that aborts the whole study read.
+#'
+#' Falls back to the exact path when there is no unique case-insensitive match,
+#' so a genuinely missing file still produces `fread()`'s own clear error rather
+#' than a silently different one.
+#'
+#' @param path Study directory.
+#' @param fname Dataset name as declared, in any case.
+#' @return Path to the CSV to read.
+#' @noRd
+dataset_csv_path <- function(path, fname) {
+  wanted <- paste0(fname, ".csv")
+  files <- list.files(path, pattern = "\\.csv$", ignore.case = TRUE)
+
+  # Resolve against the directory listing rather than testing file.exists()
+  # on the constructed name. file.exists() is itself case-insensitive on
+  # Windows and macOS, so it would answer TRUE for "TS.csv" when the file is
+  # ts.csv and hand back a name that does not exist on a case-sensitive
+  # filesystem - reintroducing the very platform split this exists to remove.
+  # Going through the listing returns the file's REAL name everywhere.
+  hit <- files[files == wanted]
+  if (length(hit) == 0) {
+    hit <- files[tolower(files) == tolower(wanted)]
+  }
+  if (length(hit) == 1) file.path(path, hit) else file.path(path, wanted)
+}
+
 #' Read one test-case dataset CSV, typed per `_variables.csv`
 #' @param path Study directory.
 #' @param fname Dataset filename (without extension).
@@ -214,7 +254,7 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   # Falling back to auto-detected types for just that one dataset is the
   # only option when upstream's own type declarations are simply absent.
   fread_args <- list(
-    file.path(path, paste0(fname, ".csv")),
+    dataset_csv_path(path, fname),
     na.strings = character(0), strip.white = FALSE
   )
   if (length(col_classes) > 0) {
