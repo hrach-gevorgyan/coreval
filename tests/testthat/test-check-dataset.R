@@ -12,11 +12,17 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
 
   expect_true(all(c("findings", "skipped") %in% names(result)))
   # Same column contract as check_study(), so write_findings() works on either.
-  expect_equal(names(result$findings), c("rule_id", "Dataset", "Record", "Variable", "Value"))
+  expect_equal(
+    names(result$findings),
+    c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+  )
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 
   bad_date <- result$findings[result$findings$Value == "2024-02-30", ]
   expect_equal(bad_date$rule_id, "CORE-000547") # the ISO 8601 rule
+  # `issue` is the whole point: a row saying only "CORE-000547" cannot be
+  # acted on without looking the rule up somewhere else.
+  expect_match(bad_date$issue, "ISO 8601")
   expect_equal(bad_date$Dataset, "AE")
   expect_equal(bad_date$Record, 2L)
   expect_equal(bad_date$Variable, "AESTDTC")

@@ -36,6 +36,8 @@ library(coreval)
 This is the one you'll use most while writing code. You have a data frame;
 check it.
 
+Note row 2: `2024-02-30`. February never has 30 days.
+
 ```{r one-dataset}
 ae <- data.frame(
   STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1", "S2"),
@@ -45,16 +47,19 @@ ae <- data.frame(
 )
 
 result <- check_dataset(ae)
+result
 ```
 
-Look at row 2: `2024-02-30`. February never has 30 days. Did it notice?
+Each problem is described in words, with the rows and values that caused it, and
+the rule number at the end in case you want to look it up. The worst offenders
+come first, so the top of the report is where to start.
+
+When you want the rows themselves — to filter or count — they are in
+`result$findings`, with the same description in an `issue` column:
 
 ```{r one-dataset-date}
 result$findings[result$findings$Value == "2024-02-30", ]
 ```
-
-Yes — row 2, `AESTDTC`, flagged by `CORE-000547`, the rule that says date
-variables have to hold real dates.
 
 You can pass a file instead of a data frame — `.xpt`, `.sas7bdat` or `.csv`:
 
@@ -172,7 +177,7 @@ findings table means one of two things: your data is clean, or a lot of rules
 never ran. Those look identical if you only read the findings. coreval always
 shows you both, with a reason for every rule it couldn't run.
 
-### Saving it
+### Saving it, and tracking what you didn't fix
 
 ```{r export, eval = FALSE}
 write_findings(study_result, "issues.xlsx")  # one workbook, two sheets
@@ -181,6 +186,12 @@ write_findings(study_result, "issues.csv")   # issues.csv + issues_skipped.csv
 
 Both tables get written every time, for the reason just above. Excel output
 needs the `writexl` package.
+
+The saved file has three empty columns — `Status`, `Owner` and `Notes` — for you
+to fill in once it is open. Not every finding is something you will fix: some are
+expected, some belong to someone else, some are waiting on a data query. Those
+decisions are worth recording next to the finding rather than in a separate
+document. Pass `tracking = FALSE` if you would rather not have them.
 
 ## The rule set
 

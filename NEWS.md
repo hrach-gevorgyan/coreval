@@ -17,14 +17,20 @@ qualified validation tool, never instead of it.
 * **Check a whole study** with `read_study()` on a folder, then `check_study()`.
   It reads XPT, SAS and CSV, and picks up Define-XML (2.0 or 2.1) if it's there.
   Reading everything at once is what makes the cross-dataset rules work.
-* **See what's wrong** in a tidy data frame — one row per problem, with the
-  dataset, row number, variable and the value that was actually there.
+* **Read what's wrong in plain language.** Printing a result gives you a report
+  grouped by problem, worst first, each described in words — "Variable value is
+  not in correct ISO 8601 date or datetime format" — with the rows and values
+  that caused it and the rule number at the end. The same description is on
+  every row of `$findings` as an `issue` column, so a rule number is never the
+  only thing you get.
 * **See what couldn't be checked**, always, in a second table with a reason for
   each. An empty findings table can mean clean data *or* rules that never ran,
   and those look identical otherwise.
-* **Save it** with `write_findings()` to Excel (one workbook, two sheets) or CSV
-  (two files), to share with people who don't use R or to attach to your
-  data-review documentation. Both tables are written every time.
+* **Save it and track it** with `write_findings()` to Excel (one workbook, two
+  sheets) or CSV (two files). The file carries empty `Status`, `Owner` and
+  `Notes` columns for you to fill in, so "expected, see protocol deviation log"
+  lives next to the finding instead of in another document. Both tables are
+  written every time; pass `tracking = FALSE` to leave the extra columns out.
 * **Look at the rules themselves** with `list_rules()`, `rules_for_domain()` and
   `rules_version()` — including which CDISC commit they came from and how much
   each rule can be trusted.

@@ -8,37 +8,76 @@
 
 **Check your SDTM data against CDISC rules without leaving R.**
 
-You have a data frame. Check it:
+You just finished writing your DM code. You have a data frame. Check it:
 
 ```r
 library(coreval)
 
-check_dataset(ae)$findings
-#>       rule_id Dataset Record Variable      Value
-#> 1 CORE-000547      AE      2  AESTDTC 2024-02-30
+check_dataset(dm)
 ```
 
-There it is — 30 February, in row 2, in `AESTDTC`. No export, no upload, no
-waiting for a report.
+```
+── coreval — DM ────────────────────────────────────────────────────────
+
+12 problems across 6 records  (204 checks ran)
+
+Variable value is not in correct ISO 8601 date or datetime format
+  2 records · RFSTDTC
+    row 3      RFSTDTC = (empty)
+    row 4      RFSTDTC = "2024-13-01"
+    CORE-000547
+
+AGEU is missing when AGE is provided.
+  1 record · AGE, AGEU
+    row 3      AGE = "47"
+    CORE-000189
+
+SUBJID is not unique within study
+  4 records · SUBJID
+    not in the dataset: SUBJID
+    CORE-000186
+
+  ... and 9 more problems. See result$findings for all of them.
+
+────────────────────────────────────────────────────────────────────────
+65 checks could not run.
+  49 need other datasets (AE, AG, CE, CM, DD, DS, ...)
+     → run check_study() on the whole folder to cover these
+  16 need a define.xml
+
+Fix what you can, then run this again.
+To track the rest:  write_findings(result, "issues.xlsx")
+```
+
+It tells you **what's wrong in words**, which rows, which variables, and the
+actual values. No export, no upload, no waiting, no looking rule numbers up in
+a PDF.
 
 ---
 
-## Why you might want this
+## The workflow this is built for
 
-You know the loop:
+You're a programmer. You've just written the code that builds DM. You don't
+want to export transport files and open Pinnacle 21 to find out you left a
+month of 13 in a date.
 
-> write code → export XPT → upload to Pinnacle 21 → wait → read report →
-> find the line of code that caused it → fix → **do it all again**
+```r
+result <- check_dataset(dm)   # 1. see what's wrong, in plain language
+                              # 2. fix what you can
+result <- check_dataset(dm)   # 3. run it again — it takes a second
 
-You go round it many times, because fixing one thing uncovers the next. And
-almost none of that time is spent *fixing* anything. It's spent **finding out
-what's broken**.
+write_findings(result, "dm_issues.xlsx")   # 4. track what's left
+```
 
-coreval does the finding part on your machine, in seconds. You still run
-Pinnacle 21 — you just arrive with far less for it to complain about.
+Step 4 gives you a spreadsheet with the problem described in words, plus empty
+`Status`, `Owner` and `Notes` columns to fill in — so "expected, see protocol
+deviation log" gets recorded next to the finding instead of in some other
+document.
 
-**This does not replace Pinnacle 21 and isn't trying to.** Your qualified
-validation run stays exactly where it is.
+Then the full run still happens: you or your study lead runs the whole study
+through your qualified tool. **This doesn't replace that, and isn't trying
+to.** It just means the expensive check finds far less, and you found the
+obvious things in seconds instead of half an hour.
 
 ## Install
 
@@ -140,28 +179,31 @@ there's a Define-XML in the folder, coreval finds it and uses it.
 
 You get two tables. **Both matter.**
 
+Printing the result gives you the readable report above. When you want the raw
+rows — to filter, count, or feed somewhere else — they're in `result$findings`:
+
 ### `result$findings` — what's wrong
 
 ```r
 head(result$findings)
-#>       rule_id Dataset Record Variable      Value
-#> 1 CORE-000005      AE      3  AESTDTC  2013-02-30
-#> 2 CORE-000005      AE      3  AEENDTC  2013-02-11
-#> 3 CORE-000112      DM      7    AGEU
+#>   Dataset Record Variable      Value                                    issue     rule_id
+#> 1      AE      3  AESTDTC 2013-02-30  Variable value is not in correct ISO ... CORE-000005
+#> 2      DM      7     AGEU             AGEU is missing when AGE is provided.    CORE-000112
 ```
 
 One row per problem, pointing at the exact spot:
 
 | Column | What it tells you |
 |---|---|
-| `rule_id` | Which CDISC rule fired |
 | `Dataset` | Which dataset (or `STUDY` for whole-study checks) |
 | `Record` | Row number, counting from 1 |
 | `Variable` | The variable being complained about |
 | `Value` | What was actually in there |
+| `issue` | **What's wrong, in words** — the rule's own description |
+| `rule_id` | The CDISC rule, if you need to look it up |
 
-`Not in dataset` in the `Value` column means the rule wanted a variable you
-don't have — which is usually the point.
+`Not in dataset` under `Value` means the rule wanted a variable you don't have
+— which is usually the point.
 
 ### `result$skipped` — what couldn't be checked
 
@@ -175,15 +217,28 @@ head(result$skipped)
 table means one of two things: your data is clean, or half the rules never ran.
 Those look identical if you only read `findings`. coreval always shows you both.
 
-### Saving it
+### Saving it, and tracking what you didn't fix
 
 ```r
 write_findings(result, "issues.xlsx")   # one workbook, two sheets
 write_findings(result, "issues.csv")    # issues.csv + issues_skipped.csv
 ```
 
-Both tables get written, every time, for the reason above. Hand the spreadsheet
-to a colleague or attach it to your data-review documentation.
+Both tables get written, every time, for the reason above.
+
+The file has three empty columns — `Status`, `Owner`, `Notes` — for you to fill
+in once it's open. Not every finding is a bug you'll fix: some are expected, some
+belong to someone else, some are waiting on a data query. Those decisions belong
+next to the finding, not in a separate document nobody opens.
+
+```
+Dataset  Record  Variable  Value        issue                          rule_id      Status   Owner  Notes
+DM       4       RFSTDTC   2024-13-01   Variable value is not in ...   CORE-000547
+DM       3       AGE       47           AGEU is missing when AGE ...   CORE-000189
+```
+
+Pass `tracking = FALSE` if you're reading the file back into R and don't want
+the extra columns.
 
 ---
 

@@ -17,10 +17,18 @@
 #' isn't installed you get a clear message telling you to install it or use
 #' `.csv` instead, rather than a failure part-way through writing.
 #'
-#' @param result A list from [check_study()], with `findings` and `skipped`
-#'   elements.
+#' @section Columns for tracking:
+#' Three empty columns are added to the findings — `Status`, `Owner` and
+#' `Notes` — for you to fill in by hand once the file is open. They exist so a
+#' finding you have looked at and decided not to act on ("expected, see
+#' protocol deviation log") can be recorded next to the finding itself, rather
+#' than in a separate document nobody reads.
+#'
+#' @param result A result from [check_dataset()] or [check_study()].
 #' @param path Output file path. The extension decides the format: `.xlsx`
 #'   for Excel, `.csv` (or anything else) for CSV.
+#' @param tracking Add the empty `Status`/`Owner`/`Notes` columns. `TRUE` by
+#'   default; set `FALSE` for a file you intend to read back into R.
 #' @return The paths actually written, invisibly — one element for Excel, two
 #'   for CSV.
 #' @examples
@@ -37,19 +45,26 @@
 #' unlink(dir, recursive = TRUE)
 #' }
 #' @export
-write_findings <- function(result, path) {
+write_findings <- function(result, path, tracking = TRUE) {
   if (!is.list(result) || is.null(result$findings)) {
     stop(
-      "`result` must be the list returned by check_study(), ",
+      "`result` must be what check_dataset() or check_study() returned, ",
       "with a `findings` element.",
       call. = FALSE
     )
   }
-  findings <- result$findings
+  findings <- data.table::as.data.table(result$findings)
   skipped <- if (is.null(result$skipped)) {
     data.table::data.table(rule_id = character(0), domain = character(0), reason = character(0))
   } else {
-    result$skipped
+    data.table::as.data.table(result$skipped)
+  }
+
+  if (isTRUE(tracking)) {
+    for (col in c("Status", "Owner", "Notes")) {
+      findings[[col]] <- rep("", nrow(findings))
+      skipped[[col]] <- rep("", nrow(skipped))
+    }
   }
 
   if (grepl("\\.xlsx$", path, ignore.case = TRUE)) {

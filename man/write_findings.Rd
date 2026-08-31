@@ -4,14 +4,16 @@
 \alias{write_findings}
 \title{Write conformance findings to a file}
 \usage{
-write_findings(result, path)
+write_findings(result, path, tracking = TRUE)
 }
 \arguments{
-\item{result}{A list from \code{\link[=check_study]{check_study()}}, with \code{findings} and \code{skipped}
-elements.}
+\item{result}{A result from \code{\link[=check_dataset]{check_dataset()}} or \code{\link[=check_study]{check_study()}}.}
 
 \item{path}{Output file path. The extension decides the format: \code{.xlsx}
 for Excel, \code{.csv} (or anything else) for CSV.}
+
+\item{tracking}{Add the empty \code{Status}/\code{Owner}/\code{Notes} columns. \code{TRUE} by
+default; set \code{FALSE} for a file you intend to read back into R.}
 }
 \value{
 The paths actually written, invisibly — one element for Excel, two
@@ -37,6 +39,15 @@ Excel output needs the \code{writexl} package. It is a \code{Suggests}, so if it
 isn't installed you get a clear message telling you to install it or use
 \code{.csv} instead, rather than a failure part-way through writing.
 }
+\section{Columns for tracking}{
+
+Three empty columns are added to the findings — \code{Status}, \code{Owner} and
+\code{Notes} — for you to fill in by hand once the file is open. They exist so a
+finding you have looked at and decided not to act on ("expected, see
+protocol deviation log") can be recorded next to the finding itself, rather
+than in a separate document nobody reads.
+}
+
 \examples{
 \donttest{
 dir <- tempfile("coreval_study_")

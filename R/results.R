@@ -298,6 +298,7 @@ check_study <- function(study, use_case = NULL) {
 #' @noRd
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE) {
   domains <- names(study$datasets)
+  n_ran <- 0L
   all_findings <- list()
   all_skipped <- list()
   # A whole-study rule type asks one question about the STUDY (e.g. "is DM
@@ -364,21 +365,31 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         )
         next
       }
+      n_ran <- n_ran + 1
       findings <- assemble_findings(rule, outcome$dataset, domain, outcome$violations, outcome$bindings)
       if (nrow(findings) > 0) {
         if (is_study_level) {
           findings$Dataset <- "STUDY"
         }
         findings$rule_id <- rule_id
+        # The rule's own one-line statement of what is wrong. It is the single
+        # most useful thing on the row - "Variable value is not in correct ISO
+        # 8601 date or datetime format" tells you what to do; "CORE-000547"
+        # does not - and it was being thrown away.
+        findings$issue <- rule_message(rule)
         all_findings[[length(all_findings) + 1]] <- findings
       }
     }
   }
 
   findings <- if (length(all_findings) > 0) {
-    data.table::rbindlist(all_findings)[, c("rule_id", "Dataset", "Record", "Variable", "Value")]
+    data.table::rbindlist(all_findings)[
+      , c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+    ]
   } else {
-    cbind(rule_id = character(0), empty_findings())
+    cbind(empty_findings(), issue = character(0), rule_id = character(0))[
+      , c("Dataset", "Record", "Variable", "Value", "issue", "rule_id")
+    ]
   }
   skipped <- if (length(all_skipped) > 0) {
     data.table::rbindlist(all_skipped)
@@ -386,5 +397,10 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     data.table::data.table(rule_id = character(0), domain = character(0), reason = character(0))
   }
 
-  list(findings = findings, skipped = skipped)
+  structure(
+    list(findings = findings, skipped = skipped),
+    class = "coreval_result",
+    checks_run = n_ran,
+    domains = domains
+  )
 }
