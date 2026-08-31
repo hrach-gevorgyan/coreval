@@ -9,10 +9,10 @@
 \arguments{
 \item{x}{A result from \code{\link[=check_dataset]{check_dataset()}} or \code{\link[=check_study]{check_study()}}.}
 
-\item{n}{Maximum number of distinct problems to describe (default 10).
-The rest are counted, not listed.}
+\item{n}{Maximum problems to describe - per dataset, for a study result.
+The rest are counted, not listed. Default 10.}
 
-\item{rows}{Maximum example rows to show per problem (default 3).}
+\item{rows}{Maximum example records to show per problem. Default 3.}
 
 \item{...}{Ignored.}
 }
@@ -20,8 +20,9 @@ The rest are counted, not listed.}
 \code{x}, invisibly.
 }
 \description{
-Shows what is wrong, grouped by problem rather than by row, with the rule's
-own description of the issue, where it happens, and what to do next.
+Describes each problem in the rule's own words, worst first, with the rows
+and values that caused it. A whole-study result is grouped by dataset, with
+a summary first, so you can see where the trouble is before reading detail.
 }
 \examples{
 ae <- data.frame(

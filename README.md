@@ -173,6 +173,31 @@ names(study$datasets)
 Reading everything at once is what makes the cross-dataset rules possible. If
 there's a Define-XML in the folder, coreval finds it and uses it.
 
+A study report is grouped by dataset, and tells you where the trouble is before
+showing you any detail:
+
+```
+── coreval ─────────────────────────────────────────────────────────────
+
+27 problems across 12 records in 4 datasets  (689 checks ran)
+
+  DM           9 problems    4 records
+  AE           7 problems    4 records
+  VS           7 problems    3 records
+  STUDY        4 problems    1 record
+
+── DM ──────────────────────────────────────────────────────────────────
+
+SUBJID is not unique within study
+  3 records · SUBJID
+    not in the dataset: SUBJID
+    CORE-000186
+...
+```
+
+`print(result, n = 20)` shows more problems per dataset; `rows = 5` shows more
+example records per problem.
+
 ---
 
 ## Reading the results

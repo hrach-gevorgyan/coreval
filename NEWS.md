@@ -23,6 +23,13 @@ qualified validation tool, never instead of it.
   that caused it and the rule number at the end. The same description is on
   every row of `$findings` as an `issue` column, so a rule number is never the
   only thing you get.
+* **A whole-study report is grouped by dataset**, with a summary of which
+  dataset has the most problems before any detail, so you can see where the
+  trouble is at a glance. `print(result, n = 20, rows = 5)` shows more.
+* **Rules that only say "at least one variable is missing" now name which
+  ones.** Both sets the rule compared are in the finding, so the difference
+  between them is shown: `missing required variables: SUBJID, SITEID,
+  COUNTRY`.
 * **See what couldn't be checked**, always, in a second table with a reason for
   each. An empty findings table can mean clean data *or* rules that never ran,
   and those look identical otherwise.

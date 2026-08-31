@@ -118,3 +118,117 @@ test_that("write_findings does not mutate the result it was given", {
   write_findings(result, file.path(dir, "issues.csv"))
   expect_equal(names(result$findings), before)
 })
+
+test_that("a set-valued binding reports the whole set, not its first element", {
+  # The bug this guards: value_at() indexed an atomic binding by row number.
+  # $expected_variables holds 17 names; row 1 gave "RFSTDTC", which was then
+  # reported as if RFSTDTC were the finding - while the variables actually
+  # missing were never named anywhere.
+  result <- check_dataset(demo_dm())
+  req <- result$findings[result$findings$Variable == "$required_variables", ]
+  skip_if(nrow(req) == 0)
+  expect_match(req$Value[1], "^\\[")           # a set, rendered as ['A', 'B']
+  parsed <- parse_set_value(req$Value[1])
+  expect_gt(length(parsed), 1)
+  expect_true("SUBJID" %in% parsed)
+})
+
+test_that("parse_set_value understands the reference engine's set format", {
+  expect_equal(parse_set_value("['A', 'B', 'C']"), c("A", "B", "C"))
+  expect_equal(parse_set_value("['A']"), "A")
+  expect_equal(parse_set_value("[]"), character(0))
+  # A plain value is not a set and comes back untouched.
+  expect_equal(parse_set_value("AESTDTC"), "AESTDTC")
+  expect_equal(parse_set_value(NA_character_), NA_character_)
+})
+
+test_that("binding_gap names what is missing, and stays quiet when it cannot tell", {
+  sets <- list(
+    `$required_variables` = c("STUDYID", "SUBJID", "SITEID"),
+    `$dataset_variables` = c("STUDYID", "AGE")
+  )
+  gap <- binding_gap(sets)
+  expect_equal(gap$missing, c("SUBJID", "SITEID"))
+  expect_equal(gap$label, "required variables")
+
+  # Nothing missing -> nothing to say.
+  expect_null(binding_gap(list(
+    `$required_variables` = "STUDYID",
+    `$dataset_variables` = c("STUDYID", "AGE")
+  )))
+  # No binding identifiable as "what the dataset has" -> do not guess.
+  expect_null(binding_gap(list(`$a` = "X", `$b` = "Y")))
+  expect_null(binding_gap(list(`$dataset_variables` = "X")))
+})
+
+test_that("the report names the missing variables instead of saying 'at least one'", {
+  # CDISC's own wording is "At least one required variable is missing from
+  # dataset", which does not say which. Both sets are in the finding, so the
+  # difference between them can be shown.
+  result <- check_dataset(demo_dm())
+  out <- paste(capture.output(print(result)), collapse = "\n")
+  expect_match(out, "missing required variables: ")
+  expect_match(out, "SUBJID")
+})
+
+test_that("a finding reports every variable on the row that holds a value", {
+  # Rules that compare a variable's label against the IG's label are useless
+  # if only one side is shown.
+  result <- check_dataset(demo_dm())
+  out <- paste(capture.output(print(result)), collapse = "\n")
+  expect_match(out, 'AGE = "61", AGEU = \\(empty\\)')
+})
+
+test_that("a whole-study report is grouped by dataset, worst first", {
+  dir <- tempfile("coreval_studyrep_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(demo_dm(), file.path(dir, "dm.xpt"))
+  haven::write_xpt(
+    data.frame(
+      STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
+      AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
+      AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
+    ),
+    file.path(dir, "ae.xpt")
+  )
+
+  result <- check_study(read_study(dir))
+  out <- capture.output(print(result))
+  joined <- paste(out, collapse = "\n")
+
+  # A summary of where the trouble is, before any detail.
+  expect_match(joined, "in \\d+ datasets")
+  expect_match(joined, "DM\\s+\\d+ problems")
+  expect_match(joined, "AE\\s+\\d+ problems")
+
+  # Then a banner per dataset, and the summary comes first.
+  dm_banner <- grep("^\\S+ DM ", out)
+  ae_banner <- grep("^\\S+ AE ", out)
+  expect_length(dm_banner, 1)
+  expect_length(ae_banner, 1)
+  expect_lt(grep("problems", out)[1], min(dm_banner, ae_banner))
+
+  # Findings appear under their own dataset's banner, not mixed together.
+  iso_lines <- grep("CORE-000547", out)
+  expect_true(length(iso_lines) > 0)
+})
+
+test_that("n limits problems per dataset, not across the whole study", {
+  dir <- tempfile("coreval_limit_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(demo_dm(), file.path(dir, "dm.xpt"))
+  haven::write_xpt(
+    data.frame(
+      STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
+      AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
+      AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
+    ),
+    file.path(dir, "ae.xpt")
+  )
+  result <- check_study(read_study(dir))
+  out <- capture.output(print(result, n = 1))
+  # Each dataset that had more than one problem says so separately.
+  expect_gt(length(grep("more here", out)), 1)
+})

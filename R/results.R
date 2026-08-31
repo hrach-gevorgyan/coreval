@@ -176,7 +176,15 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     vapply(output_vars, function(v) {
       if (startsWith(v, "$")) {
         resolved <- resolve_binding(bindings[[v]], dataset)
-        elem <- if (is.list(resolved)) resolved[row] else resolved[row]
+        # A LIST holds one collection per row, so take this row's. An atomic
+        # vector is ONE collection shared by every row (the same distinction
+        # as_row_collections() makes), so the whole vector is this row's value.
+        # Indexing it by row number took element 1 of a 17-element set and
+        # reported that single name as if it were the finding - so
+        # "$expected_variables = RFSTDTC" was shown when RFSTDTC was merely
+        # the first of seventeen expected variables, and the ones actually
+        # missing were never named at all.
+        elem <- if (is.list(resolved)) resolved[row] else resolved
         return(format_binding_value(elem))
       }
       x <- if (is_relrec_wildcard(v)) {
