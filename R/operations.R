@@ -348,7 +348,24 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       }
     }), use.names = FALSE)
   }
+  # An Operations `domain` can be a "--" template like "SUPP--" meaning
+  # "this domain's supplemental dataset". Resolving "--" to the DOMAIN
+  # column's value doesn't work for a SUPP dataset (it has no DOMAIN of its
+  # own), so when the template's resolution isn't a real dataset but the
+  # CURRENT dataset's own name fits the template, the rule is talking about
+  # the dataset being checked - which is the case for every bundled rule
+  # scoped to SUPP--/CO/RELREC.
   domain <- if (!is.null(op$domain)) op$domain else current_domain
+  if (is.character(domain) && length(domain) == 1L && grepl("--", domain, fixed = TRUE)) {
+    resolved <- sub("--", dataset_wildcard(current_dataset, current_domain), domain, fixed = TRUE)
+    domain <- if (!is.null(study$datasets[[toupper(resolved)]])) {
+      resolved
+    } else if (grepl(paste0("^", sub("--", ".*", domain, fixed = TRUE), "$"), toupper(current_domain))) {
+      current_domain
+    } else {
+      resolved
+    }
+  }
   ds <- study$datasets[[domain]]
   dt <- if (!is.null(ds)) ds$data else NULL
 
@@ -358,6 +375,30 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         return(NULL)
       }
       filtered <- apply_operation_filter(dt, op$filter)
+      # `value_is_reference` makes each value a COLUMN NAME to be looked up
+      # in the domain that row points at, rather than a value in its own
+      # right. The reference's Distinct keeps only those names that really
+      # are columns of the referenced dataset (`_check_column_exists_in_dataset`),
+      # dropping the rest - so the resulting set is "the IDVARs that name a
+      # real variable of their RDOMAIN", which is exactly what lets
+      # `IDVAR is_not_contained_by $rdomain_variables` flag a typo like
+      # LBSEK while leaving a valid LBSEQ alone.
+      if (isTRUE(op$value_is_reference)) {
+        ref_col <- op$referenced_domain_variable %||% "RDOMAIN"
+        if (!(ref_col %in% names(filtered))) {
+          return(NULL)
+        }
+        names_seen <- vapply(seq_len(nrow(filtered)), function(i) {
+          referenced <- study$datasets[[toupper(as.character(filtered[[ref_col]][i]))]]
+          candidate <- as.character(filtered[[op$name]][i])
+          if (is.null(referenced) || is.na(candidate) || !(candidate %in% names(referenced$data))) {
+            NA_character_
+          } else {
+            candidate
+          }
+        }, character(1))
+        return(scalar_binding(distinct_values(names_seen)))
+      }
       if (is.null(op$group)) {
         scalar_binding(distinct_values(filtered[[op$name]]))
       } else {

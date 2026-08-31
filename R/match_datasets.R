@@ -172,6 +172,84 @@ apply_supp_match <- function(dataset, supp_dataset) {
   list(data = merged, meta = dataset$meta)
 }
 
+# A "Child" join runs the OTHER way round from the ordinary one: the dataset
+# being checked is the CHILD (a SUPPxx, CO or RELREC record), and the join
+# pulls in the PARENT record that child points at. The parent isn't named by
+# the rule - each child row names it itself, in RDOMAIN - so different rows
+# of one dataset can join to entirely different domains.
+#
+# Per the reference's `_merge_rdomain_dataset` / `_merge_standard_then_filter_idvar`
+# (dataset_preprocessor.py), each child row is resolved individually:
+#   1. narrow the parent to rows matching the standard keys (USUBJID, ...);
+#   2. among those, pick the one whose IDVAR-named column equals IDVARVAL
+#      (e.g. IDVAR="AESEQ", IDVARVAL="3" -> the parent row with AESEQ == 3);
+#   3. with no usable IDVAR/IDVARVAL, take the first candidate;
+#   4. with no candidate at all, keep the child row and leave the parent's
+#      columns missing.
+# The parent's values win on a name collision, matching the reference's own
+# `{**child_row, **final_match}` ordering.
+#' Join each child record to the parent record it names via RDOMAIN/IDVAR
+#' @param dataset The child dataset being checked (`list(data, meta)`).
+#' @param study Full study object.
+#' @param keys The spec's `Keys` (IDVAR/IDVARVAL are handled specially).
+#' @return `dataset` with the matched parent columns joined in.
+#' @noRd
+apply_child_match <- function(dataset, study, keys) {
+  child <- data.table::copy(dataset$data)
+  if (nrow(child) == 0) {
+    return(dataset)
+  }
+  standard_keys <- setdiff(keys, c("IDVAR", "IDVARVAL"))
+  rdomain <- child[["RDOMAIN"]]
+  if (is.null(rdomain)) {
+    return(dataset)
+  }
+
+  scalar_or_na <- function(row, col) {
+    if (!(col %in% names(row))) NA_character_ else as.character(row[[col]])[1]
+  }
+
+  merged <- lapply(seq_len(nrow(child)), function(i) {
+    row <- child[i, ]
+    parent <- study$datasets[[toupper(rdomain[i])]]
+    if (is.null(parent) || nrow(parent$data) == 0) {
+      return(row)
+    }
+    candidates <- parent$data
+    for (k in standard_keys) {
+      if (k %in% names(candidates) && k %in% names(row)) {
+        candidates <- candidates[as.character(candidates[[k]]) == as.character(row[[k]]), ]
+      }
+    }
+    idvar <- scalar_or_na(row, "IDVAR")
+    idvarval <- scalar_or_na(row, "IDVARVAL")
+    pick <- if (nrow(candidates) == 0) {
+      NULL
+    } else if (!is_blank(idvar) && !is_blank(idvarval) && idvar %in% names(candidates)) {
+      hit <- which(as.character(candidates[[idvar]]) == idvarval)
+      if (length(hit) == 0) NULL else candidates[hit[1], ]
+    } else {
+      candidates[1, ]
+    }
+    # With NO match the parent's columns are still added, as missing values.
+    # That is not a cosmetic detail: a rule asking "is IDVARVAL really the
+    # value of the parent variable IDVAR names" needs that column to EXIST
+    # and be empty in order to report the mismatch. Returning the child row
+    # untouched instead makes the column absent, the comparison
+    # unresolvable, and the violation silently disappear.
+    if (is.null(pick)) {
+      pick <- parent$data[0, ][NA_integer_, ]
+    }
+    keep <- setdiff(names(row), names(pick))
+    cbind(row[, keep, with = FALSE], pick)
+  })
+
+  list(
+    data = data.table::rbindlist(merged, use.names = TRUE, fill = TRUE),
+    meta = dataset$meta
+  )
+}
+
 #' Left-join one Match Datasets spec's columns onto a dataset
 #' @param dataset The dataset being checked (`list(data, meta)`).
 #' @param spec One Match Datasets spec (`Name`, `Keys`, optional `Child`).
@@ -198,7 +276,8 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # Pivoting there would join a SUPP dataset to itself and quietly answer
   # the wrong question, so fall through to the error and let the rule be
   # reported as unevaluable instead.
-  if (grepl("^(SUPP|SQ)", match_name) && !grepl("^(SUPP|SQ)", toupper(current_domain))) {
+  if (grepl("^(SUPP|SQ)", match_name) && !isTRUE(spec$Child) &&
+      !grepl("^(SUPP|SQ)", toupper(current_domain))) {
     supp_name <- sub("--$", dataset_wildcard(dataset, current_domain), match_name)
     supp_dataset <- study$datasets[[toupper(supp_name)]]
     if (is.null(supp_dataset)) {
@@ -206,7 +285,13 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
     }
     return(apply_supp_match(dataset, supp_dataset))
   }
-  if (!is.null(spec$Child) || identical(match_name, "RELREC")) {
+  # A Child spec names the CHILD dataset - which, for every bundled rule
+  # using one, is the dataset being checked. So this joins each row to the
+  # parent it names in RDOMAIN rather than to some other named domain.
+  if (isTRUE(spec$Child)) {
+    return(apply_child_match(dataset, study, spec$Keys))
+  }
+  if (identical(match_name, "RELREC")) {
     stop("Match Datasets: unsupported join type for '", match_name, "'", call. = FALSE)
   }
 

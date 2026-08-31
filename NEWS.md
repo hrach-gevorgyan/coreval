@@ -39,14 +39,14 @@ run alongside and before a qualified validation system, never instead of one.
   legitimately incomplete, such as `2024-03`), grouping and uniqueness checks,
   and set membership.
 * The `Operations` pipeline (pre-computed values a rule's checks refer to),
-  `Match Datasets` joins including RELREC relationships and SUPP/SQ
-  supplemental qualifiers, and seven rule types spanning record-level, dataset,
+  `Match Datasets` joins including RELREC relationships, SUPP/SQ
+  supplemental qualifiers and parent-child joins, and seven rule types spanning record-level, dataset,
   variable-metadata and domain-presence checks.
 
 ## Correctness
 
 * Verified by replaying CDISC's own reference test cases and comparing flagged
-  records one by one. Currently agrees with CDISC on 482 of 505 published,
+  records one by one. Currently agrees with CDISC on 486 of 509 published,
   fully executable rules that ship reference data (about 95%). See the README
   for the other denominators and what they mean.
 * A rule that cannot be evaluated is always reported as skipped, with a reason,

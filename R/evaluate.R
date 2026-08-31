@@ -166,6 +166,22 @@ resolve_relrec_wildcard_value <- function(name, dataset, for_display = FALSE) {
 #
 # A `$`-prefixed value (e.g. `$tv_visit`) refers to an Operations binding
 # instead of a column - see operations.R.
+# Whether a resolved comparator varies ROW BY ROW (a real column, a
+# value_is_reference lookup, a grouped binding) as opposed to one value
+# applying to every row (a literal, or a scalar Operations aggregate). The
+# blank-comparison rules turn on that difference - a blank per-row value is
+# a genuine "populated vs missing" difference, a blank aggregate means
+# "could not be computed" - and LENGTH cannot distinguish them, because a
+# single-row dataset makes both length 1.
+#' Mark a resolved comparator as varying per row
+#' @param x The resolved value.
+#' @return `x`, marked so `compare_op()` can tell its provenance.
+#' @noRd
+as_per_row_value <- function(x) {
+  attr(x, "coreval_per_row") <- TRUE
+  x
+}
+
 #' Resolve a Check condition's comparison value (column reference, Operations binding, or literal)
 #' @param condition One Check condition.
 #' @param dataset The dataset being checked.
@@ -177,6 +193,29 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
   if (is.null(condition$value)) {
     return(NULL)
   }
+  # `value_is_reference` is a DOUBLE indirection: the named column holds, per
+  # row, the NAME of the column actually being compared against. So with
+  # `value: IDVAR, value_is_reference: true`, a row whose IDVAR is "LBSEQ"
+  # compares against that row's own LBSEQ. Per the reference
+  # (`_check_equality`), a name that isn't a real column yields no
+  # comparator at all for that row rather than falling back to the literal
+  # text. Used by the SUPP/CO/RELREC rules to check that IDVARVAL really is
+  # the value of the parent variable IDVAR names.
+  if (isTRUE(condition$value_is_reference)) {
+    ref_name <- resolve_var_name(condition$value, domain)
+    if (!(ref_name %in% names(dataset$data))) {
+      return(NULL)
+    }
+    per_row_names <- as.character(dataset$data[[ref_name]])
+    return(as_per_row_value(vapply(seq_along(per_row_names), function(i) {
+      col <- per_row_names[i]
+      if (is.na(col) || !(col %in% names(dataset$data))) {
+        NA_character_
+      } else {
+        as.character(dataset$data[[col]][i])
+      }
+    }, character(1))))
+  }
   if (isTRUE(condition$value_is_literal)) {
     return(condition$value)
   }
@@ -187,10 +226,10 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
     }
     ref_name <- resolve_var_name(condition$value, domain)
     if (ref_name %in% names(dataset$data)) {
-      return(dataset$data[[ref_name]])
+      return(as_per_row_value(dataset$data[[ref_name]]))
     }
     if (is_relrec_wildcard(ref_name)) {
-      return(resolve_relrec_wildcard_value(ref_name, dataset))
+      return(as_per_row_value(resolve_relrec_wildcard_value(ref_name, dataset)))
     }
   }
   condition$value

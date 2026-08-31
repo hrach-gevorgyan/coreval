@@ -262,16 +262,16 @@ and the exact records their engine flags. Every bundled rule is run against all
 of it and compared record by record.
 
 On published rules that ship reference data to compare against, coreval agrees
-with CDISC's own results on **482 of 505 — about 95%**.
+with CDISC's own results on **486 of 509 — about 95%**.
 
 <details>
 <summary>The other numbers, and why there's more than one</summary>
 
 | What's counted | Agreement |
 |---|---|
-| Published rules with reference data — **the meaningful number** | **482 / 505 (95%)** |
-| All published rules, including those with nothing to compare against | 482 / 543 (89%) |
-| Every bundled rule, including deprecated and draft | 591 / 722 (82%) |
+| Published rules with reference data — **the meaningful number** | **486 / 509 (95%)** |
+| All published rules, including those with nothing to compare against | 486 / 543 (90%) |
+| Every bundled rule, including deprecated and draft | 595 / 722 (82%) |
 
 **81 rules ship no reference data at all.** CDISC publishes the rule but no
 examples, so there's nothing to compare against — they can't pass *or* fail.

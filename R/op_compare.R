@@ -59,17 +59,20 @@ compare_op <- function(fn) {
     #     column. Its fixture expects NO violation there: "the aggregate
     #     could not be computed" is not a difference between two values.
     #
-    # `is_blank()` cannot tell those apart, but their SHAPE can: a per-row
-    # comparator has one value per row, an aggregate is a scalar broadcast
-    # across them. So the comparator half of the truth table is applied only
-    # to genuinely per-row comparators.
+    # `is_blank()` cannot tell those apart, so resolve_condition_value()
+    # marks the comparator's PROVENANCE as it resolves it, and the
+    # comparator half of the truth table is applied only to genuinely
+    # per-row comparators. Length was tried as the discriminator first and
+    # is wrong: on a single-row dataset a scalar aggregate and a per-row
+    # column are both length 1, which silently disabled the rule for exactly
+    # the one-row CO/SUPP datasets that need it (CORE-000206).
     #
     # The target half needs no such qualification - CORE-000552/553 pin it:
     # not_equal_to must be TRUE when the target (--STDY/--ENDY) is a genuine
     # per-row blank and the comparator is populated.
     target_blank <- is_blank(ctx$target)
     value_blank <- is_blank(ctx$value)
-    value_is_per_row <- length(ctx$value) == ctx$n && ctx$n > 1
+    value_is_per_row <- isTRUE(attr(ctx$value, "coreval_per_row"))
     is_negation <- startsWith(ctx$condition$operator, "not_")
     if (is_negation) {
       result[target_blank & !value_blank] <- TRUE

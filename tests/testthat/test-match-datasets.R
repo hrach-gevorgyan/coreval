@@ -195,10 +195,39 @@ test_that("apply_match_dataset handles an all-valid-key dataset without erroring
   expect_equal(joined$data$DTHFL, c("Y", "N"))
 })
 
-test_that("apply_match_dataset refuses the Child/RELREC joins it doesn't implement", {
+test_that("a Child join attaches each child record to the parent it names in RDOMAIN", {
+  # The dataset being checked is the CHILD (a CO/SUPP/RELREC record) and the
+  # parent isn't named by the rule - each row names it itself, so different
+  # rows can join to different domains. The parent row is chosen by matching
+  # the standard keys and then the column IDVAR names against IDVARVAL.
+  child <- list(
+    data = data.table::data.table(
+      RDOMAIN = c("LB", "LB"), USUBJID = c("S1", "S1"),
+      IDVAR = c("LBSEQ", "LBSEQ"), IDVARVAL = c("321", "999")
+    ),
+    meta = NULL
+  )
+  lb <- list(
+    data = data.table::data.table(USUBJID = "S1", LBSEQ = 321, LBTESTCD = "ALB"),
+    meta = NULL
+  )
+  study <- list(datasets = list(LB = lb))
+  joined <- apply_child_match(child, study, c("USUBJID", "IDVAR", "IDVARVAL"))
+
+  # Row 1's IDVARVAL matches a real LB record, so its columns come across.
+  expect_equal(joined$data$LBTESTCD[1], "ALB")
+  # Row 2 points at LBSEQ 999, which doesn't exist. The parent's columns are
+  # still PRESENT but empty - a rule asking "is IDVARVAL really the value of
+  # the variable IDVAR names" needs that column to exist in order to report
+  # the mismatch; omitting it makes the violation silently disappear.
+  expect_true("LBSEQ" %in% names(joined$data))
+  expect_true(is.na(joined$data$LBTESTCD[2]))
+})
+
+test_that("apply_match_dataset still refuses a plain RELREC spec it doesn't implement", {
   left <- list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
   study <- list(datasets = list())
-  expect_error(apply_match_dataset(left, list(Name = "CO", Keys = "USUBJID", Child = TRUE), study, "AE"))
+  expect_error(apply_match_dataset(left, list(Name = "RELREC", Keys = "USUBJID", Child = FALSE), study, "AE"))
   # A SUPP name whose dataset simply isn't in the study is a no-op, not an
   # error - the rule just has nothing to join.
   expect_equal(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"), left)
