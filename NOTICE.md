@@ -16,6 +16,15 @@ validation tool, never instead of one.
 
 coreval's own package code is MIT licensed — see [LICENSE.md](LICENSE.md).
 
+The bundled CDISC material and the MIT notice it requires are reproduced in
+`inst/COPYRIGHTS`, which **ships with the installed package** — this file does
+not, so the legally required notice travels with the software rather than only
+with the repository. Read it after installing with:
+
+```r
+file.show(system.file("COPYRIGHTS", package = "coreval"))
+```
+
 The rule definitions bundled in `inst/extdata/rules.rds` are extracted from
 [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules),
 copyright CDISC, and remain subject to that project's terms rather than

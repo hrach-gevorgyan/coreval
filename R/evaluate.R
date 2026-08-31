@@ -353,6 +353,12 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
 
 #' Evaluate one rule's Check against one dataset
 #'
+#' Internal, and deliberately not exported. It returns a raw logical vector
+#' rather than findings, needs a rule record the caller has to fetch from
+#' package internals, and has no story a user could follow -
+#' [check_dataset()] is the supported way to check one dataset. The
+#' conformance harness reaches it through `devtools::load_all()`.
+#'
 #' @param rule A rule record, e.g. `.coreval_env$data$rules[[id]]` or an
 #'   equivalent list with `$check`.
 #' @param dataset_or_study Either a single dataset entry from a study object
@@ -374,7 +380,7 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
 #'   name = "AGE", operator = "greater_than", value = 120, value_is_literal = TRUE
 #' ))
 #' evaluate_rule(rule, dataset, domain = "DM")
-#' @export
+#' @noRd
 evaluate_rule <- function(rule, dataset_or_study, domain) {
   study <- as_study(dataset_or_study, domain)
   assert_rule_inputs_available(rule, study)

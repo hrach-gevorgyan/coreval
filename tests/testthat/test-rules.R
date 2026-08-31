@@ -73,3 +73,22 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
   for (r in rules) logical_value_checks <- c(logical_value_checks, walk_check(r$check))
   expect_true(all(vapply(logical_value_checks, function(h) startsWith(h$name, "$") || grepl("_exists|is_custom|has_no_data", h$name, ignore.case = TRUE), logical(1))))
 })
+
+test_that("the bundled CDISC material ships with its required licence notice", {
+  # cdisc-open-rules is MIT, and MIT requires the copyright and permission
+  # notice to travel with "substantial portions of the Software". coreval
+  # bundles 756 extracted rules plus CDISC standards metadata, so the notice
+  # has to be IN THE INSTALLED PACKAGE - NOTICE.md at the repo root is
+  # Rbuildignored and never reaches anyone who installs it.
+  path <- system.file("COPYRIGHTS", package = "coreval")
+  expect_true(nzchar(path))
+  expect_true(file.exists(path))
+
+  txt <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  expect_match(txt, "MIT License", fixed = TRUE)
+  expect_match(txt, "Copyright (c) 2026 cdisc", fixed = TRUE)
+  # The permission notice itself, not merely a reference to it.
+  expect_match(txt, "shall be included in all", fixed = TRUE)
+  # And it must name what is actually bundled.
+  expect_match(txt, "rules.rds", fixed = TRUE)
+})
