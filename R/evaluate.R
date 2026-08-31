@@ -518,6 +518,9 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
   if (identical(rule$rule_type, "Domain Presence Check against Define XML")) {
     return(build_domain_list_with_define_dataset(study))
   }
+  if (identical(rule$rule_type, "Define Item Metadata Check against Library Metadata")) {
+    return(build_define_item_metadata_dataset(study, domain))
+  }
   if (identical(rule$rule_type, "Dataset Metadata Check")) {
     return(build_dataset_metadata_dataset(dataset, domain))
   }
@@ -606,6 +609,76 @@ build_domain_list_with_define_dataset <- function(study) {
   idx <- match(toupper(data$define_dataset_name), toupper(present))
   data$domain <- ifelse(is.na(idx), NA_character_, data$define_dataset_name)
   data$filename <- ifelse(is.na(idx), NA_character_, names(study$datasets)[idx])
+  list(data = data, meta = NULL)
+}
+
+# One row per variable DECLARED IN define.xml for this domain, with the
+# CDISC Library's own metadata for the same variable alongside. That pairing
+# is the whole point of the rule type: it asks whether what define.xml says
+# about a variable agrees with what the standard says (CORE-001081 compares
+# roles, CORE-000494 roles and names).
+#
+# Driven by define.xml rather than by the data, unlike
+# build_variable_metadata_dataset(): a variable can be declared in define
+# and absent from the datasets, and that is exactly the sort of discrepancy
+# these rules look for. A variable the Library doesn't know gets NA on the
+# library side rather than being dropped.
+#' Build a per-define-variable dataset for a Define Item Metadata Check
+#' @param study Full study object (needs `$define`).
+#' @param domain Domain code.
+#' @return A synthetic dataset, one row per variable define.xml declares.
+#' @noRd
+build_define_item_metadata_dataset <- function(study, domain) {
+  dv <- study$define$variables
+  if (is.null(dv) || nrow(dv) == 0) {
+    return(list(data = data.table::data.table(), meta = NULL))
+  }
+  dv <- dv[toupper(dv$define_dataset_name) == toupper(domain), ]
+  if (nrow(dv) == 0) {
+    return(list(data = data.table::data.table(), meta = NULL))
+  }
+  dv <- dv[!duplicated(dv$define_variable_name), ]
+
+  data <- data.table::as.data.table(dv)
+  data$define_dataset_name <- NULL
+
+  # A CUSTOM domain has no standard to be compared against, so the library_*
+  # columns are omitted entirely and the rule is reported as unevaluable
+  # there - the same distinction build_variable_metadata_dataset() makes,
+  # and for the same reason: judging a sponsor's own domain against the
+  # generic Model flags every one of its variables. Confirmed against
+  # CORE-001081's XD fixture, which expects no findings.
+  if (!(toupper(domain) %in% .coreval_env$domain_classes$domain)) {
+    return(list(data = data, meta = NULL))
+  }
+
+  lib <- library_variables_for(study, domain)
+  i <- if (nrow(lib) > 0) {
+    lib <- lib[!duplicated(lib$variable), ]
+    match(dv$define_variable_name, lib$variable)
+  } else {
+    rep(NA_integer_, nrow(dv))
+  }
+  data$library_variable_name <- if (nrow(lib) > 0) lib$variable[i] else NA_character_
+  data$library_variable_label <- if (nrow(lib) > 0) lib$label[i] else NA_character_
+  data$library_variable_role <- if (nrow(lib) > 0) lib$role[i] else NA_character_
+  data$library_variable_data_type <- if (nrow(lib) > 0) lib$type[i] else NA_character_
+  data$library_variable_core <- if (nrow(lib) > 0) lib$core[i] else NA_character_
+
+  # Same Model fallback as the variable-metadata builder: an IG's per-domain
+  # list doesn't enumerate every legitimate variable, and the Model's
+  # generic "--" templates cover many of them.
+  model <- model_variables_for(domain, list(data = data.table::data.table()))
+  if (nrow(model) > 0) {
+    m <- match(dv$define_variable_name, model$variable)
+    fill <- is.na(i) & !is.na(m)
+    if (any(fill)) {
+      data$library_variable_name[fill] <- model$variable[m[fill]]
+      data$library_variable_label[fill] <- model$label[m[fill]]
+      data$library_variable_role[fill] <- model$role[m[fill]]
+      data$library_variable_data_type[fill] <- model$type[m[fill]]
+    }
+  }
   list(data = data, meta = NULL)
 }
 

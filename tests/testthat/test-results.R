@@ -190,9 +190,11 @@ test_that("check_study evaluates the metadata rule types, not just Record Data",
   expect_true(rule_type_is_supported("Variable Metadata Check against Define XML"))
   expect_true(rule_type_is_supported("Domain Presence Check against Define XML"))
 
-  # Still out: needs CDISC Library metadata on top of define.xml, and
-  # there is no bundled data for it.
-  expect_false(rule_type_is_supported("Define Item Metadata Check against Library Metadata"))
+  # Now supported too: both halves it needs - define.xml and the Library's
+  # own variable metadata - are available.
+  expect_true(rule_type_is_supported("Define Item Metadata Check against Library Metadata"))
+
+  expect_false(rule_type_is_supported("Some Future Rule Type"))
   expect_false(rule_type_is_supported(NULL))
 })
 

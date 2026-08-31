@@ -58,9 +58,10 @@ get_output_variables <- function(rule, domain) {
 # define.xml or `xml2` is missing, so a rule is skipped with a reason
 # rather than evaluated against absent columns.
 #
-# Deliberately absent: "Define Item Metadata Check against Library
-# Metadata", which needs CDISC Library metadata this package has no
-# bundled data for, on top of define.xml.
+# "Define Item Metadata Check against Library Metadata" is included too:
+# both halves it needs - define.xml and the Library's own variable metadata
+# - are now available, and evaluate_rule() still refuses per study when the
+# study has no define.xml.
 #' Rule types `check_study()` can evaluate
 #' @param rule_type A rule's `rule_type` string.
 #' @return `TRUE` if `check_study()` should evaluate rules of this type.
@@ -75,7 +76,8 @@ rule_type_is_supported <- function(rule_type) {
     "Variable Metadata Check against Library Metadata",
     "Variable Metadata Check against Define XML",
     "Value Check with Variable Metadata",
-    "Value Check with Dataset Metadata"
+    "Value Check with Dataset Metadata",
+    "Define Item Metadata Check against Library Metadata"
   ))
 }
 
