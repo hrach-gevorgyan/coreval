@@ -479,6 +479,15 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
     describe_skipped(skipped, width, g)
   }
 
+  # Without a declared standard every standard's rules ran, so an SDTM study
+  # was also measured against SENDIG rules. Say so: the alternative is
+  # silently reporting SEND findings on SDTM data, which is how one defect
+  # came to be reported twice.
+  if (is.null(attr(x, "standard"))) {
+    cat("\nNo standard declared, so rules from every standard ran.\n")
+    cat("  Narrow with  standard = \"SDTMIG\"  (or \"SENDIG\", \"TIG\", ...)\n")
+  }
+
   cat("\n")
   if (nrow(f) > 0) {
     cat("Fix what you can, then run this again.\n")

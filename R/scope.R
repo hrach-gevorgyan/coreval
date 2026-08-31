@@ -172,18 +172,50 @@ sdtm_domain_classes <- function() {
 #'   dataset is one file of a domain split across several - a property of
 #'   the data's `DOMAIN` column, not of its name. Without it, such rules
 #'   are neither narrowed nor widened.
+#' @param standard Optionally the standard the data follows, e.g. `"SDTMIG"`
+#'   or `"SENDIG"`. Rules are matched against it EXACTLY, so a `"SENDIG"`
+#'   study does not pick up `"SENDIG-DART"` rules. Left `NULL`, rules from
+#'   every standard apply.
+#' @param include_deprecated Include rules CDISC has deprecated. `FALSE` by
+#'   default: a deprecated rule has a published replacement, so running both
+#'   reports the same defect twice.
 #' @return A [data.table::data.table()] with the same columns as
 #'   [list_rules()], filtered to matching rules.
 #' @examples
 #' ae_rules <- rules_for_domain("AE")
 #' nrow(ae_rules)
 #' @export
-rules_for_domain <- function(domain, use_case = NULL, dataset = NULL) {
+rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
+                             standard = NULL, include_deprecated = FALSE) {
   rules <- .coreval_env$data$rules
   keep <- vapply(
     rules, rule_applies_to_domain, logical(1),
     domain = domain, use_case = use_case, dataset = dataset
   )
+
+  # A SENDIG rule has nothing to say about an SDTM study. Of the 270 rules in
+  # scope for DM, 73 are SENDIG-only - they inflated the findings, inflated
+  # the skipped list, and cost runtime, and they were the reason one defect
+  # could be reported three times over: once by the SDTMIG rule, once by the
+  # SENDIG one, once by a deprecated predecessor.
+  #
+  # Matched exactly, not by prefix: a study declaring SENDIG should not pick
+  # up SENDIG-DART rules, which are for a different kind of study.
+  if (!is.null(standard) && length(standard) == 1 && !is.na(standard) && nzchar(standard)) {
+    want <- toupper(standard)
+    keep <- keep & vapply(
+      rules, function(r) want %in% toupper(r$standards), logical(1)
+    )
+  }
+
+  # Deprecated rules have been superseded by a published replacement, so
+  # running them reports the same defect twice.
+  if (!isTRUE(include_deprecated)) {
+    keep <- keep & vapply(
+      rules, function(r) !identical(r$source, "deprecated_dir"), logical(1)
+    )
+  }
+
   ids <- vapply(rules[keep], function(r) r$id, character(1))
   rules_table <- list_rules()
   rules_table[rules_table$id %in% ids, ]

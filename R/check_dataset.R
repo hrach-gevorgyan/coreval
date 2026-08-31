@@ -222,6 +222,9 @@ infer_domain <- function(dataset, path = NULL) {
 #'   flags every row of a large dataset would otherwise produce more findings
 #'   than anyone can read or Excel can hold. The true count is kept in
 #'   `truncated`. Use `Inf` for every record.
+#' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
+#'   default: a deprecated rule has a published replacement, so running both
+#'   reports the same defect twice.
 #' @return `list(findings, skipped, truncated)` - the same shape
 #'   [check_study()] returns, so [write_findings()] works on it unchanged.
 #' @examples
@@ -238,7 +241,8 @@ infer_domain <- function(dataset, path = NULL) {
 #' @seealso [check_study()] to check a whole study folder.
 #' @export
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
-                          use_case = NULL, max_records = 1000) {
+                          use_case = NULL, max_records = 1000,
+                          include_deprecated = FALSE) {
   path <- NULL
   if (is.character(x)) {
     if (length(x) != 1) {
@@ -285,6 +289,6 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
   run_checks(
     study,
     use_case = use_case, require_referenced_domains = TRUE,
-    max_records = max_records
+    max_records = max_records, include_deprecated = include_deprecated
   )
 }

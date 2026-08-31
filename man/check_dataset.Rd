@@ -10,7 +10,8 @@ check_dataset(
   standard = NULL,
   version = NULL,
   use_case = NULL,
-  max_records = 1000
+  max_records = 1000,
+  include_deprecated = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,10 @@ guessed at.}
 flags every row of a large dataset would otherwise produce more findings
 than anyone can read or Excel can hold. The true count is kept in
 \code{truncated}. Use \code{Inf} for every record.}
+
+\item{include_deprecated}{Also run rules CDISC has deprecated. \code{FALSE} by
+default: a deprecated rule has a published replacement, so running both
+reports the same defect twice.}
 }
 \value{
 \code{list(findings, skipped, truncated)} - the same shape

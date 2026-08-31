@@ -321,6 +321,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   identical findings, more than Excel can hold. The true count is kept in
 #'   `truncated` and the report shows it, so nothing is under-reported. Use
 #'   `Inf` for every record.
+#' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
+#'   default: a deprecated rule has a published replacement, so running both
+#'   reports the same defect twice.
 #' @return Three tables:
 #'   * `findings` - what is wrong. One row per problem, with `Dataset`,
 #'     `Record`, `Variable`, `Value`, the `issue` in words, and its `triage`.
@@ -342,11 +345,12 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' unlink(dir, recursive = TRUE)
 #' }
 #' @export
-check_study <- function(study, use_case = NULL, max_records = 1000) {
+check_study <- function(study, use_case = NULL, max_records = 1000,
+                        include_deprecated = FALSE) {
   run_checks(
     study,
     use_case = use_case, require_referenced_domains = FALSE,
-    max_records = max_records
+    max_records = max_records, include_deprecated = include_deprecated
   )
 }
 
@@ -365,7 +369,7 @@ check_study <- function(study, use_case = NULL, max_records = 1000) {
 #' @return `list(findings, skipped)`, see [check_study()].
 #' @noRd
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
-                       max_records = 1000) {
+                       max_records = 1000, include_deprecated = FALSE) {
   domains <- names(study$datasets)
   n_ran <- 0L
   all_findings <- list()
@@ -380,8 +384,16 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
 
   # Worked out up front so the progress bar knows the total, and so the rule
   # list is not recomputed per domain.
+  declared <- study$standard$product
+  if (length(declared) != 1 || is.na(declared) || !nzchar(declared)) {
+    declared <- NULL
+  }
   plans <- lapply(domains, function(d) {
-    rules_for_domain(d, use_case = use_case, dataset = study$datasets[[d]])$id
+    rules_for_domain(
+      d,
+      use_case = use_case, dataset = study$datasets[[d]],
+      standard = declared, include_deprecated = include_deprecated
+    )$id
   })
   names(plans) <- domains
 
@@ -519,6 +531,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     list(findings = findings, skipped = skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = n_ran,
-    domains = domains
+    domains = domains,
+    standard = declared
   )
 }

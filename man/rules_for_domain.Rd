@@ -4,7 +4,13 @@
 \alias{rules_for_domain}
 \title{Rules that apply to a given SDTM domain}
 \usage{
-rules_for_domain(domain, use_case = NULL, dataset = NULL)
+rules_for_domain(
+  domain,
+  use_case = NULL,
+  dataset = NULL,
+  standard = NULL,
+  include_deprecated = FALSE
+)
 }
 \arguments{
 \item{domain}{Domain code, e.g. \code{"AE"}.}
@@ -19,6 +25,15 @@ with no Use Case constraint always pass, regardless of this argument.}
 dataset is one file of a domain split across several - a property of
 the data's \code{DOMAIN} column, not of its name. Without it, such rules
 are neither narrowed nor widened.}
+
+\item{standard}{Optionally the standard the data follows, e.g. \code{"SDTMIG"}
+or \code{"SENDIG"}. Rules are matched against it EXACTLY, so a \code{"SENDIG"}
+study does not pick up \code{"SENDIG-DART"} rules. Left \code{NULL}, rules from
+every standard apply.}
+
+\item{include_deprecated}{Include rules CDISC has deprecated. \code{FALSE} by
+default: a deprecated rule has a published replacement, so running both
+reports the same defect twice.}
 }
 \value{
 A \code{\link[data.table:data.table]{data.table::data.table()}} with the same columns as

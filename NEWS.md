@@ -103,6 +103,24 @@ qualified validation tool, never instead of it.
   `"2003-11-31"` was rejected when checked alone and accepted when checked as
   part of a column.
 
+## Fewer rules, better aimed
+
+* **Rules are scoped to the standard your data follows.** `standard = "SDTMIG"`
+  was accepted and silently ignored before, so an SDTM study was also measured
+  against SENDIG rules - 73 of the 270 rules in scope for DM are SENDIG-only.
+  Declaring it now halves the rules and more than halves the reported problems,
+  losing no real coverage. Matched exactly, so a `SENDIG` study does not pick
+  up `SENDIG-DART` rules.
+* **Deprecated rules are no longer run** unless you ask for them with
+  `include_deprecated = TRUE`. A deprecated rule has a published replacement,
+  so running both reports the same defect twice.
+* Together these are why one problem could appear three times: once from the
+  SDTMIG rule, once from its SENDIG equivalent, once from a deprecated
+  predecessor. Declaring the standard now reports it once.
+* When no standard is declared, every standard's rules still run - coreval does
+  not guess - but the report **says so**, instead of quietly reporting SEND
+  findings on SDTM data.
+
 ## What's covered
 
 * **756 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is

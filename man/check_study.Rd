@@ -4,7 +4,12 @@
 \alias{check_study}
 \title{Check a whole study against CDISC Open Rules}
 \usage{
-check_study(study, use_case = NULL, max_records = 1000)
+check_study(
+  study,
+  use_case = NULL,
+  max_records = 1000,
+  include_deprecated = FALSE
+)
 }
 \arguments{
 \item{study}{A study object from \code{\link[=read_study]{read_study()}}.}
@@ -17,6 +22,10 @@ flag every row - a missing \code{EPOCH} on a 200 000-row \code{LB} is 200 000
 identical findings, more than Excel can hold. The true count is kept in
 \code{truncated} and the report shows it, so nothing is under-reported. Use
 \code{Inf} for every record.}
+
+\item{include_deprecated}{Also run rules CDISC has deprecated. \code{FALSE} by
+default: a deprecated rule has a published replacement, so running both
+reports the same defect twice.}
 }
 \value{
 Three tables:

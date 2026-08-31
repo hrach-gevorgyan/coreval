@@ -246,3 +246,66 @@ test_that("an empty or row-less dataset says which situation it is", {
   # And an explicit domain makes a row-less dataset checkable.
   expect_no_error(check_dataset(no_rows, domain = "DM"))
 })
+
+test_that("declaring a standard scopes the rules to it", {
+  # Before this, `standard=` was accepted and silently ignored: declaring
+  # SDTMIG gave byte-identical results to declaring nothing, while 73 of DM's
+  # 270 in-scope rules were SENDIG-only.
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
+    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
+    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  )
+  sdtm <- check_dataset(dm, standard = "SDTMIG")
+  send <- check_dataset(dm, standard = "SENDIG")
+  open <- check_dataset(dm)
+
+  # Declaring one runs strictly fewer rules than declaring none.
+  n <- function(r) attr(r, "checks_run") + nrow(r$skipped)
+  expect_lt(n(sdtm), n(open))
+  expect_lt(n(send), n(open))
+
+  # The same defect is written up once per standard. Declaring the standard
+  # picks the right one instead of reporting both.
+  expect_true("CORE-000189" %in% sdtm$findings$rule_id)   # SDTMIG, TIG
+  expect_false("CORE-000883" %in% sdtm$findings$rule_id)  # SENDIG only
+  expect_true("CORE-000883" %in% send$findings$rule_id)
+  expect_false("CORE-000189" %in% send$findings$rule_id)
+
+  # Matched exactly: a SENDIG study must not pick up SENDIG-DART rules.
+  dart_only <- vapply(.coreval_env$data$rules, function(r) {
+    identical(sort(toupper(r$standards)), "SENDIG-DART")
+  }, logical(1))
+  expect_false(any(names(which(dart_only)) %in% send$findings$rule_id))
+})
+
+test_that("deprecated rules are dropped by default and can be asked for", {
+  # A deprecated rule has a published replacement, so running both reports the
+  # same defect twice. CORE-000452 is the deprecated twin of CORE-000189.
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
+    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
+    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  )
+  expect_false("CORE-000452" %in% check_dataset(dm)$findings$rule_id)
+  expect_true("CORE-000452" %in% check_dataset(dm, include_deprecated = TRUE)$findings$rule_id)
+
+  # rules_for_domain follows the same default.
+  expect_false("CORE-000452" %in% rules_for_domain("DM")$id)
+  expect_true("CORE-000452" %in% rules_for_domain("DM", include_deprecated = TRUE)$id)
+})
+
+test_that("the report says when no standard was declared", {
+  # Silently measuring an SDTM study against SENDIG rules is how one defect
+  # came to be reported twice; the reader has to know that happened.
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = "01",
+    AGE = 34, AGEU = "", SEX = "M", stringsAsFactors = FALSE
+  )
+  open <- paste(capture.output(print(check_dataset(dm))), collapse = "\n")
+  expect_match(open, "No standard declared")
+  expect_match(open, "SDTMIG")
+
+  named <- paste(capture.output(print(check_dataset(dm, standard = "SDTMIG"))), collapse = "\n")
+  expect_false(grepl("No standard declared", named))
+})
