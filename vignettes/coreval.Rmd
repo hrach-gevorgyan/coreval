@@ -25,6 +25,13 @@ formal validation run has less to find.
 
 It does not replace a qualified validation system, and it isn't trying to.
 
+> **coreval is an independent, personal open-source project.** It is not a
+> CDISC product, is not affiliated with or endorsed by CDISC, and is not
+> qualified or validated software. It evaluates a copy of the publicly
+> published CDISC Open Rules so you can catch problems early and cheaply. Every
+> result it gives you is an *indication*, not a certification — your qualified
+> tool and your own review remain the authority on whether data is submittable.
+
 ```{r setup}
 library(coreval)
 ```
@@ -86,12 +93,7 @@ and whole-study rules.
 
 ### 3. Read the findings
 
-```{r findings}
-head(result$findings)
-```
-
-One row per *(dataset, record, variable)*, so you can go straight to the
-offending row in the source:
+There is one row per *(dataset, record, variable)*:
 
 | Column | Meaning |
 |---|---|
@@ -100,6 +102,39 @@ offending row in the source:
 | `Record` | row number in that dataset, counting from 1 |
 | `Variable` | the variable the rule reports on |
 | `Value` | what was actually there |
+
+The impossible date we planted is in there. `Record` counts from 1 in the
+dataset as read, so it points straight at the offending row:
+
+```{r findings-date}
+result$findings[result$findings$Value == "2024-02-30", ]
+```
+
+`CORE-000547` is the ISO 8601 rule: date variables must hold real dates, and
+there is no 30 February.
+
+Findings arrive in rule order, not severity order, and a small study still
+trips a fair number of rules — mostly about variables that a real submission
+would have and this three-row demo does not:
+
+```{r findings-head}
+head(result$findings)
+
+nrow(result$findings)
+length(unique(result$findings$rule_id))
+```
+
+`Not in dataset` in `Value` means the rule reports on a variable this dataset
+does not have, which is itself usually the finding.
+
+Because it is a plain data frame, narrowing it needs nothing special — one
+dataset, one rule, or only the record-level findings:
+
+```{r findings-filter}
+f <- result$findings
+head(f[f$Dataset == "DM", ])
+head(f[!is.na(f$Record), ])
+```
 
 ### 4. Always look at what was skipped
 

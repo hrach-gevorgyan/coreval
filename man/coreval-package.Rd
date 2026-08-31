@@ -8,6 +8,37 @@
 \description{
 Checks clinical trial datasets against the CDISC Open Rules (CORE) conformance rules and returns the findings as a tidy data frame, so data issues can be found and fixed early rather than late. Intended as a fast, local, unqualified pre-check that runs alongside - never instead of - a qualified validation system. Reads study data from transport ('XPT'), 'SAS' and comma-separated files, and reads a Define-XML file when one is present. Covers rules for the SDTM, SEND and TIG standards across their published versions. Rule definitions are bundled as data, extracted at build time from a pinned commit of the CDISC Open Rules repository, so checking a study needs no internet connection, no API key and no external service. Rules that cannot be evaluated are reported as skipped, with a reason, rather than silently passing. An independent project: not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
 }
+\details{
+\code{coreval} checks clinical trial datasets against the CDISC Open Rules (CORE)
+and returns the findings as a tidy data frame. It is meant to be run early
+and often, while the code that produces the data is still being written, so
+that problems are found when they are cheap to fix.
+
+Start with \code{vignette("coreval")}. The usual path through the package is
+\code{\link[=read_study]{read_study()}} to load a study directory, then \code{\link[=check_study]{check_study()}} to evaluate
+every applicable rule, then \code{\link[=write_findings]{write_findings()}} to export the result.
+
+\code{\link[=check_study]{check_study()}} returns two tables, and both matter. \verb{$findings} holds the
+rule violations. \verb{$skipped} holds the rules that could \strong{not} be evaluated,
+each with a reason. A short \verb{$findings} table on its own is ambiguous — it
+can mean clean data, or it can mean many rules never ran — so read \verb{$skipped}
+before concluding anything.
+}
+\section{Status}{
+
+\strong{coreval is an independent, personal open-source project.} It is not a
+CDISC product, is not affiliated with or endorsed by CDISC, and is not
+qualified or validated software. It evaluates a copy of the publicly
+published CDISC Open Rules, bundled as data from a pinned upstream commit,
+so that checking a study needs no internet connection, no API key and no
+external service.
+
+Every result is an \emph{indication}, not a certification. A qualified validation
+system and your own review remain the authority on whether data is
+submittable. Nothing here removes that step; it only makes that step find
+less.
+}
+
 \seealso{
 Useful links:
 \itemize{

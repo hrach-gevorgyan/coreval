@@ -1,5 +1,10 @@
 # Contributor Covenant Code of Conduct
 
+This code of conduct governs the **coreval** project's community. coreval is an
+independent, personal open-source project: it is not a CDISC product and is not
+affiliated with or endorsed by CDISC, so nothing here speaks for CDISC or any
+other organisation.
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our
