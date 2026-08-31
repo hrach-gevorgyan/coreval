@@ -4,24 +4,32 @@
 \alias{check_study}
 \title{Check a whole study against CDISC Open Rules}
 \usage{
-check_study(study, use_case = NULL)
+check_study(study, use_case = NULL, max_records = 1000)
 }
 \arguments{
 \item{study}{A study object from \code{\link[=read_study]{read_study()}}.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}) to further filter
 which rules apply, as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
+
+\item{max_records}{Most records to keep per rule, default 1000. A rule can
+flag every row - a missing \code{EPOCH} on a 200 000-row \code{LB} is 200 000
+identical findings, more than Excel can hold. The true count is kept in
+\code{truncated} and the report shows it, so nothing is under-reported. Use
+\code{Inf} for every record.}
 }
 \value{
-Two tables, and both are worth reading:
+Three tables:
 \itemize{
-\item \code{findings} - what is wrong. Columns \code{rule_id}, \code{Dataset}, \code{Record},
-\code{Variable}, \code{Value}, one row per problem. \verb{Not in dataset} under \code{Value}
-means the rule wanted a variable you do not have, which is usually the
-finding itself.
+\item \code{findings} - what is wrong. One row per problem, with \code{Dataset},
+\code{Record}, \code{Variable}, \code{Value}, the \code{issue} in words, and its \code{triage}.
+\verb{Not in dataset} under \code{Value} means the rule wanted a variable you do
+not have, which is usually the finding itself.
 \item \code{skipped} - what could not be checked, with a \code{reason} for each. Read
 this one: an empty \code{findings} table can mean clean data \emph{or} rules that
 never ran, and they look identical otherwise.
+\item \code{truncated} - rules that flagged more records than \code{max_records} kept,
+with how many they really found.
 }
 }
 \description{

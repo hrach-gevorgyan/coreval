@@ -226,9 +226,11 @@ describe_cells <- function(cell) {
 #' @param rows Maximum example records per problem.
 #' @param width Line width.
 #' @param g Glyph list.
+#' @param truncated The result's `truncated` table, so a capped count can be
+#'   reported as the true one.
 #' @return `invisible(NULL)`.
 #' @noRd
-describe_problems <- function(f, n, rows, width, g) {
+describe_problems <- function(f, n, rows, width, g, truncated = NULL) {
   key <- paste(f$Dataset, f$rule_id)
   groups <- unique(key)
   # Triage first, record count second. Ordering purely by "how many records"
@@ -260,8 +262,17 @@ describe_problems <- function(f, n, rows, width, g) {
     present <- unique(real$Variable[real$Value != "Not in dataset"])
     vars <- if (length(present)) present else unique(real$Variable)
 
+    # When a rule flagged more records than were kept, say the TRUE number.
+    # Printing the kept count alone would under-report a problem affecting
+    # every row of the dataset as though it affected a thousand.
+    total_rec <- n_rec
+    if (!is.null(truncated) && nrow(truncated) > 0) {
+      hit <- truncated$rule_id == sub$rule_id[1] & truncated$domain == sub$Dataset[1]
+      if (any(hit)) total_rec <- truncated$records_found[which(hit)[1]]
+    }
     cat(
-      "  ", n_rec, if (n_rec == 1) " record" else " records",
+      "  ", total_rec, if (total_rec == 1) " record" else " records",
+      if (total_rec > n_rec) paste0(" (first ", n_rec, " kept)") else "",
       if (length(vars)) paste0(" ", g$dot, " ", paste(utils::head(vars, 4), collapse = ", ")) else "",
       "\n",
       sep = ""
@@ -431,7 +442,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
   }
 
   if (nrow(f) > 0 && one_dataset) {
-    describe_problems(f, n, rows, width, g)
+    describe_problems(f, n, rows, width, g, x$truncated)
   } else if (nrow(f) > 0) {
     # A study produces far too many findings to read as one flat list, and
     # "which dataset is worst" is the first thing anyone wants to know. So:
@@ -460,7 +471,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
 
     for (d in by_dataset) {
       report_banner(d, width, g)
-      describe_problems(f[f$Dataset == d, ], n, rows, width, g)
+      describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated)
     }
   }
 

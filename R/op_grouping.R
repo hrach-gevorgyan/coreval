@@ -56,7 +56,12 @@ register_operator("is_not_unique_set", function(ctx) {
     ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col))
   })
   key <- do.call(paste, c(normalized, sep = "\x1f"))
-  duplicated_any <- as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
+  # "Does this key occur more than once?" - which is all the group SIZE was
+  # ever used for. stats::ave() answered it by building an interaction factor
+  # and sorting it, and on a 200 000-row dataset that one line was 53% of the
+  # entire check, sorting alone 36%. duplicated() answers the same question by
+  # hashing: no factor, no sort.
+  duplicated_any <- duplicated(key) | duplicated(key, fromLast = TRUE)
   # Return only this file's rows. rbindlist stacked the siblings in
   # split_domain_siblings()'s order, which puts the current dataset first.
   duplicated_any[seq_len(ctx$n)]
@@ -173,7 +178,8 @@ present_on_multiple_rows_within_check <- function(ctx) {
   group <- ctx$dataset$data[[within_col]]
   normalize <- function(x) ifelse(is_blank(x), "\x1fBLANK\x1f", as.character(x))
   key <- paste(normalize(group), normalize(ctx$target), sep = "\x1f")
-  as.vector(stats::ave(seq_along(key), key, FUN = length)) > 1
+  # Same substitution as is_not_unique_set(), for the same reason.
+  duplicated(key) | duplicated(key, fromLast = TRUE)
 }
 
 # Operator: present_on_multiple_rows_within - target's value appears on >1 row sharing the same `within` value

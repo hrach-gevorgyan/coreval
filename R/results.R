@@ -133,7 +133,8 @@ group_first_violations <- function(dataset, violations, grouping_vars, domain) {
 #'   Output Variable (e.g. CORE-000888's `$txparmcd`).
 #' @return A [data.table::data.table()] with columns `Dataset`, `Record`, `Variable`, `Value`.
 #' @noRd
-assemble_findings <- function(rule, dataset, domain, violations, bindings = list()) {
+assemble_findings <- function(rule, dataset, domain, violations, bindings = list(),
+                              max_records = Inf) {
   output_vars <- unique(get_output_variables(rule, dataset_wildcard(dataset, domain)))
   # An Output Variable that isn't a real column of THIS domain's dataset
   # (e.g. "POOLID" for a rule whose Check covers both USUBJID- and
@@ -172,36 +173,56 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     }
     if (is.na(x)) "" else as.character(x)
   }
+  # One value vector per output variable, for a whole set of rows at once.
+  #
+  # This used to run per (row, variable): `is_relrec_wildcard(v)` is a grepl,
+  # `resolve_relrec_wildcard_value()` rebuilt the entire RELREC lookup, and
+  # `v %in% names(...)` scanned the column names - all three repeated for
+  # every violating record. On a 100 000-row dataset that was 29% of the whole
+  # check. What kind of thing a variable IS does not change between rows, so
+  # it is decided once here.
+  values_for <- function(v, rows) {
+    n <- length(rows)
+    if (startsWith(v, "$")) {
+      resolved <- resolve_binding(bindings[[v]], dataset)
+      # A LIST holds one collection per row, so take that row's. An atomic
+      # vector is ONE collection shared by every row (the same distinction
+      # as_row_collections() makes), so the whole vector is the value.
+      # Indexing it by row number took element 1 of a 17-element set and
+      # reported that single name as if it were the finding - so
+      # "$expected_variables = RFSTDTC" was shown when RFSTDTC was merely the
+      # first of seventeen expected variables, and the ones actually missing
+      # were never named at all.
+      if (is.list(resolved)) {
+        return(vapply(rows, function(r) format_binding_value(resolved[r]), character(1)))
+      }
+      return(rep(format_binding_value(resolved), n))
+    }
+    x <- if (is_relrec_wildcard(v)) {
+      resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[rows]
+    } else if (!(v %in% names(dataset$data))) {
+      return(rep("Not in dataset", n))
+    } else {
+      dataset$data[[v]][rows]
+    }
+    # A missing NUMERIC value's `as.character()` is `NA_character_`, not `""`
+    # - this package's own blank contract (see read.R) says a numeric blank is
+    # `NA` internally but must report as `""`, matching how a missing
+    # character column already reports (its blank is already `""`, never
+    # `NA`). Left uncorrected, a violation on a row with a missing numeric
+    # Output Variable would emit the literal text "NA".
+    out <- as.character(x)
+    out[is.na(x)] <- ""
+    out
+  }
+
+  # Rows down, variables across, then read back record-major so each record's
+  # variables stay together - the order assemble_findings() reports in.
+  values_matrix <- function(rows) {
+    do.call(rbind, lapply(output_vars, values_for, rows = rows))
+  }
   value_at <- function(row) {
-    vapply(output_vars, function(v) {
-      if (startsWith(v, "$")) {
-        resolved <- resolve_binding(bindings[[v]], dataset)
-        # A LIST holds one collection per row, so take this row's. An atomic
-        # vector is ONE collection shared by every row (the same distinction
-        # as_row_collections() makes), so the whole vector is this row's value.
-        # Indexing it by row number took element 1 of a 17-element set and
-        # reported that single name as if it were the finding - so
-        # "$expected_variables = RFSTDTC" was shown when RFSTDTC was merely
-        # the first of seventeen expected variables, and the ones actually
-        # missing were never named at all.
-        elem <- if (is.list(resolved)) resolved[row] else resolved
-        return(format_binding_value(elem))
-      }
-      x <- if (is_relrec_wildcard(v)) {
-        resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[row]
-      } else if (!(v %in% names(dataset$data))) {
-        return("Not in dataset")
-      } else {
-        dataset$data[[v]][row]
-      }
-      # A missing NUMERIC value's `as.character()` is `NA_character_`, not
-      # `""` - this package's own blank contract (see read.R) says a numeric
-      # blank is `NA` internally but must report as `""`, matching how a
-      # missing character column already reports (its blank is already
-      # `""`, never `NA`). Left uncorrected, a violation on a row with a
-      # missing numeric Output Variable would emit the literal text "NA".
-      if (is.na(x)) "" else as.character(x)
-    }, character(1))
+    vapply(output_vars, values_for, character(1), rows = row)
   }
 
   # A Match Datasets join can explode one original row into several (see
@@ -240,6 +261,18 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       return(empty_findings())
     }
 
+    # A rule can flag every row: a missing EPOCH on a 200 000-row LB is
+    # 200 000 identical findings. Nobody reads them, Excel cannot hold them
+    # (its limit is ~1 048 576 rows), and building them dominated the run. Keep
+    # the first `max_records` and carry the TRUE count alongside, so the report
+    # can say "200 000 records (showing the first 1 000)" rather than quietly
+    # under-reporting.
+    records_found <- length(records)
+    if (is.finite(max_records) && records_found > max_records) {
+      exploded_rows <- exploded_rows[seq_len(max_records)]
+      records <- records[seq_len(max_records)]
+    }
+
     # One data.table for the whole set, not one per violating record. The
     # per-record version allocated a data.table per row and rbindlist'ed
     # thousands of them, which was over half the remaining runtime of a
@@ -249,13 +282,15 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     # columns gives a matrix of (variable x record). Reading it in column
     # order yields record 1's variables, then record 2's - exactly the order
     # rep(records, each =) and rep(output_vars, times =) produce.
-    values <- vapply(exploded_rows, value_at, character(length(output_vars)))
-    data.table::data.table(
+    values <- values_matrix(exploded_rows)
+    out <- data.table::data.table(
       Dataset = domain,
       Record = rep(records, each = length(output_vars)),
       Variable = rep(output_vars, times = length(exploded_rows)),
       Value = as.vector(values)
     )
+    attr(out, "records_found") <- records_found
+    out
   }
 }
 
@@ -281,14 +316,21 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' @param study A study object from [read_study()].
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
 #'   which rules apply, as in [rules_for_domain()].
-#' @return Two tables, and both are worth reading:
-#'   * `findings` - what is wrong. Columns `rule_id`, `Dataset`, `Record`,
-#'     `Variable`, `Value`, one row per problem. `Not in dataset` under `Value`
-#'     means the rule wanted a variable you do not have, which is usually the
-#'     finding itself.
+#' @param max_records Most records to keep per rule, default 1000. A rule can
+#'   flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200 000
+#'   identical findings, more than Excel can hold. The true count is kept in
+#'   `truncated` and the report shows it, so nothing is under-reported. Use
+#'   `Inf` for every record.
+#' @return Three tables:
+#'   * `findings` - what is wrong. One row per problem, with `Dataset`,
+#'     `Record`, `Variable`, `Value`, the `issue` in words, and its `triage`.
+#'     `Not in dataset` under `Value` means the rule wanted a variable you do
+#'     not have, which is usually the finding itself.
 #'   * `skipped` - what could not be checked, with a `reason` for each. Read
 #'     this one: an empty `findings` table can mean clean data *or* rules that
 #'     never ran, and they look identical otherwise.
+#'   * `truncated` - rules that flagged more records than `max_records` kept,
+#'     with how many they really found.
 #' @examples
 #' \donttest{
 #' dir <- tempfile("coreval_study_")
@@ -300,8 +342,12 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' unlink(dir, recursive = TRUE)
 #' }
 #' @export
-check_study <- function(study, use_case = NULL) {
-  run_checks(study, use_case = use_case, require_referenced_domains = FALSE)
+check_study <- function(study, use_case = NULL, max_records = 1000) {
+  run_checks(
+    study,
+    use_case = use_case, require_referenced_domains = FALSE,
+    max_records = max_records
+  )
 }
 
 #' Evaluate every applicable rule against every domain in a study
@@ -318,11 +364,13 @@ check_study <- function(study, use_case = NULL) {
 #'   whole study and `TRUE` for a single dataset.
 #' @return `list(findings, skipped)`, see [check_study()].
 #' @noRd
-run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE) {
+run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
+                       max_records = 1000) {
   domains <- names(study$datasets)
   n_ran <- 0L
   all_findings <- list()
   all_skipped <- list()
+  all_truncated <- list()
   # A whole-study rule type asks one question about the STUDY (e.g. "is DM
   # present anywhere?"), so it must be answered ONCE and reported under the
   # "STUDY" sentinel dataset - not re-answered for each domain the scope
@@ -409,7 +457,17 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         next
       }
       n_ran <- n_ran + 1
-      findings <- assemble_findings(rule, outcome$dataset, domain, outcome$violations, outcome$bindings)
+      findings <- assemble_findings(
+        rule, outcome$dataset, domain, outcome$violations, outcome$bindings,
+        max_records = max_records
+      )
+      found <- attr(findings, "records_found")
+      if (!is.null(found) && found > length(unique(findings$Record))) {
+        all_truncated[[length(all_truncated) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = domain,
+          records_found = found, records_kept = length(unique(findings$Record))
+        )
+      }
       if (nrow(findings) > 0) {
         if (is_study_level) {
           findings$Dataset <- "STUDY"
@@ -448,8 +506,17 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     data.table::data.table(rule_id = character(0), domain = character(0), reason = character(0))
   }
 
+  truncated <- if (length(all_truncated) > 0) {
+    data.table::rbindlist(all_truncated)
+  } else {
+    data.table::data.table(
+      rule_id = character(0), domain = character(0),
+      records_found = integer(0), records_kept = integer(0)
+    )
+  }
+
   structure(
-    list(findings = findings, skipped = skipped),
+    list(findings = findings, skipped = skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = n_ran,
     domains = domains

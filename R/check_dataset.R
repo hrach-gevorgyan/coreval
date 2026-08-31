@@ -198,8 +198,12 @@ infer_domain <- function(dataset, path = NULL) {
 #'   guessed at.
 #' @param version The standard's version, e.g. `"3-4"`.
 #' @param use_case Optional use case (e.g. `"INDH"`), as in [rules_for_domain()].
-#' @return `list(findings, skipped)` - the same shape [check_study()] returns,
-#'   so [write_findings()] works on it unchanged.
+#' @param max_records Most records to keep per rule, default 1000. A rule that
+#'   flags every row of a large dataset would otherwise produce more findings
+#'   than anyone can read or Excel can hold. The true count is kept in
+#'   `truncated`. Use `Inf` for every record.
+#' @return `list(findings, skipped, truncated)` - the same shape
+#'   [check_study()] returns, so [write_findings()] works on it unchanged.
 #' @examples
 #' ae <- data.frame(
 #'   STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
@@ -214,7 +218,7 @@ infer_domain <- function(dataset, path = NULL) {
 #' @seealso [check_study()] to check a whole study folder.
 #' @export
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
-                          use_case = NULL) {
+                          use_case = NULL, max_records = 1000) {
   path <- NULL
   if (is.character(x)) {
     if (length(x) != 1) {
@@ -258,5 +262,9 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
       version = if (is.null(version)) NA_character_ else version
     )
   )
-  run_checks(study, use_case = use_case, require_referenced_domains = TRUE)
+  run_checks(
+    study,
+    use_case = use_case, require_referenced_domains = TRUE,
+    max_records = max_records
+  )
 }

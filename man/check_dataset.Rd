@@ -9,7 +9,8 @@ check_dataset(
   domain = NULL,
   standard = NULL,
   version = NULL,
-  use_case = NULL
+  use_case = NULL,
+  max_records = 1000
 )
 }
 \arguments{
@@ -29,10 +30,15 @@ guessed at.}
 \item{version}{The standard's version, e.g. \code{"3-4"}.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}), as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
+
+\item{max_records}{Most records to keep per rule, default 1000. A rule that
+flags every row of a large dataset would otherwise produce more findings
+than anyone can read or Excel can hold. The true count is kept in
+\code{truncated}. Use \code{Inf} for every record.}
 }
 \value{
-\code{list(findings, skipped)} - the same shape \code{\link[=check_study]{check_study()}} returns,
-so \code{\link[=write_findings]{write_findings()}} works on it unchanged.
+\code{list(findings, skipped, truncated)} - the same shape
+\code{\link[=check_study]{check_study()}} returns, so \code{\link[=write_findings]{write_findings()}} works on it unchanged.
 }
 \description{
 For when you are writing the code that builds a domain and want to know

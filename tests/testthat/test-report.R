@@ -294,15 +294,28 @@ test_that("the report leads with wrong values, not with things merely absent", {
 })
 
 test_that("within a problem, the record holding a real bad value is shown first", {
-  # RFSTDTC is empty on one row and "2024-13-01" on another. Showing the empty
-  # one first leads with the row that might be perfectly fine and buries the
-  # one that certainly is not - the complaint that prompted triage.
-  result <- check_dataset(demo_dm())
+  # RFSTDTC is EMPTY on an earlier row and "2024-13-01" on a later one, so the
+  # natural row order puts the harmless-looking one first. Leading with an
+  # empty value buries the one that certainly is wrong - the complaint that
+  # prompted triage in the first place.
+  #
+  # The empty row has to come FIRST in the data or this asserts nothing, which
+  # is exactly what happened when this test was written against a fixture that
+  # had no empty value at all: its skip_if() guard made it vacuous.
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02", "03"),
+    RFSTDTC = c("2024-01-05", "", "2024-13-01"),
+    AGE = c(34, 61, 47), AGEU = c("YEARS", "YEARS", "YEARS"),
+    SEX = c("M", "F", "F"), stringsAsFactors = FALSE
+  )
+  result <- check_dataset(dm)
   out <- capture.output(print(result))
+
   iso_block <- out[grep("ISO 8601", out)[1]:length(out)]
   bad <- grep("2024-13-01", iso_block)[1]
   empty <- grep("RFSTDTC = \\(empty\\)", iso_block)[1]
-  skip_if(is.na(empty))
+  expect_false(is.na(bad))
+  expect_false(is.na(empty))
   expect_lt(bad, empty)
 })
 
@@ -315,4 +328,50 @@ test_that("triage survives export, so a spreadsheet can be sorted by it", {
   back <- data.table::fread(paths[1], colClasses = "character")
   expect_true("triage" %in% names(back))
   expect_true(all(back$triage %in% TRIAGE_LEVELS))
+})
+
+test_that("a rule flagging every row is capped, and the true count is still reported", {
+  # A missing variable on a large dataset is one finding per row. Keeping them
+  # all is unreadable, exceeds Excel's row limit, and dominated the runtime -
+  # but a capped count must never be mistaken for the real one.
+  n <- 300
+  d <- data.frame(
+    STUDYID = "S1", DOMAIN = "LB", USUBJID = sprintf("%03d", seq_len(n) %% 50),
+    LBSEQ = seq_len(n), LBTESTCD = "ALT",
+    LBDTC = "2024-01-10", stringsAsFactors = FALSE
+  )
+  capped <- check_dataset(d, max_records = 10)
+
+  expect_true(nrow(capped$truncated) > 0)
+  expect_true(all(capped$truncated$records_kept <= 10))
+  expect_true(all(capped$truncated$records_found > capped$truncated$records_kept))
+
+  # No rule keeps more than the cap.
+  per_rule <- tapply(capped$findings$Record, capped$findings$rule_id,
+                     function(r) length(unique(r)))
+  expect_true(all(per_rule <= 10))
+
+  # The report states the true number, not the kept one, and says it is cut.
+  out <- paste(capture.output(print(capped)), collapse = "\n")
+  biggest <- capped$truncated$records_found[which.max(capped$truncated$records_found)]
+  expect_match(out, paste0(biggest, " records"))
+  expect_match(out, "first 10 kept")
+})
+
+test_that("max_records = Inf keeps everything, and the cap changes nothing else", {
+  n <- 60
+  d <- data.frame(
+    STUDYID = "S1", DOMAIN = "LB", USUBJID = sprintf("%03d", seq_len(n) %% 20),
+    LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
+    stringsAsFactors = FALSE
+  )
+  full <- check_dataset(d, max_records = Inf)
+  expect_equal(nrow(full$truncated), 0)
+
+  # Capping must only ever DROP records - never change which rules fire, nor
+  # what any kept finding says.
+  capped <- check_dataset(d, max_records = 5)
+  expect_setequal(unique(capped$findings$rule_id), unique(full$findings$rule_id))
+  expect_setequal(unique(capped$findings$issue), unique(full$findings$issue))
+  expect_true(nrow(capped$findings) < nrow(full$findings))
 })

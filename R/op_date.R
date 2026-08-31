@@ -77,19 +77,25 @@ days_in_month <- function(year, month) {
 #' @param x Character vector of date strings.
 #' @return A logical vector.
 #' @noRd
-is_valid_date_str <- function(x) {
+is_valid_date_str <- function(x, comp = NULL) {
   if (length(x) == 0) {
     return(logical(0))
   }
   xx <- ifelse(is.na(x), "", x)
-  valid <- nzchar(xx) & grepl(date_regex, xx, perl = TRUE)
+  # Reuse the caller's components when it already has them. The date regex is
+  # expensive and was being run up to four times over the same column - once
+  # here, once to extract, once to detect precision (which re-validated), and
+  # once to parse.
+  if (is.null(comp)) {
+    comp <- extract_date_components(xx)
+  }
+  valid <- attr(comp, "matched")
   needs_calendar_check <- valid & !has_date_uncertainty(xx)
   if (any(needs_calendar_check)) {
     idx <- which(needs_calendar_check)
-    comp <- extract_date_components(xx[idx])
-    y <- suppressWarnings(as.integer(comp[, "year"]))
-    m <- suppressWarnings(as.integer(comp[, "month"]))
-    d <- suppressWarnings(as.integer(comp[, "day"]))
+    y <- suppressWarnings(as.integer(comp[idx, "year"]))
+    m <- suppressWarnings(as.integer(comp[idx, "month"]))
+    d <- suppressWarnings(as.integer(comp[idx, "day"]))
 
     # Nothing to validate at this precision unless all three are present.
     ok <- rep(TRUE, length(idx))
@@ -184,6 +190,9 @@ extract_date_components <- function(x) {
 
   primary[primary %in% c("-", "")] <- NA_character_
   colnames(primary) <- date_group_names
+  # Whether the regex matched at all, carried along so callers can get
+  # validity without running the same regex a second time.
+  attr(primary, "matched") <- m != -1L & nzchar(xx)
   primary
 }
 
@@ -221,19 +230,21 @@ date_precision_defaults <- c(year = 1970, month = 1, day = 1, hour = 0, minute =
 #' @param x A single date string.
 #' @return An integer precision index (0 = year, ..., 6 = microsecond), or `NA`.
 #' @noRd
-detect_precision <- function(x) {
+detect_precision <- function(x, comp = NULL) {
   n <- length(x)
   out <- rep(NA_integer_, n)
   if (n == 0) {
     return(out)
   }
-  valid <- is_valid_date_str(x)
+  if (is.null(comp)) {
+    comp <- extract_date_components(ifelse(is.na(x), "", x))
+  }
+  valid <- is_valid_date_str(x, comp)
   if (!any(valid)) {
     return(out)
   }
   idx <- which(valid)
-  comp <- extract_date_components(ifelse(is.na(x), "", x)[idx])
-  missing <- is.na(comp)
+  missing <- is.na(comp)[idx, , drop = FALSE]
 
   # The first missing component (in year->microsecond order) caps precision at
   # the level just before it; max.col finds that first TRUE per row in one
@@ -266,12 +277,14 @@ detect_precision_one <- function(x) {
 #' @param precision Optional precision index to truncate to (see `detect_precision_one()`).
 #' @return A `POSIXct` value.
 #' @noRd
-parse_date <- function(x, precision = NA_integer_) {
+parse_date <- function(x, precision = NA_integer_, comp = NULL) {
   n <- length(x)
   if (n == 0) {
     return(as.POSIXct(character(0), tz = "UTC"))
   }
-  comp <- extract_date_components(x)
+  if (is.null(comp)) {
+    comp <- extract_date_components(x)
+  }
   precision <- rep_len(precision, n)
   date_fields <- date_group_names[date_group_names != "timezone"]
 
@@ -345,15 +358,20 @@ compare_dates <- function(target, comparator, op) {
   if (!any(ok)) {
     return(out)
   }
-  ok[ok] <- is_valid_date_str(target[ok]) & is_valid_date_str(comparator[ok])
+
+  # Parse each side ONCE. Validity, precision and the parsed instant all read
+  # from the same components, instead of each re-running the date regex over
+  # the whole column.
+  ct <- extract_date_components(target)
+  cc <- extract_date_components(comparator)
+
+  ok <- ok & is_valid_date_str(target, ct) & is_valid_date_str(comparator, cc)
   if (!any(ok)) {
     return(out)
   }
 
-  p1 <- rep(NA_integer_, n)
-  p2 <- rep(NA_integer_, n)
-  p1[ok] <- detect_precision(target[ok])
-  p2[ok] <- detect_precision(comparator[ok])
+  p1 <- detect_precision(target, ct)
+  p2 <- detect_precision(comparator, cc)
   ok <- ok & !is.na(p1) & !is.na(p2) & p1 >= 0L & p2 >= 0L
   if (!any(ok)) {
     return(out)
@@ -362,10 +380,8 @@ compare_dates <- function(target, comparator, op) {
   # Both sides truncated to their common (coarser) precision before
   # comparing - two dates are only compared at the resolution both specify.
   common <- pmin(p1, p2)
-  t1 <- rep(as.POSIXct(NA, tz = "UTC"), n)
-  t2 <- t1
-  t1[ok] <- parse_date(target[ok], common[ok])
-  t2[ok] <- parse_date(comparator[ok], common[ok])
+  t1 <- parse_date(target, common, ct)
+  t2 <- parse_date(comparator, common, cc)
 
   # equal_to/not_equal_to also require matching precision: "2024" and
   # "2024-01-01" are never equal, even though truncating both to year
