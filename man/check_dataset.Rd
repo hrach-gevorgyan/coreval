@@ -24,9 +24,15 @@ so \code{ae1.xpt} from a split dataset is still checked as \code{AE}. Set it
 yourself if that guess is wrong.}
 
 \item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
-\code{"SENDIG"}. Rules that compare your variables against CDISC Library
-metadata need to know this; without it they are skipped rather than
-guessed at.}
+\code{"SENDIG"}. Rules are scoped to it, which is usually what you want - a
+SENDIG rule has nothing to say about an SDTM study.
+
+It is not free, though, and CDISC's coverage is uneven. The general
+"dates must be valid ISO 8601" rule (\code{CORE-000547}) is published for
+SENDIG and TIG but \strong{not for SDTMIG}, whose only equivalents are
+\code{TSVAL}-specific or deprecated. So \code{standard = "SDTMIG"} genuinely stops
+a malformed \code{RFSTDTC} being reported. The report says how many rules were
+set aside; leave \code{standard} unset to see everything.}
 
 \item{version}{The standard's version, e.g. \code{"3-4"}.}
 
