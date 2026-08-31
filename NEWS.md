@@ -47,6 +47,18 @@ qualified validation tool, never instead of it.
   `Notes` columns for you to fill in, so "expected, see protocol deviation log"
   lives next to the finding instead of in another document. Both tables are
   written every time; pass `tracking = FALSE` to leave the extra columns out.
+* **Cross-refer to Pinnacle 21.** Every rule now carries the legacy
+  conformance-rule ids it descends from - `CG0665`, `SEND66`, `TIG0699`,
+  `FB0801` - which are the ids P21 and the published Conformance Rules
+  spreadsheets use. The report shows them next to the CORE id, so a finding
+  here can be matched to a finding there, including to a severity CDISC itself
+  does not publish. All 756 rules have at least one.
+* **The "why", from the Implementation Guide itself.** Each rule carries the
+  sentence it exists to enforce, with document and section: *"The SENDIG
+  requires dates and times of day to be stored according to the international
+  standard ISO 8601 (SENDIG v3.0 4.4)"*. `print(result, guidance = TRUE)` shows
+  it under each problem - off by default, since it roughly doubles the report -
+  and `rule_info()` always returns it.
 * **Look up a rule you were shown** with `rule_info("CORE-000547")`. The report
   gives you a rule id; this tells you what it checks, in words, without leaving
   R. `list_rules()` now carries the same `issue` text for every rule, alongside

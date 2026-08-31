@@ -125,3 +125,40 @@ test_that("filtering to nothing gives an empty result that still prints", {
   expect_equal(nrow(none$findings), 0)
   expect_no_error(capture.output(print(none)))
 })
+
+test_that("every rule carries the ids Pinnacle 21 uses, and the guidance it enforces", {
+  # CDISC publishes no severity, so the practical substitute is the legacy
+  # conformance-rule id - what P21 and the Conformance Rules spreadsheets call
+  # the same rule - plus the IG sentence explaining WHY it exists.
+  rules <- .coreval_env$data$rules
+  expect_true(all(vapply(rules, function(r) length(r$legacy_ids) > 0, logical(1))))
+  expect_true(all(vapply(rules, function(r) length(r$citations) > 0, logical(1))))
+
+  info <- rule_info("CORE-000189")
+  expect_match(info$legacy_ids, "CG0665")
+  expect_true(nzchar(info$guidance))
+
+  # Scoped to the standards the rule was kept for: quoting a SEND id on an
+  # SDTM-only rule would send the reader to the wrong row of the spreadsheet.
+  iso <- .coreval_env$data$rules[["CORE-000547"]]
+  expect_true(all(grepl("^(SEND|TIG)", iso$legacy_ids)))
+  expect_false(any(grepl("^CG", iso$legacy_ids)))
+})
+
+test_that("the report shows the legacy ids, and guidance only when asked", {
+  dm <- data.frame(
+    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
+    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
+    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  )
+  result <- check_dataset(dm)
+
+  plain <- paste(capture.output(print(result)), collapse = "\n")
+  expect_match(plain, "also CG0665")
+
+  # Guidance roughly doubles the report, so it is opt-in.
+  expect_false(grepl("Variable Qualifier of AGE", plain, fixed = TRUE))
+  verbose <- paste(capture.output(print(result, guidance = TRUE)), collapse = "\n")
+  expect_match(verbose, "Variable Qualifier of AGE", fixed = TRUE)
+  expect_true(nchar(verbose) > nchar(plain))
+})

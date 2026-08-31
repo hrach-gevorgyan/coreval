@@ -305,11 +305,24 @@ the extra columns.
 
 ```r
 rule_info("CORE-000547")
-#> id           issue                                              standard
-#> CORE-000547  Variable value is not in correct ISO 8601 date ...  SENDIG, TIG
+#> issue      Variable value is not in correct ISO 8601 date or datetime format
+#> legacy_ids SEND66, SEND67, SEND68, TIG0267, TIG0268, TIG0269
+#> guidance   The SENDIG requires dates and times of day to be stored according
+#>            to the international standard ISO 8601  (SENDIG v3.0 4.4)
+#> standard   SENDIG, TIG
 ```
 
-The report gives you a rule id; this tells you what it checks without leaving R.
+Three things worth knowing here:
+
+- **`legacy_ids`** are what Pinnacle 21 and the published Conformance Rules
+  spreadsheets call the same rule. That's how you match a coreval finding to a
+  P21 report — including to a severity CDISC itself doesn't publish. The
+  console report shows them too: `CORE-000189 · also CG0665, TIG0699`.
+- **`guidance`** is the sentence from the Implementation Guide the rule exists
+  to enforce — the *why*, which no rule message carries. `print(result,
+  guidance = TRUE)` shows it under each problem; it's off by default because it
+  roughly doubles the report's length.
+- All 756 rules carry both.
 
 **Just the things that are definitely wrong**
 

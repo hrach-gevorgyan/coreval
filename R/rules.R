@@ -39,6 +39,7 @@ list_rules <- function() {
       # a rule's sensitivity and executability but not what it CHECKS, so a
       # report saying "CORE-000547" could not be resolved from within R at all.
       issue = rule_message(r),
+      legacy_ids = paste(r$legacy_ids, collapse = ", "),
       source = r$source,
       status = r$status,
       standard = paste(r$standards, collapse = ", "),
@@ -57,9 +58,12 @@ list_rules <- function() {
 #'
 #' @param id One or more rule ids, e.g. `"CORE-000547"`.
 #' @return A [data.table::data.table()] with one row per rule: its `id`, the
-#'   one-line `issue` it reports, the fuller `description`, which `standard`s
-#'   and `authority` it comes from, its `rule_type` and `sensitivity`, and
-#'   whether it is `published`, `deprecated` or draft (`source`).
+#'   one-line `issue` it reports, the fuller `description`, the `legacy_ids`
+#'   Pinnacle 21 and the Conformance Rules spreadsheets use for it (`CG0665`,
+#'   `SEND66`), the `guidance` sentence from the Implementation Guide it
+#'   enforces, which `standard`s and `authority` it comes from, its `rule_type`
+#'   and `sensitivity`, and whether it is `published`, `deprecated` or draft
+#'   (`source`).
 #' @examples
 #' rule_info("CORE-000547")
 #'
@@ -83,6 +87,12 @@ rule_info <- function(id) {
       id = r$id,
       issue = rule_message(r),
       description = if (is.null(r$description)) NA_character_ else r$description,
+      # What Pinnacle 21 and the Conformance Rules spreadsheets call this rule.
+      legacy_ids = paste(r$legacy_ids, collapse = ", "),
+      # The sentence from the Implementation Guide the rule enforces, with the
+      # document and section it came from - the "why", which no rule message
+      # carries.
+      guidance = if (length(r$citations)) r$citations[1] else NA_character_,
       standard = paste(r$standards, collapse = ", "),
       authority = paste(r$authorities, collapse = ", "),
       rule_type = r$rule_type,

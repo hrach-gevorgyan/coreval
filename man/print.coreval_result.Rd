@@ -4,7 +4,7 @@
 \alias{print.coreval_result}
 \title{Print a coreval check result as a readable report}
 \usage{
-\method{print}{coreval_result}(x, n = 10, rows = 3, ...)
+\method{print}{coreval_result}(x, n = 10, rows = 3, guidance = FALSE, ...)
 }
 \arguments{
 \item{x}{A result from \code{\link[=check_dataset]{check_dataset()}} or \code{\link[=check_study]{check_study()}}.}
@@ -13,6 +13,10 @@
 The rest are counted, not listed. Default 10.}
 
 \item{rows}{Maximum example records to show per problem. Default 3.}
+
+\item{guidance}{Also print the sentence from the Implementation Guide that
+each rule enforces - the "why" behind it. Off by default: it roughly
+doubles the length of the report.}
 
 \item{...}{Ignored.}
 }

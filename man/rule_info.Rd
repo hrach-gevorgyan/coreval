@@ -11,9 +11,12 @@ rule_info(id)
 }
 \value{
 A \code{\link[data.table:data.table]{data.table::data.table()}} with one row per rule: its \code{id}, the
-one-line \code{issue} it reports, the fuller \code{description}, which \code{standard}s
-and \code{authority} it comes from, its \code{rule_type} and \code{sensitivity}, and
-whether it is \code{published}, \code{deprecated} or draft (\code{source}).
+one-line \code{issue} it reports, the fuller \code{description}, the \code{legacy_ids}
+Pinnacle 21 and the Conformance Rules spreadsheets use for it (\code{CG0665},
+\code{SEND66}), the \code{guidance} sentence from the Implementation Guide it
+enforces, which \code{standard}s and \code{authority} it comes from, its \code{rule_type}
+and \code{sensitivity}, and whether it is \code{published}, \code{deprecated} or draft
+(\code{source}).
 }
 \description{
 The report gives you a rule id such as \code{CORE-000547}. This tells you what it

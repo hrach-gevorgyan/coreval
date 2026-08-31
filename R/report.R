@@ -156,6 +156,30 @@ finding_triage <- function(sub, rule = NULL) {
   "missing optional"
 }
 
+#' The conformance-rule ids a CORE rule descends from
+#'
+#' `CG0665`, `SEND66`, `TIG0699`, `FB0801` - the ids Pinnacle 21 and the
+#' published Conformance Rules spreadsheets use. They are how a finding here is
+#' matched to a finding there, including to a severity CDISC itself does not
+#' publish.
+#'
+#' @param id A rule id.
+#' @return A character vector, possibly empty.
+#' @noRd
+rule_legacy_ids <- function(id) {
+  r <- .coreval_env$data$rules[[id]]
+  if (is.null(r) || is.null(r$legacy_ids)) character(0) else r$legacy_ids
+}
+
+#' The Implementation Guide sentence a rule enforces
+#' @param id A rule id.
+#' @return A character vector of citations, possibly empty.
+#' @noRd
+rule_guidance <- function(id) {
+  r <- .coreval_env$data$rules[[id]]
+  if (is.null(r) || is.null(r$citations)) character(0) else r$citations
+}
+
 #' Characters used to lay out the report
 #'
 #' The box-drawing characters have to be escapes: R CMD check refuses
@@ -228,9 +252,11 @@ describe_cells <- function(cell) {
 #' @param g Glyph list.
 #' @param truncated The result's `truncated` table, so a capped count can be
 #'   reported as the true one.
+#' @param guidance Print the Implementation Guide sentence each rule enforces.
 #' @return `invisible(NULL)`.
 #' @noRd
-describe_problems <- function(f, n, rows, width, g, truncated = NULL) {
+describe_problems <- function(f, n, rows, width, g, truncated = NULL,
+                              guidance = FALSE) {
   key <- paste(f$Dataset, f$rule_id)
   groups <- unique(key)
   # Triage first, record count second. Ordering purely by "how many records"
@@ -326,7 +352,28 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL) {
         }
       }
     }
-    cat("    ", sub$rule_id[1], "\n", sep = "")
+    # The legacy conformance-rule ids alongside the CORE id: CG0665, SEND66,
+    # TIG0699. Those are what Pinnacle 21 and the published Conformance Rules
+    # spreadsheets use, so they are how a finding here is matched to a finding
+    # there - including to a severity CDISC itself does not publish.
+    rid <- sub$rule_id[1]
+    legacy <- rule_legacy_ids(rid)
+    cat("    ", rid,
+      if (length(legacy)) {
+        paste0(
+          "  ", g$dot, " also ", paste(utils::head(legacy, 3), collapse = ", "),
+          if (length(legacy) > 3) ", ..." else ""
+        )
+      },
+      "\n",
+      sep = ""
+    )
+    if (isTRUE(guidance)) {
+      cited <- rule_guidance(rid)
+      if (length(cited)) {
+        for (ln in wrap_lines(cited[1], width - 6, 6)) cat("    ", ln, "\n", sep = "")
+      }
+    }
   }
 
   if (length(groups) > n) {
@@ -384,6 +431,9 @@ describe_skipped <- function(skipped, width, g) {
 #' @param n Maximum problems to describe - per dataset, for a study result.
 #'   The rest are counted, not listed. Default 10.
 #' @param rows Maximum example records to show per problem. Default 3.
+#' @param guidance Also print the sentence from the Implementation Guide that
+#'   each rule enforces - the "why" behind it. Off by default: it roughly
+#'   doubles the length of the report.
 #' @param ... Ignored.
 #' @return `x`, invisibly.
 #' @examples
@@ -394,7 +444,7 @@ describe_skipped <- function(skipped, width, g) {
 #' )
 #' check_dataset(ae)
 #' @export
-print.coreval_result <- function(x, n = 10, rows = 3, ...) {
+print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   g <- report_glyphs()
   width <- max(60, min(getOption("width", 80), 100))
   f <- x$findings
@@ -448,7 +498,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
   }
 
   if (nrow(f) > 0 && one_dataset) {
-    describe_problems(f, n, rows, width, g, x$truncated)
+    describe_problems(f, n, rows, width, g, x$truncated, guidance)
   } else if (nrow(f) > 0) {
     # A study produces far too many findings to read as one flat list, and
     # "which dataset is worst" is the first thing anyone wants to know. So:
@@ -477,7 +527,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, ...) {
 
     for (d in by_dataset) {
       report_banner(d, width, g)
-      describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated)
+      describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated, guidance)
     }
   }
 

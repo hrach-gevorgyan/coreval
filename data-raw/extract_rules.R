@@ -139,8 +139,58 @@ extract_one <- function(path, source) {
   # potentially-collision-prone folder name as the id.
   rule_id <- if (!is.null(d$Core$Id)) d$Core$Id else paste0("FDA.", matched_standards[1], ".", basename(dirname(path)))
 
+  # The conformance-rule id this CORE rule descends from - CG0027, SEND66,
+  # FB0801, TI2001. These are the ids Pinnacle 21 and the published
+  # Conformance Rules spreadsheets use, so they are how someone cross-refers a
+  # coreval finding to a P21 report or looks up a severity CDISC itself does
+  # not publish. 1251 of 1348 upstream rules carry at least one.
+  #
+  # Only the references belonging to a standard we kept: a rule spanning
+  # SDTMIG and SENDIG has a different legacy id under each, and quoting a SEND
+  # id on an SDTM finding would send the reader to the wrong row.
+  refs <- unlist(lapply(d$Authorities, function(a) {
+    lapply(a$Standards, function(s) {
+      if (!(s$Name %in% want_standards)) {
+        return(NULL)
+      }
+      lapply(s$References, function(r) r[["Rule Identifier"]][["Id"]])
+    })
+  }), recursive = TRUE, use.names = FALSE)
+  legacy_ids <- unique(as.character(refs[!vapply(refs, is.null, logical(1))]))
+
+  # The sentence from the Implementation Guide that the rule exists to
+  # enforce, with where it came from. This is the "why" - "The SENDIG requires
+  # dates and times of day to be stored according to ISO 8601" - which no rule
+  # message carries, and which is what someone needs when deciding whether a
+  # finding matters. Deduplicated: the same guidance is repeated per IG
+  # version, so a rule spanning five versions quotes it five times.
+  cites <- unlist(lapply(d$Authorities, function(a) {
+    lapply(a$Standards, function(s) {
+      if (!(s$Name %in% want_standards)) {
+        return(NULL)
+      }
+      lapply(s$References, function(r) {
+        lapply(r$Citations, function(cit) {
+          txt <- cit[["Cited Guidance"]]
+          if (is.null(txt) || !nzchar(trimws(txt))) {
+            return(NULL)
+          }
+          doc <- cit[["Document"]]
+          sec <- cit[["Section"]]
+          paste0(
+            trimws(gsub("\\s+", " ", txt)),
+            if (!is.null(doc)) paste0("  (", doc, if (!is.null(sec)) paste0(" ", sec), ")")
+          )
+        })
+      })
+    })
+  }), recursive = TRUE, use.names = FALSE)
+  citations <- unique(as.character(cites[!vapply(cites, is.null, logical(1))]))
+
   list(
     id = rule_id,
+    legacy_ids = legacy_ids,
+    citations = citations,
     source = source,
     status = d$Core$Status,
     core_version = d$Core$Version,
