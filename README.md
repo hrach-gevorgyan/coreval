@@ -113,6 +113,65 @@ install.packages("writexl")  # to export findings to .xlsx
 
 ---
 
+## Checking one dataset while you're writing it
+
+You don't need a study folder to get value out of this. If you're a programmer
+building a single domain, `check_dataset()` takes the data frame you already
+have in memory:
+
+```r
+library(coreval)
+
+ae <- data.frame(
+  STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
+  AESEQ   = c(1, 2),
+  AETERM  = c("Headache", "Rash"),
+  AESTDTC = c("2024-01-10", "2024-02-30")   # 30 February isn't a date
+)
+
+result <- check_dataset(ae)
+
+result$findings[result$findings$Value == "2024-02-30", ]
+#>       rule_id Dataset Record Variable      Value
+#> 1 CORE-000547      AE      2  AESTDTC 2024-02-30
+```
+
+It also takes a path to one file — `.xpt`, `.sas7bdat` or `.csv`:
+
+```r
+result <- check_dataset("ae.xpt")
+```
+
+The domain comes from your `DOMAIN` column, falling back to the file name, so a
+split dataset in `ae1.xpt` is still checked as `AE`. Override it with
+`check_dataset(x, domain = "AE")` when neither is right.
+
+**What it can't see, and won't pretend to.** A rule that needs another dataset —
+anything joining `DM`, `SUPP--`, `RELREC`, or reading a value out of another
+domain — can't be answered from one dataset. Those rules are **not run**. They're
+listed in `$skipped` with the domain they'd have needed:
+
+```r
+head(result$skipped[grepl("not supplied", result$skipped$reason), ], 3)
+#>       rule_id domain                                    reason
+#> 1 CORE-000138     AE  needs DM, which was not supplied - ...
+#> 2 CORE-000140     AE  needs TV, which was not supplied - ...
+#> 3 CORE-000168     AE  needs SV, which was not supplied - ...
+```
+
+That's deliberate. Running them anyway would compare your data against columns
+that aren't there and report confident findings built out of nothing.
+
+> **So a short findings list here does not mean the dataset is clean.** Most
+> rules *do* run on a single dataset — measured across AE, DM, LB and VS,
+> **76–84%** of the applicable rules execute, and the rest are reported as
+> skipped. But the ones that can't run are exactly the cross-dataset checks,
+> and those are often the ones that matter. This is a fast first pass to catch
+> the obvious while you code — not a verdict. Run `check_study()` on the full
+> folder before you conclude anything.
+
+---
+
 ## Getting started, A to Z
 
 ### 1. Point it at your data

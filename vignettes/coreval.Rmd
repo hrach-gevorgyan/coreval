@@ -157,6 +157,46 @@ write_findings(result, "issues.csv")   # issues.csv + issues_skipped.csv
 Both tables are always written, for the reason above. Excel output needs the
 `writexl` package.
 
+## Checking one dataset while you write it
+
+Everything above assumes a study folder. That is the right shape once a study
+exists, but it is the wrong shape while you are still writing the code that
+produces a single domain. `check_dataset()` takes the data frame you already
+have:
+
+```{r one-dataset}
+ae_only <- data.frame(
+  STUDYID = "DEMO", DOMAIN = "AE", USUBJID = c("S1", "S1"),
+  AESEQ = c(1, 2), AETERM = c("Headache", "Nausea"),
+  AESTDTC = c("2024-01-10", "2024-02-30")
+)
+
+quick <- check_dataset(ae_only)
+quick$findings[quick$findings$Value == "2024-02-30", ]
+```
+
+It accepts a path to a single `.xpt`, `.sas7bdat` or `.csv` file too. The domain
+is read from the `DOMAIN` column, falling back to the file name, so `ae1.xpt`
+from a split dataset is still checked as `AE`; pass `domain =` to override.
+
+The important part is what it refuses to do. A rule that needs another dataset
+cannot be answered from one, so it is **not run** — it is reported with the
+domain it would have needed:
+
+```{r one-dataset-skips}
+cross <- quick$skipped[grepl("was not supplied", quick$skipped$reason), ]
+nrow(cross)
+head(unique(cross$reason), 3)
+```
+
+Evaluating those anyway would compare against columns that are absent and
+report findings built out of nothing, which is worse than saying nothing.
+
+Most rules still run — across AE, DM, LB and VS, 76–84% of the applicable rules
+execute on the dataset alone. But the ones that cannot are precisely the
+cross-dataset checks, so treat this as a fast first pass, not a verdict, and run
+`check_study()` on the whole folder before concluding anything.
+
 ## Working with the rule set
 
 ```{r rules}

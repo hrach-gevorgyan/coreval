@@ -245,22 +245,21 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' Variable) for Record-sensitivity rules, or one row per (Dataset,
 #' Variable) with `Record` blank for Dataset-sensitivity rules.
 #'
-#' Seven rule types are evaluated: `"Record Data"`, `"Domain Presence
-#' Check"`, `"Dataset Metadata Check"`, `"Variable Metadata Check"` (and its
-#' `"against Library Metadata"` variant), `"Value Check with Variable
-#' Metadata"`, and `"Value Check with Dataset Metadata"`. Each models a
-#' different notion of "one row" - a record, the study, the dataset, a
-#' variable, or a (record, variable) pair - and a `"Domain Presence Check"`
-#' asks one question about the whole study, so it is answered once and
-#' reported under the sentinel `Dataset` value `"STUDY"` rather than
-#' repeated for every domain it applies to.
+#' Each rule type models a different notion of "one row" - a record, the
+#' study, the dataset, a variable, or a (record, variable) pair. A
+#' `"Domain Presence Check"` asks one question about the whole study, so it is
+#' answered once and reported under the sentinel `Dataset` value `"STUDY"`
+#' rather than repeated for every domain it applies to.
 #'
-#' Rule types that compare against a define.xml are NOT evaluated: this
-#' package has no define.xml reader, and running one anyway would
-#' manufacture findings out of missing input rather than report nothing.
-#' Those are reported in `$skipped`, as is any rule using an operator,
-#' `Operations` type, or `Match Datasets` join this package doesn't
+#' Rules comparing against a define.xml ARE evaluated when the study has one
+#' and the `xml2` package is installed. Without both, they are skipped with a
+#' reason rather than run against absent columns, which would manufacture
+#' findings out of missing input. The same applies to any rule using an
+#' operator, `Operations` type, or `Match Datasets` join this package does not
 #' implement.
+#'
+#' To check a single dataset while you are still writing the code that builds
+#' it, see [check_dataset()].
 #'
 #' @param study A study object from [read_study()].
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
@@ -285,6 +284,24 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' }
 #' @export
 check_study <- function(study, use_case = NULL) {
+  run_checks(study, use_case = use_case, require_referenced_domains = FALSE)
+}
+
+#' Evaluate every applicable rule against every domain in a study
+#'
+#' The single evaluation loop behind both [check_study()] and
+#' [check_dataset()], so the two can never drift apart in what they run or how
+#' they report it.
+#'
+#' @param study A study object.
+#' @param use_case Optional use case filter.
+#' @param require_referenced_domains When `TRUE`, a rule that references a
+#'   domain absent from `study` is skipped with a reason instead of evaluated.
+#'   See `assert_referenced_domains_available()` for why this is `FALSE` for a
+#'   whole study and `TRUE` for a single dataset.
+#' @return `list(findings, skipped)`, see [check_study()].
+#' @noRd
+run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE) {
   domains <- names(study$datasets)
   all_findings <- list()
   all_skipped <- list()
@@ -305,6 +322,22 @@ check_study <- function(study, use_case = NULL) {
           reason = paste0("unsupported rule type: ", rule$rule_type)
         )
         next
+      }
+      # Refused deliberately, so it is reported as its own reason rather than
+      # through the generic "evaluation failed" path below: nothing failed,
+      # the rule simply asks about data that was not supplied.
+      if (require_referenced_domains) {
+        absent <- missing_referenced_domains(rule, study, domain)
+        if (length(absent) > 0) {
+          all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+            rule_id = rule_id, domain = domain,
+            reason = paste0(
+              "needs ", paste(absent, collapse = ", "),
+              ", which was not supplied - check the whole study folder to run this rule"
+            )
+          )
+          next
+        }
       }
       is_study_level <- identical(rule$rule_type, "Domain Presence Check")
       if (is_study_level) {

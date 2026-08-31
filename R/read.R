@@ -56,16 +56,21 @@ fill_char_blanks <- function(dt) {
 #' @noRd
 read_study_xpt <- function(path) {
   files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
-  datasets <- lapply(files, function(f) build_dataset_from_xpt(haven::read_xpt(f)))
+  datasets <- lapply(files, function(f) build_dataset_from_data_frame(haven::read_xpt(f)))
   names(datasets) <- toupper(tools::file_path_sans_ext(basename(files)))
   list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
-#' Convert one `haven::read_xpt()` data frame into a `list(data, meta)` dataset entry
-#' @param raw Data frame returned by [haven::read_xpt()].
+#' Convert a data frame into a `list(data, meta)` dataset entry
+#'
+#' Used for a whole directory of XPT files, and for a single data frame handed
+#' straight to [check_dataset()]. Column labels are read from each column's
+#' `label` attribute, which `haven` sets and a plain data frame simply lacks.
+#'
+#' @param raw A data frame, e.g. from [haven::read_xpt()].
 #' @return `list(data, meta)`, see [read_study()].
 #' @noRd
-build_dataset_from_xpt <- function(raw) {
+build_dataset_from_data_frame <- function(raw) {
   dt <- data.table::as.data.table(raw)
   labels <- vapply(raw, function(col) {
     lbl <- attr(col, "label")

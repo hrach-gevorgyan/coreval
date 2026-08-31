@@ -13,6 +13,12 @@ run alongside and before a qualified validation system, never instead of one.
 * `check_study()` runs every applicable bundled rule against every dataset and
   returns findings as a tidy data frame — one row per (dataset, record,
   variable) — alongside a table of what could not be checked and why.
+* `check_dataset()` checks a **single** dataset — a data frame you already have
+  in memory, or one `.xpt`/`.sas7bdat`/`.csv` file — without assembling a study
+  folder first, for the programmer writing the code that builds a domain. The
+  domain is read from the `DOMAIN` column, falling back to the file name. Rules
+  needing another dataset are reported as skipped, naming the domain they
+  wanted, rather than evaluated against columns that are not there.
 * `write_findings()` saves the result to Excel (one workbook, two sheets) or
   CSV (two files), so findings can be shared with people who don't use R or
   attached to data-review documentation. Both the findings and the skipped

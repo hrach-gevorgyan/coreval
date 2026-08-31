@@ -32,20 +32,21 @@ Variable) for Record-sensitivity rules, or one row per (Dataset,
 Variable) with \code{Record} blank for Dataset-sensitivity rules.
 }
 \details{
-Seven rule types are evaluated: \code{"Record Data"}, \code{"Domain Presence Check"}, \code{"Dataset Metadata Check"}, \code{"Variable Metadata Check"} (and its
-\code{"against Library Metadata"} variant), \code{"Value Check with Variable Metadata"}, and \code{"Value Check with Dataset Metadata"}. Each models a
-different notion of "one row" - a record, the study, the dataset, a
-variable, or a (record, variable) pair - and a \code{"Domain Presence Check"}
-asks one question about the whole study, so it is answered once and
-reported under the sentinel \code{Dataset} value \code{"STUDY"} rather than
-repeated for every domain it applies to.
+Each rule type models a different notion of "one row" - a record, the
+study, the dataset, a variable, or a (record, variable) pair. A
+\code{"Domain Presence Check"} asks one question about the whole study, so it is
+answered once and reported under the sentinel \code{Dataset} value \code{"STUDY"}
+rather than repeated for every domain it applies to.
 
-Rule types that compare against a define.xml are NOT evaluated: this
-package has no define.xml reader, and running one anyway would
-manufacture findings out of missing input rather than report nothing.
-Those are reported in \verb{$skipped}, as is any rule using an operator,
-\code{Operations} type, or \verb{Match Datasets} join this package doesn't
+Rules comparing against a define.xml ARE evaluated when the study has one
+and the \code{xml2} package is installed. Without both, they are skipped with a
+reason rather than run against absent columns, which would manufacture
+findings out of missing input. The same applies to any rule using an
+operator, \code{Operations} type, or \verb{Match Datasets} join this package does not
 implement.
+
+To check a single dataset while you are still writing the code that builds
+it, see \code{\link[=check_dataset]{check_dataset()}}.
 }
 \examples{
 \donttest{
