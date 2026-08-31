@@ -77,6 +77,17 @@ build_dataset_from_data_frame <- function(raw) {
     if (is.null(lbl)) NA_character_ else lbl
   }, character(1))
 
+  # A factor is text as far as every rule is concerned, but it is an integer
+  # vector underneath, so nzchar()/startsWith() on one is an error rather than
+  # a wrong answer - the whole check died with "'nzchar()' requires a
+  # character vector". `read.csv(stringsAsFactors = TRUE)` and plenty of older
+  # code still hand over factors, so convert rather than refuse.
+  for (v in names(dt)) {
+    if (is.factor(dt[[v]])) {
+      data.table::set(dt, j = v, value = as.character(dt[[v]]))
+    }
+  }
+
   fill_char_blanks(dt)
 
   meta <- data.table::data.table(

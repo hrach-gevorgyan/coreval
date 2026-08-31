@@ -166,3 +166,83 @@ test_that("write_findings works on a check_dataset() result unchanged", {
   expect_length(written, 2)
   expect_true(all(file.exists(written)))
 })
+
+test_that("factor columns are checked, not crashed on", {
+  # read.csv(stringsAsFactors = TRUE) and older code hand over factors. A
+  # factor is text to every rule but an integer vector underneath, so
+  # nzchar()/startsWith() on one is an ERROR, not a wrong answer - the whole
+  # check died with "'nzchar()' requires a character vector".
+  as_factors <- data.frame(
+    STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
+    AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
+    AESTDTC = c("2024-01-10", "2024-02-30"),
+    stringsAsFactors = TRUE
+  )
+  result <- expect_no_error(check_dataset(as_factors))
+  expect_true("2024-02-30" %in% result$findings$Value)
+
+  # And it must agree with the same data as character.
+  as_chars <- as_factors
+  as_chars[] <- lapply(as_chars, function(col) {
+    if (is.factor(col)) as.character(col) else col
+  })
+  expect_setequal(
+    unique(result$findings$rule_id),
+    unique(check_dataset(as_chars)$findings$rule_id)
+  )
+})
+
+test_that("a trailing blank in DOMAIN does not silently change the answer", {
+  # "AE " is not the domain "AE". Untrimmed it scoped to a domain of that
+  # name, ran a different rule set, and reported a different number of
+  # findings with no warning - and it resolved "--STDTC" to "AE STDTC", a
+  # column nothing has, so every "--" rule quietly found nothing.
+  padded <- data.frame(
+    STUDYID = "S1", DOMAIN = "AE ", USUBJID = c("01", "01"),
+    AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
+    AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
+  )
+  clean <- padded
+  clean$DOMAIN <- "AE"
+
+  a <- check_dataset(padded)
+  b <- check_dataset(clean)
+
+  # Same domain, so the same rules are in scope.
+  expect_equal(unique(a$findings$Dataset), unique(b$findings$Dataset))
+
+  # The "--"-templated date rule must fire on the padded copy too. Untrimmed,
+  # "--STDTC" resolved to "AE STDTC" and it found nothing.
+  expect_true("2024-02-30" %in% a$findings$Value)
+
+  # Nothing is LOST to the padding: every rule the clean copy finds, the
+  # padded one finds too. That is the property that matters - a silently
+  # smaller result was the bug.
+  expect_true(all(unique(b$findings$rule_id) %in% unique(a$findings$rule_id)))
+
+  # The padded copy legitimately finds MORE, because a trailing space in
+  # DOMAIN is itself a conformance problem and several rules say so. Those are
+  # true positives about the data, not an artefact of the fix.
+  extra <- setdiff(unique(a$findings$rule_id), unique(b$findings$rule_id))
+  expect_true(length(extra) > 0)
+  expect_true(any(grepl("DOMAIN|Domain", a$findings$issue[a$findings$rule_id %in% extra])))
+})
+
+test_that("an empty or row-less dataset says which situation it is", {
+  # "no single DOMAIN value" reads as "your DOMAIN column is inconsistent" to
+  # someone whose column is simply empty, or who has no rows yet.
+  no_rows <- data.frame(
+    STUDYID = character(0), DOMAIN = character(0), USUBJID = character(0)
+  )
+  expect_error(check_dataset(no_rows), "no rows")
+
+  all_blank <- data.frame(DOMAIN = c("", ""), USUBJID = c("1", "2"), stringsAsFactors = FALSE)
+  expect_error(check_dataset(all_blank), "blank")
+
+  # Both should still name the way out.
+  expect_error(check_dataset(no_rows), "domain=")
+  expect_error(check_dataset(all_blank), "domain=")
+
+  # And an explicit domain makes a row-less dataset checkable.
+  expect_no_error(check_dataset(no_rows, domain = "DM"))
+})

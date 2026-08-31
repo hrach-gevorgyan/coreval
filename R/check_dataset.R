@@ -144,10 +144,16 @@ infer_domain <- function(dataset, path = NULL) {
   # lives in ae1.xpt / ae2.xpt but still carries DOMAIN == "AE", and that is
   # the code the rules are written against.
   col <- dataset$data$DOMAIN
-  if (!is.null(col)) {
-    values <- unique(col[!is.na(col) & nzchar(col)])
+  has_domain_column <- !is.null(col)
+  if (has_domain_column) {
+    # Trailing blanks are everywhere in SAS-derived data, and an untrimmed
+    # "AE " is not the domain "AE": it silently scoped to a domain of that
+    # name, ran a different set of rules, and reported a different number of
+    # findings with no warning at all.
+    values <- trimws(as.character(col))
+    values <- unique(values[!is.na(values) & nzchar(values)])
     if (length(values) == 1) {
-      return(toupper(as.character(values)))
+      return(toupper(values))
     }
     if (length(values) > 1) {
       stop(
@@ -159,6 +165,20 @@ infer_domain <- function(dataset, path = NULL) {
   }
   if (!is.null(path)) {
     return(toupper(tools::file_path_sans_ext(basename(path))))
+  }
+  # Say which of the two situations this actually is. "no single DOMAIN value"
+  # reads as "your DOMAIN column is inconsistent" to someone whose column is
+  # simply empty, or whose dataset has no rows yet.
+  if (has_domain_column) {
+    stop(
+      if (nrow(dataset$data) == 0) {
+        "this dataset has no rows, so the DOMAIN column is empty - "
+      } else {
+        "every value in the DOMAIN column is blank - "
+      },
+      "pass domain= to say what this is, e.g. domain = \"AE\"",
+      call. = FALSE
+    )
   }
   NULL
 }

@@ -37,7 +37,10 @@ dataset_wildcard <- function(dataset, domain) {
   }
   dom_col <- dataset$data[["DOMAIN"]]
   if (!is.null(dom_col) && length(dom_col) > 0) {
-    first <- as.character(dom_col[1])
+    # Trimmed for the same reason infer_domain() trims: an untrimmed "AE "
+    # here resolves "--STDTC" to "AE STDTC", a column no dataset has, so
+    # every "--" rule silently reports nothing.
+    first <- trimws(as.character(dom_col[1]))
     if (!is.na(first) && nzchar(first)) {
       return(toupper(first))
     }

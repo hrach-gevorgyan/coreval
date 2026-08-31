@@ -82,6 +82,19 @@ qualified validation tool, never instead of it.
 
 ## Fixed
 
+* **Factor columns no longer crash the check.** A factor is text to every rule
+  but an integer vector underneath, so the whole run died with `'nzchar()'
+  requires a character vector`. `read.csv(stringsAsFactors = TRUE)` and plenty
+  of older code still produce factors, so they are converted rather than
+  refused.
+* **A trailing blank in `DOMAIN` no longer changes the answer.** `"AE "` was
+  treated as a domain of that name: it scoped to a different rule set, and
+  resolved `"--STDTC"` to `"AE STDTC"` - a column nothing has - so every
+  `"--"` rule silently found nothing. (The padded value is still reported as
+  a problem in its own right, by the rules that exist to catch exactly that.)
+* **A dataset with no rows, or an all-blank `DOMAIN`, says which it is.** The
+  old message claimed there was "no single DOMAIN value", which reads as "your
+  column is inconsistent" to someone whose data simply has no rows yet.
 * `days_in_month()` was wrong for vector input: it built its lookup table with
   `c(31, ifelse(leap, 29, 28), 31, ...)`, which produces one element per YEAR
   rather than one per month, so for n years the table was 11 + n long and every
