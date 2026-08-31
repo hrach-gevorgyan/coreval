@@ -49,6 +49,13 @@ model_variables$ordinal <- suppressWarnings(as.integer(model_variables$ordinal))
 # variable allowed for this class at all", so the inherited set is folded
 # into each class here rather than at every call site - otherwise a
 # perfectly ordinary variable like USUBJID looks disallowed for Findings.
+# `source_class` records where a row CAME from, which `class` alone can no
+# longer say once inheritance is folded in. The standard's expected variable
+# ORDER is built in sections - General Observations identifiers, then the
+# class's own variables, then General Observations timing - so reconstructing
+# those sections later needs to know which rows were inherited.
+model_variables$source_class <- model_variables$class
+
 general <- model_variables[model_variables$class == "General Observations", ]
 specific <- model_variables[model_variables$class != "General Observations", ]
 inherited <- do.call(rbind, lapply(unique(specific$class), function(cls) {

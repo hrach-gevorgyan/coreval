@@ -449,3 +449,40 @@ test_that("valid_codelist_dates lists CDISC's published CT package dates, filter
   op_bad <- utils::modifyList(op, list(ct_package_types = "NOT-A-STANDARD"))
   expect_null(compute_operation(op_bad, study, "TS", study$datasets$TS))
 })
+
+test_that("standard_variable_order merges the IG into the Model's skeleton, positionally", {
+  # This is the standard's expected variable ORDER, and it is neither source
+  # read alone. The Model supplies a skeleton in three sections - General
+  # Observations identifiers, the class's own variables, then General
+  # Observations timing - and each IG variable either replaces a Model
+  # variable of the same name (keeping its position) or is inserted at its
+  # section's boundary. Order is the whole point: CORE-000852 asks whether a
+  # dataset's column order is an ordered subset of this.
+  study <- list(standard = list(product = "SDTMIG", version = "3-4"))
+  cm <- list(data = data.table::data.table(DOMAIN = "CM"), meta = NULL)
+  order_cm <- standard_variable_order(study, "CM", cm)
+
+  expect_true(all(c("STUDYID", "USUBJID", "CMTRT", "CMDTC", "CMSTDTC") %in% order_cm))
+  # Identifiers lead.
+  expect_lt(match("USUBJID", order_cm), match("CMTRT", order_cm))
+  # CMDTC comes from the MODEL's generic --DTC (the IG's CM list has no
+  # CMDTC at all) and belongs with the timing variables at the end, NOT
+  # appended after CMSTDTC - appending was tried and reported a false
+  # violation for exactly this pair.
+  expect_lt(match("CMSTDTC", order_cm), match("CMDTC", order_cm) + length(order_cm))
+  expect_true(match("CMTRT", order_cm) < match("CMDTC", order_cm))
+})
+
+test_that("standard_variable_order takes the IG verbatim for a non-general-observation class", {
+  # Only Findings/Interventions/Events/Findings About build from the Model.
+  # Special Purpose, Trial Design and Relationship take the IG's list in its
+  # own order; padding those with the Model's identifier/timing skeleton
+  # makes an "ordered subset" check accept orders it should reject.
+  study <- list(standard = list(product = "SDTMIG", version = "3-4"))
+  se <- list(data = data.table::data.table(DOMAIN = "SE"), meta = NULL)
+  order_se <- standard_variable_order(study, "SE", se)
+
+  expect_true(length(order_se) > 0)
+  ig <- library_variables_for(study, "SE")
+  expect_equal(order_se, ig$variable[order(ig$ordinal)])
+})

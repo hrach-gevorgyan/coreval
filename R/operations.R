@@ -309,6 +309,114 @@ model_variables_for <- function(domain, dataset = NULL) {
   rows[!duplicated(rows$variable), ]
 }
 
+# The standard's full expected variable ORDER for a domain, which is NOT
+# either source read alone: the reference merges the Implementation Guide's
+# per-domain list INTO the SDTM Model's, positionally
+# (`sdtm_utilities.get_variables_metadata_from_standard`).
+#
+# The Model supplies the skeleton, in three sections - General Observations
+# identifiers, the class's own variables, then General Observations timing.
+# Each IG variable then either REPLACES a Model variable of the same name,
+# keeping the Model's position, or is INSERTED at its section's boundary:
+# an Identifier after the identifiers, a Timing at the very end, anything
+# else just before the timing section.
+#
+# Order is the entire point - the only rule using this asks whether a
+# dataset's column order is an ordered subset of the standard's - so
+# approximating it is worse than not answering. Appending the Model's
+# extras at the end, for instance, puts CMDTC after CMSTDTC and reports a
+# violation that isn't there.
+#' The standard's expected variable order for a domain (IG merged into Model)
+#' @param study Full study object (its `$standard` selects standard/version).
+#' @param domain Domain code.
+#' @param dataset The dataset being checked, for `"--"` resolution.
+#' @return A character vector of variable names in the standard's order.
+#' @noRd
+standard_variable_order <- function(study, domain, dataset) {
+  cls <- domain_class(domain)
+  model <- .coreval_env$model_variables
+  wildcard <- dataset_wildcard(dataset, domain)
+
+  # Only the three general observation classes (plus Findings About) build
+  # from the Model at all. Everything else - Special Purpose, Trial Design,
+  # Relationship - takes the Implementation Guide's list verbatim, in its
+  # own ordinal order. Giving those the Model's identifier/timing skeleton
+  # too would pad the expected order with variables the standard doesn't
+  # list for them, and an "is this an ordered subset" check would then
+  # accept orders it should reject (caught on SE).
+  detectable <- normalize_class(c("Findings", "Interventions", "Events", "Findings About"))
+  if (!(normalize_class(cls) %in% detectable)) {
+    ig_only <- library_variables_for(study, domain)
+    if (nrow(ig_only) == 0) {
+      return(character(0))
+    }
+    ig_only <- ig_only[order(ig_only$ordinal), , drop = FALSE]
+    return(resolve_var_name(ig_only$variable, wildcard))
+  }
+
+  in_class <- normalize_class(model$class) == normalize_class(cls)
+  if (!any(in_class)) {
+    return(character(0))
+  }
+  rows <- model[in_class, ]
+  ordered <- function(x) x[order(x$ordinal), , drop = FALSE]
+  from_general <- normalize_class(rows$source_class) == normalize_class("General Observations")
+
+  identifiers <- ordered(rows[from_general & rows$role == "Identifier", ])$variable
+  timing <- ordered(rows[from_general & rows$role == "Timing", ])$variable
+  class_own <- ordered(rows[!from_general, ])$variable
+
+  # Findings About is a special case in the reference: it inherits the
+  # FINDINGS class variables too, and its own variables are SPLICED INTO
+  # them immediately after "--TEST" rather than appended. Getting this wrong
+  # only shows up as a wrong ORDER, which is precisely what the rule using
+  # this checks.
+  if (identical(normalize_class(cls), normalize_class("Findings About"))) {
+    findings <- model[
+      normalize_class(model$class) == normalize_class("Findings") &
+        normalize_class(model$source_class) != normalize_class("General Observations"),
+    ]
+    findings_own <- ordered(findings)$variable
+    at <- match("--TEST", findings_own)
+    if (!is.na(at)) {
+      class_own <- c(findings_own[seq_len(at)], class_own, findings_own[-seq_len(at)])
+    }
+  }
+  skeleton <- resolve_var_name(c(identifiers, class_own, timing), wildcard)
+  n_identifiers <- length(identifiers)
+  n_timing <- length(timing)
+
+  ig <- library_variables_for(study, domain)
+  if (nrow(ig) == 0) {
+    return(skeleton)
+  }
+  ig <- ig[order(ig$ordinal), , drop = FALSE]
+  ig_names <- resolve_var_name(ig$variable, wildcard)
+
+  for (k in seq_along(ig_names)) {
+    name <- ig_names[k]
+    at <- match(name, skeleton)
+    if (!is.na(at)) {
+      next # already positioned by the Model
+    }
+    role <- ig$role[k]
+    insert_at <- if (identical(role, "Identifier")) {
+      n_identifiers
+    } else if (identical(role, "Timing")) {
+      length(skeleton)
+    } else {
+      length(skeleton) - n_timing
+    }
+    skeleton <- append(skeleton, name, after = insert_at)
+    if (identical(role, "Identifier")) {
+      n_identifiers <- n_identifiers + 1L
+    } else if (identical(role, "Timing")) {
+      n_timing <- n_timing + 1L
+    }
+  }
+  skeleton
+}
+
 #' Look up a domain's variables at a given Core designation (Req/Exp), standard- and version-aware
 #' @param study Full study object.
 #' @param domain Domain code.
@@ -433,21 +541,13 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     max = date_extreme_binding(dt, op, want_max = TRUE),
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
-    # NOT IMPLEMENTED, deliberately. This is the standard's full expected
-    # variable ORDER, and the reference builds it by MERGING the SDTM
-    # Model's class variables INTO the Implementation Guide's per-domain
-    # list (sdtm_utilities.get_variables_metadata_from_standard), not by
-    # reading either alone. The merge is positional, and order is the whole
-    # point of the only rule that uses this (CORE-000852 asks whether the
-    # dataset's column order is an ordered subset of the standard's), so an
-    # approximation is worse than nothing: appending the Model's extras at
-    # the end puts CMDTC after CMSTDTC and reports a false violation.
-    #
-    # The gap is real: the IG's CM list genuinely has no CMDTC/CMDY (41
-    # variables, verified in the cache) - those come from the Model's
-    # generic --DTC/--DY and belong mid-list. Implementing this means
-    # porting that merge faithfully, including its ordering.
-    get_column_order_from_library = NULL,
+    # The standard's expected variable order - see standard_variable_order(),
+    # which merges the IG's per-domain list into the Model's skeleton
+    # positionally rather than reading either alone.
+    get_column_order_from_library = {
+      order_names <- standard_variable_order(study, current_domain, current_dataset)
+      if (length(order_names) == 0) NULL else scalar_binding(order_names)
+    },
     # The SDTM MODEL's variables for this domain's class, filtered by a
     # metadata key (e.g. role == "Timing"). Distinct from
     # get_column_order_from_library, which reads the Implementation Guide's
