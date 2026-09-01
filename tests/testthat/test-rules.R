@@ -107,8 +107,16 @@ test_that("the bundled CDISC material ships with its required licence notice", {
   expect_match(txt, "Copyright (c) 2026 cdisc", fixed = TRUE)
   # The permission notice itself, not merely a reference to it.
   expect_match(txt, "shall be included in all", fixed = TRUE)
-  # And it must name what is actually bundled.
-  expect_match(txt, "rules.rds", fixed = TRUE)
+  # And it must name what is actually bundled - every one of it, not just a
+  # spot-check. Adding a bundled CDISC-derived file and forgetting to declare
+  # it here is a licence gap, so let that fail the suite rather than ship.
+  bundled <- basename(Sys.glob(file.path(
+    system.file("extdata", package = "coreval"), "*.rds"
+  )))
+  expect_gt(length(bundled), 0)
+  for (file in bundled) {
+    expect_match(txt, file, fixed = TRUE, info = file)
+  }
 })
 
 test_that("listing is not running: the catalog shows everything by default", {
@@ -154,4 +162,26 @@ test_that("the bundled commit rides along with the rule table", {
   rules <- list_rules()
   expect_true(nzchar(attr(rules, "rules_version")))
   expect_equal(attr(rules, "rules_version"), attr(list_rules(domain = "AE"), "rules_version"))
+})
+
+test_that("arguments that would silently check nothing are refused, naming the argument", {
+  # Each of these used to fail quietly. An unrecognised standard scoped every
+  # rule out and reported a clean bill of health on zero checks; a numeric or
+  # NA domain reached the scope matcher and errored several frames from the
+  # call; max_records aborted only after all the evaluation work was done.
+  dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1", AGE = 30)
+
+  expect_error(check_dataset(dm, standard = "NOPE"), "no bundled rule targets the standard")
+  expect_error(check_dataset(dm, standard = "NOPE"), "Available:")
+  expect_error(check_dataset(dm, standard = "SDTMIG", version = "9.9"), "version '9.9'")
+  expect_error(check_dataset(dm, version = "3.4"), "needs `standard` too")
+  expect_error(check_dataset(dm, domain = NA), "single, non-empty string")
+  expect_error(check_dataset(dm, domain = 42), "single, non-empty string")
+  expect_error(check_dataset(dm, max_records = 0), "1 or more")
+  expect_error(check_study(tempdir(), max_records = -1), "1 or more")
+
+  # Both dashed and dotted version spellings stay acceptable.
+  expect_silent(validate_check_args(standard = "SDTMIG", version = "3.4"))
+  expect_silent(validate_check_args(standard = "SDTMIG", version = "3-4"))
+  expect_silent(validate_check_args(standard = "sdtmig"))
 })

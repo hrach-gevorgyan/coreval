@@ -14,8 +14,11 @@
 #'
 #' @param path Directory path.
 #' @return A study object: `list(datasets = <named list of domain ->
-#'   list(data, meta, label)>, define = NULL, ct = NULL, standard =
-#'   list(product, version))`. Each `data` is a [data.table::data.table()];
+#'   list(data, meta, label)>, define, ct = NULL, standard =
+#'   list(product, version))`. `define` is the parsed Define-XML if one was
+#'   found in `path` and the `xml2` package is installed, and `NULL`
+#'   otherwise; `ct` is always `NULL` (controlled terminology is not
+#'   bundled). Each `data` is a [data.table::data.table()];
 #'   each `meta` is a data.table with columns `variable`, `label`, `type`;
 #'   `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
 #'   unavailable. `standard` is the study's declared standard/version (e.g.
@@ -30,6 +33,16 @@
 #' unlink(dir, recursive = TRUE)
 #' @export
 read_study <- function(path) {
+  # A missing folder used to read as an empty study, and an empty study checks
+  # clean - so a typo in the path reported the data as fine. check_study()
+  # already refuses a path it cannot find; read_study() must not be laxer than
+  # its sibling.
+  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+    stop("`path` must be a single folder path.", call. = FALSE)
+  }
+  if (!dir.exists(path)) {
+    stop("no such folder: ", path, call. = FALSE)
+  }
   if (file.exists(file.path(path, "_variables.csv"))) {
     read_study_test_case(path)
   } else {

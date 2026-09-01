@@ -237,3 +237,29 @@ test_that("progress reporting is off by default in scripts and never changes the
   expect_identical(quiet$findings, noisy$findings)
   expect_identical(quiet$skipped, noisy$skipped)
 })
+
+test_that("check_study() refuses anything that is not a study, instead of reporting it clean", {
+  # The worst possible failure for this package: a wrong argument used to sail
+  # through to run_checks(), where names(study$datasets) is NULL, nothing ran,
+  # and the result printed "Nothing to fix in the 0 checks that ran." A data
+  # frame passed by mistake, or a NULL from an earlier failed step, was
+  # reported as clean data.
+  expect_error(check_study(NULL), "must be a folder path")
+  expect_error(check_study(list(a = 1)), "must be a folder path")
+  expect_error(check_study(data.frame(a = 1)), "check_dataset")
+  expect_error(check_study(c("a", "b")), "one folder path")
+
+  empty <- tempfile("coreval_empty_")
+  dir.create(empty)
+  on.exit(unlink(empty, recursive = TRUE), add = TRUE)
+  expect_error(check_study(empty), "no datasets in it")
+})
+
+test_that("read_study() errors on a missing folder rather than returning an empty study", {
+  # An empty study checks clean, so a typo in the path read as "your data is
+  # fine". check_study() already refused an unfindable path; read_study() was
+  # laxer than its sibling.
+  expect_error(read_study(file.path(tempdir(), "coreval_no_such_folder")), "no such folder")
+  expect_error(read_study(NULL), "single folder path")
+  expect_error(read_study(c("a", "b")), "single folder path")
+})

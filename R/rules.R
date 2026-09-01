@@ -164,3 +164,69 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   data.table::setattr(out, "rules_version", rules_version())
   out
 }
+
+#' Reject arguments that would silently make a check do nothing
+#'
+#' Every one of these used to fail quietly rather than loudly. An unrecognised
+#' `standard` scoped every rule out and reported a clean bill of health on zero
+#' checks; a `domain` given as a number or `NA` reached the scope matcher and
+#' produced an internal error several frames from the call; an out-of-range
+#' `max_records` aborted only at the end, after all the evaluation work, with a
+#' message that named none of the arguments. Checking here means the caller is
+#' told which argument is wrong, before anything runs.
+#'
+#' @param standard,version,domain,max_records The user-supplied arguments.
+#' @return `invisible(NULL)`; raises an error naming the offending argument.
+#' @noRd
+validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
+                                max_records = NULL) {
+  one_string <- function(x, arg) {
+    if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(x)) {
+      stop("`", arg, "` must be a single, non-empty string.", call. = FALSE)
+    }
+  }
+  if (!is.null(domain)) {
+    one_string(domain, "domain")
+  }
+  if (!is.null(max_records)) {
+    if (!is.numeric(max_records) || length(max_records) != 1L ||
+      is.na(max_records) || max_records < 1) {
+      stop("`max_records` must be a single number of 1 or more.", call. = FALSE)
+    }
+  }
+  if (is.null(standard) && is.null(version)) {
+    return(invisible(NULL))
+  }
+
+  pairs <- unlist(lapply(.coreval_env$data$rules, function(r) r$standard_versions))
+  products <- sort(unique(sub("[[:space:]].*$", "", pairs)))
+  if (!is.null(standard)) {
+    one_string(standard, "standard")
+    if (!(toupper(standard) %in% toupper(products))) {
+      stop(
+        "no bundled rule targets the standard '", standard, "'. Available: ",
+        paste(products, collapse = ", "), ".",
+        call. = FALSE
+      )
+    }
+  }
+  if (!is.null(version)) {
+    one_string(version, "version")
+    if (is.null(standard)) {
+      stop("`version` needs `standard` too - a version alone is ambiguous.", call. = FALSE)
+    }
+    # Versions are dashed in the bundled data ("3-4") and usually typed with
+    # dots ("3.4"); both forms are accepted everywhere else, so compare both.
+    prefix <- paste0(toupper(standard), " ")
+    have <- sub(prefix, "", grep(prefix, toupper(pairs), value = TRUE), fixed = TRUE)
+    want <- c(toupper(version), gsub("-", ".", toupper(version), fixed = TRUE))
+    if (!any(want %in% gsub("-", ".", have, fixed = TRUE))) {
+      stop(
+        "no bundled ", standard, " rule targets version '", version, "'. Available: ",
+        paste(sort(unique(have)), collapse = ", "), ".",
+        call. = FALSE
+      )
+    }
+  }
+  invisible(NULL)
+}

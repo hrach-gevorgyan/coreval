@@ -338,7 +338,6 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   * `truncated` - rules that flagged more records than `max_records` kept,
 #'     with how many they really found.
 #' @examples
-#' \donttest{
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)
 #' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
@@ -346,10 +345,10 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' result <- check_study(dir)
 #' result$findings
 #' unlink(dir, recursive = TRUE)
-#' }
 #' @export
 check_study <- function(study, use_case = NULL, max_records = 1000,
                         include_deprecated = FALSE) {
+  validate_check_args(max_records = max_records)
   # Take the folder directly. Requiring read_study() first made people call
   # two functions to do one thing, for no benefit in the common case.
   if (is.character(study)) {
@@ -364,6 +363,26 @@ check_study <- function(study, use_case = NULL, max_records = 1000,
       )
     }
     study <- read_study(study)
+  }
+  # Anything that is not a study object went straight through to run_checks(),
+  # where `names(study$datasets)` is NULL, nothing runs, and the result prints
+  # "Nothing to fix in the 0 checks that ran." A data frame passed by mistake
+  # (check_dataset()'s argument, not this one), or a NULL left by an earlier
+  # failed step, was therefore reported as clean data. That is the one thing
+  # this package must never do.
+  if (!is.list(study) || is.null(study$datasets)) {
+    stop(
+      "`study` must be a folder path, or a study object from read_study(). ",
+      "To check a single dataset or data frame, use check_dataset().",
+      call. = FALSE
+    )
+  }
+  if (length(study$datasets) == 0) {
+    stop(
+      "this study has no datasets in it - nothing could be checked. ",
+      "Check the folder holds .xpt/.sas7bdat/.csv files.",
+      call. = FALSE
+    )
   }
   run_checks(
     study,
@@ -487,22 +506,16 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         }
         study_level_done <- c(study_level_done, rule_id)
       }
-      outcome <- tryCatch(
-        {
-          # Same guards evaluate_rule() applies - this path builds and
-          # evaluates inline rather than calling it, so refusing a rule
-          # whose define.xml or CDISC Library inputs are unavailable has
-          # to happen here too, or it fabricates findings instead.
-          assert_rule_inputs_available(rule, study)
-          dataset <- prepare_dataset_for_rule(rule, study, domain)
-          assert_referenced_metadata_available(rule, dataset)
-          bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
-          violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
-          violations[is.na(violations)] <- FALSE
-          list(dataset = dataset, violations = violations, bindings = bindings)
-        },
-        error = function(e) e
-      )
+      # The SAME evaluation path evaluate_rule() takes - guards, dataset
+      # construction, Operations bindings and all. This used to be an inline
+      # copy, and it had already drifted: it never resolved an undeclared
+      # study standard from the rule, so a SEND rule run from check_dataset()
+      # or check_study() was judged against SDTM Library metadata while the
+      # same rule run through evaluate_rule() was not. Everything the test
+      # suite and the conformance harness verify goes through
+      # run_rule_on_domain(), so this must too, or they prove nothing about
+      # what a user actually runs.
+      outcome <- tryCatch(run_rule_on_domain(rule, study, domain), error = function(e) e)
       if (inherits(outcome, "error")) {
         all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
           rule_id = rule_id, domain = domain,

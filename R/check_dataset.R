@@ -249,6 +249,7 @@ infer_domain <- function(dataset, path = NULL) {
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
                           use_case = NULL, max_records = 1000,
                           include_deprecated = FALSE) {
+  validate_check_args(standard, version, domain, max_records)
   path <- NULL
   if (is.character(x)) {
     if (length(x) != 1) {

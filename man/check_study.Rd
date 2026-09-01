@@ -64,7 +64,6 @@ problems that do not exist. The same goes for any rule needing an operator or
 join coreval does not implement yet.
 }
 \examples{
-\donttest{
 dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
@@ -72,5 +71,4 @@ haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(d
 result <- check_study(dir)
 result$findings
 unlink(dir, recursive = TRUE)
-}
 }
