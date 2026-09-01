@@ -461,12 +461,39 @@ looks exactly like a check that works.
 
 | | rules | |
 |---|---|---|
-| **In coreval** | **797** | Every rule that is (a) in a data format this can read and (b) has an answer sheet |
+| **In coreval** | **797** | everything in a data format this can read, where CDISC gave an answer sheet — plus 30 that came along inside those folders without one |
 | Written for a different kind of data | 259 | USDM — study *design* documents in JSON, not the row-and-column datasets this reads. Not a gap; a different tool's job. |
-| No answer sheet | 292 | Includes all **93 ADaM** rules. CDISC ships example data for every one of them and an answer sheet for none. |
+| No answer sheet | 292 | includes all **93 ADaM** rules. CDISC ships example data for every one of them and an answer sheet for none. |
 
-That's the whole picture. Of the rules that are both readable and verifiable,
-coreval has **767 of 767**.
+Of the rules that are both readable and have an answer sheet, coreval has
+**767 of 767**.
+
+### How many of the 797 are actually proven
+
+| | |
+|---|---|
+| **677 confirmed** | run against CDISC's example, flagged exactly the rows the answer sheet says |
+| 70 disagree | we flag different rows than CDISC does — see below |
+| 50 not checked | 30 have no answer sheet at all; 13 need CDISC's terminology lists; 7 are gaps on my side |
+
+**677 of the 767 verifiable rules — 88%.**
+
+The 30 without an answer sheet are honest about it: they're reported as
+skipped, by name, every time you run. They are never counted as passing.
+
+### The 70 that disagree
+
+This is where the real work is, and I won't dress it up: for 70 rules, coreval
+flags different rows than CDISC's answer sheet says it should.
+
+Some are bugs on my side. Others are cases where CDISC's own example data
+contradicts itself — a file whose stated answer doesn't match its own rows,
+usually because the data was edited after the answers were generated. Each one
+is investigated individually and written down rather than quietly ignored.
+
+Either way, the honest reading is: **treat a finding from those rules with more
+suspicion than the rest.** That's why every finding carries its rule id — so
+you can look it up.
 
 ### The ADaM question, since people ask
 
@@ -486,10 +513,6 @@ Three honest problems, none of them hidden from you at runtime:
   package would make a 0.6 MB install into a very large one, so it belongs in a
   separate package. Those rules are reported as skipped, by name, with the
   reason.
-- **25 published rules disagree with CDISC's answer sheet.** Some are genuine
-  bugs on my side; several are cases where CDISC's example data contradicts
-  itself. Each one is investigated and written down rather than quietly
-  ignored.
 - **The agreement percentage is a floor, not a score.** CDISC's examples are
   small and tidy. Real submissions are neither. Three separate bugs found in
   this package moved that percentage by exactly zero.

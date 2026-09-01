@@ -88,7 +88,36 @@ send_extension_domains <- data.frame(
 )
 domain_classes <- rbind(domain_classes, send_extension_domains)
 
-stopifnot(length(domain_classes$domain) == 82, !anyDuplicated(domain_classes$domain))
+# TIG (Tobacco Implementation Guide) domains, from the same bundled cache as
+# everything above: standards_details.pkl, keys "standards/tig/1-0/sdtm" and
+# "standards/tig/1-0/send". Class names normalised the same way ("Special-
+# Purpose" -> "SPECIAL PURPOSE").
+#
+# This file's header used to claim it covered TIG. It did not. Of TIG's 55
+# domains, 42 happen to be shared with SDTM/SEND and resolved by accident;
+# these 13 are TIG-only and resolved to NA, so `Scope > Classes` failed for
+# every rule scoped to one. That silently SKIPPED 29 rules whose test data was
+# sitting right there with the correct domain in it - the conformance harness
+# reported "no dataset in this test case matches the rule's scope" while the
+# dataset it wanted was the only one present.
+#
+# Checked against the 42 shared domains before adding: TIG agrees with every
+# class already in this table, no conflicts.
+tig_domains <- data.frame(
+  domain = c(
+    "DI", "DO", "DU", "EM", "ES", "GT", "IN",
+    "IQ", "IT", "PD", "PT", "RELREF", "TO"
+  ),
+  class = c(
+    "STUDY REFERENCE", "FINDINGS", "FINDINGS", "EVENTS", "STUDY REFERENCE",
+    "FINDINGS", "SPECIAL PURPOSE", "SPECIAL PURPOSE", "SPECIAL PURPOSE",
+    "SPECIAL PURPOSE", "FINDINGS", "RELATIONSHIP", "STUDY REFERENCE"
+  ),
+  stringsAsFactors = FALSE
+)
+domain_classes <- rbind(domain_classes, tig_domains)
+
+stopifnot(length(domain_classes$domain) == 95, !anyDuplicated(domain_classes$domain))
 
 dir.create(file.path("inst", "extdata"), recursive = TRUE, showWarnings = FALSE)
 saveRDS(domain_classes, file.path("inst", "extdata", "sdtm_domain_classes.rds"))

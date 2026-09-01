@@ -189,6 +189,14 @@ qualified validation tool, never instead of it.
   have no expected results either.
 * Two new operators, `contains_case_insensitive` and
   `does_not_contain_case_insensitive`.
+* **13 TIG domains added to the domain-to-class table.** It claimed to cover
+  TIG and did not: 42 of TIG's 55 domains happen to be shared with SDTM/SEND
+  and resolved by accident, while `TO`, `PT`, `IN`, `RELREF` and nine others
+  resolved to nothing. Every rule scoped to one failed its `Scope > Classes`
+  check and was skipped as "no dataset matches the rule's scope" - with the
+  right dataset sitting in the test case. Taken from the same CDISC cache as
+  the rest of the table, and checked against the 42 shared domains first: no
+  conflicts.
 
 ## What's covered
 

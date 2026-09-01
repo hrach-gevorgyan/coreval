@@ -80,8 +80,19 @@ test_that("rules_for_domain matches SUPPxx domains via the RELATIONSHIP class", 
 test_that("the bundled domain-to-class reference table resolves Scope > Classes", {
   tbl <- sdtm_domain_classes()
   expect_s3_class(tbl, "data.table")
-  expect_true(nrow(tbl) == 82) # 63 SDTMIG 3.4 + 10 base-SEND + 9 SEND extension-standard additions
+  # 63 SDTMIG 3.4 + 10 base-SEND + 9 SEND extension + 13 TIG-only
+  expect_true(nrow(tbl) == 95)
   expect_true(all(c("domain", "class") %in% names(tbl)))
+
+  # The TIG-only domains are the point of the last block: without them,
+  # `Scope > Classes` returned NA for every TIG-scoped rule and 29 rules were
+  # skipped as "no dataset matches the rule's scope" while their test data sat
+  # right there. A count alone would not have caught that, so name a few.
+  expect_equal(domain_class("TO"), "STUDY REFERENCE")
+  expect_equal(domain_class("PT"), "FINDINGS")
+  expect_equal(domain_class("IN"), "SPECIAL PURPOSE")
+  expect_equal(domain_class("RELREF"), "RELATIONSHIP")
+  expect_false(any(is.na(tbl$class)))
 })
 
 test_that("dataset_is_split distinguishes a split file from an ordinary or AP dataset", {
