@@ -268,12 +268,15 @@ result's name.
 **Nothing leaves your machine.** No internet, no API key, no account. The rules
 and the standards metadata are bundled inside the package.
 
-**Think of the accuracy number as a floor.** coreval agrees with CDISC's own
-reference results on about 95% of the published rules that ship reference data.
-But that reference data is mostly small, single-file datasets, so it doesn't
-exercise much of what real submissions do. Agreement is a lower bound on
-correctness, not a quality score — which is why the advice stays the same: run
-your qualified tool before you submit.
+**Think of the accuracy number as a floor.** For most rules CDISC publishes an
+answer sheet: some example data, and the exact rows a correct implementation
+should flag. Every rule here is run against those examples and compared row by
+row, and coreval agrees on about 95% of the fully published ones.
+
+But those examples are small and tidy, and real submissions are neither, so
+agreement is a lower bound on correctness rather than a score. The README says
+where the remaining gaps are. The advice stays the same either way: run your
+qualified tool before you submit.
 
 ```{r cleanup, include = FALSE}
 unlink(dir, recursive = TRUE)

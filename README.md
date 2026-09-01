@@ -434,21 +434,81 @@ nrow(unique(result$findings[, c("Dataset", "Record")]))
 
 ---
 
-## What's covered
+## What's covered, and what isn't
 
-797 rules for **SDTM**, **SEND** and **TIG**, bundled inside the package as
-data. Nothing is downloaded — no internet, no API key, no account, and your
-trial data never leaves your machine.
+CDISC publishes its rules in the open. Their repository has **1,348 rules** in
+it. coreval ships **797**. Here's exactly where the other 551 went, and why.
 
-**ADaM isn't in yet, and that's not my choice.** CDISC publishes 197 ADaM rules,
-but not one of them ships with reference results — there's no published expected
-output to check an implementation against. Including them would mean asking you
-to trust checks nobody has verified. The day CDISC publishes that reference data,
-they go in.
+### First, how anyone knows a rule works
 
-Not every rule carries the same weight; `list_rules()` has a `source` column
-telling you whether a rule is published, deprecated or draft. See
-[NOTICE.md](NOTICE.md).
+For most rules, CDISC publishes three things: the rule itself, some example
+data, and **an answer sheet** — a file saying which exact rows a correct
+implementation should flag in that example.
+
+That answer sheet is everything. It's how I prove my version of a rule does
+what CDISC's does, instead of just believing it. Every rule in coreval is run
+against CDISC's own examples and compared row by row.
+
+**Some rules ship without one.** CDISC publishes the rule, sometimes even the
+example data, but never says what the right answer is. I can implement such a
+rule, and it will produce findings, and neither of us will have any way to know
+whether they're correct.
+
+I don't ship those. A check you can't verify is worse than no check, because it
+looks exactly like a check that works.
+
+### Where the 1,348 rules go
+
+| | rules | |
+|---|---|---|
+| **In coreval** | **797** | Every rule that is (a) in a data format this can read and (b) has an answer sheet |
+| Written for a different kind of data | 259 | USDM — study *design* documents in JSON, not the row-and-column datasets this reads. Not a gap; a different tool's job. |
+| No answer sheet | 292 | Includes all **93 ADaM** rules. CDISC ships example data for every one of them and an answer sheet for none. |
+
+That's the whole picture. Of the rules that are both readable and verifiable,
+coreval has **767 of 767**.
+
+### The ADaM question, since people ask
+
+**ADaM isn't missing because I skipped it.** All 93 ADaM rules come with example
+data and zero answer sheets. Including them would mean shipping 93 checks that
+nobody — me, you, or CDISC — can confirm are right.
+
+The day CDISC publishes answer sheets for them, they go in. Nothing else has to
+change.
+
+### Where it's genuinely weak
+
+Three honest problems, none of them hidden from you at runtime:
+
+- **A few rules need CDISC's terminology lists** — the controlled vocabularies
+  saying which codes are valid. That data is around 438 MB. Putting it in this
+  package would make a 0.6 MB install into a very large one, so it belongs in a
+  separate package. Those rules are reported as skipped, by name, with the
+  reason.
+- **25 published rules disagree with CDISC's answer sheet.** Some are genuine
+  bugs on my side; several are cases where CDISC's example data contradicts
+  itself. Each one is investigated and written down rather than quietly
+  ignored.
+- **The agreement percentage is a floor, not a score.** CDISC's examples are
+  small and tidy. Real submissions are neither. Three separate bugs found in
+  this package moved that percentage by exactly zero.
+
+### Keeping up with CDISC
+
+The rules are pinned to one exact commit of CDISC's repository — recorded in
+the package, visible with `attr(list_rules(), "rules_version")`, and written
+into every file `write_findings()` saves. So a result is always traceable to
+the precise rule set that produced it.
+
+Updating is deliberate, not automatic: a maintainer tool
+(`data-raw/check_upstream.R`) reports when CDISC's repository has moved, and
+re-pinning means re-extracting and re-running every rule against every example
+again. That way a new version can't silently change your results, and any rule
+that breaks shows up before release rather than in your data.
+
+Not every rule carries the same weight either — `list_rules()` has a `source`
+column saying whether a rule is fully published, superseded, or still a draft.
 
 ## How accurate is it?
 
