@@ -64,8 +64,15 @@ scalar_binding <- function(value) list(kind = "scalar", value = value)
 #' @param value_col Name of the aggregate value column in `table`.
 #' @return A binding list with `kind = "grouped"`.
 #' @noRd
-grouped_binding <- function(group_cols, table, value_col) {
-  list(kind = "grouped", group_cols = group_cols, table = table, value_col = value_col)
+grouped_binding <- function(group_cols, table, value_col, regex = NULL) {
+  list(
+    kind = "grouped", group_cols = group_cols, table = table,
+    value_col = value_col,
+    # Carried so resolve_binding() can key each row the SAME way the table
+    # was grouped. A regex-grouped table holds reduced values (a date, not a
+    # full datetime), so keying rows off their raw values would match nothing.
+    regex = regex
+  )
 }
 
 #' Construct a per-row Operations binding (already one value per row of the current dataset)
@@ -154,15 +161,25 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   # SCALAR date wrappers, so the date regex was re-run twice for every row of
   # every domain for every rule needing --DY. It was 84% of a whole
   # check_study().
+  # Study day is defined on the DATE portion of each timestamp, not the
+  # instant: "--DY = (date portion of --DTC) - (date portion of RFSTDTC) + 1".
+  # Keeping the time made difftime return fractions, so a row whose --DY was
+  # perfectly correct compared unequal and got flagged. With an RFSTDTC of
+  # 2012-11-30T20:00, a --DTC of 2012-11-23 gave -7.83 against a stored -7,
+  # and same-day 2012-11-30T13:00 gave -0.29 against a stored 1. Any study
+  # whose RFSTDTC carries a time would see nearly every --DY reported.
+  target_dates <- sub("T.*$", "", target_vals)
+  rf_dates <- sub("T.*$", "", rf)
+
   usable <- !is.na(rf) & nzchar(rf) & !is.na(target_vals) & nzchar(target_vals)
   day <- rep(NA_real_, n)
   if (any(usable)) {
     idx <- which(usable)
-    ok <- is_valid_date_str(target_vals[idx]) & is_valid_date_str(rf[idx])
+    ok <- is_valid_date_str(target_dates[idx]) & is_valid_date_str(rf_dates[idx])
     idx <- idx[ok]
     if (length(idx) > 0) {
       delta <- as.numeric(difftime(
-        parse_date(target_vals[idx]), parse_date(rf[idx]),
+        parse_date(target_dates[idx]), parse_date(rf_dates[idx]),
         units = "days"
       ))
       # Study day has no zero: the day before the reference date is -1, the
@@ -536,6 +553,12 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         if (length(group_cols) == 0) {
           return(NULL)
         }
+        # An Operations `regex` means "group on this much of the value" -
+        # see apply_grouping_regex(). It has to be applied to BOTH sides,
+        # and to the data the binding is later resolved against, or the
+        # join back onto each row finds no matching group.
+        dt <- apply_grouping_regex(dt, group_cols, op$regex)
+        filtered <- apply_grouping_regex(filtered, group_cols, op$regex)
         # A filter can leave a group with zero matching rows - it must
         # still resolve to 0, not "no binding for this group." Build the
         # group set from the FULL (unfiltered) data, then left-join the
@@ -544,7 +567,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         filtered_counts <- filtered[, list(.value = .N), by = group_cols]
         agg <- merge(all_groups, filtered_counts, by = group_cols, all.x = TRUE)
         agg$.value[is.na(agg$.value)] <- 0
-        grouped_binding(group_cols, agg, ".value")
+        grouped_binding(group_cols, agg, ".value", regex = op$regex)
       }
     },
     max_date = ,
@@ -623,7 +646,32 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       }, logical(1)))
       scalar_binding(count)
     },
-    study_domains = scalar_binding(sort(names(study$datasets))),
+    # The DOMAIN VALUES a study actually contains, not its dataset NAMES.
+    # The reference (operations/study_domains.py) is
+    # `list({(dataset.domain or "") for dataset in get_datasets()})`, where
+    # SDTMDatasetMetadata.domain is `(first_record or {}).get("DOMAIN", None)`
+    # - the DOMAIN column of each dataset's FIRST RECORD, and `""` when the
+    # dataset has no DOMAIN column at all (every SUPP--/SQ-- dataset, and any
+    # file whose header is unreadable).
+    #
+    # The distinction decides CORE-000457 ("SUPP--.RDOMAIN must name a dataset
+    # present in the study"): its positive fixture ships an `ec.csv` with a
+    # blank header row, so the reference sees no EC domain and flags
+    # SUPPEC.RDOMAIN="EC", while a name-based set contains "EC" and reports
+    # nothing. The empty string is deliberately kept in the set, so a
+    # domainless dataset makes an RDOMAIN of "" compare as present.
+    study_domains = scalar_binding(sort(unique(vapply(
+      study$datasets,
+      function(d) {
+        dom <- d$data[["DOMAIN"]]
+        if (is.null(dom) || length(dom) == 0) {
+          return("")
+        }
+        first <- trimws(as.character(dom[1]))
+        if (is.na(first)) "" else first
+      },
+      character(1)
+    )))),
     # Matches the reference engine's own derivation (csv_metadata_reader.py:
     # dataset_name = Filename.upper() when there's no separate "Dataset
     # Name" column) - confirmed directly against CORE-000539/CORE-000540's
@@ -656,9 +704,32 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         # Some classes (Special-Purpose, Relationship, Trial Design, Study
         # Reference) have NO generic class-level variable list in the Model
         # at all - each domain in them (DM, RELREC, TA, TI, ...) defines its
-        # own bespoke variables instead. An empty `allowed` set would make
-        # "is_not_contained_by" trivially flag every single variable as
-        # disallowed, which is wrong - NULL (unresolvable) is honest instead.
+        # own bespoke variables instead. Ask the Model for THAT domain's own
+        # variables, which is where the reference engine reads them from too.
+        # Returning NULL here instead (as this did until
+        # sdtm_model_dataset_variables.rds existed) made the rule unresolvable
+        # and silently found nothing on DM - CORE-000550's invalid ARMCDXX
+        # went unreported.
+        if (length(allowed) == 0) {
+          dsv <- .coreval_env$model_dataset_variables
+          allowed <- dsv$variable[dsv$domain == current_domain]
+        }
+        # An Associated Persons dataset carries its observation class's
+        # variables PLUS the ones that make it an AP dataset in the first
+        # place (APID, RSUBJID, SREL), which the Model keeps in a class of
+        # their own. Without them APEG's own defining variables look
+        # disallowed - coreval flagged all three and missed the one variable
+        # (XEGBEATNO) that really is not in the Model.
+        if (startsWith(current_domain, "AP") && nchar(current_domain) > 2 &&
+          !startsWith(current_domain, "APID")) {
+          allowed <- c(allowed, .coreval_env$model_variables$variable[
+            model_class == normalize_class("Associated Persons")
+          ])
+        }
+        # Still nothing (a domain the Model does not describe at either
+        # level): an empty `allowed` set would make "is_not_contained_by"
+        # trivially flag every single variable as disallowed, which is wrong
+        # - NULL (unresolvable) is honest instead.
         if (length(allowed) == 0) {
           NULL
         } else {
@@ -735,7 +806,9 @@ resolve_binding <- function(binding, dataset) {
   # multi-column keys with no separator at all collides across column
   # boundaries (e.g. ("1","23") and ("12","3") would both key to "123").
   key_of <- function(dt) do.call(paste, c(lapply(group_cols, function(c) dt[[c]]), sep = "\x1f"))
-  row_keys <- key_of(dataset$data)
+  row_keys <- key_of(apply_grouping_regex(
+    dataset$data[, group_cols, with = FALSE], group_cols, binding$regex
+  ))
   table_keys <- key_of(binding$table)
   idx <- match(row_keys, table_keys)
   values <- binding$table[[binding$value_col]]

@@ -132,7 +132,17 @@ read_define_xml <- function(path) {
   if (!define_xml_available() || is.null(path) || !file.exists(path)) {
     return(NULL)
   }
-  doc <- tryCatch(xml2::read_xml(path), error = function(e) NULL)
+  # Read the bytes first and parse from memory. xml2::read_xml(<path>) hands
+  # libxml2 the filename and lets it open the file itself, and on a parse
+  # error that descriptor is not released - a malformed define.xml therefore
+  # left an open handle behind, which on Windows keeps the file locked and
+  # makes a later unlink() of the study folder fail. Reading first means R
+  # owns and closes the connection whatever the parser then does.
+  raw <- tryCatch(readBin(path, "raw", file.size(path)), error = function(e) NULL)
+  if (is.null(raw)) {
+    return(NULL)
+  }
+  doc <- tryCatch(xml2::read_xml(raw), error = function(e) NULL)
   if (is.null(doc)) {
     return(NULL)
   }
@@ -167,7 +177,27 @@ read_define_xml <- function(path) {
     define_variable_label = xml_translated_text(items),
     define_variable_data_type = xml2::xml_attr(items, "DataType"),
     define_variable_length = suppressWarnings(as.integer(xml2::xml_attr(items, "Length"))),
+    # def:Origin says where a variable's values came from. "Was it collected
+    # on the CRF" is spelled differently in the two Define-XML versions -
+    # 2.1 uses Origin Type "Collected", 2.0 uses "CRF" - and the reference
+    # engine keeps a separate reader per version for exactly this. Both
+    # spellings are accepted here instead, in the same spirit as this file's
+    # namespace stripping: no version uses both, and the remaining Origin
+    # types (Derived, Assigned, Protocol, Predecessor, eDT) are shared, so
+    # the union is unambiguous. NA where a variable declares no Origin at
+    # all, which is not the same as declaring a non-collected one.
+    # Matched by local-name(): `def:Origin` keeps its namespace for XPath
+    # purposes even after xml_ns_strip(), so a plain "./Origin" finds
+    # nothing. The unprefixed ODM elements (./ItemRef above) are unaffected.
+    define_variable_origin_type = xml2::xml_attr(
+      xml2::xml_find_first(items, "./*[local-name()='Origin']"), "Type"
+    ),
     stringsAsFactors = FALSE
+  )
+  item_defs$define_variable_is_collected <- ifelse(
+    is.na(item_defs$define_variable_origin_type),
+    NA,
+    item_defs$define_variable_origin_type %in% c("Collected", "CRF")
   )
 
   refs <- lapply(seq_along(groups), function(i) {

@@ -72,6 +72,14 @@ any_value_match <- function(target, values, match_fn) {
 # Operator: contains - target contains any of value (substring for a plain
 # string target, exact set membership for a `distinct`-Operation SET target)
 register_operator("contains", guarded_op(function(ctx) {
+  # A whole-dataset collection (a `distinct` Operation) is one set, so the
+  # question has one answer for every row. CDISC.SENDIG-DART.SEND399 asks
+  # whether TS's distinct TSPARMCD values contain "SNDIGVER"; comparing the
+  # collection elementwise against the rows instead flagged every record of
+  # every case, including the one where SNDIGVER is plainly there.
+  if (isTRUE(ctx$target_is_collection)) {
+    return(rep(any(as.character(ctx$value) %in% as.character(ctx$target)), ctx$n))
+  }
   if (is.list(ctx$target)) {
     return(vapply(ctx$target, function(t) any(ctx$value %in% t), logical(1)))
   }
@@ -89,6 +97,12 @@ register_operator("does_not_contain", function(ctx) {
 # list containing "PLANFSUBxxx" still does not contain "PLANFSUB", case
 # regardless.
 register_operator("contains_case_insensitive", guarded_op(function(ctx) {
+  if (isTRUE(ctx$target_is_collection)) {
+    return(rep(
+      any(toupper(as.character(ctx$value)) %in% toupper(as.character(ctx$target))),
+      ctx$n
+    ))
+  }
   if (is.list(ctx$target)) {
     value <- toupper(as.character(ctx$value))
     return(vapply(ctx$target, function(t) any(value %in% toupper(as.character(t))), logical(1)))

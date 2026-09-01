@@ -1,4 +1,10 @@
-"""Dump SDTM Model class-variable metadata to CSV for data-raw/model_variables.R.
+"""Dump SDTM Model variable metadata to CSV for data-raw/model_variables.R.
+
+Writes two files. The class-level one (model_variables.csv) is the Model's
+per-observation-class variable list. The dataset-level one
+(model_dataset_variables.csv) is the Model's per-DATASET variable list, which
+exists for exactly the classes that have no class-level list at all (Special-
+Purpose, Relationship, Trial Design, Study Reference - DM, RELREC, TA, TS, ...).
 
 Reads the offline, MIT-licensed cache that cdisc-org/cdisc-rules-engine
 commits directly to git (resources/cache/standards_models.pkl). No CDISC API
@@ -20,6 +26,7 @@ CACHE = os.path.join(
     "resources", "cache", "standards_models.pkl",
 )
 OUT = os.path.join("data-raw", "model_variables.csv")
+OUT_DATASETS = os.path.join("data-raw", "model_dataset_variables.csv")
 
 # The newest SDTM Model, used as a superset. A variable's class membership
 # and datatype are stable across Model versions in a way per-IG variable
@@ -70,6 +77,32 @@ def main():
     templated = sum(1 for r in rows if r["variable"].startswith("--"))
     print("wrote %s: %d rows (%d '--' templates)" % (OUT, len(rows), templated))
     print("classes: %s" % ", ".join(classes))
+
+    dataset_rows = []
+    for dataset in model.get("datasets") or []:
+        domain = dataset.get("name", "")
+        for var in dataset.get("datasetVariables") or []:
+            dataset_rows.append({
+                "domain": domain,
+                "variable": var.get("name", ""),
+                "label": var.get("label", "") or "",
+                "role": var.get("role", "") or "",
+                "type": var.get("simpleDatatype", "") or "",
+                "ordinal": var.get("ordinal", "") or "",
+            })
+    dataset_rows = [r for r in dataset_rows if r["domain"] and r["variable"]]
+
+    with open(OUT_DATASETS, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(
+            fh, fieldnames=["domain", "variable", "label", "role", "type", "ordinal"]
+        )
+        writer.writeheader()
+        writer.writerows(dataset_rows)
+
+    domains = sorted({r["domain"] for r in dataset_rows})
+    print("wrote %s: %d rows across %d datasets"
+          % (OUT_DATASETS, len(dataset_rows), len(domains)))
+    print("datasets: %s" % ", ".join(domains))
 
 
 if __name__ == "__main__":

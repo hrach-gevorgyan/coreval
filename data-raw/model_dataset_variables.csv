@@ -1,0 +1,266 @@
+domain,variable,label,role,type,ordinal
+DM,STUDYID,Study Identifier,Identifier,Char,1
+DM,DOMAIN,Domain Abbreviation,Identifier,Char,2
+DM,USUBJID,Unique Subject Identifier,Identifier,Char,3
+DM,SUBJID,Subject Identifier for the Study,Topic,Char,4
+DM,RFSTDTC,Subject Reference Start Date/Time,Record Qualifier,Char,5
+DM,RFENDTC,Subject Reference End Date/Time,Record Qualifier,Char,6
+DM,RFXSTDTC,Date/Time of First Study Exposure,Record Qualifier,Char,7
+DM,RFXENDTC,Date/Time of Last Study Exposure,Record Qualifier,Char,8
+DM,RFCSTDTC,Date/Time of First Challenge Agent Admin,Record Qualifier,Char,9
+DM,RFCENDTC,Date/Time of Last Challenge Agent Admin,Record Qualifier,Char,10
+DM,RFICDTC,Date/Time of Informed Consent,Record Qualifier,Char,11
+DM,RFPENDTC,Date/Time of End of Participation,Record Qualifier,Char,12
+DM,DTHDTC,Date/Time of Death,Record Qualifier,Char,13
+DM,DTHFL,Subject Death Flag,Record Qualifier,Char,14
+DM,SITEID,Study Site Identifier,Record Qualifier,Char,15
+DM,INVID,Investigator Identifier,Record Qualifier,Char,16
+DM,INVNAM,Investigator Name,Synonym Qualifier,Char,17
+DM,BRTHDTC,Date/Time of Birth,Record Qualifier,Char,18
+DM,AGE,Age,Record Qualifier,Num,19
+DM,AGETXT,Age Text,Record Qualifier,Char,20
+DM,AGEU,Age Units,Variable Qualifier,Char,21
+DM,SEX,Sex,Record Qualifier,Char,22
+DM,RACE,Race,Record Qualifier,Char,23
+DM,ETHNIC,Ethnicity,Record Qualifier,Char,24
+DM,SPECIES,Species,Record Qualifier,Char,25
+DM,STRAIN,Strain/Substrain,Record Qualifier,Char,26
+DM,SBSTRAIN,Strain/Substrain Details,Variable Qualifier,Char,27
+DM,ARMCD,Planned Arm Code,Record Qualifier,Char,28
+DM,ARM,Description of Planned Arm,Synonym Qualifier,Char,29
+DM,ACTARMCD,Actual Arm Code,Record Qualifier,Char,30
+DM,ACTARM,Description of Actual Arm,Synonym Qualifier,Char,31
+DM,ARMNRS,Reason Arm and/or Actual Arm is Null,Record Qualifier,Char,32
+DM,ACTARMUD,Description of Unplanned Actual Arm,Record Qualifier,Char,33
+DM,SETCD,Set Code,Record Qualifier,Char,34
+DM,RPATHCD,Planned Repro Path Code,Record Qualifier,Char,35
+DM,COUNTRY,Country,Record Qualifier,Char,36
+DM,DMDTC,Date/Time of Collection,Timing,Char,37
+DM,DMDY,Study Day of Collection,Timing,Num,38
+CO,STUDYID,Study Identifier,Identifier,Char,1
+CO,DOMAIN,Domain Abbreviation,Identifier,Char,2
+CO,RDOMAIN,Related Domain Abbreviation,Record Qualifier,Char,3
+CO,USUBJID,Unique Subject Identifier,Identifier,Char,4
+CO,POOLID,Pool Identifier,Identifier,Char,5
+CO,SPDEVID,Sponsor Device Identifier,Identifier,Char,6
+CO,COSEQ,Sequence Number,Identifier,Num,7
+CO,IDVAR,Identifying Variable,Record Qualifier,Char,8
+CO,IDVARVAL,Identifying Variable Value,Record Qualifier,Char,9
+CO,COREF,Comment Reference,Record Qualifier,Char,10
+CO,COVAL,Comment,Topic,Char,11
+CO,COEVAL,Evaluator,Record Qualifier,Char,12
+CO,COEVALID,Evaluator Identifier,Variable Qualifier,Char,13
+CO,CODTC,Date/Time of Comment,Timing,Char,14
+CO,CODY,Study Day of Comment,Timing,Num,15
+SE,STUDYID,Study Identifier,Identifier,Char,1
+SE,DOMAIN,Domain Abbreviation,Identifier,Char,2
+SE,USUBJID,Unique Subject Identifier,Identifier,Char,3
+SE,SESEQ,Sequence Number,Identifier,Num,4
+SE,ETCD,Element Code,Topic,Char,5
+SE,ELEMENT,Description of Element,Synonym Qualifier,Char,6
+SE,TAETORD,Planned Order of Element within Arm,Timing,Num,7
+SE,EPOCH,Epoch,Timing,Char,8
+SE,SESTDTC,Start Date/Time of Element,Timing,Char,9
+SE,SEENDTC,End Date/Time of Element,Timing,Char,10
+SE,SESTDY,Study Day of Start of Element,Timing,Num,11
+SE,SEENDY,Study Day of End of Element,Timing,Num,12
+SE,SEUPDES,Description of Unplanned Element,Synonym Qualifier,Char,13
+SJ,STUDYID,Study Identifier,Identifier,Char,1
+SJ,DOMAIN,Domain Abbreviation,Identifier,Char,2
+SJ,USUBJID,Unique Subject Identifier,Identifier,Char,3
+SJ,SJSEQ,Sequence Number,Identifier,Num,4
+SJ,RSTGCD,Repro Stage Code,Topic,Char,5
+SJ,RSTAGE,Description of Repro Stage,Synonym Qualifier,Char,6
+SJ,SJSTDTC,Start Date/Time of Repro Stage,Timing,Char,7
+SJ,SJENDTC,End Date/Time of Repro Stage,Timing,Char,8
+SJ,RPHASE,Repro Phase,Timing,Char,9
+SJ,SJUPDES,Description of Unplanned Repro Stage,Synonym Qualifier,Char,10
+SV,STUDYID,Study Identifier,Identifier,Char,1
+SV,DOMAIN,Domain Abbreviation,Identifier,Char,2
+SV,USUBJID,Unique Subject Identifier,Identifier,Char,3
+SV,VISITNUM,Visit Number,Topic,Num,4
+SV,VISIT,Visit Name,Synonym Qualifier,Char,5
+SV,SVPRESP,Pre-Specified,Variable Qualifier,Char,6
+SV,SVOCCUR,Occurrence,Record Qualifier,Char,7
+SV,SVREASOC,Reason for Occur Value,Record Qualifier,Char,8
+SV,SVCNTMOD,Contact Mode,Record Qualifier,Char,9
+SV,SVEPCHGI,Epi/Pandemic Related Change Indicator,Record Qualifier,Char,10
+SV,VISITDY,Planned Study Day of Visit,Timing,Num,11
+SV,SVSTDTC,Start Date/Time of Visit,Timing,Char,12
+SV,SVENDTC,End Date/Time of Visit,Timing,Char,13
+SV,SVSTDY,Study Day of Start of Visit,Timing,Num,14
+SV,SVENDY,Study Day of End of Visit,Timing,Num,15
+SV,SVUPDES,Description of Unplanned Visit,Record Qualifier,Char,16
+SM,STUDYID,Study Identifier,Identifier,Char,1
+SM,DOMAIN,Domain Abbreviation,Identifier,Char,2
+SM,USUBJID,Unique Subject Identifier,Identifier,Char,3
+SM,SMSEQ,Sequence Number,Identifier,Num,4
+SM,MIDS,Disease Milestone Instance Name,Topic,Char,5
+SM,MIDSTYPE,Disease Milestone Type,Record Qualifier,Char,6
+SM,SMSTDTC,Start Date/Time of Milestone,Timing,Char,7
+SM,SMENDTC,End Date/Time of Milestone,Timing,Char,8
+SM,SMSTDY,Study Day of Start of Milestone,Timing,Num,9
+SM,SMENDY,Study Day of End of Milestone,Timing,Num,10
+TE,STUDYID,Study Identifier,Identifier,Char,1
+TE,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TE,ETCD,Element Code,Topic,Char,3
+TE,ELEMENT,Description of Element,Synonym Qualifier,Char,4
+TE,TESTRL,Rule for Start of Element,Rule,Char,5
+TE,TEENRL,Rule for End of Element,Rule,Char,6
+TE,TEDUR,Planned Duration of Element,Timing,Char,7
+TA,STUDYID,Study Identifier,Identifier,Char,1
+TA,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TA,ARMCD,Planned Arm Code,Topic,Char,3
+TA,ARM,Description of Planned Arm,Synonym Qualifier,Char,4
+TA,TAETORD,Planned Order of Element within Arm,Timing,Num,5
+TA,ETCD,Element Code,Record Qualifier,Char,6
+TA,ELEMENT,Description of Element,Synonym Qualifier,Char,7
+TA,TABRANCH,Branch,Rule,Char,8
+TA,TATRANS,Transition Rule,Rule,Char,9
+TA,EPOCH,Epoch,Timing,Char,10
+TX,STUDYID,Study Identifier,Identifier,Char,1
+TX,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TX,SETCD,Set Code,Identifier,Char,3
+TX,SET,Set Description,Synonym Qualifier,Char,4
+TX,TXSEQ,Sequence Number,Identifier,Num,5
+TX,TXPARMCD,Trial Set Parameter Short Name,Topic,Char,6
+TX,TXPARM,Trial Set Parameter,Synonym Qualifier,Char,7
+TX,TXVAL,Trial Set Parameter Value,Result Qualifier,Char,8
+TT,STUDYID,Study Identifier,Identifier,Char,1
+TT,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TT,RSTGCD,Repro Stage Code,Topic,Char,3
+TT,RSTAGE,Description of Repro Stage,Synonym Qualifier,Char,4
+TT,TTSTRL,Rule for Start of Repro Stage,Rule,Char,5
+TT,TTENRL,Rule for End of Repro Stage,Rule,Char,6
+TT,TTDUR,Planned Duration of Repro Stage,Timing,Char,7
+TP,STUDYID,Study Identifier,Identifier,Char,1
+TP,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TP,RPATHCD,Planned Repro Path Code,Topic,Char,3
+TP,RPATH,Description of Planned Repro Path,Synonym Qualifier,Char,4
+TP,TPSTGORD,Order of Repro Stage within Repro Path,Timing,Num,5
+TP,RSTGCD,Repro Stage Code,Topic,Char,6
+TP,RSTAGE,Description of Repro Stage,Synonym Qualifier,Char,7
+TP,TPBRANCH,Branch,Rule,Char,8
+TP,RPHASE,Repro Phase,Timing,Char,9
+TP,RPRFDY,Repro Phase Start Reference Day,Timing,Num,10
+TV,STUDYID,Study Identifier,Identifier,Char,1
+TV,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TV,VISITNUM,Visit Number,Topic,Num,3
+TV,VISIT,Visit Name,Synonym Qualifier,Char,4
+TV,VISITDY,Planned Study Day of Visit,Timing,Num,5
+TV,ARMCD,Planned Arm Code,Record Qualifier,Char,6
+TV,ARM,Description of Planned Arm,Synonym Qualifier,Char,7
+TV,TVSTRL,Visit Start Rule,Rule,Char,8
+TV,TVENRL,Visit End Rule,Rule,Char,9
+TD,STUDYID,Study Identifier,Identifier,Char,1
+TD,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TD,TDORDER,Sequence of Planned Assessment Schedule,Timing,Num,3
+TD,TDANCVAR,Anchor Variable Name,Timing,Char,4
+TD,TDSTOFF,Offset from the Anchor,Timing,Char,5
+TD,TDTGTPAI,Planned Assessment Interval,Timing,Char,6
+TD,TDMINPAI,Planned Assessment Interval Minimum,Timing,Char,7
+TD,TDMAXPAI,Planned Assessment Interval Maximum,Timing,Char,8
+TD,TDNUMRPT,Maximum Number of Actual Assessments,Record Qualifier,Num,9
+TM,STUDYID,Study Identifier,Identifier,Char,1
+TM,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TM,MIDSTYPE,Disease Milestone Type,Topic,Char,3
+TM,TMDEF,Disease Milestone Definition,Variable Qualifier,Char,4
+TM,TMRPT,Disease Milestone Repetition Indicator,Record Qualifier,Char,5
+TI,STUDYID,Study Identifier,Identifier,Char,1
+TI,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TI,IETESTCD,Inclusion/Exclusion Criterion Short Name,Topic,Char,3
+TI,IETEST,Inclusion/Exclusion Criterion,Synonym Qualifier,Char,4
+TI,IECAT,Inclusion/Exclusion Category,Grouping Qualifier,Char,5
+TI,IESCAT,Inclusion/Exclusion Subcategory,Grouping Qualifier,Char,6
+TI,TIRL,Inclusion/Exclusion Criterion Rule,Rule,Char,7
+TI,TIVERS,Protocol Criteria Versions,Record Qualifier,Char,8
+TS,STUDYID,Study Identifier,Identifier,Char,1
+TS,DOMAIN,Domain Abbreviation,Identifier,Char,2
+TS,TSSEQ,Sequence Number,Identifier,Num,3
+TS,TSGRPID,Group ID,Identifier,Char,4
+TS,TSPARMCD,Trial Summary Parameter Short Name,Topic,Char,5
+TS,TSPARM,Trial Summary Parameter,Synonym Qualifier,Char,6
+TS,TSVAL,Parameter Value,Result Qualifier,Char,7
+TS,TSVALNF,Parameter Null Flavor,Result Qualifier,Char,8
+TS,TSVALCD,Parameter Value Code,Result Qualifier,Char,9
+TS,TSVCDREF,Name of the Reference Terminology,Result Qualifier,Char,10
+TS,TSVCDVER,Version of the Reference Terminology,Result Qualifier,Char,11
+AC,STUDYID,Study Identifier,Identifier,Char,1
+AC,DOMAIN,Domain Abbreviation,Identifier,Char,2
+AC,ACSEQ,Sequence Number,Identifier,Num,3
+AC,ACGRPID,Group ID,Identifier,Char,4
+AC,ACPARMCD,Challenge Agent Parameter Short Name,Topic,Char,5
+AC,ACPARM,Challenge Agent Parameter,Synonym Qualifier,Char,6
+AC,ACVAL,Parameter Value,Result Qualifier,Char,7
+AC,ACVALU,Parameter Units,Variable Qualifier,Char,8
+AC,ACVALNF,Parameter Null Flavor,Result Qualifier,Char,9
+AC,ACVALCD,Parameter Value Code,Result Qualifier,Char,10
+AC,ACVCDREF,Name of the Reference Terminology,Result Qualifier,Char,11
+AC,ACVCDVER,Version of the Reference Terminology,Result Qualifier,Char,12
+DI,STUDYID,Study Identifier,Identifier,Char,1
+DI,DOMAIN,Domain Abbreviation,Identifier,Char,2
+DI,SPDEVID,Sponsor Device Identifier,Identifier,Char,3
+DI,DISEQ,Sequence Number,Identifier,Num,4
+DI,DIPARMCD,Device Identifier Element Short Name,Topic,Char,5
+DI,DIPARM,Device Identifier Element Name,Synonym Qualifier,Char,6
+DI,DIVAL,Device Identifier Element Value,Result Qualifier,Char,7
+OI,STUDYID,Study Identifier,Identifier,Char,1
+OI,DOMAIN,Domain Abbreviation,Identifier,Char,2
+OI,NHOID,Non-Host Organism Identifier,Identifier,Char,3
+OI,OISEQ,Sequence Number,Identifier,Num,4
+OI,OIPARMCD,Non-Host Organism ID Element Short Name,Topic,Char,5
+OI,OIPARM,Non-Host Organism ID Element Name,Synonym Qualifier,Char,6
+OI,OIVAL,Non-Host Organism ID Element Value,Result Qualifier,Char,7
+RELREC,STUDYID,Study Identifier,Identifier,Char,1
+RELREC,RDOMAIN,Related Domain Abbreviation,Identifier,Char,2
+RELREC,USUBJID,Unique Subject Identifier,Identifier,Char,3
+RELREC,APID,Associated Persons Identifier,Identifier,Char,4
+RELREC,POOLID,Pool Identifier,Identifier,Char,5
+RELREC,SPDEVID,Sponsor Device Identifier,Identifier,Char,6
+RELREC,IDVAR,Identifying Variable,Identifier,Char,7
+RELREC,IDVARVAL,Identifying Variable Value,Identifier,Char,8
+RELREC,RELTYPE,Relationship Type,Record Qualifier,Char,9
+RELREC,RELID,Relationship Identifier,Record Qualifier,Char,10
+SUPPQUAL,STUDYID,Study Identifier,Identifier,Char,1
+SUPPQUAL,RDOMAIN,Related Domain Abbreviation,Identifier,Char,2
+SUPPQUAL,USUBJID,Unique Subject Identifier,Identifier,Char,3
+SUPPQUAL,APID,Associated Persons Identifier,Identifier,Char,4
+SUPPQUAL,POOLID,Pool Identifier,Identifier,Char,5
+SUPPQUAL,SPDEVID,Sponsor Device Identifier,Identifier,Char,6
+SUPPQUAL,IDVAR,Identifying Variable,Identifier,Char,7
+SUPPQUAL,IDVARVAL,Identifying Variable Value,Identifier,Char,8
+SUPPQUAL,QNAM,Qualifier Variable Name,Topic,Char,9
+SUPPQUAL,QLABEL,Qualifier Variable Label,Synonym Qualifier,Char,10
+SUPPQUAL,QVAL,Data Value,Result Qualifier,Char,11
+SUPPQUAL,QORIG,Origin,Record Qualifier,Char,12
+SUPPQUAL,QEVAL,Evaluator,Record Qualifier,Char,13
+POOLDEF,STUDYID,Study Identifier,Identifier,Char,1
+POOLDEF,POOLID,Pool Identifier,Identifier,Char,2
+POOLDEF,USUBJID,Unique Subject Identifier,Identifier,Char,3
+POOLDEF,APID,Associated Persons Identifier,Identifier,Char,4
+RELSUB,STUDYID,Study Identifier,Identifier,Char,1
+RELSUB,USUBJID,Unique Subject Identifier,Identifier,Char,2
+RELSUB,POOLID,Pool Identifier,Identifier,Char,3
+RELSUB,RSUBJID,Related Subject or Pool Identifier,Identifier,Char,4
+RELSUB,SREL,Subject Relationship,Record Qualifier,Char,5
+RELREF,STUDYID,Study Identifier,Identifier,Char,1
+RELREF,SETCD,Trial Set Code,Identifier,Char,2
+RELREF,REFID,Reference ID,Identifier,Char,3
+RELREF,PARENT,Parent Reference ID,Identifier,Char,4
+RELREF,LEVEL,Reference ID Generation Level,Variable Qualifier,Num,5
+RELREF,LVLDESC,Reference ID Level Description,Variable Qualifier,Char,6
+DR,STUDYID,Study Identifier,Identifier,Char,1
+DR,DOMAIN,Domain Abbreviation,Identifier,Char,2
+DR,USUBJID,Unique Subject Identifier,Identifier,Char,3
+DR,SPDEVID,Sponsor Device Identifier,Identifier,Char,4
+APRELSUB,STUDYID,Study Identifier,Identifier,Char,1
+APRELSUB,APID,Associated Persons Identifier,Identifier,Char,2
+APRELSUB,RSUBJID,Related Subject or Pool Identifier,Identifier,Char,3
+APRELSUB,RDEVID,Related Device Identifier,Identifier,Char,4
+APRELSUB,SREL,"Subject, Device, or Study Relationship",Record Qualifier,Char,5
+RELSPEC,STUDYID,Study Identifier,Identifier,Char,1
+RELSPEC,USUBJID,Unique Subject Identifier,Identifier,Char,2
+RELSPEC,REFID,Reference ID,Identifier,Char,3
+RELSPEC,SPEC,Specimen Type,Variable Qualifier,Char,4
+RELSPEC,PARENT,Specimen Parent,Identifier,Char,5
+RELSPEC,LEVEL,Specimen Level,Variable Qualifier,Num,6

@@ -109,8 +109,15 @@ ordinal_compare_op <- function(fn) {
     # the NUMBER to a STRING (since one side is character) and compare
     # lexicographically - "9" > "65" is TRUE character-wise, even though
     # 9 > 65 is FALSE numerically. Only coerce when the string side parses
-    # cleanly as numeric everywhere it isn't already NA/blank, so a
-    # genuine text ordinal comparison (two character columns) is untouched.
+    # cleanly as numeric everywhere it isn't already NA/blank, so a genuine
+    # text ordinal comparison is untouched.
+    #
+    # The same trap catches two CHARACTER columns compared against each other,
+    # which is the common case in SDTM - every variable read from an XPT is
+    # text. CORE-000698 compares PDVALTRG against PDVALMIN; with the values
+    # "1000" and "999" a lexicographic `<` says TRUE, so coreval reported a
+    # target below its own minimum where there was none. Both sides parsing
+    # cleanly as numbers is the signal that a numeric comparison was meant.
     parses_as_numeric <- function(x) {
       x_num <- suppressWarnings(as.numeric(x))
       !any(is.na(x_num) & !is.na(x) & x != "")
@@ -119,6 +126,22 @@ ordinal_compare_op <- function(fn) {
       value <- suppressWarnings(as.numeric(value))
     } else if (is.numeric(value) && is.character(target) && parses_as_numeric(target)) {
       target <- suppressWarnings(as.numeric(target))
+    } else if (is.character(target) && is.character(value)) {
+      # Two character columns. A whole-column gate is no use here: the columns
+      # these rules compare are usually mixed, holding numbers on the rows the
+      # rule cares about and text elsewhere (CORE-000698's PDVALTRG carries
+      # "1000" and "YES" in the same column). So decide per row, and only where
+      # BOTH sides parse - every other row keeps the plain string comparison it
+      # had before, which leaves genuine text ordinals untouched.
+      n <- max(length(target), length(value))
+      target_num <- suppressWarnings(as.numeric(target))
+      value_num <- suppressWarnings(as.numeric(value))
+      both <- rep_len(!is.na(target_num), n) & rep_len(!is.na(value_num), n)
+      if (any(both)) {
+        result <- rep_len(fn(target, value), n)
+        result[both] <- rep_len(fn(target_num, value_num), n)[both]
+        return(result)
+      }
     }
     fn(target, value)
   }

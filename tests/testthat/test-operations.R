@@ -336,22 +336,48 @@ test_that("get_model_column_order matches CDISC's reference results.csv (CORE-00
   }
 })
 
-test_that("get_model_column_order returns NULL (unresolvable) for a class with no modeled variables", {
-  # Special-Purpose/Relationship/Trial Design/Study Reference classes have
-  # no generic class-level variable list in the Model - each domain in them
-  # (DM, RELREC, TA, ...) defines its own bespoke variables instead. An
-  # empty allowed-set would make is_not_contained_by flag every variable.
+test_that("get_model_column_order falls back to per-dataset Model variables for a class with no modeled variables", {
+  # Special-Purpose/Relationship/Trial Design/Study Reference classes have no
+  # generic class-level variable list in the Model - each domain in them (DM,
+  # RELREC, TA, ...) defines its own bespoke variables instead. This used to
+  # return NULL, which silently found nothing on DM: CORE-000550's invalid
+  # ARMCDXX went unreported. The Model's per-dataset list is the answer, and
+  # is where the reference engine reads it from too.
   study <- list(datasets = list(DM = list(data = data.table::data.table(A = 1), meta = NULL)))
   op <- list(domain = "DM", id = "$allowed", operator = "get_model_column_order")
   binding <- compute_operation(op, study, "DM", study$datasets$DM)
-  expect_null(binding)
+  expect_true("ARMCD" %in% binding$value)
+  expect_false("ARMCDXX" %in% binding$value)
+})
+
+test_that("get_model_column_order returns NULL (unresolvable) for a domain the Model does not describe", {
+  # NULL is still the honest answer where the Model says nothing at either
+  # level: an empty allowed-set would make is_not_contained_by flag every
+  # variable in the dataset as disallowed.
+  study <- list(datasets = list(ZZ = list(data = data.table::data.table(A = 1), meta = NULL)))
+  op <- list(domain = "ZZ", id = "$allowed", operator = "get_model_column_order")
+  expect_null(compute_operation(op, study, "ZZ", study$datasets$ZZ))
+})
+
+test_that("get_model_column_order allows an Associated Persons dataset its AP variables", {
+  # APEG is Findings (like EG) plus the variables that make it an AP dataset:
+  # APID, RSUBJID, SREL. Without them coreval flagged all three as disallowed
+  # and missed the variable that really was not in the Model.
+  study <- list(datasets = list(
+    APEG = list(data = data.table::data.table(APID = "1", RSUBJID = "2", SREL = "3"), meta = NULL)
+  ))
+  op <- list(domain = "APEG", id = "$allowed", operator = "get_model_column_order")
+  binding <- compute_operation(op, study, "APEG", study$datasets$APEG)
+  expect_true(all(c("APID", "RSUBJID", "SREL") %in% binding$value))
 })
 
 test_that("study_domains/dataset_names/variable_exists/domain_is_custom are local, no Library needed", {
   study <- list(datasets = list(
-    AE = list(data = data.table::data.table(AETERM = "X", AESCAN = "Y"), meta = NULL),
-    ZZ = list(data = data.table::data.table(A = 1), meta = NULL)
+    AE = list(data = data.table::data.table(DOMAIN = "AE", AETERM = "X", AESCAN = "Y"), meta = NULL),
+    ZZ = list(data = data.table::data.table(DOMAIN = "ZZ", A = 1), meta = NULL)
   ))
+  # study_domains reads each dataset's DOMAIN value, not its name - see the
+  # dedicated test below for why the distinction matters.
   expect_equal(compute_operation(list(id = "$d", operator = "study_domains"), study, "AE", study$datasets$AE)$value, c("AE", "ZZ"))
   expect_true(compute_operation(list(id = "$e", name = "AESCAN", operator = "variable_exists"), study, "AE", study$datasets$AE)$value)
   expect_false(compute_operation(list(id = "$e2", name = "NOPE", operator = "variable_exists"), study, "AE", study$datasets$AE)$value)
@@ -485,4 +511,52 @@ test_that("standard_variable_order takes the IG verbatim for a non-general-obser
   expect_true(length(order_se) > 0)
   ig <- library_variables_for(study, "SE")
   expect_equal(order_se, ig$variable[order(ig$ordinal)])
+})
+
+test_that("compute_dy uses the date portion only, ignoring any time on RFSTDTC or --DTC", {
+  # Bug (CDISC.SENDIG.71): study day is defined on the DATE portion —
+  # "(date portion of --DTC) - (date portion of RFSTDTC) + 1" — but parsing
+  # kept the time, so difftime returned fractions and rows whose --DY was
+  # perfectly correct compared unequal and were reported. Any study whose
+  # RFSTDTC carries a time component would see nearly every --DY flagged.
+  study <- list(datasets = list(
+    DM = list(
+      data = data.table::data.table(USUBJID = "S1", RFSTDTC = "2012-11-30T20:00"),
+      meta = NULL
+    ),
+    VS = list(
+      data = data.table::data.table(
+        USUBJID = rep("S1", 4),
+        VSDTC = c("2012-11-23", "2012-11-30T13:00", "2012-11-29T21:00", "2013-01-10")
+      ),
+      meta = NULL
+    )
+  ))
+  op <- list(domain = "VS", id = "$val_dy", name = "VSDTC", operator = "dy")
+  binding <- compute_operation(op, study, "VS", study$datasets$VS)
+  # a week before; the reference date itself (day 1, despite the earlier
+  # clock time); the day before (-1, study day has no zero); and 42 days on.
+  expect_equal(binding$value, c(-7, 1, -1, 42))
+})
+
+test_that("study_domains is the set of DOMAIN values, not dataset names", {
+  # Bug (CORE-000457): the reference is
+  # `list({(dataset.domain or "") for dataset in get_datasets()})` where
+  # domain is the DOMAIN column of each dataset's FIRST RECORD, "" when the
+  # dataset has no DOMAIN column at all. Using dataset names instead made
+  # "SUPP--.RDOMAIN must name a dataset present in the study" pass on a study
+  # whose ec.csv has an unreadable header - the name EC was in the set even
+  # though no dataset declares DOMAIN=EC.
+  study <- list(datasets = list(
+    DM = list(data = data.table::data.table(DOMAIN = c("DM", "DM"), USUBJID = c("1", "2")), meta = NULL),
+    # No DOMAIN column: contributes "" (every SUPP-- dataset does this).
+    SUPPDM = list(data = data.table::data.table(RDOMAIN = "DM", IDVAR = "USUBJID"), meta = NULL),
+    # A file whose header did not parse: named EC, but declares no domain.
+    EC = list(data = data.table::data.table(V1 = "", V2 = ""), meta = NULL)
+  ))
+  op <- list(id = "$study_domains", operator = "study_domains")
+  binding <- compute_operation(op, study, "SUPPDM", study$datasets$SUPPDM)
+  expect_equal(binding$kind, "scalar")
+  expect_equal(binding$value, c("", "DM"))
+  expect_false("EC" %in% binding$value)
 })

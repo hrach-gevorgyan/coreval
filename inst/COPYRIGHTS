@@ -3,33 +3,42 @@ Third-party material bundled with coreval
 
 coreval's own R code is MIT licensed; see the package's LICENSE file.
 
-The files below are NOT coreval's own work. They are derived from
-cdisc-org/cdisc-open-rules, which is MIT licensed, and the notice that licence
-requires is reproduced in full at the end of this file.
+The files below are NOT coreval's own work. They come from two MIT-licensed
+repositories published by CDISC, and the notice that licence requires is
+reproduced in full at the end of this file:
+
+  * cdisc-org/cdisc-open-rules      - the rule definitions and their test data
+  * cdisc-org/cdisc-rules-engine    - the offline standards-metadata caches
+                                      that project commits to its own git
+
+Each entry below names which of the two it came from.
 
 
 inst/extdata/rules.rds
 ----------------------
-797 conformance rule definitions - the check logic, scope, messages, cited
-guidance and conformance-rule identifiers - extracted at build time from a
-pinned commit of cdisc-org/cdisc-open-rules. The commit is recorded in
+From cdisc-org/cdisc-open-rules. 797 conformance rule definitions - the check
+logic, scope, messages, cited guidance and conformance-rule identifiers -
+extracted at build time from a pinned commit of that repository. The commit is recorded in
 data-raw/UPSTREAM_SHA and available as attr(list_rules(), "rules_version").
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds
+inst/extdata/sdtm_model_dataset_variables.rds
 inst/extdata/ct_packages.rds
 inst/extdata/sdtm_domain_classes.rds
 ----------------------------------
-CDISC standards metadata - variable names, labels, roles, data types, Core
-designations, observation classes and Controlled Terminology package dates.
-Extracted at build time from the offline caches that cdisc-org's own rules
-engine ships in its repository. No CDISC API is contacted at build or run time.
+From cdisc-org/cdisc-rules-engine. CDISC standards metadata - variable names,
+labels, roles, data types, Core designations, observation classes and
+Controlled Terminology package dates. Extracted at build time from the offline
+caches (resources/cache/*.pkl) that CDISC's own rules engine commits directly
+to its repository, not downloaded: no CDISC API is contacted at build or run
+time.
 
 tests/testthat/fixtures/
 ------------------------
-Test data and expected results published alongside the rules in the same
-repository, used to verify coreval's implementation against CDISC's own
-reference output.
+From cdisc-org/cdisc-open-rules. Test data and expected results published
+alongside the rules, used to verify coreval's implementation against CDISC's
+own reference output.
 
 
 Licence of the bundled material

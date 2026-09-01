@@ -4,6 +4,80 @@
 #' @noRd
 is_blank <- function(x) is.na(x) | (is.character(x) & x == "")
 
+#' Expand an Operations reference sitting in a grouping-column list
+#'
+#' Grouping operators read `condition$value` raw, because they need column
+#' NAMES. An entry like `$TIMING_VARIABLES` is not a column - it names an
+#' Operations binding whose value IS a list of columns (CORE-001034 groups by
+#' `[USUBJID, --TESTCD, $TIMING_VARIABLES]`). The reference engine flattens
+#' these with `flatten_list()`; left unexpanded the key silently collapses to
+#' the few literal entries, which is a far looser key.
+#'
+#' @param values The condition's raw `value` entries.
+#' @param bindings The rule's Operations bindings.
+#' @return A character vector of column names.
+#' @noRd
+expand_binding_columns <- function(values, bindings) {
+  if (length(values) == 0) {
+    return(character(0))
+  }
+  unlist(lapply(values, function(v) {
+    if (is.character(v) && length(v) == 1L && startsWith(v, "$")) {
+      binding <- bindings[[v]]
+      if (!is.null(binding) && identical(binding$kind, "scalar")) {
+        return(as.character(binding$value))
+      }
+      return(character(0))
+    }
+    as.character(v)
+  }), use.names = FALSE)
+}
+
+#' Reduce grouping-column values to the part a rule's `regex` matches
+#'
+#' A rule can carry a `regex` alongside its grouping columns, meaning "group
+#' on this much of the value". CORE-001034 groups records by their timing
+#' variables with `^\\d{4}-\\d{2}-\\d{2}`, so `--DTC` values of `2022-01-14`
+#' and `2022-01-14T07:00` belong to the SAME day. Ignoring the regex split
+#' them into separate groups, and the rule's own record-count condition then
+#' never saw the group it was counting.
+#'
+#' Follows the reference engine (`is_unique_set` and `RecordCount.
+#' _apply_regex_to_grouping_columns`) in two details that matter: the regex is
+#' applied only to columns whose FIRST non-missing value matches it - so a
+#' `VISIT` or `--TPT` column sitting in the same grouping list is left alone -
+#' and matching is anchored at the start of the value, as Python's `re.match`
+#' is, not searched anywhere within it.
+#'
+#' @param dt A data.table of grouping columns.
+#' @param cols Column names to consider.
+#' @param regex The rule's regex, or `NULL`.
+#' @return `dt`, with matching columns reduced to their matched prefix.
+#' @noRd
+apply_grouping_regex <- function(dt, cols, regex) {
+  if (is.null(regex) || !nzchar(regex)) {
+    return(dt)
+  }
+  out <- data.table::copy(dt)
+  for (col in intersect(cols, names(out))) {
+    v <- out[[col]]
+    if (!is.character(v)) {
+      next
+    }
+    present <- v[!is.na(v)]
+    if (length(present) == 0 || regexpr(regex, present[1]) != 1L) {
+      next
+    }
+    m <- regexpr(regex, v)
+    idx <- which(m == 1L & !is.na(v) & nzchar(v))
+    if (length(idx) > 0) {
+      v[idx] <- substr(v[idx], 1L, attr(m, "match.length")[idx])
+      out[[col]] <- v
+    }
+  }
+  out
+}
+
 # TRUE where a record's combination of values across [name, value...] columns
 # duplicates another record's combination anywhere in the dataset. Blanks
 # count as a real, matching value for grouping purposes (two blank rows in
@@ -25,7 +99,9 @@ register_operator("is_not_unique_set", function(ctx) {
   # flagged every baseline-flagged row of any subject with 2+ of them.
   # (The sibling is_inconsistent_across_dataset already resolves its own
   # grouping columns this way.)
-  cols <- unique(c(ctx$name, resolve_var_name(ctx$condition$value, ctx$wildcard)))
+  cols <- unique(c(ctx$name, resolve_var_name(
+    expand_binding_columns(ctx$condition$value, ctx$bindings), ctx$wildcard
+  )))
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))
@@ -47,6 +123,7 @@ register_operator("is_not_unique_set", function(ctx) {
       use.names = TRUE, fill = TRUE
     )
   }
+  dt <- apply_grouping_regex(dt, names(dt), ctx$condition$regex)
   # The blank sentinel and the between-column separator both use the ASCII
   # Unit Separator (0x1F), which can't appear in ordinary clinical text -
   # a plain "NA" sentinel would collide with a genuine data value of "NA",

@@ -124,3 +124,30 @@ test_that("not_equal_to matches CDISC's reference results.csv across all domains
     }
   }
 })
+
+test_that("ordinal comparisons between two character columns compare numbers as numbers", {
+  # Bug (CORE-000698, PDVALTRG vs PDVALMIN): every variable read from an XPT
+  # is character, so BOTH sides of a column-to-column ordinal comparison are
+  # strings and nothing was coerced. Lexicographically "1000" < "999" is TRUE,
+  # so coreval reported a target below its own minimum where there was none.
+  data <- data.table::data.table(
+    PDVALTRG = c("1000", "999", "9", "-69"),
+    PDVALMIN = c("999", "1000", "65", "-69")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "PDVALTRG", operator = "less_than", value = "PDVALMIN")
+  expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, TRUE, TRUE, FALSE))
+})
+
+test_that("a column mixing numbers and text keeps text comparisons as text", {
+  # The columns these rules compare are mixed - numbers on the rows the rule
+  # cares about, text elsewhere - so the numeric decision is made per row.
+  # Rows where either side is not a number must behave exactly as before.
+  data <- data.table::data.table(
+    A = c("1000", "apple", "9"),
+    B = c("999", "banana", "65")
+  )
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "A", operator = "less_than", value = "B")
+  expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, TRUE, TRUE))
+})

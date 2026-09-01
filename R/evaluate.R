@@ -267,11 +267,20 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   # operator resolving its own column names (op_grouping, op_sequence, ...)
   # uses the same expansion.
   wildcard <- dataset_wildcard(dataset, domain)
+  # A `distinct`-style Operation resolves to ONE collection for the whole
+  # dataset, not a value per row. Operators that ask "is this value in the
+  # target" have to answer once and give every row the same answer; treating
+  # the collection as a per-row vector compares row i against the i'th
+  # distinct value, which is meaningless. Flagged here because only the
+  # binding's own `kind` distinguishes it - by the time an operator sees
+  # `ctx$target` it is just a character vector.
+  target_is_collection <- FALSE
   if (is.character(condition$name) && startsWith(condition$name, "$")) {
     binding <- bindings[[condition$name]]
     name <- condition$name
     exists <- !is.null(binding)
     target <- if (exists) resolve_binding(binding, dataset) else NULL
+    target_is_collection <- exists && identical(binding$kind, "scalar")
   } else {
     name <- resolve_var_name(condition$name, wildcard)
     exists <- name %in% names(dataset$data)
@@ -292,6 +301,7 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     name = name,
     exists = exists,
     target = target,
+    target_is_collection = target_is_collection,
     value = resolve_condition_value(condition, dataset, wildcard, bindings),
     n = nrow(dataset$data),
     condition = condition,
@@ -300,7 +310,13 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     domain = domain,
     # Needed by the uniqueness operators, which must see every file a
     # split domain is spread across - not just the one being checked.
-    study = study
+    study = study,
+    # The grouping operators read `condition$value` RAW (they need column
+    # NAMES, not resolved values), so an Operations reference sitting in that
+    # list - CORE-001034 groups by [USUBJID, --TESTCD, $TIMING_VARIABLES] -
+    # has to be expanded to the columns it stands for. The reference engine
+    # does this with flatten_list().
+    bindings = bindings
   )
 
   op_fn <- get_operator(condition$operator)
@@ -348,6 +364,17 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
   if (!is.null(check$not)) {
     return(!evaluate_check(check$not, dataset, domain, bindings, study))
   }
+  # An `all:`/`any:`/`not:` written with no conditions under it parses to a
+  # NULL body and falls through every branch above, so the generic message
+  # would name a combinator this engine plainly does support. Say what is
+  # actually wrong instead: the rule has no conditions to evaluate.
+  # CORE-000536 ships exactly this - its whole Check block is `all: null`.
+  if (any(names(check) %in% c("all", "any", "not"))) {
+    stop(
+      "the rule's Check block is empty upstream (",
+      paste(names(check), collapse = ", "), " with no conditions under it)"
+    )
+  }
   stop("Unrecognized Check node: ", paste(names(check), collapse = ", "))
 }
 
@@ -382,15 +409,83 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
 #' evaluate_rule(rule, dataset, domain = "DM")
 #' @noRd
 evaluate_rule <- function(rule, dataset_or_study, domain) {
-  study <- as_study(dataset_or_study, domain)
+  out <- run_rule_on_domain(rule, as_study(dataset_or_study, domain), domain)
+  collapse_exploded_violations(out$dataset, out$violations)
+}
+
+#' Run one rule against one domain: the single evaluation path
+#'
+#' Extracted so `evaluate_rule()` and `run_checks()` cannot drift. They had:
+#' `run_checks()` never called `study_standard_from_rule()`, so a SEND rule run
+#' through `check_dataset()`/`check_study()` was still judged against SDTM
+#' Library metadata - the very bug that function was added to fix, fixed only
+#' on the path the tests and the conformance harness take. A test suite that
+#' validates a function the shipped entry points do not call is not a safety
+#' net, so both now go through here.
+#'
+#' The one thing callers still do differently is collapsing a Match-Datasets
+#' row explosion: `evaluate_rule()` returns one logical per ORIGINAL row via
+#' `collapse_exploded_violations()`, while `run_checks()` keeps the exploded
+#' rows because `assemble_findings()` collapses them itself, using
+#' `.coreval_row_id` to report each finding against the original record.
+#'
+#' @param rule A rule record.
+#' @param study A study object (already normalised by `as_study()`).
+#' @param domain Domain code being checked.
+#' @return `list(dataset, violations, bindings)`, `violations` being a per-row
+#'   logical over `dataset$data` with `NA` treated as "not a violation".
+#' @noRd
+run_rule_on_domain <- function(rule, study, domain) {
+  study <- study_standard_from_rule(study, rule)
   assert_rule_inputs_available(rule, study)
   dataset <- prepare_dataset_for_rule(rule, study, domain)
   assert_referenced_metadata_available(rule, dataset)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
 
-  result <- evaluate_check(rule$check, dataset, domain, bindings, study)
-  result[is.na(result)] <- FALSE
-  collapse_exploded_violations(dataset, result)
+  violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
+  violations[is.na(violations)] <- FALSE
+  list(dataset = dataset, violations = violations, bindings = bindings)
+}
+
+#' Fill an undeclared study standard from the standard the rule targets
+#'
+#' `library_variables_for()` falls back to SDTMIG when a study declares no
+#' standard, which is right for a study that never says otherwise but wrong
+#' when the rule being run is a SEND rule: a SENDIG rule then judges the data
+#' against SDTM labels, roles and types. CDISC.SENDIG.6A shows the damage -
+#' every VS variable whose SEND label differs from its SDTM one
+#' ("Result or Findings as Collected" vs "Result or Finding in Original
+#' Units") was reported as a define.xml/Library mismatch that is not there.
+#'
+#' A rule states the standards it applies to, so use the first one it lists
+#' when the study itself is silent. A study that DOES declare a standard is
+#' never overridden - what the data says about itself always wins.
+#'
+#' @param study A study list.
+#' @param rule A rule definition.
+#' @return `study`, possibly with `standard$product` filled in.
+#' @noRd
+study_standard_from_rule <- function(study, rule) {
+  declared <- study$standard$product %||% NA_character_
+  if (!is.na(declared) && nzchar(declared)) {
+    return(study)
+  }
+  targets <- rule$standard_versions
+  if (length(targets) == 0) {
+    return(study)
+  }
+  # Entries read "SENDIG 3.1" / "SDTMIG 3.4"; the family is everything before
+  # the version. Upstream lists the base standard first, so a rule covering
+  # SENDIG and SENDIG-DART resolves to SENDIG.
+  product <- sub("[[:space:]].*$", "", targets[[1]])
+  if (!nzchar(product)) {
+    return(study)
+  }
+  # Version deliberately left as-is: library_variables_for() falls back to the
+  # newest bundled version for the standard, which is the right default when
+  # the study never said which version it follows.
+  study$standard$product <- product
+  study
 }
 
 # Refuses a rule whose Check names a CDISC Library pseudo-column
@@ -518,9 +613,19 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
   # the ordinary record-level path instead, where its pseudo-field
   # `variable_name` doesn't exist as a real column, silently resolving to
   # "no violation" rather than actually evaluating the rule).
+  # "Value Check against Define XML Variable" is named like a record-level
+  # check but its Check iterates VARIABLES - CDISC.SDTMIG.CG0097 asks whether
+  # `variable_name == CMTRT` has `define_variable_is_collected == FALSE`. Left
+  # off this list it took the record-level path, where `variable_name` is not
+  # a real column, and silently reported no violation: the same trap the
+  # comment above records for CORE-000902.
   if (isTRUE(rule$rule_type %in% c(
     "Variable Metadata Check", "Variable Metadata Check against Library Metadata",
-    "Variable Metadata Check against Define XML"
+    "Variable Metadata Check against Define XML",
+    # Both sources at once. The suffix still only says what the Check
+    # COMPARES against; the row model is the same one-row-per-variable.
+    "Variable Metadata Check against Define XML and Library Metadata",
+    "Value Check against Define XML Variable"
   ))) {
     return(build_variable_metadata_dataset(dataset, study$define, domain, study))
   }
@@ -677,7 +782,16 @@ build_define_item_metadata_dataset <- function(study, domain) {
   # Same Model fallback as the variable-metadata builder: an IG's per-domain
   # list doesn't enumerate every legitimate variable, and the Model's
   # generic "--" templates cover many of them.
-  model <- model_variables_for(domain, list(data = data.table::data.table()))
+  #
+  # The REAL dataset has to go in here, not an empty stand-in. The two copies
+  # of this block had drifted: model_variables_for() resolves the Model's "--"
+  # templates through dataset_wildcard(), which reads the dataset's own DOMAIN
+  # column and only falls back to the name when there is no dataset to ask. An
+  # empty table therefore resolved "--CHENDY" against the FILE name, so a split
+  # dataset (lbae.csv, DOMAIN = LB) got "LBAECHENDY" and an Associated Persons
+  # dataset got "APEGCHENDY" - columns nothing has, so the fallback quietly
+  # matched nothing for exactly the datasets it was written to help.
+  model <- model_variables_for(domain, study$datasets[[domain]])
   if (nrow(model) > 0) {
     m <- match(dv$define_variable_name, model$variable)
     fill <- is.na(i) & !is.na(m)
@@ -714,6 +828,23 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
     variable_label = meta$label,
     variable_data_type = meta$type
   )
+
+  # "Is this variable carrying any data at all?" - the reference's
+  # get_variable_null_stats(): a value counts as absent when it is NA or the
+  # empty string, `variable_has_empty_values` is TRUE when ANY row is absent
+  # and `variable_is_empty` when EVERY row is, and a variable the dataset
+  # does not have at all is both. Needed by rules that ask whether a
+  # Permissible variable was declared but left unpopulated
+  # (CDISC.SDTMIG.CG0015).
+  null_stats <- lapply(meta$variable, function(v) {
+    if (!(v %in% names(real_dataset$data))) {
+      return(c(TRUE, TRUE))
+    }
+    absent <- is_blank(real_dataset$data[[v]])
+    c(any(absent), all(absent))
+  })
+  data$variable_has_empty_values <- vapply(null_stats, `[`, logical(1), 1L)
+  data$variable_is_empty <- vapply(null_stats, `[`, logical(1), 2L)
 
   # What the CDISC Library says this domain's variables SHOULD look like,
   # for whichever standard the study declares. Joined by variable name, so
@@ -804,16 +935,32 @@ build_variable_value_check_dataset <- function(real_dataset) {
   meta <- real_dataset$meta
   data <- real_dataset$data
   n_records <- nrow(data)
-  melted <- lapply(seq_len(nrow(meta)), function(i) {
-    v <- meta$variable[i]
-    if (!(v %in% names(data))) {
-      return(NULL)
-    }
+  # Melt the DATA's own columns, not the variable-metadata rows. The
+  # reference does this too - ValuesDatasetBuilder.build() is
+  # `data_contents_df.melt(id_vars="row_number", var_name="variable_name",
+  # value_name="variable_value")` and never opens the metadata file - and the
+  # difference is not cosmetic: driving the melt from `meta` makes the whole
+  # rule silently find nothing whenever the metadata is unreadable. That is
+  # exactly CORE-000356's fixture, whose `_variables.csv` declares 5 column
+  # names for 6 columns of data, so `meta` parses to zero rows for LB and the
+  # melt came out empty - while the real violation (record 1 has STUDYID and
+  # LBSEQ both blank) sat in the data all along.
+  #
+  # The declared type is still looked up from `meta` where it has something
+  # to say, and is NA otherwise, so a column the metadata never mentions is
+  # checked rather than dropped.
+  variables <- names(data)
+  type_of <- if (is.null(meta) || nrow(meta) == 0) {
+    rep(NA_character_, length(variables))
+  } else {
+    meta$type[match(variables, meta$variable)]
+  }
+  melted <- lapply(seq_along(variables), function(i) {
     data.table::data.table(
       .coreval_row_id = seq_len(n_records),
-      variable_name = v,
-      variable_data_type = meta$type[i],
-      variable_value = as.character(data[[v]])
+      variable_name = variables[i],
+      variable_data_type = type_of[i],
+      variable_value = as.character(data[[variables[i]]])
     )
   })
   list(data = data.table::rbindlist(melted), meta = NULL)

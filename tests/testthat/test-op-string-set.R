@@ -281,3 +281,91 @@ test_that("does_not_contain_case_insensitive is the exact negation", {
     !get_operator("contains_case_insensitive")(ctx)
   )
 })
+
+test_that("contains against a whole-dataset collection answers once, not row by row", {
+  # Bug (CDISC.SENDIG-DART.SEND399): a `distinct` Operation resolves to ONE
+  # collection for the dataset, not a value per row. Treating it as a per-row
+  # vector compared row i against the i'th distinct value, so "do the distinct
+  # TSPARMCD values contain SNDIGVER" came out TRUE for every record of every
+  # case - including the one where SNDIGVER is plainly present.
+  data <- data.table::data.table(TSPARMCD = c("AGEU", "SNDIGVER", "ADAPT"))
+  dataset <- list(data = data, meta = NULL)
+  bindings <- list("$distinct_tsparmcd" = list(
+    kind = "scalar", value = c("ADAPT", "AGEU", "SNDIGVER")
+  ))
+
+  present <- list(name = "$distinct_tsparmcd", operator = "does_not_contain", value = "SNDIGVER")
+  expect_equal(evaluate_check(present, dataset, "TS", bindings), rep(FALSE, 3))
+
+  absent <- list(name = "$distinct_tsparmcd", operator = "does_not_contain", value = "NOSUCHPARM")
+  expect_equal(evaluate_check(absent, dataset, "TS", bindings), rep(TRUE, 3))
+
+  # A near-miss must not match: set membership is whole-element, not substring.
+  partial <- list(name = "$distinct_tsparmcd", operator = "contains", value = "SNDIG")
+  expect_equal(evaluate_check(partial, dataset, "TS", bindings), rep(FALSE, 3))
+})
+
+test_that("a regex on grouping columns reduces them to the matched prefix", {
+  # Bug (CORE-001034): a rule can carry a regex meaning "group on this much
+  # of the value", so --DTC values of "2022-01-14" and "2022-01-14T07:00"
+  # belong to the same day. Only columns whose first value matches are
+  # touched, and the match is anchored at the start.
+  dt <- data.table::data.table(
+    EGDTC = c("2022-01-14", "2022-01-14T07:00", "2022-01-20T13:01"),
+    EGTPT = c("PREDOSE", "PREDOSE", "6H"),
+    VISITNUM = c(1, 1, 2)
+  )
+  out <- apply_grouping_regex(dt, names(dt), "^\\d{4}-\\d{2}-\\d{2}")
+  expect_equal(out$EGDTC, c("2022-01-14", "2022-01-14", "2022-01-20"))
+  expect_equal(out$EGTPT, dt$EGTPT)
+  expect_equal(out$VISITNUM, dt$VISITNUM)
+  expect_equal(apply_grouping_regex(dt, names(dt), NULL)$EGDTC, dt$EGDTC)
+})
+
+test_that("an Operations reference inside a grouping list expands to its columns", {
+  bindings <- list("$TIMING" = list(kind = "scalar", value = c("VISITNUM", "EGDTC")))
+  expect_equal(
+    expand_binding_columns(list("USUBJID", "--TESTCD", "$TIMING"), bindings),
+    c("USUBJID", "--TESTCD", "VISITNUM", "EGDTC")
+  )
+  # An unresolvable reference contributes nothing rather than becoming a
+  # literal column name that matches nothing.
+  expect_equal(expand_binding_columns(list("USUBJID", "$NOPE"), bindings), "USUBJID")
+})
+
+test_that("the four operators no bundled rule currently uses still discriminate correctly", {
+  # These four are implemented but referenced by zero bundled rules, so nothing
+  # in the fixture-driven suite ever executes them. A pre-release audit claimed
+  # two of them "fabricate a violation on every row"; that is not true - checked
+  # here with data that must produce mixed results, which is the only way to
+  # tell a working operator from one that answers the same thing regardless of
+  # its input. Keep these tests: an untested operator can rot silently, and the
+  # first rule to use one would inherit the damage.
+  len <- list(data = data.table::data.table(A = c("AB", "ABC", "ABCD")), meta = NULL)
+  expect_equal(
+    evaluate_check(list(name = "A", operator = "has_equal_length", value = 3, value_is_literal = TRUE), len, "TS"),
+    c(FALSE, TRUE, FALSE)
+  )
+
+  one_to_one <- list(data = data.table::data.table(A = c("X", "Y", "Z"), B = c("1", "2", "3")), meta = NULL)
+  expect_equal(
+    evaluate_check(list(name = "A", operator = "is_unique_relationship", value = "B"), one_to_one, "TS"),
+    c(TRUE, TRUE, TRUE)
+  )
+  # X maps to both 1 and 2, so the X rows are not a one-to-one relationship.
+  broken <- list(data = data.table::data.table(A = c("X", "X", "Z"), B = c("1", "2", "3")), meta = NULL)
+  expect_equal(
+    evaluate_check(list(name = "A", operator = "is_unique_relationship", value = "B"), broken, "TS"),
+    c(FALSE, FALSE, TRUE)
+  )
+
+  affix <- list(data = data.table::data.table(A = c("ABC", "ABD", "XYZ")), meta = NULL)
+  expect_equal(
+    evaluate_check(list(name = "A", operator = "prefix_is_contained_by", value = "AB", prefix = 2), affix, "TS"),
+    c(TRUE, TRUE, FALSE)
+  )
+  expect_equal(
+    evaluate_check(list(name = "A", operator = "suffix_is_contained_by", value = "BC", suffix = 2), affix, "TS"),
+    c(TRUE, FALSE, FALSE)
+  )
+})

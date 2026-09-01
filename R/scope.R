@@ -60,6 +60,15 @@ domain_class <- function(domain) {
   if (startsWith(domain, "SUPP") && nchar(domain) > 4) {
     return("RELATIONSHIP")
   }
+  # An Associated Persons dataset (APEG, APQS, ...) holds the same kind of
+  # observation as the domain it is associated with, so it takes that
+  # domain's class - APEG is Findings exactly as EG is. Like SUPPxx these are
+  # generated per parent domain and never listed individually. APID is an
+  # identifier variable, not a domain prefix, so it is excluded here for the
+  # same reason resolve_var_name() excludes it.
+  if (startsWith(domain, "AP") && nchar(domain) > 2 && !startsWith(domain, "APID")) {
+    return(domain_class(substring(domain, 3)))
+  }
   NA_character_
 }
 
@@ -95,6 +104,12 @@ domains_match <- function(domains_spec, domain) {
 #' @noRd
 rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL) {
   scope <- rule$scope
+  # `Domains: Include: [ALL]` alongside a narrower `Classes` filter does NOT
+  # widen scope to every domain: both still have to match. Tested directly -
+  # letting Domains=ALL override Classes turns CORE-000794/847/848 green but
+  # breaks 11 other rules, a net loss of 8. Whatever the reference does for
+  # those three, it is not this. 121 of the 797 rules pair the two, so do not
+  # retry this without measuring the whole sweep.
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain)) {
     return(FALSE)
   }

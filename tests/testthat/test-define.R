@@ -212,3 +212,40 @@ test_that("library_* columns are omitted for a CUSTOM domain, but present for a 
   # LBSEQ from the IG, LBCHENDY from the Model's --CHENDY template.
   expect_equal(known$data$library_variable_data_type, c("Num", "Num"))
 })
+
+test_that("def:Origin is read, and is_collected follows the Define-XML version's spelling", {
+  # Two bugs at once. (1) def:Origin keeps its namespace for XPath purposes
+  # even after xml_ns_strip(), so a plain "./Origin" found nothing and every
+  # variable's origin came back NA. (2) "collected on the CRF" is spelled
+  # "Collected" in Define-XML 2.1 and "CRF" in 2.0; both are accepted, since
+  # no version uses both and the other Origin types are shared.
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  on.exit(unlink(path), add = TRUE)
+  writeLines(c(
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study><MetaDataVersion>',
+    '<ItemGroupDef OID="IG.CM" Name="CM" Domain="CM" Repeating="Yes">',
+    '<Description><TranslatedText>Con Meds</TranslatedText></Description>',
+    '<ItemRef ItemOID="IT.CM.CMTRT" OrderNumber="1" Mandatory="Yes"/>',
+    '<ItemRef ItemOID="IT.CM.CMSEQ" OrderNumber="2" Mandatory="Yes"/>',
+    '<ItemRef ItemOID="IT.CM.CMDOSE" OrderNumber="3" Mandatory="No"/>',
+    '</ItemGroupDef>',
+    '<ItemDef OID="IT.CM.CMTRT" Name="CMTRT" DataType="text">',
+    '<def:Origin Source="Investigator" Type="Protocol"/></ItemDef>',
+    '<ItemDef OID="IT.CM.CMSEQ" Name="CMSEQ" DataType="integer">',
+    '<def:Origin Type="Collected" Source="Investigator"/></ItemDef>',
+    '<ItemDef OID="IT.CM.CMDOSE" Name="CMDOSE" DataType="float"/>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+
+  define <- read_define_xml(path)
+  v <- as.data.frame(define$variables)
+  got <- function(name, col) v[[col]][v$define_variable_name == name]
+
+  expect_equal(got("CMTRT", "define_variable_origin_type"), "Protocol")
+  expect_false(got("CMTRT", "define_variable_is_collected"))
+  expect_true(got("CMSEQ", "define_variable_is_collected"))
+  # No def:Origin at all is not the same as declaring a non-collected one.
+  expect_true(is.na(got("CMDOSE", "define_variable_is_collected")))
+})
