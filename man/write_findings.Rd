@@ -57,8 +57,9 @@ haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(d
 study <- read_study(dir)
 result <- check_study(study)
 
-out <- file.path(tempdir(), "findings.csv")
-write_findings(result, out)
+out <- file.path(dir, "findings.csv")
+written <- write_findings(result, out)
+basename(written)
 
 unlink(dir, recursive = TRUE)
 }

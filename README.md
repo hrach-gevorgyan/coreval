@@ -663,12 +663,12 @@ finding real problems in real data. See [NEWS.md](NEWS.md).
 
 Issues and pull requests welcome — especially a dataset that produces a wrong or
 missing finding. That's the most useful bug report there is. Please read the
-[Code of Conduct](https://github.com/hrach-gevorgyan/coreval/blob/main/CODE_OF_CONDUCT.md) first.
+[Code of Conduct](https://github.com/hrach-gevorgyan/coreval/blob/master/CODE_OF_CONDUCT.md) first.
 
 ## License
 
-Package code is MIT ([LICENSE.md](https://github.com/hrach-gevorgyan/coreval/blob/main/LICENSE.md)). Bundled rule definitions come
+Package code is MIT ([LICENSE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/LICENSE.md)). Bundled rule definitions come
 from [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
-and remain under CDISC's terms — see [NOTICE.md](https://github.com/hrach-gevorgyan/coreval/blob/main/NOTICE.md).
+and remain under CDISC's terms — see [NOTICE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/NOTICE.md).
 
 Not affiliated with, endorsed by, or certified by CDISC.

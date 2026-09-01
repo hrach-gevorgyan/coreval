@@ -5,7 +5,7 @@ First submission of coreval to CRAN.
 ## Test environments
 
 * Local: Windows 11, R 4.6.1 — 0 errors | 0 warnings | 0 notes
-* win-builder: R-devel and R-release — *to be run before submission*
+* win-builder: R-devel and R-release — submitted 2026-09-02
 * Linux (GitHub Actions, ubuntu-latest): R release — *to be run before submission*
 * macOS builder — *to be run before submission*
 
@@ -24,6 +24,13 @@ repository it came from, and reproduces the MIT notice in full. The
 `Copyright` field in DESCRIPTION points there.
 
 Nothing is downloaded at build, install, check or run time.
+
+## Pre-submission checks run
+
+* `urlchecker::url_check()` — all 12 URLs resolve.
+* `checkhelper` — no exported function missing a `@return`, `@export` or
+  `@noRd`; nothing written outside `tempdir()`, and examples clean up after
+  themselves.
 
 ## Notes for the reviewer
 
