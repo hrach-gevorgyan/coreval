@@ -205,3 +205,135 @@ test_that("a \"--\" template expands to the DOMAIN column's value, not the file 
   blank_domain <- list(data = data.table::data.table(DOMAIN = "", X = 1), meta = NULL)
   expect_equal(dataset_wildcard(blank_domain, "AE"), "AE")
 })
+
+test_that("an undeclared study standard is taken from the rule being run, not defaulted to SDTMIG", {
+  # Bug (CDISC.SENDIG.6A): library_variables_for() falls back to SDTMIG when a
+  # study declares no standard. Running a SENDIG rule then judged the data
+  # against SDTM labels, so every VS variable whose SEND label differs from
+  # its SDTM one was reported as a define.xml/Library mismatch that isn't
+  # there. What the data says about itself must still win where it says
+  # anything at all.
+  study <- list(
+    datasets = list(VS = list(data = data.table::data.table(VSORRES = "1"), meta = NULL)),
+    standard = list(product = NA_character_, version = NA_character_)
+  )
+  rule <- list(standard_versions = c("SENDIG 3.0", "SENDIG 3.1", "SENDIG-DART 1.1"))
+  expect_equal(study_standard_from_rule(study, rule)$standard$product, "SENDIG")
+
+  declared <- study
+  declared$standard$product <- "SDTMIG"
+  expect_equal(study_standard_from_rule(declared, rule)$standard$product, "SDTMIG")
+
+  expect_equal(
+    study_standard_from_rule(study, list())$standard$product,
+    NA_character_
+  )
+})
+
+test_that("a Value Check with Dataset Metadata melts the data, not the metadata rows", {
+  # Bug (CORE-000356): the melt was driven by the variable-metadata table, so
+  # an unreadable `_variables.csv` made the whole rule silently find nothing.
+  # The reference melts the data's own columns and never opens that file.
+  data <- data.table::data.table(
+    STUDYID = c("", "S1"), DOMAIN = c("LB", "LB"), LBSEQ = c("", "2")
+  )
+  # Metadata that knows about only one of the three columns - the other two
+  # must still be checked, with an unknown declared type.
+  meta <- data.frame(variable = "DOMAIN", type = "Char", stringsAsFactors = FALSE)
+
+  built <- build_variable_value_check_dataset(list(data = data, meta = meta))
+  expect_setequal(unique(built$data$variable_name), c("STUDYID", "DOMAIN", "LBSEQ"))
+  expect_equal(nrow(built$data), 6)
+  expect_equal(built$data$variable_data_type[built$data$variable_name == "DOMAIN"], c("Char", "Char"))
+  expect_true(all(is.na(built$data$variable_data_type[built$data$variable_name == "LBSEQ"])))
+
+  # Zero-row metadata (the malformed-file case) must not empty the melt.
+  empty_meta <- build_variable_value_check_dataset(
+    list(data = data, meta = meta[0, , drop = FALSE])
+  )
+  expect_equal(nrow(empty_meta$data), 6)
+  expect_true(all(is.na(empty_meta$data$variable_data_type)))
+})
+
+test_that("variable_is_empty / variable_has_empty_values follow the reference's null stats", {
+  # The reference's get_variable_null_stats(): a value is absent when NA or
+  # "", `has_empty_values` is TRUE when ANY row is absent and `is_empty` when
+  # EVERY row is. A variable the dataset does not carry at all is both.
+  # Without these columns a rule naming them resolves the name to literal
+  # text and silently reports nothing (CDISC.SDTMIG.CG0015).
+  real <- list(
+    data = data.table::data.table(
+      FULL = c("a", "b"), SOME = c("a", ""), NONE = c("", ""), NAS = c(NA_character_, NA_character_)
+    ),
+    meta = data.frame(
+      variable = c("FULL", "SOME", "NONE", "NAS", "ABSENT"),
+      label = NA_character_, type = "Char", stringsAsFactors = FALSE
+    )
+  )
+  built <- build_variable_metadata_dataset(real)
+  d <- as.data.frame(built$data)
+  got <- function(v, col) d[[col]][d$variable_name == v]
+
+  expect_equal(got("FULL", "variable_has_empty_values"), FALSE)
+  expect_equal(got("FULL", "variable_is_empty"), FALSE)
+  expect_equal(got("SOME", "variable_has_empty_values"), TRUE)
+  expect_equal(got("SOME", "variable_is_empty"), FALSE)
+  expect_equal(got("NONE", "variable_is_empty"), TRUE)
+  expect_equal(got("NAS", "variable_is_empty"), TRUE)
+  # Declared in metadata, absent from the data: both TRUE.
+  expect_equal(got("ABSENT", "variable_has_empty_values"), TRUE)
+  expect_equal(got("ABSENT", "variable_is_empty"), TRUE)
+})
+
+test_that("check_study() and evaluate_rule() take the same evaluation path", {
+  # These were separate code paths, and they had already drifted: run_checks()
+  # never resolved an undeclared study standard from the rule, so a SEND rule
+  # run through check_dataset()/check_study() was judged against SDTM Library
+  # metadata while the same rule through evaluate_rule() was not. The whole
+  # test suite and the conformance harness exercise evaluate_rule(), so a
+  # divergence there means the suite proves nothing about what users run.
+  dir <- tempfile("coreval_drift_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(
+    data.frame(
+      STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2", "3"),
+      RFSTDTC = c("2024-01-05", "", "2024-13-01"),
+      AGE = c(34, 61, 47), AGEU = c("YEARS", "", "YEARS"), SEX = c("M", "F", "F")
+    ),
+    file.path(dir, "dm.xpt")
+  )
+  study <- read_study(dir)
+  result <- check_study(dir)
+
+  # For every rule that produced a finding, evaluate_rule() must flag exactly
+  # the same records.
+  reported <- unique(result$findings$rule_id)
+  expect_gt(length(reported), 0)
+  for (id in reported) {
+    rule <- .coreval_env$data$rules[[id]]
+    if (is.null(rule) || identical(rule$rule_type, "Domain Presence Check")) next
+    direct <- which(evaluate_rule(rule, study, "DM"))
+    via_check <- sort(unique(result$findings$Record[result$findings$rule_id == id]))
+    via_check <- via_check[!is.na(via_check)]
+    if (length(via_check) == 0) next
+    expect_equal(sort(direct), as.integer(via_check), info = id)
+  }
+})
+
+test_that("run_rule_on_domain resolves the standard from the rule on BOTH paths", {
+  # The specific drift that motivated sharing the path.
+  study <- list(
+    datasets = list(VS = list(data = data.table::data.table(DOMAIN = "VS", VSORRES = "1"), meta = NULL)),
+    standard = list(product = NA_character_, version = NA_character_)
+  )
+  rule <- list(
+    standard_versions = c("SENDIG 3.1"),
+    check = list(name = "VSORRES", operator = "non_empty")
+  )
+  # Not the return value that matters here - that the shared core is what both
+  # callers reach, so the standard fill-in cannot apply to only one of them.
+  out <- run_rule_on_domain(rule, study, "VS")
+  expect_true(is.logical(out$violations))
+  expect_named(out, c("dataset", "violations", "bindings"))
+})

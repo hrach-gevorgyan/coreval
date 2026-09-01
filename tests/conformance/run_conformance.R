@@ -62,7 +62,43 @@ rule_operators <- function(check, ops = character(0)) {
 expected_records <- function(results_csv, dataset_name) {
   results <- data.table::fread(results_csv, colClasses = "character")
   results <- results[results$Dataset == dataset_name, ]
+  # Drop the placeholder rows CDISC's sheets carry - `EG,,,` in CORE-000701,
+  # `PP,,,` in CORE-000465 - which name a dataset that was looked at and had
+  # nothing, and produced a meaningless "expected {NA}".
+  #
+  # Filter on VARIABLE, not on Record. A blank Record with a real Variable is
+  # a legitimate DATASET-level finding, and the NA it yields is what tells the
+  # sensitivity branch a violation was expected at all - dropping those costs
+  # 136 rules.
+  results <- results[nzchar(trimws(results$Variable)), ]
   as.integer(unique(results$Record))
+}
+
+# CDISC's own engine failed to run the rule, and the "expected" output records
+# that crash rather than an expected finding - e.g. CORE-000239's answer sheet
+# is a single EXECUTION_ERROR row saying min_date could not parse a date.
+# There is nothing to compare against: our result cannot be called right or
+# wrong by an answer sheet that says the grader broke.
+reference_crashed <- function(results_csv) {
+  results <- data.table::fread(results_csv, colClasses = "character")
+  isTRUE(any(results$Variable == "EXECUTION_ERROR", na.rm = TRUE))
+}
+
+# The answer sheet names findings for this dataset but gives no record numbers
+# for any of them, so it is stating a dataset-level fact ("this dataset has the
+# problem") rather than which rows. Comparing row numbers against that is
+# meaningless whatever the rule's declared Sensitivity says - the answer sheet
+# is what we are being graded against, not the declaration.
+reference_is_dataset_level <- function(results_csv, dataset_name) {
+  results <- data.table::fread(results_csv, colClasses = "character")
+  results <- results[results$Dataset == dataset_name, ]
+  # A row with no Variable either is a placeholder, not a finding. CDISC's own
+  # files carry lines like `PP,,,` meaning "PP was looked at and had nothing" -
+  # reading those as a reported violation turns 18 correct results into
+  # failures, which is exactly what happened when this function first ignored
+  # the Variable column.
+  reported <- results[nzchar(trimws(results$Variable)), ]
+  nrow(reported) > 0 && all(!nzchar(trimws(reported$Record)))
 }
 
 # Runs one rule against one test case (a positive/NN or negative/NN dir).
@@ -72,6 +108,13 @@ run_case <- function(rule, case_dir) {
   results_csv <- file.path(case_dir, "results", "results.csv")
   if (!dir.exists(data_dir) || !file.exists(results_csv)) {
     return(list(status = "SKIPPED", reason = "missing data/ or results.csv"))
+  }
+
+  if (reference_crashed(results_csv)) {
+    return(list(
+      status = "SKIPPED",
+      reason = "CDISC's own engine errored on this rule; its expected output is a crash, not a result"
+    ))
   }
 
   study <- tryCatch(read_study(data_dir), error = function(e) e)
@@ -85,18 +128,41 @@ run_case <- function(rule, case_dir) {
     return(list(status = "SKIPPED", reason = "no dataset in this test case matches the rule's scope"))
   }
 
+  evaluable <- 0L
+  first_error <- NA_character_
   for (domain in applicable) {
     violations <- tryCatch(
       evaluate_rule(rule, study, domain),
       error = function(e) e
     )
     if (inherits(violations, "error")) {
-      return(list(status = "SKIPPED", reason = paste("evaluate_rule failed:", conditionMessage(violations))))
+      # One unevaluable DOMAIN must not condemn the whole rule. A custom
+      # domain (a sponsor's XY) is deliberately given no library_* columns -
+      # there is no standard to judge its variables against - so a rule
+      # comparing against Library metadata is unevaluable there and fine
+      # everywhere else. check_study() already behaves this way: it records a
+      # per-domain skip and carries on. The harness used to return on the
+      # first such domain, reporting CORE-001081 and CORE-001082 as wholly
+      # SKIPPED when SV/LB/DM evaluate correctly and only XD/XY cannot.
+      #
+      # Still SKIPPED if NO domain could be evaluated - that is a real
+      # "this rule could not run" and must not be silently dropped. The
+      # first such error is kept verbatim: "the rule's Check block is empty
+      # upstream" and "needs CDISC Library variable metadata ..." are the
+      # whole point of reporting a reason at all, and a generic sentence
+      # would throw them away.
+      if (is.na(first_error)) {
+        first_error <- conditionMessage(violations)
+      }
+      next
     }
+    evaluable <- evaluable + 1L
 
     expected <- expected_records(results_csv, domain)
 
-    if (identical(rule$sensitivity, "Dataset") || identical(rule$rule_type, "Domain Presence Check")) {
+    if (identical(rule$sensitivity, "Dataset") ||
+      identical(rule$rule_type, "Domain Presence Check") ||
+      reference_is_dataset_level(results_csv, domain)) {
       actual_any <- any(violations)
       # A whole-study-level rule (e.g. Domain Presence Check's "is DM
       # present anywhere") reports its finding under a "STUDY" sentinel
@@ -128,6 +194,12 @@ run_case <- function(rule, case_dir) {
         )))
       }
     }
+  }
+  if (evaluable == 0L) {
+    return(list(
+      status = "SKIPPED",
+      reason = paste("evaluate_rule failed:", first_error)
+    ))
   }
   list(status = "PASS", reason = NA_character_)
 }
