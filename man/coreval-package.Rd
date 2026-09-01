@@ -4,9 +4,9 @@
 \name{coreval-package}
 \alias{coreval}
 \alias{coreval-package}
-\title{coreval: Evaluate CDISC Open Rules (CORE) Conformance Against Clinical Trial Data}
+\title{coreval: Check Clinical Trial Data Against 'CDISC' Open Rules}
 \description{
-Finds CDISC conformance problems in clinical trial data without leaving R. Check a single dataset while you are still writing the code that builds it, or a whole study folder once it exists, and get the findings back as a tidy data frame pointing at the exact row and variable. Reads transport ('XPT'), 'SAS' and comma-separated files, plus Define-XML when present, and covers rules for the SDTM, SEND and TIG standards. The rules are bundled inside the package, so nothing is downloaded and your data never leaves your machine: no internet, no API key, no account. When a rule cannot be checked - because it needs a dataset you did not supply, for instance - it is reported as skipped with the reason, never counted as a pass. Meant as a quick first pass before a qualified validation system, never as a replacement for one. An independent project: not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
+Finds conformance problems in clinical trial data without leaving R, using the openly published 'CDISC' Open Rules ('CORE'). Check a single dataset while you are still writing the code that builds it, or a whole study folder once it exists, and get the findings back as a tidy data frame pointing at the exact row and variable. Reads transport ('XPT'), 'SAS' and comma-separated files, plus 'Define-XML' when present, and covers rules for the 'SDTM', 'SEND' and 'TIG' standards. The rules are bundled inside the package, so nothing is downloaded and your data never leaves your machine: no internet, no API key, no account. When a rule cannot be checked - because it needs a dataset you did not supply, for instance - it is reported as skipped with the reason, never counted as a pass. Meant as a quick first pass before a qualified validation system, never as a replacement for one. An independent project: not affiliated with or endorsed by CDISC, and not a CORE-certified conformance engine.
 }
 \details{
 coreval finds CDISC conformance problems in clinical trial data without

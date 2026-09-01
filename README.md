@@ -19,7 +19,7 @@ check_dataset(dm)
 ```
 ── coreval — DM ────────────────────────────────────────────────────────────
 
-9 problems across 6 records  (167 checks ran)
+9 problems across 6 records  (170 checks ran)
 
   wrong value         4   the data breaks the rule - start here
   missing required    2   the standard requires it
@@ -145,9 +145,11 @@ Or a file — `.xpt`, `.sas7bdat` or `.csv`:
 result <- check_dataset("ae.xpt")
 ```
 
-coreval works out the domain from your `DOMAIN` column, or from the file name if
-there isn't one. So a split dataset in `ae1.xpt` is still checked as `AE`. If it
-guesses wrong, tell it:
+coreval works out the domain from your `DOMAIN` column, and falls back to the
+file name only when the data has no `DOMAIN` column at all. That order matters
+for a split dataset: `ae1.xpt` is checked as `AE` because its `DOMAIN` column
+says so — on a file with no `DOMAIN` column, the name `ae1` is taken at face
+value. If it guesses wrong, tell it:
 
 ```r
 result <- check_dataset(ae, domain = "AE")
@@ -242,11 +244,15 @@ rows — to filter, count, or feed somewhere else — they're in `result$finding
 ### `result$findings` — what's wrong
 
 ```r
-head(result$findings)
-#>   Dataset Record Variable      Value                                    issue     rule_id
-#> 1      AE      3  AESTDTC 2013-02-30  Variable value is not in correct ISO ... CORE-000005
-#> 2      DM      7     AGEU             AGEU is missing when AGE is provided.    CORE-000112
+head(result$findings[, c("Dataset", "Record", "Variable", "Value", "triage", "rule_id")])
+#>  Dataset Record Variable          Value           triage     rule_id
+#>       AE      2  AESTDTC     2024-02-30      wrong value CORE-000547
+#>       AE      2  RFSTDTC Not in dataset      wrong value CORE-000547
+#>       AE      1   AESTDY Not in dataset missing optional CORE-000328
 ```
+
+(`issue` is dropped from that view only so the table fits the page — it is
+there on every row, and it is the column worth reading.)
 
 One row per problem, pointing at the exact spot:
 
@@ -257,6 +263,7 @@ One row per problem, pointing at the exact spot:
 | `Variable` | The variable being complained about |
 | `Value` | What was actually in there |
 | `issue` | **What's wrong, in words** — the rule's own description |
+| `triage` | `wrong value`, `missing required` or `missing optional` |
 | `rule_id` | The CDISC rule, if you need to look it up |
 
 `Not in dataset` under `Value` means the rule wanted a variable you don't have
@@ -335,13 +342,22 @@ you have most of the value.
 **What does CORE-000547 actually mean?**
 
 ```r
-list_rules(id = "CORE-000547")
-#> issue      Variable value is not in correct ISO 8601 date or datetime format
-#> legacy_ids SEND66, SEND67, SEND68, TIG0267, TIG0268, TIG0269
-#> guidance   The SENDIG requires dates and times of day to be stored according
-#>            to the international standard ISO 8601  (SENDIG v3.0 4.4)
-#> standard   SENDIG, TIG
+rule <- list_rules(id = "CORE-000547")
+
+rule$issue
+#> [1] "Variable value is not in correct ISO 8601 date or datetime format"
+rule$legacy_ids
+#> [1] "SEND66, SEND67, SEND68, TIG0267, TIG0268, TIG0269"
+rule$guidance
+#> [1] "The SENDIG requires dates and times of day to be stored according to the
+#>     international standard ISO 8601  (SENDIG v3.0 4.4)"
+rule$standard
+#> [1] "SENDIG, SENDIG-DART, SENDIG-GENETOX, TIG"
 ```
+
+`list_rules()` always returns a data frame with one row per rule, so pick the
+columns you want off it. (`t(rule)` gives the whole row as a column, which is
+often easier to read for a single rule.)
 
 Three things worth knowing here:
 
@@ -387,7 +403,7 @@ result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
 ```
 
 Rules are written per Implementation Guide version, so this genuinely narrows
-what runs — for DM: 132 rules for SDTMIG generally, 94 for 3.2, 130 for 3.4.
+what runs — for DM: 134 rules for SDTMIG generally, 96 for 3.2, 132 for 3.4.
 
 Worth knowing: this genuinely narrows what runs, and the report tells you how
 many rules it set aside. CDISC's coverage is uneven — the general "dates must be
@@ -470,44 +486,69 @@ Of the rules that are both readable and have an answer sheet, coreval has
 
 ### How many of the 797 are actually proven
 
-| | |
-|---|---|
-| **677 confirmed** | run against CDISC's example, flagged exactly the rows the answer sheet says |
-| 70 disagree | we flag different rows than CDISC does — see below |
-| 30 cannot be checked | CDISC ships no answer sheet for these. Nobody can confirm them, including CDISC. |
-| 9 blocked | need CDISC's terminology lists (the 438 MB problem) |
-| 11 my gaps | see below |
+Every rule falls into exactly one of four buckets. They add up to 797.
 
-**677 of the 767 verifiable rules — 88%.**
+| | rules | what it means |
+|---|---|---|
+| **Confirmed** | **695** | Run against CDISC's own example data. Flagged exactly the rows their answer sheet says, no more and no fewer. |
+| Nothing to check against | 37 | CDISC ships no usable answer for these. Not my gap and not theirs to fix quickly — nobody can confirm them, including CDISC. |
+| Blocked on data I don't ship | 10 | The rule is fine and the answer sheet is fine. I'm missing a reference list it needs. |
+| Still disagreeing | 55 | coreval flags different rows than the answer sheet says. The actual work left. |
+
+**Of the rules that can be confirmed at all — 695 of 750, 93%.**
+
+#### The 37 nobody can confirm
+
+| | rules | |
+|---|---|---|
+| No answer sheet at all | 30 | CDISC published the rule and no worked example. There is nothing to compare against. |
+| Answer sheet exists, but the example data can't trigger the rule | 6 | e.g. the rule only applies to Events datasets and the folder contains DM, TX and VS. Or the rule scopes `TA`/`TE` and only an `SE` dataset was shipped. |
+| The rule itself is empty | 1 | `CORE-000536` ships a check block with no conditions in it. There is nothing to run. |
+
+One of those 6 deserves naming: `CORE-000229` says `RELSUB` is a Special-Purpose
+dataset, while CDISC's own data model says it's a Relationship dataset. The two
+halves of its own scope can never both be true. I've left it alone rather than
+bend the model to fit — matching a rule against a class its own publisher
+disagrees with would be guessing.
+
+**These are never counted as passing.** They're reported as skipped, by name,
+with the reason, every time you run.
+
+#### The 10 blocked on data I don't ship
+
+| | rules | |
+|---|---|---|
+| Need CDISC's terminology lists | 9 | The codelists — which values are legal for `SEX`, `AEOUT` and so on. That's the 438 MB problem below, and it is **not in this release**. |
+| Need a CDISC Library code I don't carry | 1 | One rule wants a variable's controlled-terminology C-code. |
+
+This is the honest "my fault" column, and it's 10 rules — all of them the same
+packaging decision, not bugs.
 
 Put another way, the work that is actually left:
 
 ```
 797 rules
- -30  nobody can ever confirm these
- - 9  blocked on the terminology package decision
+ -37  nobody can confirm these, ever
+ -10  blocked until I ship more reference data
  ---
- 758  should end up confirmed
- 677  are
+ 750  should end up confirmed
+ 695  are
  ---
-  81  still to finish
+  55  still to finish
 ```
 
-Of those 81: **70 disagreements** and **11 gaps on my side** — 4 rules need
-CDISC variable metadata this doesn't carry yet, 1 uses a rule structure not
-implemented, 3 have test cases containing no dataset the rule applies to, 2
-have test data that won't load, and 1 is a rule whose own metadata contradicts
-CDISC's model (it says `RELSUB` is a Special-Purpose dataset; CDISC's model
-says Relationship). That last one is left alone deliberately — matching a rule
-against a class its own publisher disagrees with would be guessing.
+### The 55 that disagree
 
-The 30 without an answer sheet are honest about it: they're reported as
-skipped, by name, every time you run. They are never counted as passing.
+This is where the real work is, and I won't dress it up: for 55 rules, coreval
+flags different rows than CDISC's answer sheet says it should. 26 of them are
+deprecated rules that a check never actually runs, so 29 affect real output.
 
-### The 70 that disagree
-
-This is where the real work is, and I won't dress it up: for 70 rules, coreval
-flags different rows than CDISC's answer sheet says it should.
+Every one of the 55 has been investigated individually and written down. 53 are
+cases where CDISC's example contradicts CDISC's own rule or is missing an
+answer it should have. The other 2 are split datasets: coreval finds the same
+problem but reports it against the file it is in, with that file's own row
+numbers, where CDISC reports it against the merged domain. That is deliberate —
+a finding has to point at a file you can open and a row you can find.
 
 Some are bugs on my side. Others are cases where CDISC's own example data
 contradicts itself — a file whose stated answer doesn't match its own rows,
@@ -531,11 +572,11 @@ change.
 
 Three honest problems, none of them hidden from you at runtime:
 
-- **A few rules need CDISC's terminology lists** — the controlled vocabularies
-  saying which codes are valid. That data is around 438 MB. Putting it in this
-  package would make a 0.6 MB install into a very large one, so it belongs in a
-  separate package. Those rules are reported as skipped, by name, with the
-  reason.
+- **9 rules need CDISC's terminology lists** — the controlled vocabularies
+  saying which codes are valid. That data is around 438 MB, which would turn a
+  0.6 MB install into a very large one, so it is **not part of this release**.
+  Those 9 rules are reported as skipped, by name, with the reason, every time
+  you run. They are never counted as passing.
 - **The agreement percentage is a floor, not a score.** CDISC's examples are
   small and tidy. Real submissions are neither. Three separate bugs found in
   this package moved that percentage by exactly zero.
@@ -562,18 +603,18 @@ CDISC publishes, for each rule, data that *should* trigger it, data that
 *shouldn't*, and the exact records their own engine flags. coreval replays all of
 it and compares record by record.
 
-**On published rules that ship reference data: 488 of 511, about 95%.**
+**On published rules that ship reference data: 540 of 562, about 96%.**
 
 <details>
 <summary>Why there's more than one number</summary>
 
 | What's counted | Agreement |
 |---|---|
-| Published rules with reference data — **the meaningful one** | **488 / 511 (95%)** |
-| All published rules, including those with nothing to compare against | 488 / 543 (90%) |
-| Every bundled rule, including deprecated and draft | 597 / 722 (83%) |
+| Published rules with reference data — **the meaningful one** | **540 / 562 (96%)** |
+| All published rules, including those with nothing to compare against | 540 / 566 (95%) |
+| Every bundled rule, including deprecated and draft | 695 / 797 (87%) |
 
-**81 rules ship no reference data at all.** CDISC publishes the rule but no
+**30 rules ship no reference data at all.** CDISC publishes the rule but no
 examples, so there's nothing to compare against — they can't pass or fail.
 Counting them as failures understates things; hiding them overstates. So both
 are here.
@@ -589,7 +630,7 @@ was edited after the expected results were generated.
 
 </details>
 
-**Please don't read 95% as a quality score.** CDISC's examples are mostly
+**Please don't read 96% as a quality score.** CDISC's examples are mostly
 simple, single-file datasets, so they don't exercise much of what real
 submissions do. I once found a bug that silently switched off a third of the
 rules on split-domain studies — it moved that number by exactly zero. It's a
@@ -622,12 +663,12 @@ finding real problems in real data. See [NEWS.md](NEWS.md).
 
 Issues and pull requests welcome — especially a dataset that produces a wrong or
 missing finding. That's the most useful bug report there is. Please read the
-[Code of Conduct](CODE_OF_CONDUCT.md) first.
+[Code of Conduct](https://github.com/hrach-gevorgyan/coreval/blob/main/CODE_OF_CONDUCT.md) first.
 
 ## License
 
-Package code is MIT ([LICENSE.md](LICENSE.md)). Bundled rule definitions come
+Package code is MIT ([LICENSE.md](https://github.com/hrach-gevorgyan/coreval/blob/main/LICENSE.md)). Bundled rule definitions come
 from [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
-and remain under CDISC's terms — see [NOTICE.md](NOTICE.md).
+and remain under CDISC's terms — see [NOTICE.md](https://github.com/hrach-gevorgyan/coreval/blob/main/NOTICE.md).
 
 Not affiliated with, endorsed by, or certified by CDISC.

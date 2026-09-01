@@ -1,6 +1,7 @@
-# coreval 0.0.0.9000
+# coreval 0.1.0
 
-First development version. Not released yet, and the API may still change.
+First release. The API is settled for 0.1.x; anything that changes will go
+through a deprecation cycle rather than disappearing.
 
 A personal open-source project — not affiliated with or endorsed by CDISC, and
 not a CORE-certified engine. It's a quick local check to run *before* your
@@ -217,15 +218,15 @@ qualified validation tool, never instead of it.
 ## How much you can trust it
 
 * Checked by replaying CDISC's own reference test cases and comparing flagged
-  records one by one. It currently agrees with CDISC on **488 of 511** published,
-  fully executable rules that ship reference data — about 95%. The README
+  records one by one. It currently agrees with CDISC on **540 of 562** published,
+  fully executable rules that ship reference data — about 96%. The README
   explains the other denominators and why there's more than one.
 * A rule that can't be evaluated is always reported as skipped, with a reason,
   never counted as a pass.
 
 ## What it can't do yet
 
-* **No ADaM rules.** CDISC publishes 197 of them, but none currently ships
+* **No ADaM rules.** CDISC publishes 93 of them, but none currently ships
   reference results, so there's no published expected output to check an
   implementation against. Including them would mean asking you to trust checks
   nobody has verified. They go in as soon as that data exists.

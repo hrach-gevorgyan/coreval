@@ -29,10 +29,11 @@
 #'   for Excel, `.csv` (or anything else) for CSV.
 #' @param tracking Add the empty `Status`/`Owner`/`Notes` columns. `TRUE` by
 #'   default; set `FALSE` for a file you intend to read back into R.
-#' @return The paths actually written, invisibly — one element for Excel, two
-#'   for CSV.
+#' @return The paths actually written, invisibly. One element for Excel (a
+#'   single workbook). For CSV, one path per file written: the findings, plus
+#'   siblings for `skipped` and `about`, plus one for `truncated` when any rule
+#'   flagged more records than were kept.
 #' @examples
-#' \donttest{
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)
 #' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
@@ -43,7 +44,6 @@
 #' write_findings(result, out)
 #'
 #' unlink(dir, recursive = TRUE)
-#' }
 #' @export
 write_findings <- function(result, path, tracking = TRUE) {
   if (!is.list(result) || is.null(result$findings)) {

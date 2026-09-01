@@ -16,8 +16,10 @@ for Excel, \code{.csv} (or anything else) for CSV.}
 default; set \code{FALSE} for a file you intend to read back into R.}
 }
 \value{
-The paths actually written, invisibly — one element for Excel, two
-for CSV.
+The paths actually written, invisibly. One element for Excel (a
+single workbook). For CSV, one path per file written: the findings, plus
+siblings for \code{skipped} and \code{about}, plus one for \code{truncated} when any rule
+flagged more records than were kept.
 }
 \description{
 Saves the result of \code{\link[=check_study]{check_study()}} to CSV or Excel, so findings can be
@@ -49,7 +51,6 @@ than in a separate document nobody reads.
 }
 
 \examples{
-\donttest{
 dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
@@ -60,5 +61,4 @@ out <- file.path(tempdir(), "findings.csv")
 write_findings(result, out)
 
 unlink(dir, recursive = TRUE)
-}
 }
