@@ -474,9 +474,32 @@ Of the rules that are both readable and have an answer sheet, coreval has
 |---|---|
 | **677 confirmed** | run against CDISC's example, flagged exactly the rows the answer sheet says |
 | 70 disagree | we flag different rows than CDISC does — see below |
-| 50 not checked | 30 have no answer sheet at all; 13 need CDISC's terminology lists; 7 are gaps on my side |
+| 30 unconfirmable | CDISC ships no answer sheet for these. Nobody can confirm them, including CDISC. |
+| 9 blocked | need CDISC's terminology lists (the 438 MB problem) |
+| 11 my gaps | see below |
 
 **677 of the 767 verifiable rules — 88%.**
+
+Put another way, the work that is actually left:
+
+```
+797 rules
+ -30  nobody can ever confirm these
+ - 9  blocked on the terminology package decision
+ ---
+ 758  should end up confirmed
+ 677  are
+ ---
+  81  still to finish
+```
+
+Of those 81: **70 disagreements** and **11 gaps on my side** — 4 rules need
+CDISC variable metadata this doesn't carry yet, 1 uses a rule structure not
+implemented, 3 have test cases containing no dataset the rule applies to, 2
+have test data that won't load, and 1 is a rule whose own metadata contradicts
+CDISC's model (it says `RELSUB` is a Special-Purpose dataset; CDISC's model
+says Relationship). That last one is left alone deliberately — matching a rule
+against a class its own publisher disagrees with would be guessing.
 
 The 30 without an answer sheet are honest about it: they're reported as
 skipped, by name, every time you run. They are never counted as passing.
