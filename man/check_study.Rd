@@ -12,7 +12,10 @@ check_study(
 )
 }
 \arguments{
-\item{study}{A study object from \code{\link[=read_study]{read_study()}}.}
+\item{study}{A study folder path, or a study object from \code{\link[=read_study]{read_study()}}.
+Passing the path is the usual way; reading first is only worth it when
+you want to check the same large study more than once without re-reading
+it, or to look at what was parsed.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}) to further filter
 which rules apply, as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
@@ -65,8 +68,8 @@ join coreval does not implement yet.
 dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
-study <- read_study(dir)
-result <- check_study(study)
+
+result <- check_study(dir)
 result$findings
 unlink(dir, recursive = TRUE)
 }

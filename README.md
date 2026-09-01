@@ -187,20 +187,23 @@ cross-dataset checks, and those often matter most.
 When you do have the full folder:
 
 ```r
-study  <- read_study("path/to/study/sdtm")
-result <- check_study(study)
+result <- check_study("path/to/study/sdtm")
 ```
 
-`read_study()` takes a **folder**, not a file, and reads everything in it — XPT,
-SAS, CSV, whichever you have:
+A **folder**, not a file. coreval reads everything in it — XPT, SAS, CSV,
+whichever you have — and reading it all at once is what makes the cross-dataset
+rules possible. If there's a Define-XML in there, it finds it and uses it.
+
+If you want to look at what was parsed, or check the same large study twice
+without re-reading it, do the read yourself:
 
 ```r
+study <- read_study("path/to/study/sdtm")
 names(study$datasets)
 #> [1] "AE" "CM" "DM" "EX" "LB" "VS"
-```
 
-Reading everything at once is what makes the cross-dataset rules possible. If
-there's a Define-XML in the folder, coreval finds it and uses it.
+check_study(study)
+```
 
 A study report is grouped by dataset, and tells you where the trouble is before
 showing you any detail:

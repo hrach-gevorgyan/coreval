@@ -160,6 +160,12 @@ qualified validation tool, never instead of it.
   work - coreval bundles 756 extracted rules and CDISC standards metadata, but
   the notice lived only in `NOTICE.md`, which is excluded from the build and so never
   reached anyone who installed the package. A test now guards it.
+* **`check_study()` takes a folder path**, so `read_study()` is now optional:
+  `check_study("study/sdtm")` instead of reading first. Reading yourself is
+  still worth it to inspect what was parsed, or to check the same large study
+  twice without re-reading it.
+* `sdtm_domain_classes()` is no longer exported - a domain-to-class lookup
+  table answers a question nobody working with their own data has.
 * `evaluate_rule()` is no longer exported. It returned a raw logical vector,
   needed a rule record fetched from package internals, and had no story a user
   could follow now that `check_dataset()` exists.

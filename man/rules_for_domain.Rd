@@ -50,7 +50,7 @@ Resolves each rule's \code{Scope > Classes} and \code{Scope > Domains} (handling
 \code{"ALL"}/\code{"NONE"} sentinels and \code{"XX--"} prefix wildcards) against \code{domain}.
 }
 \details{
-Dynamically-named domains not in \code{\link[=sdtm_domain_classes]{sdtm_domain_classes()}} (e.g. \code{SUPPAE},
+Dynamically-named domains not in the bundled domain-to-class table (e.g. \code{SUPPAE},
 \code{SUPPDM}) resolve to the \code{RELATIONSHIP} class, since every \code{SUPPxx}
 dataset follows the \code{SUPPQUAL} template. Associated Persons domains
 (\code{APxx}) currently have no class resolution - as of this writing no

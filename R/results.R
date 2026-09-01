@@ -313,7 +313,10 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' problems that do not exist. The same goes for any rule needing an operator or
 #' join coreval does not implement yet.
 #'
-#' @param study A study object from [read_study()].
+#' @param study A study folder path, or a study object from [read_study()].
+#'   Passing the path is the usual way; reading first is only worth it when
+#'   you want to check the same large study more than once without re-reading
+#'   it, or to look at what was parsed.
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
 #'   which rules apply, as in [rules_for_domain()].
 #' @param max_records Most records to keep per rule, default 1000. A rule can
@@ -339,14 +342,29 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)
 #' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
-#' study <- read_study(dir)
-#' result <- check_study(study)
+#'
+#' result <- check_study(dir)
 #' result$findings
 #' unlink(dir, recursive = TRUE)
 #' }
 #' @export
 check_study <- function(study, use_case = NULL, max_records = 1000,
                         include_deprecated = FALSE) {
+  # Take the folder directly. Requiring read_study() first made people call
+  # two functions to do one thing, for no benefit in the common case.
+  if (is.character(study)) {
+    if (length(study) != 1) {
+      stop("`study` must be one folder path, or a study from read_study().", call. = FALSE)
+    }
+    if (!dir.exists(study)) {
+      stop(
+        "no such folder: ", study,
+        if (file.exists(study)) " (that is a file - use check_dataset() for a single dataset)",
+        call. = FALSE
+      )
+    }
+    study <- read_study(study)
+  }
   run_checks(
     study,
     use_case = use_case, require_referenced_domains = FALSE,

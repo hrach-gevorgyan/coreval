@@ -77,7 +77,7 @@ test_that("rules_for_domain matches SUPPxx domains via the RELATIONSHIP class", 
   expect_true(nrow(r) > 0)
 })
 
-test_that("sdtm_domain_classes exposes the bundled reference table", {
+test_that("the bundled domain-to-class reference table resolves Scope > Classes", {
   tbl <- sdtm_domain_classes()
   expect_s3_class(tbl, "data.table")
   expect_true(nrow(tbl) == 82) # 63 SDTMIG 3.4 + 10 base-SEND + 9 SEND extension-standard additions

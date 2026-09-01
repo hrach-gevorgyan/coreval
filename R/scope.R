@@ -140,11 +140,12 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
 #' `TF`, ...), so SDTMIG, SENDIG and TIG rules all resolve. See
 #' `data-raw/domain_classes.R` for provenance.
 #'
+#' Internal. It answers a question nobody working with their own data has -
+#' anyone who needs to know LB is a Findings domain already knows - and exists
+#' only so `Scope > Classes` can be resolved.
+#'
 #' @return A [data.table::data.table()] with columns `domain`, `class`.
-#' @examples
-#' classes <- sdtm_domain_classes()
-#' head(classes)
-#' @export
+#' @noRd
 sdtm_domain_classes <- function() {
   data.table::as.data.table(.coreval_env$domain_classes)
 }
@@ -154,7 +155,7 @@ sdtm_domain_classes <- function() {
 #' Resolves each rule's `Scope > Classes` and `Scope > Domains` (handling the
 #' `"ALL"`/`"NONE"` sentinels and `"XX--"` prefix wildcards) against `domain`.
 #'
-#' Dynamically-named domains not in [sdtm_domain_classes()] (e.g. `SUPPAE`,
+#' Dynamically-named domains not in the bundled domain-to-class table (e.g. `SUPPAE`,
 #' `SUPPDM`) resolve to the `RELATIONSHIP` class, since every `SUPPxx`
 #' dataset follows the `SUPPQUAL` template. Associated Persons domains
 #' (`APxx`) currently have no class resolution - as of this writing no

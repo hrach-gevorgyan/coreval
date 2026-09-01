@@ -362,3 +362,23 @@ test_that("every rule records which IG versions it was written for", {
   expect_true("SDTMIG 3.4" %in% v)
   expect_true(all(grepl("^(SDTMIG|SENDIG|TIG|ADaMIG)", v)))
 })
+
+test_that("check_study takes a folder path, so read_study is optional", {
+  # Requiring read_study() first made people call two functions to do one
+  # thing. The object form still works, for re-checking a large study without
+  # re-reading it.
+  dir <- tempfile("coreval_path_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(demo_ae(), file.path(dir, "ae.xpt"))
+
+  from_path <- check_study(dir)
+  from_object <- check_study(read_study(dir))
+  expect_identical(from_path$findings, from_object$findings)
+  expect_identical(from_path$skipped, from_object$skipped)
+
+  # A file is not a folder, and the message should point at the right function.
+  expect_error(check_study(file.path(dir, "ae.xpt")), "check_dataset")
+  expect_error(check_study("no-such-folder"), "no such folder")
+  expect_error(check_study(c("a", "b")), "one folder path")
+})
