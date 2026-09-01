@@ -18,7 +18,7 @@ you want to check the same large study more than once without re-reading
 it, or to look at what was parsed.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}) to further filter
-which rules apply, as in \code{\link[=rules_for_domain]{rules_for_domain()}}.}
+which rules apply, as in \code{\link[=list_rules]{list_rules()}}.}
 
 \item{max_records}{Most records to keep per rule, default 1000. A rule can
 flag every row - a missing \code{EPOCH} on a 200 000-row \code{LB} is 200 000

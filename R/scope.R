@@ -184,12 +184,12 @@ sdtm_domain_classes <- function() {
 #' @param include_deprecated Include rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
-#' @return A [data.table::data.table()] with the same columns as
-#'   [list_rules()], filtered to matching rules.
-#' @examples
-#' ae_rules <- rules_for_domain("AE")
-#' nrow(ae_rules)
-#' @export
+#' Internal. [list_rules()] is the public way to ask this, via its `domain`
+#' argument; this stays separate because `run_checks()` calls it per domain in
+#' the hot path and needs the `dataset` argument, which has no public meaning.
+#'
+#' @return A [data.table::data.table()] of matching rules.
+#' @noRd
 rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
                              standard = NULL, version = NULL,
                              include_deprecated = FALSE) {
@@ -238,6 +238,8 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
   }
 
   ids <- vapply(rules[keep], function(r) r$id, character(1))
-  rules_table <- list_rules()
+  # build_rules_table(), not list_rules(): list_rules(domain =) delegates HERE
+  # for scoping, so calling it back would recurse forever.
+  rules_table <- build_rules_table()
   rules_table[rules_table$id %in% ids, ]
 }

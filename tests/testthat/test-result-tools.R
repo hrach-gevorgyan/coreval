@@ -7,23 +7,23 @@ demo <- function() {
   )
 }
 
-test_that("rule_info answers the question the report raises", {
+test_that("list_rules(id =) answers the question the report raises", {
   # The report hands you "CORE-000547". Before this there was no way to ask R
   # what that means: list_rules() carried sensitivity and executability but
   # not what the rule actually CHECKS.
-  info <- rule_info("CORE-000547")
+  info <- list_rules(id = "CORE-000547")
   expect_equal(nrow(info), 1)
   expect_match(info$issue, "ISO 8601")
   expect_true(nzchar(info$description))
   expect_true(all(c("standard", "authority", "source", "sensitivity") %in% names(info)))
 
   # Several at once, in the order asked for - so it composes with a result.
-  many <- rule_info(c("CORE-000189", "CORE-000547"))
+  many <- list_rules(id = c("CORE-000189", "CORE-000547"))
   expect_equal(many$id, c("CORE-000189", "CORE-000547"))
 
   # An unknown id says so, and says what an id looks like.
-  expect_error(rule_info("CORE-999999"), "no such rule")
-  expect_error(rule_info("CORE-999999"), "CORE-000547")
+  expect_error(list_rules(id = "CORE-999999"), "no such rule")
+  expect_error(list_rules(id = "CORE-999999"), "CORE-000547")
 })
 
 test_that("list_rules now carries what each rule checks", {
@@ -134,7 +134,7 @@ test_that("every rule carries the ids Pinnacle 21 uses, and the guidance it enfo
   expect_true(all(vapply(rules, function(r) length(r$legacy_ids) > 0, logical(1))))
   expect_true(all(vapply(rules, function(r) length(r$citations) > 0, logical(1))))
 
-  info <- rule_info("CORE-000189")
+  info <- list_rules(id = "CORE-000189")
   expect_match(info$legacy_ids, "CG0665")
   expect_true(nzchar(info$guidance))
 

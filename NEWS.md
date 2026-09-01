@@ -65,10 +65,14 @@ qualified validation tool, never instead of it.
   standard ISO 8601 (SENDIG v3.0 4.4)"*. `print(result, guidance = TRUE)` shows
   it under each problem - off by default, since it roughly doubles the report -
   and `rule_info()` always returns it.
-* **Look up a rule you were shown** with `rule_info("CORE-000547")`. The report
-  gives you a rule id; this tells you what it checks, in words, without leaving
-  R. `list_rules()` now carries the same `issue` text for every rule, alongside
-  `rules_for_domain()` and `rules_version()`.
+* **One function for every question about the rule set.** `list_rules()` now
+  answers all three: `list_rules()` for the catalog, `list_rules(id =
+  "CORE-000547")` to look up a rule the report named, `list_rules(domain =
+  "AE")` for what applies to a domain. The columns are the same whatever you
+  ask, so the result is safe to filter, join and script against.
+  `rule_info()`, `rules_for_domain()` and `rules_version()` are gone -
+  the last is now `attr(list_rules(), "rules_version")`, and
+  `write_findings()` records it in every exported file anyway.
 * **`summary()`** gives the counts in three lines, for a script or a quick
   "did that fix help?", and returns them as a row you can log.
 * **`filter_findings()`** narrows a result by triage, dataset, rule or

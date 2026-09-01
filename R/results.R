@@ -318,7 +318,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   you want to check the same large study more than once without re-reading
 #'   it, or to look at what was parsed.
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
-#'   which rules apply, as in [rules_for_domain()].
+#'   which rules apply, as in [list_rules()].
 #' @param max_records Most records to keep per rule, default 1000. A rule can
 #'   flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200 000
 #'   identical findings, more than Excel can hold. The true count is kept in

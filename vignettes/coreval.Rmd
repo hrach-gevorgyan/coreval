@@ -213,23 +213,30 @@ document. Pass `tracking = FALSE` if you would rather not have them.
 
 ## The rule set
 
-```{r rules}
-rules_version()
+One function answers every question about the rule set.
 
+```{r rules}
 rules <- list_rules()
 nrow(rules)
 table(rules$source)
+
+attr(rules, "rules_version")
 ```
 
-`rules_version()` is the exact CDISC commit the bundled rules came from — worth
-writing down next to your results.
+That last one is the exact CDISC commit the bundled rules came from. Worth
+writing down next to your results — though `write_findings()` already records
+it in every file it saves.
 
 Not every rule carries the same weight. `source` separates fully-vetted
 published rules from deprecated and draft ones; `NOTICE.md` explains each.
 
+Ask it what applies to a domain, or what a rule the report named actually
+checks:
+
 ```{r rules-for-domain}
-ae_rules <- rules_for_domain("AE")
-nrow(ae_rules)
+nrow(list_rules(domain = "AE"))
+
+list_rules(id = "CORE-000547")$issue
 ```
 
 ## Two last things

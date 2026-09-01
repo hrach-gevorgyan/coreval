@@ -92,3 +92,48 @@ test_that("the bundled CDISC material ships with its required licence notice", {
   # And it must name what is actually bundled.
   expect_match(txt, "rules.rds", fixed = TRUE)
 })
+
+test_that("listing is not running: the catalog shows everything by default", {
+  # list_rules() is the catalog of what is BUNDLED, so it includes
+  # superseded rules - `source` is there to filter on, and hiding a fifth of
+  # the bundle would make nrow(list_rules()) stop meaning "how many rules are
+  # there". Checking is a different question: a superseded rule would report
+  # the same defect twice, so check_dataset()/check_study() exclude them.
+  all_rules <- list_rules()
+  expect_true("deprecated_dir" %in% all_rules$source)
+
+  runnable <- list_rules(include_deprecated = FALSE)
+  expect_false("deprecated_dir" %in% runnable$source)
+  expect_lt(nrow(runnable), nrow(all_rules))
+})
+
+test_that("list_rules answers all three questions with one column set", {
+  # The whole point of the merge: whatever you ask for, the shape is the same,
+  # so the result is safe to filter, join and script against.
+  everything <- list_rules()
+  one <- list_rules(id = "CORE-000547")
+  scoped <- list_rules(domain = "AE", standard = "SDTMIG")
+
+  expect_equal(names(one), names(everything))
+  expect_equal(names(scoped), names(everything))
+
+  expect_equal(nrow(one), 1)
+  expect_match(one$issue, "ISO 8601")
+  expect_true(nzchar(one$description))
+  expect_true(nzchar(one$guidance))
+  expect_match(one$legacy_ids, "SEND66")
+
+  # Ids come back in the order asked for, so this composes with a result.
+  pair <- list_rules(id = c("CORE-000189", "CORE-000547"))
+  expect_equal(pair$id, c("CORE-000189", "CORE-000547"))
+
+  # Looking up an id must work even for a rule that would not currently run -
+  # the report may well have named it.
+  expect_equal(nrow(list_rules(id = "CORE-000452")), 1) # deprecated
+})
+
+test_that("the bundled commit rides along with the rule table", {
+  rules <- list_rules()
+  expect_true(nzchar(attr(rules, "rules_version")))
+  expect_equal(attr(rules, "rules_version"), attr(list_rules(domain = "AE"), "rules_version"))
+})

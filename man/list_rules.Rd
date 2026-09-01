@@ -2,31 +2,83 @@
 % Please edit documentation in R/rules.R
 \name{list_rules}
 \alias{list_rules}
-\title{List available CORE rules}
+\title{Look up CORE rules}
 \usage{
-list_rules()
+list_rules(
+  id = NULL,
+  domain = NULL,
+  standard = NULL,
+  version = NULL,
+  use_case = NULL,
+  include_deprecated = TRUE
+)
+}
+\arguments{
+\item{id}{Return only these rules, e.g. \code{"CORE-000547"}. This is how you
+look up a rule id the report gave you.}
+
+\item{domain}{Return only rules that apply to this domain, e.g. \code{"AE"},
+resolving each rule's \code{Scope > Classes} and \code{Scope > Domains}.}
+
+\item{standard}{Return only rules for this standard, e.g. \code{"SDTMIG"}.
+Matched exactly, so \code{"SENDIG"} does not pick up \code{"SENDIG-DART"}.}
+
+\item{version}{The standard's version, e.g. \code{"3.4"} (or \code{"3-4"}). Only
+narrows alongside \code{standard}, since a bare version is ambiguous across
+standards.}
+
+\item{use_case}{Optional use case (e.g. \code{"INDH"}). Rules with no Use Case
+constraint always pass.}
+
+\item{include_deprecated}{Include superseded rules. \code{TRUE} here, unlike
+\code{\link[=check_dataset]{check_dataset()}} and \code{\link[=check_study]{check_study()}}, which default to \code{FALSE}. The
+difference is deliberate: \strong{listing is not running}. This function is the
+catalog of what is bundled, so hiding a fifth of it would make
+\code{nrow(list_rules())} stop meaning "how many rules are there" - and \code{source}
+is right here to filter on. Checking is a different question, and there a
+superseded rule would report the same defect twice.
+Pass \code{FALSE} to see exactly what would run.}
 }
 \value{
-A \code{\link[data.table:data.table]{data.table::data.table()}} with one row per rule: \code{id},
-\code{source}, \code{status}, \code{standard}, \code{authority}, \code{rule_type},
-\code{executability}, \code{sensitivity}.
+A \code{\link[data.table:data.table]{data.table::data.table()}}, one row per rule: \code{id}, the one-line
+\code{issue} it reports, its fuller \code{description}, the \code{guidance} sentence
+from the Implementation Guide it enforces, the \code{legacy_ids} Pinnacle 21
+uses for it, \code{standard} and \code{standard_version}, \code{authority}, \code{rule_type},
+\code{sensitivity}, \code{executability}, \code{source} and \code{status}.
+
+The commit the bundled rules came from is on the result as
+\code{attr(x, "rules_version")}; \code{\link[=write_findings]{write_findings()}} records it in every
+exported file.
 }
 \description{
-\code{source} distinguishes where a rule came from in the upstream repository,
-since not all of them carry the same level of trust:
+One way in for every question about the rule set: what rules exist, what a
+particular one checks, and which of them apply to a domain.
+}
+\details{
+The columns are the same whatever you ask for, so the result is safe to
+filter, join and script against.
+}
+\section{What \code{source} tells you}{
+
+Not every bundled rule carries the same weight:
 \itemize{
-\item \code{"published"} - \verb{Published/}, \code{Core$Status == "Published"}, fully tested.
-\item \code{"deprecated_dir"} - \verb{Deprecated/}, \code{Core$Status == "Published"} with full
-test data, but upstream's own README says these SDTM-only rules are
-temporarily parked there during unrelated integration work and are
-"not fully validated."
-\item \code{"fda_business_rules_draft"} - \verb{Unpublished/FDA Business Rules/},
-\code{Core$Status == "Draft"}. Only rules that already ship test data are
-included.
+\item \code{"published"} - \verb{Published/} upstream, fully tested. The trusted core.
+\item \code{"deprecated_dir"} - superseded by a published replacement. Not returned
+unless you ask for it, since running both reports the same defect twice.
+\item \code{"fda_business_rules_draft"} - FDA drafts that already ship test data.
 }
 }
+
 \examples{
-rules <- list_rules()
-nrow(rules)
-head(rules)
+# Everything
+nrow(list_rules())
+
+# What does the rule the report just named actually check?
+list_rules(id = "CORE-000547")$issue
+
+# What applies to AE under SDTMIG 3.4?
+nrow(list_rules(domain = "AE", standard = "SDTMIG", version = "3.4"))
+
+# Which snapshot of CDISC's rules is this?
+attr(list_rules(), "rules_version")
 }

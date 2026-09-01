@@ -223,7 +223,7 @@ infer_domain <- function(dataset, path = NULL) {
 #'   a malformed `RFSTDTC` being reported. The report says how many rules were
 #'   set aside; leave `standard` unset to see everything.
 #' @param version The standard's version, e.g. `"3-4"`.
-#' @param use_case Optional use case (e.g. `"INDH"`), as in [rules_for_domain()].
+#' @param use_case Optional use case (e.g. `"INDH"`), as in [list_rules()].
 #' @param max_records Most records to keep per rule, default 1000. A rule that
 #'   flags every row of a large dataset would otherwise produce more findings
 #'   than anyone can read or Excel can hold. The true count is kept in

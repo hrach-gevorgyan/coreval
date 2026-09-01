@@ -309,7 +309,7 @@ the extra columns.
 **What does CORE-000547 actually mean?**
 
 ```r
-rule_info("CORE-000547")
+list_rules(id = "CORE-000547")
 #> issue      Variable value is not in correct ISO 8601 date or datetime format
 #> legacy_ids SEND66, SEND67, SEND68, TIG0267, TIG0268, TIG0269
 #> guidance   The SENDIG requires dates and times of day to be stored according
@@ -351,7 +351,7 @@ summary(result)
 **Which rules even apply to AE?**
 
 ```r
-rules_for_domain("AE")
+list_rules(domain = "AE")
 ```
 
 **Only the rules for my standard and IG version**
@@ -378,9 +378,12 @@ subset(list_rules(), source == "published")
 **Which rule version am I running?**
 
 ```r
-rules_version()
+attr(list_rules(), "rules_version")
 #> [1] "b540283d85e88fb8ee5f08ead5f03fac73eb1b8b"
 ```
+
+`write_findings()` records it in every exported file, so you rarely need to
+ask.
 
 That's the exact CDISC commit the bundled rules came from. Worth recording next
 to your results.
