@@ -474,7 +474,7 @@ Of the rules that are both readable and have an answer sheet, coreval has
 |---|---|
 | **677 confirmed** | run against CDISC's example, flagged exactly the rows the answer sheet says |
 | 70 disagree | we flag different rows than CDISC does — see below |
-| 30 unconfirmable | CDISC ships no answer sheet for these. Nobody can confirm them, including CDISC. |
+| 30 cannot be checked | CDISC ships no answer sheet for these. Nobody can confirm them, including CDISC. |
 | 9 blocked | need CDISC's terminology lists (the 438 MB problem) |
 | 11 my gaps | see below |
 
