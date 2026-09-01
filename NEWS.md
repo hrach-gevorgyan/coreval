@@ -64,7 +64,7 @@ qualified validation tool, never instead of it.
   requires dates and times of day to be stored according to the international
   standard ISO 8601 (SENDIG v3.0 4.4)"*. `print(result, guidance = TRUE)` shows
   it under each problem - off by default, since it roughly doubles the report -
-  and `rule_info()` always returns it.
+  and `list_rules()` always returns it.
 * **One function for every question about the rule set.** `list_rules()` now
   answers all three: `list_rules()` for the catalog, `list_rules(id =
   "CORE-000547")` to look up a rule the report named, `list_rules(domain =

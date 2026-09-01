@@ -134,21 +134,23 @@ haven::write_xpt(dm, file.path(dir, "dm.xpt"))
 haven::write_xpt(ae, file.path(dir, "ae.xpt"))
 ```
 
-`read_study()` wants a **folder**, not a file, and reads everything in it:
+Point it at the **folder**, not a file:
+
+```{r check}
+study_result <- check_study(dir)
+```
+
+coreval reads everything in there, and reading it all at once is the point —
+now the cross-dataset rules have both halves to work with. If there's a
+Define-XML in the folder it finds it and uses it (that needs the `xml2`
+package).
+
+If you want to look at what was parsed, or check the same large study more than
+once without re-reading it, do the read yourself and pass the object instead:
 
 ```{r read}
 study <- read_study(dir)
 names(study$datasets)
-```
-
-That's the point of reading it all at once — now the cross-dataset rules have
-both halves to work with. If there's a Define-XML in the folder, coreval finds
-it and uses it (that needs the `xml2` package).
-
-Then one call does the rest:
-
-```{r check}
-study_result <- check_study(study)
 ```
 
 ## Reading the results
@@ -228,7 +230,13 @@ writing down next to your results — though `write_findings()` already records
 it in every file it saves.
 
 Not every rule carries the same weight. `source` separates fully-vetted
-published rules from deprecated and draft ones; `NOTICE.md` explains each.
+published rules from deprecated and draft ones; `?list_rules` says what each
+means.
+
+Note the count above includes the deprecated ones. `list_rules()` is the
+catalog of what is *bundled*; a check excludes superseded rules, because
+running one alongside its replacement reports the same problem twice. Listing
+is not running.
 
 Ask it what applies to a domain, or what a rule the report named actually
 checks:
@@ -238,6 +246,22 @@ nrow(list_rules(domain = "AE"))
 
 list_rules(id = "CORE-000547")$issue
 ```
+
+## The whole API
+
+Six functions, and three of them do the work:
+
+| | |
+|---|---|
+| `check_dataset(x)` | one dataset — a data frame, or an `.xpt`/`.sas7bdat`/`.csv` |
+| `check_study(path)` | a whole folder |
+| `write_findings(result, path)` | save to Excel or CSV |
+| `list_rules()` | the rule set, one rule, or the rules for a domain |
+| `filter_findings(result, ...)` | narrow a result |
+| `read_study(path)` | read a folder yourself, when you want to inspect it |
+
+Plus `print()` and `summary()` on a result, which you get by typing the
+result's name.
 
 ## Two last things
 

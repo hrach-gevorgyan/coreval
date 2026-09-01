@@ -304,6 +304,32 @@ the extra columns.
 
 ---
 
+## The whole API
+
+Six functions. Three of them do the work:
+
+| | |
+|---|---|
+| `check_dataset(x)` | check one dataset — a data frame, or an `.xpt` / `.sas7bdat` / `.csv` |
+| `check_study(path)` | check a whole folder |
+| `write_findings(result, path)` | save to Excel or CSV, with tracking columns |
+
+The other three are there when you need them:
+
+| | |
+|---|---|
+| `list_rules()` | the rule set — also `list_rules(id = ...)` to look up a rule the report named, and `list_rules(domain = "AE")` for what applies where |
+| `filter_findings(result, ...)` | narrow a result by triage, dataset, rule or variable |
+| `read_study(path)` | read a folder yourself, if you want to inspect it or check it twice without re-reading |
+
+Plus `print()` and `summary()` on a result, which you get by typing the
+result's name.
+
+That's it. If you only ever learn `check_dataset()` and `write_findings()`,
+you have most of the value.
+
+---
+
 ## Recipes
 
 **What does CORE-000547 actually mean?**
