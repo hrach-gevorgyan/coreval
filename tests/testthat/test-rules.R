@@ -1,11 +1,11 @@
 test_that("list_rules returns the combined SDTMIG/SENDIG/TIG/ADaMIG rule set", {
   rules <- list_rules()
-  expect_equal(nrow(rules), 756)
+  expect_equal(nrow(rules), 797)
   expect_true(all(
     c("id", "source", "status", "standard", "authority", "rule_type",
       "executability", "sensitivity") %in% names(rules)
   ))
-  expect_equal(length(unique(rules$id)), 756)
+  expect_equal(length(unique(rules$id)), 797)
 
   by_source <- table(rules$source)
   expect_equal(unname(by_source[["published"]]), 566)
@@ -71,13 +71,31 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
   }
   logical_value_checks <- list()
   for (r in rules) logical_value_checks <- c(logical_value_checks, walk_check(r$check))
-  expect_true(all(vapply(logical_value_checks, function(h) startsWith(h$name, "$") || grepl("_exists|is_custom|has_no_data", h$name, ignore.case = TRUE), logical(1))))
+  # A genuine logical here is only ever a comparison against a BOOLEAN
+  # pseudo-field - `..._exists`, `..._is_...`, `has_no_data` - or an Operations
+  # binding. Anything else carrying TRUE/FALSE would mean a bare SDTM `Y`/`N`
+  # flag literal had been silently coerced, which is the corruption this
+  # guards against.
+  #
+  # The name list is not a fixed set: pulling in the Unpublished/SDTMIG and
+  # Unpublished/SENDIG drafts added `define_variable_is_collected` and
+  # `variable_is_empty`, both legitimately boolean. Widen it when a new
+  # boolean pseudo-field appears; never widen it to accommodate a real data
+  # value.
+  expect_true(all(vapply(
+    logical_value_checks,
+    function(h) {
+      startsWith(h$name, "$") ||
+        grepl("_exists|_is_|is_custom|has_no_data", h$name, ignore.case = TRUE)
+    },
+    logical(1)
+  )))
 })
 
 test_that("the bundled CDISC material ships with its required licence notice", {
   # cdisc-open-rules is MIT, and MIT requires the copyright and permission
   # notice to travel with "substantial portions of the Software". coreval
-  # bundles 756 extracted rules plus CDISC standards metadata, so the notice
+  # bundles 797 extracted rules plus CDISC standards metadata, so the notice
   # has to be IN THE INSTALLED PACKAGE - NOTICE.md at the repo root is
   # Rbuildignored and never reaches anyone who installs it.
   path <- system.file("COPYRIGHTS", package = "coreval")

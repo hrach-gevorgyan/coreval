@@ -83,6 +83,26 @@ register_operator("does_not_contain", function(ctx) {
   !get_operator("contains")(ctx)
 })
 
+# Operator: contains_case_insensitive - contains, ignoring case. Same set/
+# substring split as `contains`: a SET target (from a `distinct` Operation)
+# matches whole elements, a plain string matches a substring - so a variable
+# list containing "PLANFSUBxxx" still does not contain "PLANFSUB", case
+# regardless.
+register_operator("contains_case_insensitive", guarded_op(function(ctx) {
+  if (is.list(ctx$target)) {
+    value <- toupper(as.character(ctx$value))
+    return(vapply(ctx$target, function(t) any(value %in% toupper(as.character(t))), logical(1)))
+  }
+  any_value_match(ctx$target, ctx$value, function(t, v) {
+    grepl(toupper(v), toupper(t), fixed = TRUE)
+  })
+}))
+
+# Operator: does_not_contain_case_insensitive - negation of the above
+register_operator("does_not_contain_case_insensitive", function(ctx) {
+  !get_operator("contains_case_insensitive")(ctx)
+})
+
 # Operator: starts_with - target starts with any of value
 register_operator("starts_with", guarded_op(function(ctx) {
   any_value_match(ctx$target, ctx$value, startsWith)

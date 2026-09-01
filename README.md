@@ -353,7 +353,7 @@ Three things worth knowing here:
   to enforce — the *why*, which no rule message carries. `print(result,
   guidance = TRUE)` shows it under each problem; it's off by default because it
   roughly doubles the report's length.
-- All 756 rules carry both.
+- All 797 rules carry both.
 
 **Just the things that are definitely wrong**
 
@@ -436,7 +436,7 @@ nrow(unique(result$findings[, c("Dataset", "Record")]))
 
 ## What's covered
 
-756 rules for **SDTM**, **SEND** and **TIG**, bundled inside the package as
+797 rules for **SDTM**, **SEND** and **TIG**, bundled inside the package as
 data. Nothing is downloaded — no internet, no API key, no account, and your
 trial data never leaves your machine.
 

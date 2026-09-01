@@ -58,7 +58,7 @@ qualified validation tool, never instead of it.
   `FB0801` - which are the ids P21 and the published Conformance Rules
   spreadsheets use. The report shows them next to the CORE id, so a finding
   here can be matched to a finding there, including to a severity CDISC itself
-  does not publish. All 756 rules have at least one.
+  does not publish. All 797 rules have at least one.
 * **The "why", from the Implementation Guide itself.** Each rule carries the
   sentence it exists to enforce, with document and section: *"The SENDIG
   requires dates and times of day to be stored according to the international
@@ -161,7 +161,7 @@ qualified validation tool, never instead of it.
 * **The MIT notice for the bundled CDISC material now ships with the package**,
   in `inst/COPYRIGHTS`. cdisc-open-rules is MIT licensed, and MIT requires the
   copyright and permission notice to accompany substantial portions of the
-  work - coreval bundles 756 extracted rules and CDISC standards metadata, but
+  work - coreval bundles 797 extracted rules and CDISC standards metadata, but
   the notice lived only in `NOTICE.md`, which is excluded from the build and so never
   reached anyone who installed the package. A test now guards it.
 * **`check_study()` takes a folder path**, so `read_study()` is now optional:
@@ -174,9 +174,25 @@ qualified validation tool, never instead of it.
   needed a rule record fetched from package internals, and had no story a user
   could follow now that `check_dataset()` exists.
 
+## Coverage
+
+* **41 more rules**, from `Unpublished/SDTMIG` and `Unpublished/SENDIG` -
+  folders the extractor never opened. Both are SDTM- and SEND-shaped, so this
+  engine can read their data, and only the ones CDISC already ships expected
+  results for are taken (11 of 128, and 30 of 77). That is the whole remaining
+  gap: of the 767 upstream rules in a readable format that CDISC ships results
+  for, coreval now has 767.
+* Still excluded, and why: **USDM** (259 rules) is a JSON study-design model,
+  not tabular datasets - `read_study()` cannot read it at all.
+  **Unpublished/ADAMIG** (93) ships test data but *no* expected results for a
+  single rule, so nothing there can be verified. Another 292 readable rules
+  have no expected results either.
+* Two new operators, `contains_case_insensitive` and
+  `does_not_contain_case_insensitive`.
+
 ## What's covered
 
-* **756 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is
+* **797 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is
   downloaded — no internet, no API key, no account, and your data stays put.
 * **Around 60 rule operators**, including comparison of partial dates (SDTM
   dates are legitimately incomplete, like `2024-03`), grouping and uniqueness

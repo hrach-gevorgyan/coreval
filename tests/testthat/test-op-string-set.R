@@ -234,3 +234,50 @@ test_that("is_ordered_subset_of requires every element present AND in ascending 
 
   expect_true(get_operator("is_not_ordered_subset_of")(out_of_order))
 })
+
+test_that("contains_case_insensitive matches regardless of case, both ways", {
+  ctx <- function(target, value) {
+    list(target = target, value = value, exists = TRUE, n = length(target),
+         condition = list(operator = "contains_case_insensitive"))
+  }
+  op <- get_operator("contains_case_insensitive")
+
+  expect_equal(op(ctx(c("HEADACHE", "rash"), "head")), c(TRUE, FALSE))
+  expect_equal(op(ctx(c("Headache", "RASH"), "RASH")), c(FALSE, TRUE))
+  expect_equal(op(ctx("headache", "HEADACHE")), TRUE)
+
+  # It must agree with the case-sensitive operator whenever case already
+  # matches - otherwise it is not the same comparison with case folded.
+  same <- get_operator("contains")
+  plain <- ctx(c("abc", "def"), "abc")
+  expect_equal(op(plain), same(plain))
+})
+
+test_that("contains_case_insensitive keeps the set/substring distinction", {
+  # A SET target (from a `distinct` Operation) matches whole elements, not
+  # substrings - so a variable list holding "PLANFSUBxxx" does NOT contain
+  # "PLANFSUB". Folding case must not quietly turn that into a substring
+  # match, which would break the rule the distinction exists for.
+  op <- get_operator("contains_case_insensitive")
+  set_ctx <- list(
+    target = list(c("planfsubxxx", "armcd")), value = "PLANFSUB",
+    exists = TRUE, n = 1,
+    condition = list(operator = "contains_case_insensitive")
+  )
+  expect_false(op(set_ctx))
+
+  exact <- set_ctx
+  exact$target <- list(c("planfsub", "armcd"))
+  expect_true(op(exact))
+})
+
+test_that("does_not_contain_case_insensitive is the exact negation", {
+  ctx <- list(
+    target = c("HEADACHE", "rash"), value = "head", exists = TRUE, n = 2,
+    condition = list(operator = "does_not_contain_case_insensitive")
+  )
+  expect_equal(
+    get_operator("does_not_contain_case_insensitive")(ctx),
+    !get_operator("contains_case_insensitive")(ctx)
+  )
+})

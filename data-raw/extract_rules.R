@@ -94,11 +94,24 @@ normalize_flags <- function(x) {
   }
   nm <- names(x)
   for (i in seq_along(x)) {
+    # Assigning NULL into a list DELETES that element rather than setting it,
+    # which shortens the list mid-loop and makes every later `x[[i]]` run off
+    # the end ("subscript out of bounds"). A NULL element has nothing to
+    # normalise anyway, so leave it alone.
+    #
+    # This lay dormant for as long as no rule.yml happened to carry an empty
+    # value; CDISC.SENDIG.217 does, and it took the whole extraction down.
+    if (is.null(x[[i]])) {
+      next
+    }
     key <- if (!is.null(nm)) nm[i] else NA
     if (!is.na(key) && key %in% FLAG_KEYS) {
       x[[i]] <- isTRUE(as.logical(x[[i]]))
     } else {
-      x[[i]] <- normalize_flags(x[[i]])
+      normalised <- normalize_flags(x[[i]])
+      if (!is.null(normalised)) {
+        x[[i]] <- normalised
+      }
     }
   }
   x
@@ -152,13 +165,28 @@ extract_one <- function(path, source) {
   })))
   authorities <- authorities[!is.na(authorities)]
 
-  # A handful of FDA Business Rules drafts (only surfaced now that SENDIG is
-  # in want_standards) have no Core.Id at all - unlike every other rule.yml
-  # here, which all declare one explicitly. Their directory name (e.g.
-  # "FB6501") doesn't use the "FDA.<standard>.FBxxxx" convention the rest of
-  # this tier follows, so build the same shape rather than leaving a bare,
-  # potentially-collision-prone folder name as the id.
-  rule_id <- if (!is.null(d$Core$Id)) d$Core$Id else paste0("FDA.", matched_standards[1], ".", basename(dirname(path)))
+  # Most rule.yml files declare Core$Id. Those that don't fall into two shapes,
+  # and conflating them would mislabel a rule's provenance in its own id:
+  #
+  #   * The Unpublished/SDTMIG and Unpublished/SENDIG drafts are already named
+  #     by a qualified id ("CDISC.SDTMIG.CG0002"), so the folder name IS the
+  #     id and is used verbatim.
+  #   * Some drafts are named by a bare code ("FB6501", "SEND238"), which would
+  #     be collision-prone on its own, so they get the
+  #     "<authority>.<standard>.<code>" shape their siblings use.
+  #
+  # The authority comes from the rule, never assumed. Hardcoding "FDA." here
+  # labelled CDISC's own Unpublished/SENDIG drafts as FDA rules - wrong
+  # provenance stamped into the id itself, which then also stopped the
+  # conformance harness finding their test data.
+  folder <- basename(dirname(path))
+  rule_id <- if (!is.null(d$Core$Id)) {
+    d$Core$Id
+  } else if (grepl(".", folder, fixed = TRUE)) {
+    folder
+  } else {
+    paste0(authorities[1], ".", matched_standards[1], ".", folder)
+  }
 
   # The conformance-rule id this CORE rule descends from - CG0027, SEND66,
   # FB0801, TI2001. These are the ids Pinnacle 21 and the published
@@ -210,6 +238,10 @@ extract_one <- function(path, source) {
 
   list(
     id = rule_id,
+    # Where this came from upstream. An id is not always the folder name -
+    # a rule declaring Core$Id can live in a differently-named directory - so
+    # the conformance harness needs this rather than guessing.
+    upstream_folder = folder,
     legacy_ids = legacy_ids,
     citations = citations,
     source = source,
@@ -243,7 +275,23 @@ fda_draft_files <- Sys.glob(
 fda_draft_files <- Filter(function(f) has_results_csv(dirname(f)), fda_draft_files)
 fda_draft <- lapply(fda_draft_files, extract_one, source = "fda_business_rules_draft")
 
-rules <- c(published, deprecated, fda_draft)
+# Unpublished/SDTMIG and Unpublished/SENDIG are SDTM- and SEND-shaped, so this
+# engine can read their data - unlike Unpublished/USDM (a JSON study-design
+# model, not tabular datasets at all). Same rule as the FDA drafts: only the
+# ones that already ship reference results, since a rule with no expected
+# output cannot be verified against CDISC and shipping it would mean asking
+# people to trust a check nobody has confirmed.
+#
+# Unpublished/ADAMIG is still excluded for exactly that reason: all 93 of its
+# rules have test data and NONE has a results.csv.
+draft_dir_files <- function(subdir) {
+  files <- Sys.glob(file.path(upstream_dir, "Unpublished", subdir, "*", "rule.yml"))
+  Filter(function(f) has_results_csv(dirname(f)), files)
+}
+sdtmig_draft <- lapply(draft_dir_files("SDTMIG"), extract_one, source = "sdtmig_draft")
+sendig_draft <- lapply(draft_dir_files("SENDIG"), extract_one, source = "sendig_draft")
+
+rules <- c(published, deprecated, fda_draft, sdtmig_draft, sendig_draft)
 rules <- Filter(Negate(is.null), rules)
 names(rules) <- vapply(rules, function(r) r$id, character(1))
 
@@ -251,7 +299,9 @@ stopifnot(
   "duplicate rule ids across sources" = !anyDuplicated(names(rules)),
   "expected 566 published rules" = sum(vapply(rules, function(r) r$source == "published", logical(1))) == 566,
   "expected 163 deprecated_dir rules" = sum(vapply(rules, function(r) r$source == "deprecated_dir", logical(1))) == 163,
-  "expected 27 fda_business_rules_draft rules" = sum(vapply(rules, function(r) r$source == "fda_business_rules_draft", logical(1))) == 27
+  "expected 27 fda_business_rules_draft rules" = sum(vapply(rules, function(r) r$source == "fda_business_rules_draft", logical(1))) == 27,
+  "expected 11 sdtmig_draft rules" = sum(vapply(rules, function(r) r$source == "sdtmig_draft", logical(1))) == 11,
+  "expected 30 sendig_draft rules" = sum(vapply(rules, function(r) r$source == "sendig_draft", logical(1))) == 30
 )
 
 rules_data <- list(

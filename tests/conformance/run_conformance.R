@@ -33,6 +33,8 @@ source_root <- function(source) {
     published = file.path(upstream_dir, "Published"),
     deprecated_dir = file.path(upstream_dir, "Deprecated"),
     fda_business_rules_draft = file.path(upstream_dir, "Unpublished", "FDA Business Rules"),
+    sdtmig_draft = file.path(upstream_dir, "Unpublished", "SDTMIG"),
+    sendig_draft = file.path(upstream_dir, "Unpublished", "SENDIG"),
     stop("Unknown rule source: ", source)
   )
 }
@@ -153,7 +155,12 @@ run_rule <- function(rule) {
       return(list(status = "SKIPPED", reason = paste("unimplemented Operations type(s):", paste(missing, collapse = ", "))))
     }
   }
-  rule_dir <- file.path(source_root(rule$source), rule$id)
+  # By the rule's own upstream folder, not its id: a rule declaring Core$Id can
+  # live in a directory named something else entirely, and inferring one from
+  # the other silently reported "no test case folders found" for rules whose
+  # data was sitting right there.
+  folder <- if (!is.null(rule$upstream_folder)) rule$upstream_folder else rule$id
+  rule_dir <- file.path(source_root(rule$source), folder)
   # Most rules number their cases (positive/01/, positive/02/, ...), but some
   # FDA Business Rules drafts put data/ and results/ directly under
   # positive/negative with no numbered subfolder at all (a flat layout).

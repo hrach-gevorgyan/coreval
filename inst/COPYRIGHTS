@@ -10,10 +10,10 @@ requires is reproduced in full at the end of this file.
 
 inst/extdata/rules.rds
 ----------------------
-756 conformance rule definitions - the check logic, scope, messages, cited
+797 conformance rule definitions - the check logic, scope, messages, cited
 guidance and conformance-rule identifiers - extracted at build time from a
 pinned commit of cdisc-org/cdisc-open-rules. The commit is recorded in
-data-raw/UPSTREAM_SHA and returned by rules_version().
+data-raw/UPSTREAM_SHA and available as attr(list_rules(), "rules_version").
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds
