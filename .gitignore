@@ -11,3 +11,4 @@ data-raw/upstream/
 tests/conformance/scoreboard.csv
 docs/
 tests/conformance/audit_fixtures.json
+tests/conformance/audit_fixtures.py
