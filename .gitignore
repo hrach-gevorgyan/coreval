@@ -10,3 +10,4 @@ data-raw/cdisc-open-rules/
 data-raw/upstream/
 tests/conformance/scoreboard.csv
 docs/
+tests/conformance/audit_fixtures.json

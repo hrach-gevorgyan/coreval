@@ -1,11 +1,56 @@
+"""Classify each failing conformance rule by mechanical signature.
+
+Run from the package root, after run_conformance.R has written the scoreboard:
+
+    python tests/conformance/audit_fixtures.py
+
+Dev tooling only - not part of the package, not run by R CMD check, and
+Rbuildignored along with the rest of tests/conformance. Needs a local clone of
+cdisc-org/cdisc-open-rules at data-raw/upstream/ and PyYAML.
+
+Reports three signatures that each prove a fixture is stale rather than
+coreval being wrong, so a verdict is evidence instead of an argument:
+
+  1. the sheet's own reported Value contradicts the data at that Record
+  2. a negative case has a header-only sheet while its data differs from the
+     positive case - a violation was planted and no answer recorded
+  3. the sheet cites an Operations id the rule does not declare
+"""
+
 import csv, os, glob, sys, json, yaml
-SC='C:/Users/hrach/AppData/Local/Temp/claude/C--Users-hrach-Documents-coreval/ec04e390-0282-4a3c-b0eb-c1ca4c044f17/scratchpad'
-UP='data-raw/upstream/cdisc-open-rules'
-ROOT={'published':f'{UP}/Published','deprecated_dir':f'{UP}/Deprecated',
-      'fda_business_rules_draft':f'{UP}/Unpublished/FDA Business Rules',
-      'sdtmig_draft':f'{UP}/Unpublished/SDTMIG','sendig_draft':f'{UP}/Unpublished/SENDIG'}
-folders={r['id']:r for r in csv.DictReader(open(f'{SC}/folders.csv',newline='',encoding='utf-8'))}
-fails=[r for r in csv.DictReader(open('tests/conformance/scoreboard.csv',newline='',encoding='utf-8')) if r['status']=='FAIL']
+
+UP = os.path.join('data-raw', 'upstream', 'cdisc-open-rules')
+SCOREBOARD = os.path.join('tests', 'conformance', 'scoreboard.csv')
+ROOT = {
+    'published': f'{UP}/Published',
+    'deprecated_dir': f'{UP}/Deprecated',
+    'fda_business_rules_draft': f'{UP}/Unpublished/FDA Business Rules',
+    'sdtmig_draft': f'{UP}/Unpublished/SDTMIG',
+    'sendig_draft': f'{UP}/Unpublished/SENDIG',
+}
+
+if not os.path.isdir(UP):
+    sys.exit(f'Upstream clone not found at {UP} - see CLAUDE.md for the setup.')
+if not os.path.exists(SCOREBOARD):
+    sys.exit(f'{SCOREBOARD} not found - run tests/conformance/run_conformance.R first.')
+
+# A rule's DIRECTORY is not always its id (a rule declaring Core.Id can live in
+# a directory named something else), so the mapping is derived by walking the
+# tree and reading each rule.yml, rather than read from a file prepared
+# elsewhere.
+folders = {}
+for root, dirs, files in os.walk(UP):
+    if 'rule.yml' not in files:
+        continue
+    try:
+        doc = yaml.safe_load(open(os.path.join(root, 'rule.yml'), encoding='utf-8')) or {}
+    except Exception:
+        continue
+    rid = ((doc.get('Core') or {}).get('Id')) or os.path.basename(root)
+    folders.setdefault(rid, {'folder': os.path.basename(root), 'dir': root})
+
+fails = [r for r in csv.DictReader(open(SCOREBOARD, newline='', encoding='utf-8'))
+         if r['status'] == 'FAIL']
 
 def read_csv(p):
     with open(p,encoding='utf-8-sig',newline='') as fh: return list(csv.DictReader(fh))
@@ -67,7 +112,7 @@ report=[]
 for r in fails:
     rid=r['id']; f=folders.get(rid)
     if not f: report.append((rid,r['source'],'NO_FOLDER',0,0,[])); continue
-    rd=os.path.join(ROOT[f['source']], f['folder'])
+    rd=f['dir']
     cases=[]
     for pol in ('positive','negative'):
         base=os.path.join(rd,pol)
@@ -115,4 +160,6 @@ print()
 print(f'STALE (sheet contradicts its own data): {len(stale)}')
 print(f'sheet matches its data (needs another explanation): {len(clean)}')
 print(f'nothing checkable (dataset-level/placeholder only): {len(nodata)}')
-json.dump({'stale':stale,'clean':clean,'nodata':nodata}, open(f'{SC}/audit.json','w'))
+out = os.path.join('tests', 'conformance', 'audit_fixtures.json')
+json.dump({'stale': stale, 'clean': clean, 'nodata': nodata}, open(out, 'w'), indent=1)
+print(f'wrote {out}')
