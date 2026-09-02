@@ -16,7 +16,7 @@ Description: Finds conformance problems in clinical trial data without
     for instance - it is reported as skipped with the reason, never counted as
     a pass. Meant as a quick first pass before a qualified validation system,
     never as a replacement for one. An independent project: not affiliated
-    with or endorsed by CDISC, and not a CORE-certified conformance engine.
+    with or endorsed by 'CDISC', and not a 'CORE'-certified conformance engine.
 Copyright: Hrach Gevorgyan holds the copyright in this package's own code.
     The bundled rule definitions and CDISC standards metadata under
     inst/extdata are derived from cdisc-org/cdisc-open-rules, copyright CDISC,

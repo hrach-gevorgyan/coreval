@@ -5,13 +5,18 @@ First submission of coreval to CRAN.
 ## Test environments
 
 * Local: Windows 11, R 4.6.1 — 0 errors | 0 warnings | 0 notes
-* win-builder: R-devel and R-release — submitted 2026-09-02
+* win-builder: R-devel and R-release — 0 errors | 0 warnings | 0 notes
 * Linux (GitHub Actions, ubuntu-latest): R release — *to be run before submission*
 * macOS builder — *to be run before submission*
 
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes
+
+An earlier win-builder run reported one NOTE, "Possibly misspelled words in
+DESCRIPTION: CDISC". 'CDISC' is the standards body whose rules this package
+evaluates; it is now single-quoted in both Title and Description, per Writing
+R Extensions' convention for names of organisations and external software.
 
 ## Bundled third-party material
 
