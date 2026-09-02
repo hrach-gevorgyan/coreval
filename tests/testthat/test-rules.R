@@ -185,3 +185,91 @@ test_that("arguments that would silently check nothing are refused, naming the a
   expect_silent(validate_check_args(standard = "SDTMIG", version = "3-4"))
   expect_silent(validate_check_args(standard = "sdtmig"))
 })
+
+test_that("no rule references a pseudo-column that would silently resolve to literal text", {
+  # THE tripwire for this package's characteristic failure mode.
+  #
+  # A Check `name` that is not a real column falls through
+  # resolve_condition_value()'s "not a column -> treat as literal text"
+  # path. The comparison then becomes e.g.
+  # `define_variable_role != "library_variable_role"`, which is TRUE for
+  # every row of compliant and non-compliant data alike - or FALSE for
+  # every row, which is worse, because the rule reports nothing and looks
+  # like a pass. Three real bugs had exactly this shape
+  # (define_variable_is_collected, variable_is_empty, and a sheet citing
+  # $var_perm), and none of them moved the conformance pass count, because
+  # a rule that silently finds nothing is indistinguishable from a rule
+  # that correctly finds nothing.
+  #
+  # So: every lowercase pseudo-column any bundled rule names must be
+  # ACCOUNTED FOR - either a builder produces it, or the guard refuses the
+  # rule so it is SKIPPED with a reason. When upstream ships a rule using
+  # a new one, this test fails and forces that decision instead of letting
+  # the name quietly become a string.
+  #
+  # If this test fails, do NOT just add the name to the list. Decide:
+  #   * build it (see build_variable_metadata_dataset and friends), or
+  #   * add it to assert_referenced_metadata_available()'s guard so the
+  #     rule is skipped with a reason.
+  # Only then record it here.
+  accounted_for <- c(
+    # Produced by the dataset builders in R/evaluate.R.
+    "dataset_name", "filename",
+    "variable_name", "variable_label", "variable_data_type", "variable_value",
+    "variable_is_empty", "variable_has_empty_values",
+    "define_dataset_name", "define_dataset_has_no_data",
+    "define_variable_name", "define_variable_label", "define_variable_role",
+    "define_variable_has_no_data", "define_variable_is_collected",
+    "define_variable_origin_type",
+    "library_variable_name", "library_variable_label", "library_variable_role",
+    "library_variable_data_type", "library_variable_core",
+    # Not built. The guard must refuse a rule naming these, so it is
+    # reported SKIPPED with a reason rather than answered.
+    "define_variable_ccode", "define_variable_codelist_coded_codes",
+    "library_variable_ccode"
+  )
+
+  collect_names <- function(check, acc = character(0)) {
+    if (is.null(check)) {
+      return(acc)
+    }
+    if (!is.null(check$name) && is.character(check$name)) acc <- c(acc, check$name)
+    for (key in c("all", "any", "not")) {
+      sub <- check[[key]]
+      if (!is.null(sub)) {
+        if (is.list(sub) && is.null(names(sub))) {
+          for (item in sub) acc <- collect_names(item, acc)
+        } else {
+          acc <- collect_names(sub, acc)
+        }
+      }
+    }
+    acc
+  }
+
+  used <- unlist(lapply(.coreval_env$data$rules, function(r) collect_names(r$check)))
+  # Real SDTM variables are uppercase and "--" templates start with dashes;
+  # the pseudo-columns are the all-lowercase ones.
+  pseudo <- sort(unique(grep("^[a-z_]+$", used, value = TRUE)))
+
+  expect_gt(length(pseudo), 0)
+  expect_setequal(setdiff(pseudo, accounted_for), character(0))
+})
+
+test_that("a Check naming an unknown pseudo-column is refused, not answered", {
+  # The other half of the tripwire above: prove the guard actually fires,
+  # so "accounted for" means something. A rule inventing a metadata field
+  # this package cannot supply must raise - which check_study() turns into
+  # a SKIPPED row with a reason - never quietly evaluate to no-violation.
+  dataset <- list(
+    data = data.table::data.table(variable_name = c("STUDYID", "AGE")),
+    meta = NULL
+  )
+  rule <- list(check = list(
+    name = "library_variable_invented_thing", operator = "equal_to", value = "x"
+  ))
+  expect_error(
+    assert_referenced_metadata_available(rule, dataset),
+    "does not bundle"
+  )
+})
