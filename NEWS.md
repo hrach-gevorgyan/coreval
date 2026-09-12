@@ -1,5 +1,12 @@
 # coreval 0.1.0.9000 (development)
 
+* The one-row-per-(record, variable) table that some rule types need is built
+  column by column into a preallocated vector rather than as one table per
+  variable stitched together. It is inherently large - 27 columns of a
+  161,600-row AE is 4.4 million rows - and the old shape held every converted
+  column and the finished table at the same time. R's reported high-water on a
+  511,000-row study fell from 744 MB to 589 MB.
+
 * Date columns are scanned once instead of two to four times. Validating a
   date, detecting its precision and parsing it each re-ran the same expensive
   regex over the same column; the components are now computed once and passed

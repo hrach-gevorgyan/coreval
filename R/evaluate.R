@@ -1011,15 +1011,44 @@ build_variable_value_check_dataset <- function(real_dataset) {
   } else {
     meta$type[match(variables, meta$variable)]
   }
-  melted <- lapply(seq_along(variables), function(i) {
-    data.table::data.table(
-      .coreval_row_id = seq_len(n_records),
-      variable_name = variables[i],
-      variable_data_type = type_of[i],
-      variable_value = as.character(data[[variables[i]]])
-    )
-  })
-  list(data = data.table::rbindlist(melted), meta = NULL)
+  # Built one column at a time rather than as one data.table per variable
+  # rbindlist()ed together. The result is inherently big - one row per
+  # (record, variable), so 27 columns of a 161,600-row AE is 4.4 million rows
+  # and 123 MB - and the old shape paid for it twice, materialising 27
+  # intermediate tables and then copying them all into one. That pushed R's
+  # reported usage from 106 MB to 464 MB for a single call.
+  if (n_records == 0 || length(variables) == 0) {
+    return(list(
+      data = data.table::data.table(
+        .coreval_row_id = integer(0), variable_name = character(0),
+        variable_data_type = character(0), variable_value = character(0)
+      ),
+      meta = NULL
+    ))
+  }
+  list(
+    data = data.table::data.table(
+      .coreval_row_id = rep(seq_len(n_records), times = length(variables)),
+      variable_name = rep(variables, each = n_records),
+      variable_data_type = rep(type_of, each = n_records),
+      # Filled segment by segment into one preallocated vector. Both
+      # `unlist(lapply(...))` and the older one-table-per-variable shape held
+      # every column's converted copy AND the concatenated result at the same
+      # time; this holds the result plus one column. What matters for how big
+      # a study fits is the SIMULTANEOUS live set, not how much is allocated
+      # in total - R's high-water on a 511,000-row study was 744 MB against
+      # 106 MB of actual data.
+      variable_value = local({
+        out <- character(n_records * length(variables))
+        for (i in seq_along(variables)) {
+          out[((i - 1L) * n_records + 1L):(i * n_records)] <-
+            as.character(data[[variables[i]]])
+        }
+        out
+      })
+    ),
+    meta = NULL
+  )
 }
 
 #' Compute a rule's Operations bindings, if it has any
