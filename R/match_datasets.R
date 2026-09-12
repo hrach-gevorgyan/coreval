@@ -205,49 +205,103 @@ apply_child_match <- function(dataset, study, keys) {
     return(dataset)
   }
 
-  scalar_or_na <- function(row, col) {
-    if (!(col %in% names(row))) NA_character_ else as.character(row[[col]])[1]
+  # Vectorised as a grouped join. This was a loop over every child row that
+  # re-scanned the whole parent dataset per row, built a one-row data.table,
+  # cbind()ed it, and finally rbindlist()ed n one-row tables. It was 90% of
+  # check_study()'s entire runtime and grew faster than linearly: on a
+  # CDISCPILOT-shaped study one SUPPAE/AE merge took 3.1s at 1,616 rows and
+  # 60.4s at 16,160.
+  #
+  # What decides a match is constant within a group of child rows sharing
+  # (RDOMAIN, IDVAR, whether IDVARVAL is blank): RDOMAIN fixes the parent,
+  # IDVAR names the parent column to test, and a blank IDVARVAL means "take
+  # the first row matching the standard keys alone". So group on those three
+  # and do ONE keyed join per group.
+  n <- nrow(child)
+  chr <- function(x) if (is.null(x)) rep(NA_character_, n) else as.character(x)
+  idvar <- chr(child[["IDVAR"]])
+  idvarval <- chr(child[["IDVARVAL"]])
+  rd <- toupper(chr(rdomain))
+  blank_val <- is_blank(idvarval)
+
+  # Comparisons in the row-wise version were all as.character(), so a numeric
+  # parent column matched a character child value. Coercing both sides keeps
+  # that, rather than letting data.table's type rules decide.
+  row_id <- ".coreval_child_row"
+  child[[row_id]] <- seq_len(n)
+
+  groups <- split(
+    seq_len(n),
+    paste(rd, idvar, blank_val, sep = "")
+  )
+  # Visited in the order their FIRST child row appears, not hash order.
+  # rbindlist() takes its column order from the first element it is given, and
+  # the row-wise version fed it row 1 first - so the group holding row 1 has
+  # to come first or the output columns come back in a different order. The
+  # values were identical either way; six fixtures differed only in order.
+  groups <- groups[order(vapply(groups, min, numeric(1)))]
+
+  pieces <- vector("list", length(groups))
+  for (gi in seq_along(groups)) {
+    idx <- groups[[gi]]
+    sub <- child[idx]
+    parent <- study$datasets[[rd[idx[1]]]]
+    if (is.null(parent) || nrow(parent$data) == 0) {
+      # No parent to join: the row keeps only its own columns, exactly as
+      # before. rbindlist(fill = TRUE) below pads the parent columns.
+      pieces[[gi]] <- sub
+      next
+    }
+    p_data <- parent$data
+    k <- intersect(standard_keys, intersect(names(p_data), names(sub)))
+    iv <- idvar[idx[1]]
+    use_iv <- !blank_val[idx[1]] && !is_blank(iv) && iv %in% names(p_data)
+
+    left_cols <- k
+    right_cols <- k
+    if (use_iv) {
+      right_cols <- c(right_cols, iv)
+      left_cols <- c(left_cols, "IDVARVAL")
+    }
+
+    if (length(right_cols) == 0) {
+      # Nothing to match on: every row took the parent's first record.
+      pick_idx <- rep(1L, length(idx))
+    } else {
+      right_key <- data.table::as.data.table(
+        lapply(right_cols, function(cl) as.character(p_data[[cl]]))
+      )
+      data.table::setnames(right_key, paste0("k", seq_along(right_cols)))
+      right_key[[".coreval_parent_row"]] <- seq_len(nrow(p_data))
+      left_key <- data.table::as.data.table(
+        lapply(left_cols, function(cl) as.character(sub[[cl]]))
+      )
+      data.table::setnames(left_key, paste0("k", seq_along(left_cols)))
+      on_cols <- paste0("k", seq_along(right_cols))
+      hit <- right_key[left_key, on = on_cols, mult = "first",
+                       nomatch = NA][[".coreval_parent_row"]]
+      pick_idx <- hit
+    }
+
+    # A child row with no match still gets the parent's columns, as NA.
+    # data.table returns an all-NA row for an NA index, which is what the
+    # row-wise version built by hand. This is not cosmetic: a rule asking
+    # whether IDVARVAL really is the value of the parent variable IDVAR
+    # names needs that column to EXIST and be empty in order to report the
+    # mismatch. Drop it and the violation disappears silently.
+    keep <- setdiff(names(sub), names(p_data))
+    pieces[[gi]] <- cbind(
+      sub[, keep, with = FALSE],
+      p_data[pick_idx]
+    )
   }
 
-  merged <- lapply(seq_len(nrow(child)), function(i) {
-    row <- child[i, ]
-    parent <- study$datasets[[toupper(rdomain[i])]]
-    if (is.null(parent) || nrow(parent$data) == 0) {
-      return(row)
-    }
-    candidates <- parent$data
-    for (k in standard_keys) {
-      if (k %in% names(candidates) && k %in% names(row)) {
-        candidates <- candidates[as.character(candidates[[k]]) == as.character(row[[k]]), ]
-      }
-    }
-    idvar <- scalar_or_na(row, "IDVAR")
-    idvarval <- scalar_or_na(row, "IDVARVAL")
-    pick <- if (nrow(candidates) == 0) {
-      NULL
-    } else if (!is_blank(idvar) && !is_blank(idvarval) && idvar %in% names(candidates)) {
-      hit <- which(as.character(candidates[[idvar]]) == idvarval)
-      if (length(hit) == 0) NULL else candidates[hit[1], ]
-    } else {
-      candidates[1, ]
-    }
-    # With NO match the parent's columns are still added, as missing values.
-    # That is not a cosmetic detail: a rule asking "is IDVARVAL really the
-    # value of the parent variable IDVAR names" needs that column to EXIST
-    # and be empty in order to report the mismatch. Returning the child row
-    # untouched instead makes the column absent, the comparison
-    # unresolvable, and the violation silently disappear.
-    if (is.null(pick)) {
-      pick <- parent$data[0, ][NA_integer_, ]
-    }
-    keep <- setdiff(names(row), names(pick))
-    cbind(row[, keep, with = FALSE], pick)
-  })
+  out <- data.table::rbindlist(pieces, use.names = TRUE, fill = TRUE)
+  # Groups are visited in hash order, so restore the child's own row order.
+  data.table::setorderv(out, row_id)
+  out[[row_id]] <- NULL
 
-  list(
-    data = data.table::rbindlist(merged, use.names = TRUE, fill = TRUE),
-    meta = dataset$meta
-  )
+  list(data = out, meta = dataset$meta)
 }
 
 #' Left-join one Match Datasets spec's columns onto a dataset

@@ -379,3 +379,49 @@ test_that("a matched column the rule references as \"<Name>.<col>\" is prefixed 
   plain <- apply_match_dataset(left, list(Keys = "USUBJID", Name = "DM"), study, "AE")
   expect_true("RFPENDTC" %in% names(plain$data))
 })
+
+test_that("the child match joins to each row's own RDOMAIN parent", {
+  # apply_child_match() used to loop over every child row and rescan the whole
+  # parent per row. It was 90% of check_study()'s runtime and superlinear: one
+  # SUPPAE/AE merge took 3.1s at 1,616 rows and 60.4s at 16,160. It is now a
+  # grouped join. These assertions pin the semantics that rewrite had to keep.
+  ae <- data.table::data.table(
+    STUDYID = "S", DOMAIN = "AE", USUBJID = c("01", "01", "02"),
+    AESEQ = c(1L, 2L, 1L), AETERM = c("HEADACHE", "NAUSEA", "RASH")
+  )
+  dm <- data.table::data.table(
+    STUDYID = "S", DOMAIN = "DM", USUBJID = c("01", "02"), AGE = c(40L, 50L)
+  )
+  study <- list(datasets = list(
+    AE = list(data = ae, meta = NULL),
+    DM = list(data = dm, meta = NULL)
+  ))
+  supp <- list(
+    data = data.table::data.table(
+      STUDYID = "S", RDOMAIN = c("AE", "AE", "DM", "ZZ"),
+      USUBJID = c("01", "01", "02", "01"),
+      IDVAR = c("AESEQ", "AESEQ", "", ""),
+      IDVARVAL = c("2", "99", "", ""),
+      QNAM = c("A", "B", "C", "D"), QVAL = c("w", "x", "y", "z")
+    ),
+    meta = NULL
+  )
+  out <- apply_child_match(supp, study, c("STUDYID", "USUBJID", "IDVAR", "IDVARVAL"))
+  d <- as.data.frame(out$data)
+
+  expect_equal(nrow(d), 4L)
+  # Row order is the child's own, not group order.
+  expect_equal(d$QNAM, c("A", "B", "C", "D"))
+  # IDVAR/IDVARVAL pick the named parent record, not merely the first.
+  expect_equal(d$AETERM[1], "NAUSEA")
+  # No parent record matches IDVARVAL 99: the parent's columns must still be
+  # PRESENT and empty. A rule asking whether IDVARVAL really is the value of
+  # the parent variable IDVAR needs that column to exist to report the
+  # mismatch - drop it and the violation disappears silently.
+  expect_true("AETERM" %in% names(d))
+  expect_true(is.na(d$AETERM[2]))
+  # A blank IDVARVAL takes the first row matching the standard keys alone.
+  expect_equal(d$AGE[3], 50L)
+  # RDOMAIN naming a dataset the study does not have leaves the row alone.
+  expect_true(is.na(d$AETERM[4]))
+})

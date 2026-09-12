@@ -1,5 +1,23 @@
 # coreval 0.1.0.9000 (development)
 
+* **Checking a large study is dramatically faster.** The cross-dataset match
+  that joins a supplemental or related dataset to its parent looped over every
+  child row and rescanned the whole parent each time. It was 90% of
+  `check_study()`'s entire runtime and got worse than linearly with size. It is
+  now a single grouped join per distinct `(RDOMAIN, IDVAR)` combination.
+
+  On a CDISCPILOT-shaped study:
+
+  | rows | before | after |
+  |---|---|---|
+  | 5,000 | 18.4s | 4.9s |
+  | 51,000 | 122s | 11.1s |
+  | 511,000 | ~21 min | 73s |
+
+  The answers are unchanged: the new join was compared against the old one on
+  173 fixture cases and is bit-identical, the conformance sweep is unmoved at
+  697/54/46, and no failing rule's reported records changed either.
+
 * **`domain_label` now means what the standard calls a domain**, not what your
   own dataset metadata happens to call it. The two differ: SENDIG calls `LB`
   "Laboratory" where SDTMIG calls it "Laboratory Test Results". CORE-000272
