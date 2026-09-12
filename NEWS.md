@@ -142,13 +142,13 @@
 First release. The API is settled for 0.1.x; anything that changes will go
 through a deprecation cycle rather than disappearing.
 
-A personal open-source project — not affiliated with or endorsed by CDISC, and
+A personal open-source project. Not affiliated with or endorsed by CDISC, and
 not a CORE-certified engine. It's a quick local check to run *before* your
 qualified validation tool, never instead of it.
 
 ## What you can do with it
 
-* **Check one dataset** with `check_dataset()` — a data frame you already have
+* **Check one dataset** with `check_dataset()`: a data frame you already have
   open, or a single `.xpt`, `.sas7bdat` or `.csv` file. No study folder needed.
   This is the one for when you're mid-way through writing the code that builds a
   domain. coreval works out the domain from your `DOMAIN` column, or the file
@@ -160,17 +160,17 @@ qualified validation tool, never instead of it.
   is there when you want the parsed study itself, or want to check the same
   large study more than once without re-reading it.
 * **Read what's wrong in plain language.** Printing a result gives you a report
-  grouped by problem, worst first, each described in words — "Variable value is
-  not in correct ISO 8601 date or datetime format" — with the rows and values
+  grouped by problem, worst first, each described in words, "Variable value is
+  not in correct ISO 8601 date or datetime format", with the rows and values
   that caused it and the rule number at the end. The same description is on
   every row of `$findings` as an `issue` column, so a rule number is never the
   only thing you get.
 * **Findings are triaged**, so the ones that are definitely wrong come first.
-  CDISC Open Rules carry no severity field — Pinnacle 21's Notes/Minor/Major/
-  Critical is P21's own layer, not CDISC's — so coreval does not report one and
+  CDISC Open Rules carry no severity field. Pinnacle 21's Notes/Minor/Major/
+  Critical is P21's own layer, not CDISC's, so coreval does not report one and
   does not invent one. What it does is separate `wrong value` (your data breaks
   the rule: a month of 13, a value outside its codelist) from `missing required`
-  and `missing optional` (often legitimate — a screen-failure subject, a
+  and `missing optional` (often legitimate: a screen-failure subject, a
   variable your raw data does not carry yet). Sorting by row count alone put
   those in the wrong order. It is a `triage` column on every finding, so a
   spreadsheet can be sorted by it too.
@@ -343,12 +343,12 @@ qualified validation tool, never instead of it.
 ## What's covered
 
 * **797 rules** for SDTM, SEND and TIG, bundled inside the package. Nothing is
-  downloaded — no internet, no API key, no account, and your data stays put.
+  downloaded. No internet, no API key, no account, and your data stays put.
 * **Around 60 rule operators**, including comparison of partial dates (SDTM
   dates are legitimately incomplete, like `2024-03`), grouping and uniqueness
   checks, and set membership.
-* **Cross-dataset joins** — RELREC relationships, SUPP/SQ supplemental
-  qualifiers, and parent-child joins — plus the `Operations` pipeline that
+* **Cross-dataset joins**: RELREC relationships, SUPP/SQ supplemental
+  qualifiers, and parent-child joins, plus the `Operations` pipeline that
   pre-computes values rules refer to.
 * **CDISC Library variable metadata** for SDTM, SEND, ADaM and TIG, so rules
   comparing your variables against the standard's can actually run, and SEND
@@ -360,7 +360,7 @@ qualified validation tool, never instead of it.
 
 * Checked by replaying CDISC's own reference test cases and comparing flagged
   records one by one. It currently agrees with CDISC on **540 of 562** published,
-  fully executable rules that ship reference data — about 96%. The README
+  fully executable rules that ship reference data, about 96%. The README
   explains the other denominators and why there's more than one.
 * A rule that can't be evaluated is always reported as skipped, with a reason,
   never counted as a pass.
@@ -374,7 +374,7 @@ qualified validation tool, never instead of it.
 * **No Controlled Terminology term lists.** That data runs to roughly 438 MB and
   belongs in a separate package. The CT package *dates* are bundled, so rules
   checking that a study cites a real terminology version do run.
-* **Split domains** are handled for uniqueness — a value appearing once in each
+* **Split domains** are handled for uniqueness: a value appearing once in each
   of two files is correctly reported as a duplicate. A few rules that expect
   findings merged under one dataset name, rather than reported per file, are
   still skipped.

@@ -302,7 +302,7 @@ library_variables_for <- function(study, domain) {
 #'
 #' Not the label the study's own metadata carries. The reference reads this from
 #' the standard's dataset metadata (`operations/domain_label.py`), and the two
-#' genuinely differ: SENDIG calls `LB` "Laboratory" where SDTMIG calls it
+#' differ: SENDIG calls `LB` "Laboratory" where SDTMIG calls it
 #' "Laboratory Test Results". CORE-000272 asks whether `--CAT` equals that
 #' label, so answering with the study's own label answers a different question -
 #' it missed the violation CDISC's engine reports on that rule's own fixture,

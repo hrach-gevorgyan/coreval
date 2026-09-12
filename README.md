@@ -61,7 +61,7 @@ a PDF.
 
 ### About that ordering
 
-**CDISC Open Rules carry no severity field.** I checked the source — there's
+**CDISC Open Rules carry no severity field.** I checked the source. There is
 nothing like Pinnacle 21's Notes / Minor / Major / Critical. That's P21's own
 layer, not CDISC's, so coreval can't report a CDISC severity and won't invent
 one.
@@ -71,13 +71,13 @@ the ones that might be perfectly fine:
 
 | | What it means |
 |---|---|
-| **wrong value** | Your data contains something that breaks the rule — a month of 13, a value outside its codelist, two variables contradicting each other. Nothing about your study explains these away. **Start here.** |
+| **wrong value** | Your data contains something that breaks the rule: a month of 13, a value outside its codelist, two variables contradicting each other. Nothing about your study explains these away. **Start here.** |
 | **missing required** | Something the standard marks Required isn't there. |
-| **missing optional** | Something Expected or Permissible is absent, or a value is blank. Often legitimate — a screen-failure subject with no reference dates, a variable your raw data doesn't carry yet. |
+| **missing optional** | Something Expected or Permissible is absent, or a value is blank. Often legitimate: a screen-failure subject with no reference dates, a variable your raw data doesn't carry yet. |
 
 That last row is the point. An empty `RFSTDTC` is not the same kind of problem
 as `RFSTDTC = "2024-13-01"`, and sorting by "how many rows are affected" puts
-them in the wrong order. coreval sorts by this first, row count second — and
+them in the wrong order. coreval sorts by this first, row count second, and
 within a problem, it shows you the row with the real bad value before the row
 that's merely empty.
 
@@ -95,13 +95,13 @@ month of 13 in a date.
 ```r
 result <- check_dataset(dm)   # 1. see what's wrong, in plain language
                               # 2. fix what you can
-result <- check_dataset(dm)   # 3. run it again — it takes a second
+result <- check_dataset(dm)   # 3. run it again, it takes a second
 
 write_findings(result, "dm_issues.xlsx")   # 4. track what's left
 ```
 
 Step 4 gives you a spreadsheet with the problem described in words, plus empty
-`Status`, `Owner` and `Notes` columns to fill in — so "expected, see protocol
+`Status`, `Owner` and `Notes` columns to fill in, so "expected, see protocol
 deviation log" gets recorded next to the finding instead of in some other
 document.
 
@@ -147,7 +147,7 @@ ae <- data.frame(
 result <- check_dataset(ae)
 ```
 
-Or a file — `.xpt`, `.sas7bdat` or `.csv`:
+Or a file. `.xpt`, `.sas7bdat` or `.csv`:
 
 ```r
 result <- check_dataset("ae.xpt")
@@ -156,7 +156,7 @@ result <- check_dataset("ae.xpt")
 coreval works out the domain from your `DOMAIN` column, and falls back to the
 file name only when the data has no `DOMAIN` column at all. That order matters
 for a split dataset: `ae1.xpt` is checked as `AE` because its `DOMAIN` column
-says so — on a file with no `DOMAIN` column, the name `ae1` is taken at face
+says so. On a file with no `DOMAIN` column, the name `ae1` is taken at face
 value. If it guesses wrong, tell it:
 
 ```r
@@ -165,7 +165,7 @@ result <- check_dataset(ae, domain = "AE")
 
 ### The catch, and it's an important one
 
-Plenty of CDISC rules compare **one dataset against another** — an AE date
+Plenty of CDISC rules compare **one dataset against another**: an AE date
 against the subject's reference dates in DM, a visit against the trial design.
 Hand coreval a single dataset and those rules simply cannot be answered.
 
@@ -183,7 +183,7 @@ Running them anyway would compare your data against columns that aren't there
 and report problems that don't exist. Better to say nothing than to make
 something up.
 
-Most rules do still run — measured across AE, DM, LB and VS, **76–84%** of the
+Most rules do still run. Measured across AE, DM, LB and VS, **76–84%** of the
 applicable rules work on the dataset alone. But the ones that can't are the
 cross-dataset checks, and those often matter most.
 
@@ -200,8 +200,8 @@ When you do have the full folder:
 result <- check_study("path/to/study/sdtm")
 ```
 
-A **folder**, not a file. coreval reads everything in it — XPT, SAS, CSV,
-whichever you have — and reading it all at once is what makes the cross-dataset
+A **folder**, not a file. coreval reads everything in it, XPT, SAS, CSV,
+whichever you have, and reading it all at once is what makes the cross-dataset
 rules possible. If there's a Define-XML in there, it finds it and uses it.
 
 If you want to look at what was parsed, or check the same large study twice
@@ -216,7 +216,7 @@ check_study(study)
 ```
 
 A study report is grouped by dataset, and tells you where the trouble is before
-showing you any detail. The shape is what matters here — the counts depend on
+showing you any detail. The shape is what matters here. The counts depend on
 your study:
 
 ```
@@ -247,10 +247,10 @@ example records per problem.
 
 You get two tables. **Both matter.**
 
-Printing the result gives you the readable report above. When you want the raw
-rows — to filter, count, or feed somewhere else — they're in `result$findings`:
+Printing the result gives you the readable report above. The raw rows are in
+`result$findings`, ready to filter, count, or feed somewhere else:
 
-### `result$findings` — what's wrong
+### `result$findings`: what's wrong
 
 ```r
 head(result$findings[, c("Dataset", "Record", "Variable", "Value", "triage", "rule_id")])
@@ -260,7 +260,7 @@ head(result$findings[, c("Dataset", "Record", "Variable", "Value", "triage", "ru
 #>       AE      1   AESTDY Not in dataset missing optional CORE-000328
 ```
 
-(`issue` is dropped from that view only so the table fits the page — it is
+(`issue` is dropped from that view only so the table fits the page. It is
 there on every row, and it is the column worth reading.)
 
 One row per affected record, pointing at the exact spot:
@@ -271,14 +271,14 @@ One row per affected record, pointing at the exact spot:
 | `Record` | Row number, counting from 1 |
 | `Variable` | The variable being complained about |
 | `Value` | What was actually in there |
-| `issue` | **What's wrong, in words** — the rule's own description |
+| `issue` | **What's wrong, in words**. The rule's own description |
 | `triage` | `wrong value`, `missing required` or `missing optional` |
 | `rule_id` | The CDISC rule, if you need to look it up |
 
 `Not in dataset` under `Value` means the rule wanted a variable you don't have
-— which is usually the point.
+which is usually the point.
 
-### `result$skipped` — what couldn't be checked
+### `result$skipped`: what couldn't be checked
 
 ```r
 head(result$skipped)
@@ -299,13 +299,13 @@ write_findings(result, "issues.csv")    # issues.csv + siblings
 
 You get `findings`, `skipped`, an `about` sheet, and `truncated` if any rule
 matched more records than were kept. Both tables get written every time, for
-the reason above — and `about` carries the provenance **with the file**: which
+the reason above. `about` carries the provenance **with the file**: which
 standard it was scoped to, how many checks ran, whether it was filtered before
 export, and whether any counts were capped. A shared spreadsheet outlives the
 console session that made it, and whoever opens it can't see what you saw.
 
-Every findings column comes across — `Dataset`, `Record`, `Variable`, `Value`,
-`issue`, `triage`, `rule_id` — followed by three empty ones, `Status`, `Owner`
+Every findings column comes across: `Dataset`, `Record`, `Variable`, `Value`,
+`issue`, `triage`, `rule_id`, followed by three empty ones, `Status`, `Owner`
 and `Notes`, for you to fill in once it's open. Not every finding is a bug you'll fix: some are expected, some
 belong to someone else, some are waiting on a data query. Those decisions belong
 next to the finding, not in a separate document nobody opens.
@@ -327,7 +327,7 @@ Six functions. Three of them do the work:
 
 | | |
 |---|---|
-| `check_dataset(x)` | check one dataset — a data frame, or an `.xpt` / `.sas7bdat` / `.csv` |
+| `check_dataset(x)` | check one dataset: a data frame, or an `.xpt` / `.sas7bdat` / `.csv` |
 | `check_study(path)` | check a whole folder |
 | `write_findings(result, path)` | save to Excel or CSV, with tracking columns |
 
@@ -335,7 +335,7 @@ The other three are there when you need them:
 
 | | |
 |---|---|
-| `list_rules()` | the rule set — also `list_rules(id = ...)` to look up a rule the report named, and `list_rules(domain = "AE")` for what applies where |
+| `list_rules()` | the rule set. Also `list_rules(id = ...)` to look up a rule the report named, and `list_rules(domain = "AE")` for what applies where |
 | `filter_findings(result, ...)` | narrow a result by triage, dataset, rule or variable |
 | `read_study(path)` | read a folder yourself, if you want to inspect it or check it twice without re-reading |
 
@@ -374,10 +374,10 @@ Three things worth knowing here:
 
 - **`legacy_ids`** are what Pinnacle 21 and the published Conformance Rules
   spreadsheets call the same rule. That's how you match a coreval finding to a
-  P21 report — including to a severity CDISC itself doesn't publish. The
+  P21 report, including to a severity CDISC itself doesn't publish. The
   console report shows them too: `CORE-000189 · also CG0665, TIG0699`.
 - **`guidance`** is the sentence from the Implementation Guide the rule exists
-  to enforce — the *why*, which no rule message carries. `print(result,
+  to enforce: the *why*, which no rule message carries. `print(result,
   guidance = TRUE)` shows it under each problem; it's off by default because it
   roughly doubles the report's length.
 - All 797 rules carry both.
@@ -416,14 +416,14 @@ list_rules(domain = "AE")
 result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
 ```
 
-Rules are written per Implementation Guide version, so this genuinely narrows
-what runs — for DM: 134 rules for SDTMIG generally, 96 for 3.2, 132 for 3.4.
+Rules are written per Implementation Guide version, so this cuts the list
+sharply. For DM: 134 rules for SDTMIG generally, 96 for 3.2, 132 for 3.4.
 
-Worth knowing: this genuinely narrows what runs, and the report tells you how
-many rules it set aside. CDISC's coverage is uneven — the general "dates must be
-valid ISO 8601" rule is published for SENDIG and TIG but **not** for SDTMIG — so
-narrowing can mean a real problem stops being reported. Leave `standard`
-unset if you would rather see everything.
+It can cut too far. CDISC's coverage is uneven: the general "dates must be
+valid ISO 8601" rule is published for SENDIG and TIG but **not** for SDTMIG,
+so narrowing to SDTMIG can stop a real problem being reported. The report
+always says how many rules it set aside. Leave `standard` unset if you would
+rather see everything.
 
 **Only the fully-vetted rules, no drafts**
 
@@ -472,7 +472,7 @@ it. coreval ships **797**. Here's exactly where the other 551 went, and why.
 ### First, how anyone knows a rule works
 
 For most rules, CDISC publishes three things: the rule itself, some example
-data, and **an answer sheet** — a file saying which exact rows a correct
+data, and **an answer sheet**: a file saying which exact rows a correct
 implementation should flag in that example.
 
 That answer sheet is everything. It's how I prove my version of a rule does
@@ -491,8 +491,8 @@ looks exactly like a check that works.
 
 | | rules | |
 |---|---|---|
-| **In coreval** | **797** | everything in a data format this can read, where CDISC gave an answer sheet — plus 30 that came along inside those folders without one |
-| Written for a different kind of data | 259 | USDM — study *design* documents in JSON, not the row-and-column datasets this reads. Not a gap; a different tool's job. |
+| **In coreval** | **797** | everything in a data format this can read, where CDISC gave an answer sheet, plus 30 that came along inside those folders without one |
+| Written for a different kind of data | 259 | USDM: study *design* documents in JSON, not the row-and-column datasets this reads. Not a gap; a different tool's job. |
 | No answer sheet | 292 | includes all **93 ADaM** rules. CDISC ships example data for every one of them and an answer sheet for none. |
 
 Of the rules that are both readable and have an answer sheet, coreval has
@@ -505,11 +505,11 @@ Every rule falls into exactly one of four buckets. They add up to 797.
 | | rules | what it means |
 |---|---|---|
 | **Confirmed** | **696** | Run against CDISC's own example data. Flagged exactly the rows their answer sheet says, no more and no fewer. |
-| Nothing to check against | 37 | CDISC ships no usable answer for these. Not my gap and not theirs to fix quickly — nobody can confirm them, including CDISC. |
+| Nothing to check against | 37 | CDISC ships no usable answer for these. Not my gap and not theirs to fix quickly, nobody can confirm them, including CDISC. |
 | Blocked on data I don't ship | 9 | The rule is fine and the answer sheet is fine. I'm missing a reference list it needs. |
 | Still disagreeing | 55 | coreval flags different rows than the answer sheet says. The actual work left. |
 
-**Of the rules that can be confirmed at all — 696 of 751, 93%.**
+**Of the rules anyone can confirm at all: 696 of 751, 93%.**
 
 #### The 37 nobody can confirm
 
@@ -522,7 +522,7 @@ Every rule falls into exactly one of four buckets. They add up to 797.
 One of those 6 deserves naming: `CORE-000229` says `RELSUB` is a Special-Purpose
 dataset, while CDISC's own data model says it's a Relationship dataset. The two
 halves of its own scope can never both be true. I've left it alone rather than
-bend the model to fit — matching a rule against a class its own publisher
+bend the model to fit. Matching a rule against a class its own publisher
 disagrees with would be guessing.
 
 **These are never counted as passing.** They're reported as skipped, by name,
@@ -532,9 +532,9 @@ with the reason, every time you run.
 
 | | rules | |
 |---|---|---|
-| Need CDISC's terminology lists | 9 | The codelists — which values are legal for `SEX`, `AEOUT` and so on. Now bundled: tell `check_study()` which CT package your study follows and these run. |
+| Need CDISC's terminology lists | 9 | The codelists, which values are legal for `SEX`, `AEOUT` and so on. Now bundled: tell `check_study()` which CT package your study follows and these run. |
 
-This is the honest "my fault" column, and it's 9 rules — all of them the same
+This is the "my fault" column, and it's 9 rules, all of them the same
 packaging decision, not bugs. It was 10: the tenth needed only a codelist's
 *identity*, not its contents, which turned out to be one extra column on a
 table already bundled. That one now runs.
@@ -562,28 +562,28 @@ Every one of the 55 has been investigated individually and written down. 53 are
 cases where CDISC's example contradicts CDISC's own rule or is missing an
 answer it should have. The other 2 are split datasets: coreval finds the same
 problem but reports it against the file it is in, with that file's own row
-numbers, where CDISC reports it against the merged domain. That is deliberate —
+numbers, where CDISC reports it against the merged domain. That is deliberate.
 a finding has to point at a file you can open and a row you can find.
 
-Either way, the honest reading is: **treat a finding from those rules with more
-suspicion than the rest.** That's why every finding carries its rule id — so
+the reading is: **treat a finding from those rules with more
+suspicion than the rest.** That's why every finding carries its rule id, so
 you can look it up.
 
 ### The ADaM question, since people ask
 
 **ADaM isn't missing because I skipped it.** All 93 ADaM rules come with example
 data and zero answer sheets. Including them would mean shipping 93 checks that
-nobody — me, you, or CDISC — can confirm are right.
+nobody, me or you or CDISC, can confirm are right.
 
 The day CDISC publishes answer sheets for them, they go in. Nothing else has to
 change.
 
-### Where it's genuinely weak
+### Where it's weak
 
-Three honest problems, none of them hidden from you at runtime:
+Three problems, none of them hidden from you at runtime:
 
 - **Terminology rules need you to say which CT version you follow.** Nine rules
-  ask whether a value is a legal term — `SEX` may be `F`, `M`, `U` or
+  ask whether a value is a legal term. `SEX` may be `F`, `M`, `U` or
   `INTERSEX` and nothing else. Every published CT package is bundled, but
   coreval will not guess which one your study uses, because terminology moves
   between releases and judging your data against a version it never declared
@@ -597,7 +597,7 @@ Three honest problems, none of them hidden from you at runtime:
 
 ### Keeping up with CDISC
 
-The rules are pinned to one exact commit of CDISC's repository — recorded in
+The rules are pinned to one exact commit of CDISC's repository, recorded in
 the package, visible with `attr(list_rules(), "rules_version")`, and written
 into every file `write_findings()` saves. So a result is always traceable to
 the precise rule set that produced it.
@@ -608,7 +608,7 @@ re-pinning means re-extracting and re-running every rule against every example
 again. That way a new version can't silently change your results, and any rule
 that breaks shows up before release rather than in your data.
 
-Not every rule carries the same weight either — `list_rules()` has a `source`
+Not every rule carries the same weight either. `list_rules()` has a `source`
 column saying whether a rule is fully published, superseded, or still a draft.
 
 ## How accurate is it?
@@ -624,22 +624,22 @@ it and compares record by record.
 
 | What's counted | Agreement |
 |---|---|
-| Published rules with reference data — **the meaningful one** | **540 / 562 (96%)** |
+| Published rules with reference data, **the meaningful one** | **540 / 562 (96%)** |
 | All published rules, including those with nothing to compare against | 540 / 566 (95%) |
 | Every bundled rule, including deprecated and draft | 696 / 797 (87%) |
 
 **30 rules ship no reference data at all.** CDISC publishes the rule but no
-examples, so there's nothing to compare against — they can't pass or fail.
+examples, so there's nothing to compare against, so they can't pass or fail.
 Counting them as failures understates things; hiding them overstates. So both
 are here.
 
 **Deprecated and draft rules are a weaker pool.** Their examples predate CDISC's
-current conventions — some number records from the spreadsheet header row, so
+current conventions. Some number records from the spreadsheet header row, so
 they expect a "record 5" in a four-row file. That's the example data being old,
 not coreval being wrong.
 
 **Most of the remaining disagreements are problems in the reference data**,
-usually a file whose own stated values contradict its own rows — a sign the data
+usually a file whose own stated values contradict its own rows, a sign the data
 was edited after the expected results were generated.
 
 </details>
@@ -647,7 +647,7 @@ was edited after the expected results were generated.
 **Please don't read 96% as a quality score.** CDISC's examples are mostly
 simple, single-file datasets, so they don't exercise much of what real
 submissions do. I once found a bug that silently switched off a third of the
-rules on split-domain studies — it moved that number by exactly zero. It's a
+rules on split-domain studies. It moved that number by exactly zero. It's a
 floor, not a ceiling. Which is the same reason the advice stays: run your
 qualified tool before you submit.
 
@@ -665,7 +665,7 @@ doesn't mean it'll be rejected. It doesn't replace your organisation's own
 validation procedures.
 
 What it *is*: a fast local check that catches the obvious problems while you're
-still writing the code, and that tells you honestly when it couldn't check
+still writing the code, and that tells you when it couldn't check
 something.
 
 ## Status
@@ -675,7 +675,7 @@ finding real problems in real data. See [NEWS.md](NEWS.md).
 
 ## Contributing
 
-Issues and pull requests welcome — especially a dataset that produces a wrong or
+Issues and pull requests welcome, especially a dataset that produces a wrong or
 missing finding. That's the most useful bug report there is. Please read the
 [Code of Conduct](https://github.com/hrach-gevorgyan/coreval/blob/master/CODE_OF_CONDUCT.md) first.
 
@@ -683,6 +683,6 @@ missing finding. That's the most useful bug report there is. Please read the
 
 Package code is MIT ([LICENSE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/LICENSE.md)). Bundled rule definitions come
 from [cdisc-org/cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
-and remain under CDISC's terms — see [NOTICE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/NOTICE.md).
+and remain under CDISC's terms. See [NOTICE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/NOTICE.md).
 
 Not affiliated with, endorsed by, or certified by CDISC.

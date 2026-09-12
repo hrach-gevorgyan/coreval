@@ -22,7 +22,7 @@ it, or to look at what was parsed.}
 
 \item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
 \code{"SENDIG"}. Overrides whatever the study declares about itself. Rules
-are written per standard, so this genuinely narrows what runs; leave it
+are written per standard, so this cuts the list sharply; leave it
 unset to run every standard's rules and see everything.}
 
 \item{version}{The standard's version, e.g. \code{"3.4"}. Needs \code{standard}
@@ -104,7 +104,7 @@ closely but is still an estimate - rules differ in cost among themselves
 too - so treat it as "roughly how far through", not a clock.
 
 It is off in scripts and non-interactive runs, where it would only clutter
-a log. Force it either way with \code{options(coreval.progress = TRUE)} or
+a log. Turn it on or off with \code{options(coreval.progress = TRUE)} or
 \code{FALSE}.
 }
 

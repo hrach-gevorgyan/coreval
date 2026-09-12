@@ -23,7 +23,7 @@ or a single file. Use this while writing code.
 the datasets exist, since the cross-dataset rules need everything present.
 }
 
-Either way you get back two tables, and \strong{both matter}. \verb{$findings} is what
+Both entry points give you two tables, and \strong{both matter}. \verb{$findings} is what
 is wrong. \verb{$skipped} is what could not be checked, with a reason for each. An
 empty \verb{$findings} can mean clean data \emph{or} rules that never ran, and those
 look identical if you only read the first table.

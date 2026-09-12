@@ -10,7 +10,7 @@
 #' * [read_study()] then [check_study()] - a whole study folder. Use this once
 #'   the datasets exist, since the cross-dataset rules need everything present.
 #'
-#' Either way you get back two tables, and **both matter**. `$findings` is what
+#' Both entry points give you two tables, and **both matter**. `$findings` is what
 #' is wrong. `$skipped` is what could not be checked, with a reason for each. An
 #' empty `$findings` can mean clean data *or* rules that never ran, and those
 #' look identical if you only read the first table.

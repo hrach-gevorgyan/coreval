@@ -19,7 +19,7 @@ Hardly any of that time is spent *fixing* things. It goes on **finding out
 what's broken**.
 
 coreval does the finding part on your machine, in seconds. You still run your
-qualified tool before you submit — you just arrive with a lot less for it to
+qualified tool before you submit. You just arrive with a lot less for it to
 find.
 
 > coreval is a personal open-source project. It's not a CDISC product, isn't
@@ -71,14 +71,14 @@ and within a problem the record holding a real offending value is shown before
 one that is merely empty. It is also a `triage` column on every finding, so you
 can sort a spreadsheet by it.
 
-When you want the rows themselves — to filter or count — they are in
+The rows themselves, ready to filter or count, are in
 `result$findings`, with the same description in an `issue` column:
 
 ```{r one-dataset-date}
 result$findings[result$findings$Value == "2024-02-30", ]
 ```
 
-You can pass a file instead of a data frame — `.xpt`, `.sas7bdat` or `.csv`:
+You can pass a file instead of a data frame: `.xpt`, `.sas7bdat` or `.csv`:
 
 ```{r one-dataset-file, eval = FALSE}
 result <- check_dataset("ae.xpt")
@@ -87,12 +87,12 @@ result <- check_dataset("ae.xpt")
 coreval works out the domain from your `DOMAIN` column, and falls back to the
 file name only when the data has no `DOMAIN` column at all. That order matters
 for a split dataset: `ae1.xpt` is checked as `AE` because its `DOMAIN` column
-says `AE` — on a file with no `DOMAIN` column the name `ae1` is taken at face
+says `AE`. On a file with no `DOMAIN` column the name `ae1` is taken at face
 value. If it guesses wrong, just say so: `check_dataset(ae, domain = "AE")`.
 
 ### What it couldn't check, and why that matters
 
-Lots of CDISC rules compare **one dataset against another** — an adverse event
+Lots of CDISC rules compare **one dataset against another**: an adverse event
 date against the subject's reference dates in `DM`, a visit against the trial
 design. Give coreval a single dataset and those questions simply can't be
 answered.
@@ -124,7 +124,7 @@ Without it those rules are reported as skipped, by name, saying exactly that -
 coreval will not pick a version for you, because judging your data against
 terminology it never declared would invent violations and hide real ones.
 
-Most rules do still run — across AE, DM, LB and VS, 76–84% of the applicable
+Most rules do still run. Across AE, DM, LB and VS, 76–84% of the applicable
 ones work on a single dataset. But the ones that can't are the cross-dataset
 checks, and those are often the ones you care about.
 
@@ -157,7 +157,7 @@ Point it at the **folder**, not a file:
 study_result <- check_study(dir)
 ```
 
-coreval reads everything in there, and reading it all at once is the point —
+coreval reads everything in there, and reading it all at once is the point.
 now the cross-dataset rules have both halves to work with. If there's a
 Define-XML in the folder it finds it and uses it (that needs the `xml2`
 package).
@@ -193,7 +193,7 @@ One row per affected record, pointing straight at it:
 | `rule_id` | the CDISC rule, if you want to look it up |
 
 One thing that surprises people: `Not in dataset` under `Value` means the rule
-wanted a variable you don't have — which is usually exactly the finding.
+wanted a variable you don't have, which is usually the finding.
 
 It's a plain data frame, so slice it however you like:
 
@@ -204,7 +204,7 @@ sort(table(f$rule_id), decreasing = TRUE)[1:3]
 ```
 
 Slicing the data frame gives you rows. `filter_findings()` gives you back a
-*result* — the same object, narrowed — which is the difference that matters,
+*result*, the same object narrowed. That is the difference that matters:
 because a result is what `write_findings()` and `summary()` take:
 
 ```{r filter-findings}
@@ -215,7 +215,7 @@ summary(worst)
 
 The two numbers there are counting different things, and the difference is
 worth knowing: `findings` has a row per affected *record*, while `summary()`
-counts distinct *problems* — one rule going wrong in one dataset, however many
+counts distinct *problems*: one rule going wrong in one dataset, however many
 records it touched. A single missing variable in a 500-row dataset is one
 problem and 500 rows.
 
@@ -245,7 +245,7 @@ write_findings(study_result, "issues.csv")   # issues.csv + _skipped + _about
 Both tables get written every time, for the reason just above. Excel output
 needs the `writexl` package.
 
-The saved file has three empty columns — `Status`, `Owner` and `Notes` — for you
+The saved file has three empty columns, `Status`, `Owner` and `Notes`, for you
 to fill in once it is open. Not every finding is something you will fix: some are
 expected, some belong to someone else, some are waiting on a data query. Those
 decisions are worth recording next to the finding rather than in a separate
@@ -264,7 +264,7 @@ attr(rules, "rules_version")
 ```
 
 That last one is the exact CDISC commit the bundled rules came from. Worth
-writing down next to your results — though `write_findings()` already records
+writing down next to your results, though `write_findings()` already records
 it in every file it saves.
 
 Not every rule carries the same weight. `source` separates fully-vetted
@@ -291,7 +291,7 @@ Six functions, and three of them do the work:
 
 | | |
 |---|---|
-| `check_dataset(x)` | one dataset — a data frame, or an `.xpt`/`.sas7bdat`/`.csv` |
+| `check_dataset(x)` | one dataset: a data frame, or an `.xpt`/`.sas7bdat`/`.csv` |
 | `check_study(path)` | a whole folder |
 | `write_findings(result, path)` | save to Excel or CSV |
 | `list_rules()` | the rule set, one rule, or the rules for a domain |
@@ -314,7 +314,7 @@ row, and coreval agrees on about 96% of the fully published ones.
 
 But those examples are small and tidy, and real submissions are neither, so
 agreement is a lower bound on correctness rather than a score. The README says
-where the remaining gaps are. The advice stays the same either way: run your
+where the remaining gaps are. The advice does not change: run your
 qualified tool before you submit.
 
 ```{r cleanup, include = FALSE}

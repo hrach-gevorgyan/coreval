@@ -224,7 +224,7 @@ read_env_standard <- function(path) {
 #' `fread()` error that aborts the whole study read.
 #'
 #' Falls back to the exact path when there is no unique case-insensitive match,
-#' so a genuinely missing file still produces `fread()`'s own clear error rather
+#' so a missing file still produces `fread()`'s own clear error rather
 #' than a silently different one.
 #'
 #' @param path Study directory.

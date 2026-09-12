@@ -319,7 +319,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   it, or to look at what was parsed.
 #' @param standard The standard the data follows, e.g. `"SDTMIG"` or
 #'   `"SENDIG"`. Overrides whatever the study declares about itself. Rules
-#'   are written per standard, so this genuinely narrows what runs; leave it
+#'   are written per standard, so this cuts the list sharply; leave it
 #'   unset to run every standard's rules and see everything.
 #' @param version The standard's version, e.g. `"3.4"`. Needs `standard`
 #'   too, since a bare version is ambiguous across standards.
@@ -341,7 +341,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' too - so treat it as "roughly how far through", not a clock.
 #'
 #' It is off in scripts and non-interactive runs, where it would only clutter
-#' a log. Force it either way with `options(coreval.progress = TRUE)` or
+#' a log. Turn it on or off with `options(coreval.progress = TRUE)` or
 #' `FALSE`.
 #' @param max_records Most records to keep per rule, default 1000. A rule can
 #'   flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200 000

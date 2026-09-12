@@ -76,8 +76,8 @@ rule_external_domains <- function(rule, domain, dataset = NULL) {
 #' absent, and an `Operations` block over a missing domain yields `NA`. For a
 #' whole study that is the right, forgiving behaviour: a study legitimately has
 #' no `SUPPAE` or `RELREC`, and the reference engine also carries on. Making
-#' those hard requirements would refuse rules that genuinely have nothing to
-#' join, so `check_study()` does not.
+#' those hard requirements would refuse rules that have nothing to join, so
+#' `check_study()` does not.
 #'
 #' For a single dataset the same silence is dangerous rather than forgiving.
 #' The user has supplied one domain and *every* cross-domain rule would find
@@ -219,8 +219,8 @@ infer_domain <- function(dataset, path = NULL) {
 #'   It is not free, though, and CDISC's coverage is uneven. The general
 #'   "dates must be valid ISO 8601" rule (`CORE-000547`) is published for
 #'   SENDIG and TIG but **not for SDTMIG**, whose only equivalents are
-#'   `TSVAL`-specific or deprecated. So `standard = "SDTMIG"` genuinely stops
-#'   a malformed `RFSTDTC` being reported. The report says how many rules were
+#'   `TSVAL`-specific or deprecated. So `standard = "SDTMIG"` can stop a
+#'   malformed `RFSTDTC` being reported at all. The report says how many rules were
 #'   set aside; leave `standard` unset to see everything.
 #' @param version The standard's version, e.g. `"3-4"`.
 #' @param use_case Optional use case (e.g. `"INDH"`), as in [list_rules()].

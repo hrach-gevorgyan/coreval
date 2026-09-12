@@ -101,14 +101,14 @@ is_relrec_wildcard <- function(name) {
 #'
 #' Two distinct fallbacks, per the reference engine's own behavior: a row
 #' with NO RELREC partner at all (or whose partner domain's schema simply
-#' doesn't have this variable) resolves to a genuinely BLANK value for
+#' doesn't have this variable) resolves to a BLANK value for
 #' CHECK EVALUATION purposes - confirmed necessary against CORE-000744's
 #' `negative/02` fixture, where FA rows with no RELREC entry at all must
 #' NOT be flagged by `not_equal_to` (a blank target/comparator is a
 #' non-violation per the reference truth table, whereas comparing against a
 #' fabricated non-blank placeholder string would wrongly flag every
 #' unrelated row). `for_display = TRUE` instead reports the reference
-#' engine's own literal `"Not in dataset"` text for a genuinely
+#' engine's own literal `"Not in dataset"` text for a
 #' schema-missing variable (e.g. AE has no AETRT) - but NOT for a row with
 #' no RELREC partner, since a real violation (and therefore this value ever
 #' being rendered) can't happen on such a row - confirmed against
