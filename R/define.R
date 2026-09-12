@@ -230,6 +230,37 @@ read_define_xml <- function(path) {
     )
   )
 
+  # The term codes inside a variable's codelist, as opposed to the codelist's
+  # own C-code above. These are the study's own declaration, read straight out
+  # of its define.xml; they are not Controlled Terminology and need nothing
+  # bundled. A rule asks "is this variable's coded set contained by the CT
+  # package's", so the whole set travels as one element per variable, and the
+  # column is a list.
+  #
+  # Three details are the reference's (`_get_codelist_coded_codes`), not
+  # choices: both `CodeListItem` and `EnumeratedItem` carry terms and both
+  # count, `CodeListItem` first; EVERY `Alias` on an item is taken, with no
+  # Context filter, which is deliberately unlike the codelist's own C-code
+  # just above where only `nci:ExtCodeID` counts; and a variable with no
+  # codelist gets `character(0)`, not NA, so `empty` is TRUE for it.
+  codelist_codes <- lapply(code_lists, function(cl) {
+    # Two separate searches rather than one `a | b` union: XPath returns a
+    # union in document order, and the reference concatenates the two lists
+    # with CodeListItem first.
+    codes <- c(
+      xml2::xml_attr(xml2::xml_find_all(cl, "./CodeListItem/Alias"), "Name"),
+      xml2::xml_attr(xml2::xml_find_all(cl, "./EnumeratedItem/Alias"), "Name")
+    )
+    codes[!is.na(codes)]
+  })
+  names(codelist_codes) <- xml2::xml_attr(code_lists, "OID")
+  item_defs$define_variable_codelist_coded_codes <- lapply(
+    item_codelist_oid,
+    function(oid) {
+      if (is.na(oid) || is.null(codelist_codes[[oid]])) character(0) else codelist_codes[[oid]]
+    }
+  )
+
   item_defs$define_variable_is_collected <- ifelse(
     is.na(item_defs$define_variable_origin_type),
     NA,
@@ -262,5 +293,58 @@ read_define_xml <- function(path) {
     merged
   }
 
-  list(datasets = datasets, variables = variables)
+  # Define-XML 2.1 names the terminology the study was built against, in
+  # def:Standards: one def:Standard per standard, those with Type="CT"
+  # carrying a PublishingSet ("SDTM", "SEND", "DEFINE-XML") and a Version
+  # that is the CT release date. "SDTM" + "2020-12-18" is the bundled package
+  # sdtmct-2020-12-18. Matched by local-name() for the same reason as
+  # def:Origin above: the prefix survives xml_ns_strip() for XPath purposes.
+  standards <- xml2::xml_find_all(doc, "//*[local-name()='Standard'][@Type='CT']")
+  ct_standards <- if (length(standards) == 0) {
+    data.table::data.table(
+      publishing_set = character(0), version = character(0), package = character(0)
+    )
+  } else {
+    set <- tolower(trimws(xml2::xml_attr(standards, "PublishingSet") %||% ""))
+    version <- trimws(xml2::xml_attr(standards, "Version") %||% "")
+    keep <- !is.na(set) & nzchar(set) & !is.na(version) & nzchar(version)
+    data.table::data.table(
+      publishing_set = set[keep],
+      version = version[keep],
+      package = paste0(set[keep], "ct-", version[keep]),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  list(datasets = datasets, variables = variables, ct_standards = ct_standards)
+}
+
+#' The bundled CT package a study's define.xml declares, or `NULL`
+#'
+#' Parallel to [ct_package_from_ts()]: the study says which terminology it
+#' follows and coreval reads it rather than guessing. A SEND study cites SEND
+#' terminology and an SDTM study SDTM's, so the publishing set has to match the
+#' standard being checked; the DEFINE-XML set that sits alongside describes the
+#' define document itself, not the data, and is never the answer here.
+#'
+#' @param study Full study object.
+#' @return A bundled package name, or `NULL` when the define declares none,
+#'   declares one for another standard, or names a release not bundled.
+#' @noRd
+ct_package_from_define <- function(study) {
+  standards <- study$define$ct_standards
+  if (is.null(standards) || nrow(standards) == 0) {
+    return(NULL)
+  }
+  product <- toupper(study$standard$product %||% NA_character_)
+  family <- if (!is.na(product) && startsWith(product, "SEND")) "send" else "sdtm"
+  rows <- standards[standards$publishing_set == family, ]
+  if (nrow(rows) == 0) {
+    return(NULL)
+  }
+  # Newest first, so a define citing several releases is read the same way the
+  # TS reader resolves a disagreement rather than by document order.
+  candidates <- sort(unique(rows$package), decreasing = TRUE)
+  hit <- candidates[candidates %in% ct_package_names()]
+  if (length(hit) == 0) NULL else hit[[1]]
 }

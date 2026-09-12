@@ -414,7 +414,12 @@ check_study <- function(study, standard = NULL, version = NULL,
     # The study usually says so itself, in TS. Asking the caller for something
     # already recorded in the data would be the same mistake as making them
     # declare the standard.
-    study$ct_package <- ct_package_from_ts(study)
+    #
+    # A Define-XML 2.1 declares it too, in def:Standards. TS comes first
+    # because it is the study's own statement about the data, where the define
+    # describes the metadata that accompanies it; when TS is absent or cites no
+    # CDISC version, the define is still a declaration and beats guessing.
+    study$ct_package <- ct_package_from_ts(study) %||% ct_package_from_define(study)
   }
   # Anything that is not a study object went straight through to run_checks(),
   # where `names(study$datasets)` is NULL, nothing runs, and the result prints

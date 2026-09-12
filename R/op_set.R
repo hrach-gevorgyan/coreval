@@ -7,6 +7,26 @@
 #' @return A logical vector.
 #' @noRd
 membership_check <- function(ctx) {
+  # The TARGET can be a collection per row, not just a single value:
+  # `define_variable_codelist_coded_codes is_not_contained_by $domain_lib_ccode`
+  # asks about the whole set of codes a variable's codelist declares.
+  #
+  # The reference answers this with ANY, not ALL (`is_contained_by` in
+  # dataframe_operators.py): a row counts as contained when at least one of
+  # its items is in the comparator. Reading it as ALL looks more natural and
+  # is wrong. An empty collection is therefore not contained, which matches
+  # Python's `any([])`.
+  #
+  # This branch comes first because the reference tests the target for being
+  # a column of iterables before it looks at the comparator at all, and the
+  # comparator may itself vary by row.
+  if (is.list(ctx$target) && length(ctx$target) == ctx$n) {
+    per_row <- is.list(ctx$value) && length(ctx$value) == ctx$n
+    return(vapply(seq_len(ctx$n), function(i) {
+      comparator <- if (per_row) ctx$value[[i]] else ctx$value
+      any(ctx$target[[i]] %in% comparator)
+    }, logical(1)))
+  }
   if (is.list(ctx$value) && length(ctx$value) == ctx$n) {
     vapply(seq_len(ctx$n), function(i) ctx$target[i] %in% ctx$value[[i]], logical(1))
   } else {

@@ -295,3 +295,80 @@ test_that("a variable's codelist C-code is read from the codelist it references"
   expect_equal(ccode("VSTESTCD"), "")
   expect_equal(ccode("VSSEQ"), "")
 })
+
+test_that("a codelist's term codes are read, and are not the codelist's own code", {
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  writeLines(c(
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3"',
+    '     xmlns:def="http://www.cdisc.org/ns/def/v2.0">',
+    '<Study OID="S"><MetaDataVersion OID="MDV.1" Name="v1">',
+    '<ItemGroupDef OID="IG.CM" Name="CM" Domain="CM" Repeating="Yes">',
+    '<ItemRef ItemOID="IT.CM.DOMAIN" OrderNumber="1" Mandatory="Yes"/>',
+    '<ItemRef ItemOID="IT.CM.CMSEQ" OrderNumber="2" Mandatory="Yes"/>',
+    '</ItemGroupDef>',
+    '<ItemDef OID="IT.CM.DOMAIN" Name="DOMAIN" DataType="text">',
+    '<CodeListRef CodeListOID="CL.DOMAIN_CM"/></ItemDef>',
+    '<ItemDef OID="IT.CM.CMSEQ" Name="CMSEQ" DataType="integer"/>',
+    # Both spellings of a term appear in real defines: CodeListItem carries a
+    # Decode, EnumeratedItem does not. Both count, and the codelist's OWN
+    # C-code (C66734, a direct child) must not be among the term codes.
+    '<CodeList OID="CL.DOMAIN_CM" Name="Domain" DataType="text">',
+    '<CodeListItem CodedValue="CM"><Decode>',
+    '<TranslatedText xml:lang="en">Concomitant Medications</TranslatedText>',
+    '</Decode><Alias Context="nci:ExtCodeID" Name="C49563"/></CodeListItem>',
+    '<EnumeratedItem CodedValue="AE">',
+    '<Alias Context="nci:ExtCodeID" Name="C49562"/></EnumeratedItem>',
+    '<Alias Context="nci:ExtCodeID" Name="C66734"/>',
+    '</CodeList>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+
+  define <- read_define_xml(path)
+  v <- as.data.frame(define$variables)
+  codes <- v$define_variable_codelist_coded_codes[[which(v$define_variable_name == "DOMAIN")]]
+
+  expect_setequal(codes, c("C49563", "C49562"))
+  expect_false("C66734" %in% codes)
+  # character(0), not NA: a variable with no codelist has an empty set, and
+  # `empty` has to be TRUE for it.
+  none <- v$define_variable_codelist_coded_codes[[which(v$define_variable_name == "CMSEQ")]]
+  expect_identical(none, character(0))
+})
+
+test_that("the CT package a Define-XML 2.1 declares is read, and matches the standard", {
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  writeLines(c(
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3"',
+    '     xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study OID="S"><MetaDataVersion OID="MDV.1" Name="v1" def:DefineVersion="2.1.0">',
+    '<def:Standards>',
+    '<def:Standard OID="STD.1" Name="SDTMIG" Type="IG" Version="3.3"/>',
+    # The DEFINE-XML set describes the define document, not the data, so it is
+    # never the answer for an SDTM study.
+    '<def:Standard OID="STD.4" Name="CDISC/NCI" Type="CT"',
+    '  PublishingSet="DEFINE-XML" Version="2020-12-18"/>',
+    '<def:Standard OID="STD.3" Name="CDISC/NCI" Type="CT"',
+    '  PublishingSet="SDTM" Version="2020-12-18"/>',
+    '</def:Standards>',
+    '<ItemGroupDef OID="IG.CM" Name="CM" Domain="CM" Repeating="Yes">',
+    '<ItemRef ItemOID="IT.CM.CMSEQ" OrderNumber="1" Mandatory="Yes"/>',
+    '</ItemGroupDef>',
+    '<ItemDef OID="IT.CM.CMSEQ" Name="CMSEQ" DataType="integer"/>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+
+  define <- read_define_xml(path)
+  expect_true("sdtmct-2020-12-18" %in% define$ct_standards$package)
+
+  sdtm <- list(define = define, standard = list(product = "SDTMIG"))
+  expect_identical(ct_package_from_define(sdtm), "sdtmct-2020-12-18")
+
+  # A SEND study cites SEND terminology; this define declares none, so there is
+  # nothing to read and guessing is refused.
+  send <- list(define = define, standard = list(product = "SENDIG"))
+  expect_null(ct_package_from_define(send))
+})

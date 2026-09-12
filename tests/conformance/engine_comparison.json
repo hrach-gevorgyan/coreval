@@ -2113,6 +2113,66 @@
   "folder": "CORE-000884",
   "source": "published"
  },
+ "CORE-000929": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "FA": [
+      "2"
+     ],
+     "VS": [
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "FA": [
+      "2"
+     ],
+     "VS": [
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "CM": [
+      "2"
+     ],
+     "FA": [
+      "2"
+     ],
+     "VS": [
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CM": [
+      "2"
+     ],
+     "FA": [
+      "2"
+     ],
+     "VS": [
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000929",
+  "source": "published"
+ },
  "CORE-001080": {
   "cases": [
    {

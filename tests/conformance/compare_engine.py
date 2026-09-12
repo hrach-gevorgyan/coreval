@@ -151,7 +151,15 @@ def main():
                    "engine agrees with sheet on all %d" % len(ran))
         print("%-22s %-26s %s" % (rule_id, source, verdict))
 
-    json.dump(report, io.open(OUTPUT, "w", encoding="utf-8"), indent=1, sort_keys=True)
+    # Merge into whatever is already recorded rather than replacing it. Running
+    # this for a single rule while chasing that rule is the normal way to use
+    # it, and a plain overwrite silently reduced the committed artifact to that
+    # one rule.
+    merged = {}
+    if os.path.isfile(OUTPUT):
+        merged = json.load(io.open(OUTPUT, encoding="utf-8"))
+    merged.update(report)
+    json.dump(merged, io.open(OUTPUT, "w", encoding="utf-8"), indent=1, sort_keys=True)
     never = sum(1 for v in report.values() if v["cases_engine_ran"] == 0)
     print("\n%d rules; the engine could not run any case for %d of them" % (len(report), never))
     print("wrote", OUTPUT)

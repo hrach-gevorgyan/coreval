@@ -153,8 +153,13 @@ run_case <- function(rule, case_dir) {
   # own answers for them (see reference_ct_results.json), so the rule actually
   # runs and is graded rather than passed over.
   if (is.null(study$ct_package)) {
-    study$ct_package <- ct_package_from_ts(study)
+    study$ct_package <- ct_package_from_ts(study) %||% ct_package_from_define(study)
   }
+  # Only where neither the data nor the define says. The fallback below is a
+  # harness convenience and must never pre-empt a real declaration: CORE-000929
+  # is graded against the CT its own define.xml cites, and answering it from
+  # the newest bundled package instead gives a different DOMAIN codelist and a
+  # wrong answer.
   if (is.null(study$ct_package)) {
     study$ct_package <- if (identical(toupper(study$standard$product %||% ""), "SENDIG")) {
       "sendct-2026-03-27"

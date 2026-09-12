@@ -225,10 +225,9 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
     "library_variable_data_type", "library_variable_core",
     "library_variable_ccode", "library_variable_has_codelist",
     "define_variable_ccode",
-    # Not built. The guard must refuse a rule naming these, so it is
-    # reported SKIPPED with a reason rather than answered. The codelist's
-    # TERMS are Controlled Terminology, which is too large to bundle - the
-    # codelist's C-code above is a fact about the variable and is bundled.
+    # The term codes declared inside the variable's own codelist. Read from
+    # the study's define.xml, so this needs nothing bundled; it is unrelated
+    # to Controlled Terminology, which the codelist's C-code above points at.
     "define_variable_codelist_coded_codes"
   )
 

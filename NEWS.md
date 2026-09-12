@@ -1,5 +1,28 @@
 # coreval 0.1.0.9000 (development)
 
+* **Define-XML now says which controlled terminology a study follows.** A
+  Define-XML 2.1 records it in `def:Standards`, the same way TS records it in
+  `TSVCDVER`, and coreval reads it instead of asking. TS still wins where both
+  say; the define is used when TS is absent or cites no CDISC version.
+
+  This is what CORE-000929 was actually blocked on. The rule compares the term
+  codes in a variable's codelist against the `DOMAIN` codelist's, and that
+  codelist has 150 terms in the 2020-12-18 terminology its fixture's define
+  cites and 85 in the newest. Answered from the wrong release it flagged a
+  clean `CM`.
+
+* **The term codes inside a variable's Define-XML codelist are read**
+  (`define_variable_codelist_coded_codes`). These come from the study's own
+  define.xml and were previously refused as detail coreval does not read, which
+  was the wrong diagnosis: nothing about them needs bundling.
+
+* **Fixed: `is_contained_by` ignored a collection on the target side.** The
+  operator handled a comparator that varies per row but not a target that is
+  itself a set per row, so it compared the set against the values and reported
+  a violation for every row. The reference treats a row as contained when ANY
+  of its items is in the comparator, which reads as too weak and is what it
+  does.
+
 * Three more rule types run: `split_by`, `get_codelist_attributes` and the
   per-row form of `contains_all`/`not_contains_all`. The last was the reason
   CORE-000934 found nothing - the reference compares row by row when each row

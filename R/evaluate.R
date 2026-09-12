@@ -537,7 +537,12 @@ assert_referenced_metadata_available <- function(rule, dataset) {
   # codelist_terms was implemented and stopped shielding it: CDISC's engine
   # reports FA record 2 and coreval reported none. `test-rules.R` keeps the
   # list of unbuilt pseudo-columns in step with this one.
-  unbuilt <- unique(targets[targets %in% c("define_variable_codelist_coded_codes")])
+  #
+  # The list is currently empty: every define_* field the bundled rules name is
+  # built. Keep the guard rather than deleting it, because the failure it
+  # catches is silent - a rule naming an unbuilt field finds nothing and looks
+  # like a clean dataset.
+  unbuilt <- unique(targets[targets %in% character(0)])
   if (length(unbuilt) > 0) {
     stop(
       "needs Define-XML detail coreval does not read: ",
