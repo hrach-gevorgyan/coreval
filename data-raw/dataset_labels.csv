@@ -1,0 +1,484 @@
+standard,version,domain,label
+sdtmig,3-1-2,DM,Demographics
+sdtmig,3-1-2,CO,Comments
+sdtmig,3-1-2,SE,Subject Elements
+sdtmig,3-1-2,SV,Subject Visits
+sdtmig,3-1-2,CM,Concomitant Medications
+sdtmig,3-1-2,EX,Exposure
+sdtmig,3-1-2,SU,Substance Use
+sdtmig,3-1-2,AE,Adverse Events
+sdtmig,3-1-2,DS,Disposition
+sdtmig,3-1-2,MH,Medical History
+sdtmig,3-1-2,DV,Protocol Deviations
+sdtmig,3-1-2,CE,Clinical Events
+sdtmig,3-1-2,EG,ECG
+sdtmig,3-1-2,IE,Inclusion/Exclusion Criteria Not Met
+sdtmig,3-1-2,LB,Labs
+sdtmig,3-1-2,PE,Physical Examination
+sdtmig,3-1-2,QS,Questionnaires
+sdtmig,3-1-2,SC,Subject Characteristics
+sdtmig,3-1-2,VS,Vital Signs
+sdtmig,3-1-2,DA,Drug Accountability
+sdtmig,3-1-2,MB,Microbiology Specimen
+sdtmig,3-1-2,MS,Microbiology Susceptibility Test
+sdtmig,3-1-2,PC,Pharmacokinetic Concentrations
+sdtmig,3-1-2,PP,Pharmacokinetic Parameters
+sdtmig,3-1-2,FA,Findings About Events or Interventions
+sdtmig,3-1-2,TA,Trial Arms
+sdtmig,3-1-2,TE,Trial Elements
+sdtmig,3-1-2,TV,Trial Visits
+sdtmig,3-1-2,TI,Trial Inclusion/Exclusion Criteria
+sdtmig,3-1-2,TS,Trial Summary
+sdtmig,3-1-2,RELREC,Related Records
+sdtmig,3-1-2,SUPPQUAL,Supplemental Qualifiers [DOMAIN NAME]
+sdtmig,3-1-3,DM,Demographics
+sdtmig,3-1-3,CO,Comments
+sdtmig,3-1-3,SE,Subject Elements
+sdtmig,3-1-3,SV,Subject Visits
+sdtmig,3-1-3,CM,Concomitant Medications
+sdtmig,3-1-3,EX,Exposure
+sdtmig,3-1-3,SU,Substance Use
+sdtmig,3-1-3,AE,Adverse Events
+sdtmig,3-1-3,DS,Disposition
+sdtmig,3-1-3,MH,Medical History
+sdtmig,3-1-3,DV,Protocol Deviations
+sdtmig,3-1-3,CE,Clinical Events
+sdtmig,3-1-3,EG,ECG
+sdtmig,3-1-3,IE,Inclusion/Exclusion Criteria Not Met
+sdtmig,3-1-3,LB,Labs
+sdtmig,3-1-3,PE,Physical Examination
+sdtmig,3-1-3,QS,Questionnaires
+sdtmig,3-1-3,SC,Subject Characteristics
+sdtmig,3-1-3,VS,Vital Signs
+sdtmig,3-1-3,DA,Drug Accountability
+sdtmig,3-1-3,MB,Microbiology Specimen
+sdtmig,3-1-3,MS,Microbiology Susceptibility Test
+sdtmig,3-1-3,PC,Pharmacokinetic Concentrations
+sdtmig,3-1-3,PP,Pharmacokinetic Parameters
+sdtmig,3-1-3,TU,Tumor Identification
+sdtmig,3-1-3,TR,Tumor Results
+sdtmig,3-1-3,RS,Disease Response
+sdtmig,3-1-3,FA,Findings About Events or Interventions
+sdtmig,3-1-3,TA,Trial Arms
+sdtmig,3-1-3,TE,Trial Elements
+sdtmig,3-1-3,TV,Trial Visits
+sdtmig,3-1-3,TI,Trial Inclusion/Exclusion Criteria
+sdtmig,3-1-3,TS,Trial Summary
+sdtmig,3-1-3,RELREC,Related Records
+sdtmig,3-1-3,SUPPQUAL,Supplemental Qualifiers [DOMAIN NAME]
+sdtmig,3-2,CO,Comments
+sdtmig,3-2,DM,Demographics
+sdtmig,3-2,SE,Subject Elements
+sdtmig,3-2,SV,Subject Visits
+sdtmig,3-2,CM,Concomitant Medications
+sdtmig,3-2,EX,Exposure
+sdtmig,3-2,EC,Exposure as Collected
+sdtmig,3-2,PR,Procedures
+sdtmig,3-2,SU,Substance Use
+sdtmig,3-2,AE,Adverse Events
+sdtmig,3-2,CE,Clinical Events
+sdtmig,3-2,DS,Disposition
+sdtmig,3-2,DV,Protocol Deviations
+sdtmig,3-2,HO,Healthcare Encounters
+sdtmig,3-2,MH,Medical History
+sdtmig,3-2,DA,Drug Accountability
+sdtmig,3-2,DD,Death Details
+sdtmig,3-2,EG,ECG
+sdtmig,3-2,IE,Inclusion/Exclusion Criteria Not Met
+sdtmig,3-2,IS,Immunogenicity Specimen Assessments
+sdtmig,3-2,LB,Labs
+sdtmig,3-2,MB,Microbiology Specimen
+sdtmig,3-2,MS,Microbiology Susceptibility Test
+sdtmig,3-2,MI,Microscopic Findings
+sdtmig,3-2,MO,Morphology
+sdtmig,3-2,PC,Pharmacokinetic Concentrations
+sdtmig,3-2,PP,Pharmacokinetic Parameters
+sdtmig,3-2,PE,Physical Examination
+sdtmig,3-2,QS,Questionnaires
+sdtmig,3-2,RP,Reproductive System Findings
+sdtmig,3-2,SC,Subject Characteristics
+sdtmig,3-2,SS,Subject Status
+sdtmig,3-2,TU,Tumor Identification
+sdtmig,3-2,TR,Tumor Results
+sdtmig,3-2,RS,Disease Response
+sdtmig,3-2,VS,Vital Signs
+sdtmig,3-2,FA,Findings About Events or Interventions
+sdtmig,3-2,SR,Skin Response
+sdtmig,3-2,TA,Trial Arms
+sdtmig,3-2,TE,Trial Elements
+sdtmig,3-2,TV,Trial Visits
+sdtmig,3-2,TD,Trial Disease Assessments
+sdtmig,3-2,TI,Trial Inclusion/Exclusion Criteria
+sdtmig,3-2,TS,Trial Summary
+sdtmig,3-2,RELREC,Related Records
+sdtmig,3-2,SUPPQUAL,Supplemental Qualifiers [DOMAIN NAME]
+sdtmig,3-3,CO,Comments
+sdtmig,3-3,DM,Demographics
+sdtmig,3-3,SE,Subject Elements
+sdtmig,3-3,SM,Subject Disease Milestones
+sdtmig,3-3,SV,Subject Visits
+sdtmig,3-3,AG,Procedure Agents
+sdtmig,3-3,CM,Concomitant/Prior Medications
+sdtmig,3-3,EX,Exposure
+sdtmig,3-3,EC,Exposure as Collected
+sdtmig,3-3,ML,Meal Data
+sdtmig,3-3,PR,Procedures
+sdtmig,3-3,SU,Substance Use
+sdtmig,3-3,AE,Adverse Events
+sdtmig,3-3,CE,Clinical Events
+sdtmig,3-3,DS,Disposition
+sdtmig,3-3,DV,Protocol Deviations
+sdtmig,3-3,HO,Healthcare Encounters
+sdtmig,3-3,MH,Medical History
+sdtmig,3-3,DA,Drug Accountability
+sdtmig,3-3,DD,Death Details
+sdtmig,3-3,EG,ECG Test Results
+sdtmig,3-3,IE,Inclusion/Exclusion Criteria Not Met
+sdtmig,3-3,IS,Immunogenicity Specimen Assessments
+sdtmig,3-3,LB,Laboratory Test Results
+sdtmig,3-3,MB,Microbiology Specimen
+sdtmig,3-3,MS,Microbiology Susceptibility
+sdtmig,3-3,MI,Microscopic Findings
+sdtmig,3-3,MO,Morphology
+sdtmig,3-3,CV,Cardiovascular System Findings
+sdtmig,3-3,MK,Musculoskeletal System Findings
+sdtmig,3-3,NV,Nervous System Findings
+sdtmig,3-3,OE,Ophthalmic Examinations
+sdtmig,3-3,RP,Reproductive System Findings
+sdtmig,3-3,RE,Respiratory System Findings
+sdtmig,3-3,UR,Urinary System Findings
+sdtmig,3-3,PC,Pharmacokinetics Concentrations
+sdtmig,3-3,PP,Pharmacokinetics Parameters
+sdtmig,3-3,PE,Physical Examination
+sdtmig,3-3,FT,Functional Tests
+sdtmig,3-3,QS,Questionnaires
+sdtmig,3-3,RS,Disease Response and Clin Classification
+sdtmig,3-3,SC,Subject Characteristics
+sdtmig,3-3,SS,Subject Status
+sdtmig,3-3,TU,Tumor/Lesion Identification
+sdtmig,3-3,TR,Tumor/Lesion Results
+sdtmig,3-3,VS,Vital Signs
+sdtmig,3-3,FA,Findings About Events or Interventions
+sdtmig,3-3,SR,Skin Response
+sdtmig,3-3,TA,Trial Arms
+sdtmig,3-3,TE,Trial Elements
+sdtmig,3-3,TV,Trial Visits
+sdtmig,3-3,TD,Trial Disease Assessments
+sdtmig,3-3,TM,Trial Disease Milestones
+sdtmig,3-3,TI,Trial Inclusion/Exclusion Criteria
+sdtmig,3-3,TS,Trial Summary Information
+sdtmig,3-3,RELREC,Related Records
+sdtmig,3-3,SUPPQUAL,Supplemental Qualifiers for [domain name]
+sdtmig,3-3,RELSUB,Related Subjects
+sdtmig,3-3,OI,Non-host Organism Identifiers
+sdtmig,3-4,AG,Procedure Agents
+sdtmig,3-4,CM,Concomitant/Prior Medications
+sdtmig,3-4,EC,Exposure as Collected
+sdtmig,3-4,EX,Exposure
+sdtmig,3-4,ML,Meal Data
+sdtmig,3-4,PR,Procedures
+sdtmig,3-4,SU,Substance Use
+sdtmig,3-4,AE,Adverse Events
+sdtmig,3-4,BE,Biospecimen Events
+sdtmig,3-4,CE,Clinical Events
+sdtmig,3-4,DS,Disposition
+sdtmig,3-4,DV,Protocol Deviations
+sdtmig,3-4,HO,Healthcare Encounters
+sdtmig,3-4,MH,Medical History
+sdtmig,3-4,BS,Biospecimen Findings
+sdtmig,3-4,CP,Cell Phenotype Findings
+sdtmig,3-4,CV,Cardiovascular System Findings
+sdtmig,3-4,DA,Product Accountability
+sdtmig,3-4,DD,Death Details
+sdtmig,3-4,EG,ECG Test Results
+sdtmig,3-4,FT,Functional Tests
+sdtmig,3-4,GF,Genomics Findings
+sdtmig,3-4,IE,Inclusion/Exclusion Criteria Not Met
+sdtmig,3-4,IS,Immunogenicity Specimen Assessments
+sdtmig,3-4,LB,Laboratory Test Results
+sdtmig,3-4,MB,Microbiology Specimen
+sdtmig,3-4,MI,Microscopic Findings
+sdtmig,3-4,MK,Musculoskeletal System Findings
+sdtmig,3-4,MS,Microbiology Susceptibility
+sdtmig,3-4,NV,Nervous System Findings
+sdtmig,3-4,OE,Ophthalmic Examinations
+sdtmig,3-4,PC,Pharmacokinetics Concentrations
+sdtmig,3-4,PE,Physical Examination
+sdtmig,3-4,PP,Pharmacokinetics Parameters
+sdtmig,3-4,QS,Questionnaires
+sdtmig,3-4,RE,Respiratory System Findings
+sdtmig,3-4,RP,Reproductive System Findings
+sdtmig,3-4,RS,Disease Response and Clin Classification
+sdtmig,3-4,SC,Subject Characteristics
+sdtmig,3-4,SS,Subject Status
+sdtmig,3-4,TR,Tumor/Lesion Results
+sdtmig,3-4,TU,Tumor/Lesion Identification
+sdtmig,3-4,UR,Urinary System Findings
+sdtmig,3-4,VS,Vital Signs
+sdtmig,3-4,FA,Findings About Events or Interventions
+sdtmig,3-4,SR,Skin Response
+sdtmig,3-4,CO,Comments
+sdtmig,3-4,DM,Demographics
+sdtmig,3-4,SE,Subject Elements
+sdtmig,3-4,SM,Subject Disease Milestones
+sdtmig,3-4,SV,Subject Visits
+sdtmig,3-4,TA,Trial Arms
+sdtmig,3-4,TD,Trial Disease Assessments
+sdtmig,3-4,TE,Trial Elements
+sdtmig,3-4,TI,Trial Inclusion/Exclusion Criteria
+sdtmig,3-4,TM,Trial Disease Milestones
+sdtmig,3-4,TS,Trial Summary
+sdtmig,3-4,TV,Trial Visits
+sdtmig,3-4,OI,Non-host Organism Identifiers
+sdtmig,3-4,RELREC,Related Records
+sdtmig,3-4,RELSPEC,Related Specimens
+sdtmig,3-4,RELSUB,Related Subjects
+sdtmig,3-4,SUPPQUAL,Supplemental Qualifiers for [domain name]
+sdtmig,ap-1-0,APDM,Associated Persons Demographics
+sdtmig,ap-1-0,APRELSUB,Associated Persons Related to Subjects
+sdtmig,md-1-0,DI,Device Identifiers
+sdtmig,md-1-0,DR,Device-Subject Relationships
+sdtmig,md-1-0,DU,Device In-Use
+sdtmig,md-1-0,DO,Device Properties
+sdtmig,md-1-0,DX,Device Exposure
+sdtmig,md-1-0,DE,Device Events
+sdtmig,md-1-0,DT,Device Tracking and Disposition
+sdtmig,md-1-1,DX,Device Exposure
+sdtmig,md-1-1,DE,Device Events
+sdtmig,md-1-1,DT,Device Tracking and Disposition
+sdtmig,md-1-1,DU,Device-In-Use
+sdtmig,md-1-1,DO,Device Properties
+sdtmig,md-1-1,DR,Device-Subject Relationships
+sdtmig,md-1-1,DI,Device Identifiers
+sendig,3-0,DM,Demographics
+sendig,3-0,CO,Comments
+sendig,3-0,SE,Subject Elements
+sendig,3-0,EX,Exposure
+sendig,3-0,DS,Disposition
+sendig,3-0,BW,Body Weight
+sendig,3-0,BG,Body Weight Gains
+sendig,3-0,CL,Clinical Observations
+sendig,3-0,DD,Death Diagnosis
+sendig,3-0,FW,Food and Water Consumption
+sendig,3-0,LB,Laboratory
+sendig,3-0,MA,Macroscopic Findings
+sendig,3-0,MI,Microscopic Findings
+sendig,3-0,OM,Organ Measurements
+sendig,3-0,PM,Palpable Masses
+sendig,3-0,PC,Pharmacokinetic Concentrations
+sendig,3-0,PP,Pharmacokinetics Parameters
+sendig,3-0,SC,Subject Characteristics
+sendig,3-0,TF,Tumor Findings
+sendig,3-0,VS,Vital Signs
+sendig,3-0,EG,ECG
+sendig,3-0,TE,Trial Elements
+sendig,3-0,TA,Trial Arms
+sendig,3-0,TX,Trial Sets
+sendig,3-0,TS,Trial Summary
+sendig,3-0,RELREC,Related Records
+sendig,3-0,SUPPQUAL,Supplemental Qualifiers for (domain name)
+sendig,3-0,POOLDEF,Pooled Definition
+sendig,3-1,DM,Demographics
+sendig,3-1,CO,Comments
+sendig,3-1,SE,Subject Elements
+sendig,3-1,EX,Exposure
+sendig,3-1,DS,Disposition
+sendig,3-1,BW,Body Weight
+sendig,3-1,BG,Body Weight Gains
+sendig,3-1,CL,Clinical Observations
+sendig,3-1,DD,Death Diagnosis and Details
+sendig,3-1,FW,Food and Water Consumption
+sendig,3-1,LB,Laboratory
+sendig,3-1,MA,Macroscopic Findings
+sendig,3-1,MI,Microscopic Findings
+sendig,3-1,OM,Organ Measurements
+sendig,3-1,PM,Palpable Masses
+sendig,3-1,PC,Pharmacokinetic Concentrations
+sendig,3-1,PP,Pharmacokinetics Parameters
+sendig,3-1,SC,Subject Characteristics
+sendig,3-1,TF,Tumor Findings
+sendig,3-1,VS,Vital Signs
+sendig,3-1,EG,ECG
+sendig,3-1,CV,Cardiovascular Findings
+sendig,3-1,RE,Respiratory
+sendig,3-1,TE,Trial Elements
+sendig,3-1,TA,Trial Arms
+sendig,3-1,TX,Trial Sets
+sendig,3-1,TS,Trial Summary
+sendig,3-1,RELREC,Related Records
+sendig,3-1,SUPPQUAL,Supplemental Qualifiers for (domain name)
+sendig,3-1,POOLDEF,Pool Definition
+sendig,3-1-1,EX,Exposure
+sendig,3-1-1,DS,Disposition
+sendig,3-1-1,BW,Body Weight
+sendig,3-1-1,BG,Body Weight Gains
+sendig,3-1-1,CL,Clinical Observations
+sendig,3-1-1,DD,Death Diagnosis and Details
+sendig,3-1-1,FW,Food and Water Consumption
+sendig,3-1-1,LB,Laboratory
+sendig,3-1-1,MA,Macroscopic Findings
+sendig,3-1-1,MI,Microscopic Findings
+sendig,3-1-1,OM,Organ Measurements
+sendig,3-1-1,PM,Palpable Masses
+sendig,3-1-1,PC,Pharmacokinetic Concentrations
+sendig,3-1-1,PP,Pharmacokinetics Parameters
+sendig,3-1-1,SC,Subject Characteristics
+sendig,3-1-1,TF,Tumor Findings
+sendig,3-1-1,VS,Vital Signs
+sendig,3-1-1,EG,ECG
+sendig,3-1-1,CV,Cardiovascular Findings
+sendig,3-1-1,RE,Respiratory
+sendig,3-1-1,DM,Demographics
+sendig,3-1-1,CO,Comments
+sendig,3-1-1,SE,Subject Elements
+sendig,3-1-1,TE,Trial Elements
+sendig,3-1-1,TA,Trial Arms
+sendig,3-1-1,TX,Trial Sets
+sendig,3-1-1,TS,Trial Summary
+sendig,3-1-1,RELREC,Related Records
+sendig,3-1-1,SUPPQUAL,Supplemental Qualifiers for (domain name)
+sendig,3-1-1,POOLDEF,Pool Definition
+sendig,ar-1-0,DM,Demographics
+sendig,ar-1-0,CM,Concomitant/Prior Medications
+sendig,ar-1-0,AG,Procedure Agents
+sendig,ar-1-0,PR,Procedures
+sendig,ar-1-0,MH,Medical History
+sendig,ar-1-0,MB,Microbiology Specimen
+sendig,ar-1-0,FA,Findings About Events or Interventions
+sendig,ar-1-0,AC,Challenge Agent Characterization
+sendig,dart-1-1,SJ,Subject Repro Stages
+sendig,dart-1-1,DM,Demographics
+sendig,dart-1-1,CO,Comments
+sendig,dart-1-1,SE,Subject Elements
+sendig,dart-1-1,EX,Exposure
+sendig,dart-1-1,DS,Disposition
+sendig,dart-1-1,IC,Implantation Classification
+sendig,dart-1-1,PY,Nonclinical Pregnancy Results
+sendig,dart-1-1,FM,Fetal Measurements
+sendig,dart-1-1,FX,Fetal Pathology Findings
+sendig,dart-1-1,BW,Body Weight
+sendig,dart-1-1,BG,Body Weight Gains
+sendig,dart-1-1,CL,Clinical Observations
+sendig,dart-1-1,DD,Death Diagnosis and Details
+sendig,dart-1-1,FW,Food and Water Consumption
+sendig,dart-1-1,LB,Laboratory
+sendig,dart-1-1,MA,Macroscopic Findings
+sendig,dart-1-1,MI,Microscopic Findings
+sendig,dart-1-1,OM,Organ Measurements
+sendig,dart-1-1,PC,Pharmacokinetic Concentrations
+sendig,dart-1-1,PP,Pharmacokinetics Parameters
+sendig,dart-1-1,SC,Subject Characteristics
+sendig,dart-1-1,TT,Trial Repro Stages
+sendig,dart-1-1,TP,Trial Repro Paths
+sendig,dart-1-1,TE,Trial Elements
+sendig,dart-1-1,TA,Trial Arms
+sendig,dart-1-1,TX,Trial Sets
+sendig,dart-1-1,TS,Trial Summary
+sendig,dart-1-1,RELREC,Related Records
+sendig,dart-1-1,SUPPQUAL,Supplemental Qualifiers for (domain name)
+sendig,dart-1-1,POOLDEF,Pool Definition
+sendig,genetox-1-0,DS,Disposition
+sendig,genetox-1-0,BG,Body Weight Gains
+sendig,genetox-1-0,BW,Body Weight
+sendig,genetox-1-0,CL,Clinical Observations
+sendig,genetox-1-0,CV,Cardiovascular Findings
+sendig,genetox-1-0,DD,Death Diagnosis and Details
+sendig,genetox-1-0,EG,ECG
+sendig,genetox-1-0,FW,Food and Water Consumption
+sendig,genetox-1-0,GV,Genetic Toxicology - In Vivo
+sendig,genetox-1-0,LB,Laboratory
+sendig,genetox-1-0,MA,Macroscopic Findings
+sendig,genetox-1-0,MI,Microscopic Findings
+sendig,genetox-1-0,OM,Organ Measurements
+sendig,genetox-1-0,PC,Pharmacokinetic Concentrations
+sendig,genetox-1-0,PM,Palpable Masses
+sendig,genetox-1-0,PP,Pharmacokinetics Parameters
+sendig,genetox-1-0,RE,Respiratory
+sendig,genetox-1-0,SC,Subject Characteristics
+sendig,genetox-1-0,TF,Tumor Findings
+sendig,genetox-1-0,VS,Vital Signs
+sendig,genetox-1-0,EX,Exposure
+sendig,genetox-1-0,POOLDEF,Pool Definition
+sendig,genetox-1-0,RELREC,Related Records
+sendig,genetox-1-0,SUPPQUAL,Supplemental Qualifiers for (domain name)
+sendig,genetox-1-0,CO,Comments
+sendig,genetox-1-0,DM,Demographics
+sendig,genetox-1-0,SE,Subject Elements
+sendig,genetox-1-0,TA,Trial Arms
+sendig,genetox-1-0,TE,Trial Elements
+sendig,genetox-1-0,TS,Trial Summary
+sendig,genetox-1-0,TX,Trial Sets
+tig-sdtm,1-0,CM,Concomitant/Prior Medications
+tig-sdtm,1-0,EC,Exposure as Collected
+tig-sdtm,1-0,EX,Exposure
+tig-sdtm,1-0,SU,Substance Use
+tig-sdtm,1-0,AE,Adverse Events
+tig-sdtm,1-0,DS,Disposition
+tig-sdtm,1-0,DV,Protocol Deviations
+tig-sdtm,1-0,EM,Tobacco Product Events and Malfunctions
+tig-sdtm,1-0,MH,Medical History
+tig-sdtm,1-0,DA,Product Accountability
+tig-sdtm,1-0,DO,Device Properties
+tig-sdtm,1-0,DU,Device-in-Use
+tig-sdtm,1-0,EG,ECG Test Results
+tig-sdtm,1-0,IE,Inclusion/Exclusion Criteria Not Met
+tig-sdtm,1-0,LB,Laboratory Test Results
+tig-sdtm,1-0,PC,Pharmacokinetics Concentrations
+tig-sdtm,1-0,PP,Pharmacokinetics Parameters
+tig-sdtm,1-0,PT,Tobacco Product Testing
+tig-sdtm,1-0,QS,Questionnaires
+tig-sdtm,1-0,RE,Respiratory System Findings
+tig-sdtm,1-0,SC,Subject Characteristics
+tig-sdtm,1-0,VS,Vital Signs
+tig-sdtm,1-0,FA,Findings About Events or Interventions
+tig-sdtm,1-0,CO,Comments
+tig-sdtm,1-0,DM,Demographics
+tig-sdtm,1-0,IN,Non-Tobacco Ingredients
+tig-sdtm,1-0,IQ,Ingredient Quantities by Component
+tig-sdtm,1-0,IT,Tobacco Ingredients
+tig-sdtm,1-0,PD,Product Design Parameters
+tig-sdtm,1-0,SE,Subject Elements
+tig-sdtm,1-0,SV,Subject Visits
+tig-sdtm,1-0,TA,Trial Arms
+tig-sdtm,1-0,TE,Trial Elements
+tig-sdtm,1-0,TI,Trial Inclusion/Exclusion Criteria
+tig-sdtm,1-0,TS,Trial Summary
+tig-sdtm,1-0,TV,Trial Visits
+tig-sdtm,1-0,DI,Device Identifiers
+tig-sdtm,1-0,ES,Environmental Storage Conditions
+tig-sdtm,1-0,TO,Tobacco Product Identifiers and Descriptors
+tig-sdtm,1-0,RELREC,Related Records
+tig-sdtm,1-0,SUPPQUAL,Supplemental Qualifiers for [domain name]
+tig-send,1-0,EX,Exposure
+tig-send,1-0,DS,Disposition
+tig-send,1-0,BW,Body Weights
+tig-send,1-0,CL,Clinical Observations
+tig-send,1-0,CV,Cardiovascular System Findings
+tig-send,1-0,DD,Death Diagnosis and Details
+tig-send,1-0,DU,Device-in-Use
+tig-send,1-0,EG,ECG Test Results
+tig-send,1-0,FW,Food and Water Consumption
+tig-send,1-0,GT,Genetic Toxicology In Vitro Test Results
+tig-send,1-0,LB,Laboratory Test Results
+tig-send,1-0,MA,Macroscopic Findings
+tig-send,1-0,MI,Microscopic Findings
+tig-send,1-0,OM,Organ Measurements
+tig-send,1-0,PC,Pharmacokinetics Concentrations
+tig-send,1-0,PM,Palpable Masses
+tig-send,1-0,PP,Pharmacokinetics Parameters
+tig-send,1-0,RE,Respiratory System Findings
+tig-send,1-0,SC,Subject Characteristics
+tig-send,1-0,TF,Tumor Findings
+tig-send,1-0,VS,Vital Signs
+tig-send,1-0,CO,Comments
+tig-send,1-0,DM,Demographics
+tig-send,1-0,SE,Subject Elements
+tig-send,1-0,TA,Trial Arms
+tig-send,1-0,TE,Trial Elements
+tig-send,1-0,TS,Trial Summary
+tig-send,1-0,TX,Trial Sets
+tig-send,1-0,DI,Device Identifiers
+tig-send,1-0,POOLDEF,Pool Definition
+tig-send,1-0,RELREC,Related Records
+tig-send,1-0,RELREF,Related References
+tig-send,1-0,SUPPQUAL,Supplemental Qualifiers for [domain name]

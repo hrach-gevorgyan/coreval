@@ -550,3 +550,29 @@ test_that("study_domains is the set of DOMAIN values, not dataset names", {
   expect_equal(binding$value, c("", "DM"))
   expect_false("EC" %in% binding$value)
 })
+
+test_that("domain_label is the standard's label, not the study's own", {
+  # The reference reads this from the standard's dataset metadata
+  # (operations/domain_label.py), and the standards genuinely disagree: SENDIG
+  # calls LB "Laboratory", SDTMIG calls it "Laboratory Test Results".
+  # CORE-000272 asks whether --CAT equals that label, and its own fixture's
+  # .env declares SENDIG - so reading the study's own dataset label missed the
+  # violation CDISC's engine reports.
+  ds <- list(label = "Whatever the sponsor typed")
+
+  send <- list(standard = list(product = "SENDIG", version = "3-1-1"))
+  expect_equal(standard_domain_label(send, "LB", ds), "Laboratory")
+
+  sdtm <- list(standard = list(product = "SDTMIG", version = "3-4"))
+  expect_equal(standard_domain_label(sdtm, "LB", ds), "Laboratory Test Results")
+
+  # A domain no standard defines falls back to the dataset's own label rather
+  # than returning nothing.
+  expect_equal(standard_domain_label(sdtm, "XY", ds), "Whatever the sponsor typed")
+
+  # Lower-cased product and an undeclared version both still resolve.
+  expect_equal(
+    standard_domain_label(list(standard = list(product = "sendig")), "LB", ds),
+    "Laboratory"
+  )
+})

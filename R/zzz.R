@@ -32,4 +32,7 @@ utils::globalVariables(".N")
 
   ct_packages_path <- system.file("extdata", "ct_packages.rds", package = pkgname)
   .coreval_env$ct_packages <- readRDS(ct_packages_path)
+
+  dataset_labels_path <- system.file("extdata", "dataset_labels.rds", package = pkgname)
+  .coreval_env$dataset_labels <- readRDS(dataset_labels_path)
 }

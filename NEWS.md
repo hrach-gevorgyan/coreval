@@ -1,5 +1,13 @@
 # coreval 0.1.0.9000 (development)
 
+* **`domain_label` now means what the standard calls a domain**, not what your
+  own dataset metadata happens to call it. The two differ: SENDIG calls `LB`
+  "Laboratory" where SDTMIG calls it "Laboratory Test Results". CORE-000272
+  asks whether `--CAT` equals that label, so on a SEND study coreval was
+  answering a different question and missing the finding. Per-standard dataset
+  labels are now bundled (483 of them, 4 standards). A domain no standard
+  defines still falls back to your own label.
+
 * **Fixed a false-positive class: a variable that isn't there is no longer
   treated as failing a date or uniqueness test.** Three operators were written
   as plain negations of their positive counterparts, which answer `FALSE` for a

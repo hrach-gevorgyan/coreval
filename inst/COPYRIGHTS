@@ -27,13 +27,14 @@ inst/extdata/sdtm_model_variables.rds
 inst/extdata/sdtm_model_dataset_variables.rds
 inst/extdata/ct_packages.rds
 inst/extdata/sdtm_domain_classes.rds
+inst/extdata/dataset_labels.rds
 ----------------------------------
 From cdisc-org/cdisc-rules-engine. CDISC standards metadata - variable names,
-labels, roles, data types, Core designations, observation classes and
-Controlled Terminology package dates. Extracted at build time from the offline
-caches (resources/cache/*.pkl) that CDISC's own rules engine commits directly
-to its repository, not downloaded: no CDISC API is contacted at build or run
-time.
+labels, roles, data types, Core designations, codelist identifiers, observation
+classes, per-standard dataset labels and Controlled Terminology package dates.
+Extracted at build time from the offline caches (resources/cache/*.pkl) that
+CDISC's own rules engine commits directly to its repository, not downloaded: no
+CDISC API is contacted at build or run time.
 
 tests/testthat/fixtures/
 ------------------------

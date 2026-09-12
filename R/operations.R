@@ -284,6 +284,50 @@ library_variables_for <- function(study, domain) {
   rows[toupper(rows$domain) == toupper(lookup_domain), ]
 }
 
+#' The label the STANDARD gives a domain, for a study's declared standard
+#'
+#' Not the label the study's own metadata carries. The reference reads this from
+#' the standard's dataset metadata (`operations/domain_label.py`), and the two
+#' genuinely differ: SENDIG calls `LB` "Laboratory" where SDTMIG calls it
+#' "Laboratory Test Results". CORE-000272 asks whether `--CAT` equals that
+#' label, so answering with the study's own label answers a different question -
+#' it missed the violation CDISC's engine reports on that rule's own fixture,
+#' whose `.env` declares SENDIG 3-1.
+#'
+#' Falls back to the dataset's own label when the standard or domain is unknown,
+#' which is better than returning nothing for a sponsor's custom domain.
+#'
+#' @param study Full study object (its `$standard` selects standard/version).
+#' @param domain Domain code.
+#' @param dataset The domain's dataset, for the fallback label.
+#' @return A single label string, or `NA_character_`.
+#' @noRd
+standard_domain_label <- function(study, domain, dataset = NULL) {
+  fallback <- if (is.null(dataset)) NA_character_ else (dataset$label %||% NA_character_)
+  tbl <- .coreval_env$dataset_labels
+  if (is.null(tbl)) {
+    return(fallback)
+  }
+  product <- study$standard$product %||% NA_character_
+  standard <- if (is.na(product)) "sdtmig" else tolower(product)
+  if (identical(standard, "tig")) {
+    standard <- "tig-sdtm"
+  }
+  rows <- tbl[tbl$standard == standard, ]
+  if (nrow(rows) == 0) {
+    return(fallback)
+  }
+  version <- study$standard$version %||% NA_character_
+  use_version <- if (!is.na(version) && version %in% rows$version) {
+    version
+  } else {
+    newest_library_version(rows$version)
+  }
+  rows <- rows[rows$version == use_version, ]
+  hit <- rows$label[toupper(rows$domain) == toupper(domain)]
+  if (length(hit) == 0) fallback else hit[1]
+}
+
 # Class names differ cosmetically between sources ("FINDINGS ABOUT" in a
 # rule's Scope, "Findings About" in the Model cache), so compare them
 # case- and hyphen-insensitively rather than literally.
@@ -683,7 +727,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # against a lowercase list never matches).
     dataset_names = scalar_binding(sort(toupper(names(study$datasets)))),
     domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
-    domain_label = scalar_binding(if (is.null(ds)) NA_character_ else ds$label),
+    domain_label = scalar_binding(standard_domain_label(study, current_domain, ds)),
     required_variables = {
       vars <- sdtmig_variables_for(study, domain, "Req")
       if (is.null(vars)) NULL else scalar_binding(vars)
