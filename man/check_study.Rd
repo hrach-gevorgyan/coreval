@@ -10,7 +10,8 @@ check_study(
   version = NULL,
   use_case = NULL,
   max_records = 1000,
-  include_deprecated = FALSE
+  include_deprecated = FALSE,
+  ct_package = NULL
 )
 }
 \arguments{
@@ -39,6 +40,14 @@ identical findings, more than Excel can hold. The true count is kept in
 \item{include_deprecated}{Also run rules CDISC has deprecated. \code{FALSE} by
 default: a deprecated rule has a published replacement, so running both
 reports the same defect twice.}
+
+\item{ct_package}{Which CDISC Controlled Terminology package the study
+follows, e.g. \code{"sdtmct-2026-03-27"}. Rules that ask whether a value is a
+legal term need this, and are skipped with a reason without it - coreval
+will not pick a version for you, because terminology changes between
+releases and judging a study against one it never declared would both
+invent violations and hide real ones. Every published package is bundled;
+\code{list_ct_packages()} shows them.}
 }
 \value{
 An object of class \code{coreval_result}, holding three tables. Because
@@ -54,7 +63,7 @@ not have, which is usually the finding itself.
 this one: an empty \code{findings} table can mean clean data \emph{or} rules that
 never ran, and they look identical otherwise. Reasons include a dataset
 you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
-controlled terminology, which is around 438 MB and so is deliberately
+controlled terminology when no \code{ct_package} was given, which is
 not bundled. Nothing skipped is ever counted as a pass.
 \item \code{truncated} - rules that flagged more records than \code{max_records} kept,
 with how many they really found.

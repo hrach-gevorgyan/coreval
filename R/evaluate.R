@@ -231,6 +231,20 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
     if (ref_name %in% names(dataset$data)) {
       return(as_per_row_value(dataset$data[[ref_name]]))
     }
+    # An Operations id that does not start with "$". Most rules write theirs
+    # as "$name" and are matched above, but CDISC.SDTMIG.CG0555-CG0560 declare
+    # ids like `pkunit_terms` bare - and without this they fell through to the
+    # literal-text fallback below, so `PPORRESU is_not_contained_by
+    # pkunit_terms` compared the column against the seven-letter STRING
+    # "pkunit_terms". Never contained by it, so every row whose PPTEST lacked
+    # "norm" was reported, in the clean fixture as much as the dirty one.
+    #
+    # Checked AFTER the column lookup, so a real column of that name still
+    # wins and nothing that already resolved can change.
+    named_binding <- bindings[[condition$value]]
+    if (!is.null(named_binding)) {
+      return(resolve_binding(named_binding, dataset))
+    }
     if (is_relrec_wildcard(ref_name)) {
       return(as_per_row_value(resolve_relrec_wildcard_value(ref_name, dataset)))
     }
@@ -534,6 +548,33 @@ assert_rule_inputs_available <- function(rule, study) {
   # running the rule: it manufactures confident findings out of missing
   # input. Erroring lets callers record "could not evaluate" rather than a
   # fabricated verdict.
+  # Same reasoning for Controlled Terminology. A rule asking "is this value one
+  # of codelist X's terms" needs the terms; without them the `$`-binding is
+  # absent and resolve_condition_value()'s literal-text fallback turns the
+  # comparison into `PPORRESU is_not_contained_by "pkunit_terms"` - true for
+  # every row, so every record is reported. Refusing lets the caller record
+  # "could not evaluate" instead of inventing findings.
+  #
+  # Which CT package is never guessed. Terminology moves between releases -
+  # SEX gained INTERSEX and lost UNDIFFERENTIATED - so judging a study against
+  # a version it did not declare would both invent violations and hide real
+  # ones. The reference takes the same position: its `-ct` argument is
+  # required, and it errors without one.
+  if (!is.null(rule$operations) && is.null(study$ct_package)) {
+    needs_ct <- vapply(
+      rule$operations,
+      function(o) isTRUE(o$operator %in% c("codelist_terms", "get_codelist_attributes")),
+      logical(1)
+    )
+    if (any(needs_ct)) {
+      stop(
+        "needs a controlled terminology package: pass ct_package (e.g. ",
+        "ct_package = \"sdtmct-2026-03-27\") to say which version of the ",
+        "terminology this study follows",
+        call. = FALSE
+      )
+    }
+  }
   if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE)) && is.null(study$define)) {
     stop(
       "rule type '", rule$rule_type, "' needs define.xml: ",

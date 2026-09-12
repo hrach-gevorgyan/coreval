@@ -195,6 +195,41 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   out
 }
 
+#' Check a controlled terminology package name against what is bundled
+#'
+#' Reported immediately rather than at first use, so a typo surfaces once as an
+#' error naming the near misses, not as an identical skip reason on every rule
+#' that wanted it.
+#'
+#' @param ct_package One package name, e.g. `"sdtmct-2026-03-27"`.
+#' @return `ct_package`, unchanged.
+#' @noRd
+validate_ct_package <- function(ct_package) {
+  if (!is.character(ct_package) || length(ct_package) != 1L || is.na(ct_package)) {
+    stop("`ct_package` must be a single package name, e.g. \"sdtmct-2026-03-27\".",
+         call. = FALSE)
+  }
+  known <- ct_package_names()
+  if (!(ct_package %in% known)) {
+    family <- sub("ct-.*$", "", ct_package)
+    near <- grep(paste0("^", family, "ct-"), known, value = TRUE)
+    stop(
+      "'", ct_package, "' is not a bundled controlled terminology package.",
+      if (length(near) > 0) {
+        paste0("
+  Available for ", family, ": ", paste(utils::tail(near, 4), collapse = ", "),
+               if (length(near) > 4) ", ..." else "")
+      } else {
+        paste0("
+  Available families: ",
+               paste(unique(sub("ct-.*$", "", known)), collapse = ", "))
+      },
+      call. = FALSE
+    )
+  }
+  ct_package
+}
+
 #' Reject arguments that would silently make a check do nothing
 #'
 #' Every one of these used to fail quietly rather than loudly. An unrecognised
@@ -259,4 +294,34 @@ validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
     }
   }
   invisible(NULL)
+}
+
+#' Controlled Terminology packages coreval bundles
+#'
+#' Which version of CDISC's Controlled Terminology a study follows decides
+#' whether a value is a legal term, and the answer changes between releases -
+#' `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`. So coreval never picks
+#' one for you: pass the one your study declares as `check_study(ct_package =)`
+#' and this is the list to pick from.
+#'
+#' Only what a conformance rule can ask about is bundled - each codelist's
+#' submission value and C-code, its terms' submission values and C-codes, and
+#' whether it is extensible. Definitions and synonyms are not, which is how
+#' 438 MB of CDISC's own caches becomes half a megabyte here.
+#'
+#' @param family Optional prefix to narrow to one terminology family, e.g.
+#'   `"sdtm"` or `"send"`.
+#' @return A character vector of package names, oldest first.
+#' @export
+#' @examples
+#' head(list_ct_packages("sdtm"))
+list_ct_packages <- function(family = NULL) {
+  out <- ct_package_names()
+  if (!is.null(family)) {
+    if (!is.character(family) || length(family) != 1L) {
+      stop("`family` must be a single prefix, e.g. \"sdtm\".", call. = FALSE)
+    }
+    out <- grep(paste0("^", tolower(family), "ct-"), out, value = TRUE)
+  }
+  out
 }

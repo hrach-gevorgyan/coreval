@@ -204,16 +204,10 @@ run_case <- function(rule, case_dir) {
   list(status = "PASS", reason = NA_character_)
 }
 
-implemented_operations <- c(
-  "distinct", "record_count", "max_date", "max", "min_date",
-  "get_column_order_from_dataset", "variable_exists", "variable_count",
-  "study_domains", "dataset_names", "domain_is_custom", "domain_label", "extract_metadata", "dy",
-  "get_model_column_order", "required_variables", "expected_variables",
-  "get_model_filtered_variables", "valid_codelist_dates",
-  "get_dataset_filtered_variables", "get_parent_model_column_order",
-  "get_column_order_from_library"
-)
-
+# Read from the package itself rather than kept here, so the harness cannot
+# claim a rule is unimplemented that check_study() would happily run, or the
+# reverse. The two lists had already drifted once.
+implemented_operations <- coreval:::implemented_operation_types
 run_rule <- function(rule) {
   ops <- unique(rule_operators(rule$check))
   missing_ops <- setdiff(ops, ls(.operator_registry))

@@ -532,7 +532,7 @@ with the reason, every time you run.
 
 | | rules | |
 |---|---|---|
-| Need CDISC's terminology lists | 9 | The codelists — which values are legal for `SEX`, `AEOUT` and so on. That's the 438 MB problem below, and it is **not in this release**. |
+| Need CDISC's terminology lists | 9 | The codelists — which values are legal for `SEX`, `AEOUT` and so on. Now bundled: tell `check_study()` which CT package your study follows and these run. |
 
 This is the honest "my fault" column, and it's 9 rules — all of them the same
 packaging decision, not bugs. It was 10: the tenth needed only a codelist's
@@ -582,11 +582,15 @@ change.
 
 Three honest problems, none of them hidden from you at runtime:
 
-- **9 rules need CDISC's terminology lists** — the controlled vocabularies
-  saying which codes are valid. That data is around 438 MB, which would turn a
-  0.6 MB install into a very large one, so it is **not part of this release**.
-  Those 9 rules are reported as skipped, by name, with the reason, every time
-  you run. They are never counted as passing.
+- **Terminology rules need you to say which CT version you follow.** Nine rules
+  ask whether a value is a legal term — `SEX` may be `F`, `M`, `U` or
+  `INTERSEX` and nothing else. Every published CT package is bundled, but
+  coreval will not guess which one your study uses, because terminology moves
+  between releases and judging your data against a version it never declared
+  would invent violations and hide real ones. Pass
+  `ct_package = "sdtmct-2026-03-27"` (see `list_ct_packages()`) and they run;
+  without it they are reported as skipped, by name, with that reason, and are
+  never counted as passing.
 - **The agreement percentage is a floor, not a score.** CDISC's examples are
   small and tidy. Real submissions are neither. Three separate bugs found in
   this package moved that percentage by exactly zero.

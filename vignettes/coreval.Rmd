@@ -109,11 +109,20 @@ If it ran those anyway, it would be comparing your data against columns that
 aren't there, and reporting problems that don't exist. Saying nothing is better
 than making something up.
 
-The same honesty applies to a limitation you should know about up front: 9 rules
-need CDISC's controlled terminology — the codelists saying which values are
-legal for `SEX`, `AEOUT` and the like. Those lists run to roughly 438 MB, far
-too much to bundle, so this release does not ship them. Rules that need them are
-reported as skipped, by name, with that reason, and are never counted as passing.
+Nine rules ask a different kind of question: is this value one of the terms
+CDISC's controlled terminology allows for this variable? `SEX` may be `F`, `M`,
+`U` or `INTERSEX` and nothing else. Those need to know which version of the
+terminology your study follows, because it changes between releases - `SEX`
+gained `INTERSEX` and lost `UNDIFFERENTIATED`. So tell it:
+
+```{r ct, eval = FALSE}
+check_study(dir, ct_package = "sdtmct-2026-03-27")
+list_ct_packages("sdtm")   # every published version, pick the one you declare
+```
+
+Without it those rules are reported as skipped, by name, saying exactly that -
+coreval will not pick a version for you, because judging your data against
+terminology it never declared would invent violations and hide real ones.
 
 Most rules do still run — across AE, DM, LB and VS, 76–84% of the applicable
 ones work on a single dataset. But the ones that can't are the cross-dataset

@@ -28,6 +28,7 @@ inst/extdata/sdtm_model_dataset_variables.rds
 inst/extdata/ct_packages.rds
 inst/extdata/sdtm_domain_classes.rds
 inst/extdata/dataset_labels.rds
+inst/extdata/ct_codelists.rds
 ----------------------------------
 From cdisc-org/cdisc-rules-engine. CDISC standards metadata - variable names,
 labels, roles, data types, Core designations, codelist identifiers, observation
@@ -35,6 +36,13 @@ classes, per-standard dataset labels and Controlled Terminology package dates.
 Extracted at build time from the offline caches (resources/cache/*.pkl) that
 CDISC's own rules engine commits directly to its repository, not downloaded: no
 CDISC API is contacted at build or run time.
+
+ct_codelists.rds is the Controlled Terminology: every published CT package,
+reduced to the codelist and term submission values and C-codes a conformance
+rule can ask about, plus whether each codelist is extensible. The definitions,
+synonyms and preferred terms that make up most of the source caches are not
+included - no bundled rule asks for them - which is why 438 MB of caches
+becomes 0.54 MB here.
 
 tests/testthat/fixtures/
 ------------------------

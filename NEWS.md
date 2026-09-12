@@ -1,5 +1,38 @@
 # coreval 0.1.0.9000 (development)
 
+* **Controlled Terminology checks now run.** Nine rules ask whether a value is
+  a legal term - `SEX` may be `F`, `M`, `U` or `INTERSEX` and nothing else -
+  and they were skipped because CDISC's terminology caches are 438 MB. Almost
+  all of that is definitions and synonyms no rule asks for; the submission
+  values, C-codes and extensible flags that conformance actually needs are
+  0.54 MB, so every published package is now bundled.
+
+  Tell it which version your study follows:
+
+  ```r
+  check_study(dir, ct_package = "sdtmct-2026-03-27")
+  list_ct_packages("sdtm")
+  ```
+
+  coreval will not choose for you. Terminology moves between releases - `SEX`
+  gained `INTERSEX` and lost `UNDIFFERENTIATED` - so judging a study against a
+  version it never declared would both invent violations and hide real ones.
+  Without `ct_package` those rules are skipped saying exactly that. The table
+  is read on first use, so a session that never runs one pays nothing.
+
+* **Fixed: an Operations id without a `$` was treated as literal text.** Six
+  rules (`CDISC.SDTMIG.CG0555`-`CG0560`) declare ids like `pkunit_terms` bare,
+  so `PPORRESU is_not_contained_by pkunit_terms` compared the column against
+  the *string* "pkunit_terms" - never contained by it, so every row whose
+  `PPTEST` lacked "norm" was reported, in a clean dataset as much as a dirty
+  one.
+
+* **Fixed: an unimplemented Operations type reported nothing instead of
+  saying so.** The dispatch fell through to no binding, so the rule's condition
+  degraded to literal text and the rule quietly found nothing. CORE-000934 did
+  this: CDISC's engine reports two rows on its own fixture and `check_study()`
+  reported none. It now names the operation it cannot run.
+
 * The progress bar now names the domain being checked and how far through the
   study it is, and its percentage is weighted by how many records each domain
   holds rather than by a plain count of rules. A check against a 161,600-row

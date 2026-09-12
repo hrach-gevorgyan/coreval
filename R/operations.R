@@ -517,6 +517,120 @@ sdtmig_variables_for <- function(study, domain, core_value) {
   rows$variable[order(rows$ordinal)]
 }
 
+#' The bundled Controlled Terminology table, read on first use
+#'
+#' Not loaded in `.onLoad()` like the other bundled metadata. It is the largest
+#' thing the package ships - 0.54 MB on disk, about 16 MB once expanded - and
+#' only the handful of rules that ask about codelist membership need it, so a
+#' session that never runs one pays nothing.
+#'
+#' @return A data.frame of codelists, or `NULL` if the file is not installed.
+#' @noRd
+ct_codelists <- function() {
+  if (is.null(.coreval_env$ct_codelists)) {
+    path <- system.file("extdata", "ct_codelists.rds", package = "coreval")
+    if (!nzchar(path)) {
+      return(NULL)
+    }
+    .coreval_env$ct_codelists <- readRDS(path)
+  }
+  .coreval_env$ct_codelists
+}
+
+#' Package names of the bundled Controlled Terminology
+#' @return A character vector, e.g. `"sdtmct-2026-03-27"`.
+#' @noRd
+ct_package_names <- function() {
+  tbl <- ct_codelists()
+  if (is.null(tbl)) character(0) else sort(unique(tbl$package))
+}
+
+#' The terms (or codes) of the codelists an Operations entry names
+#'
+#' Mirrors the reference's `CodelistTerms._handle_single_version()`: look each
+#' codelist up by SUBMISSION VALUE, case-insensitively, within one CT package,
+#' and return either the codelist's own attribute or its terms', depending on
+#' `level` and `returntype`.
+#'
+#' Which package is used is the caller's choice, exactly as it is for the
+#' reference's `-ct` argument - terminology changes between releases, so
+#' picking one on the user's behalf would judge a study against terms it never
+#' declared. A codelist the package does not contain raises, because answering
+#' "not in the codelist" from a codelist that was never found would report
+#' every value in the column as a violation.
+#'
+#' @param op The Operations entry.
+#' @param study The study, for its declared `ct_package`.
+#' @return A character vector of values or codes.
+#' @noRd
+ct_terms_for <- function(op, study) {
+  package <- study$ct_package
+  tbl <- ct_codelists()
+  if (is.null(tbl)) {
+    stop("the bundled controlled terminology is not installed", call. = FALSE)
+  }
+  rows <- tbl[tbl$package == package, ]
+  if (nrow(rows) == 0) {
+    stop("no bundled controlled terminology package named '", package, "'",
+         call. = FALSE)
+  }
+  wanted <- as.character(unlist(op$codelists, use.names = FALSE))
+  level <- op$level %||% "term"
+  returntype <- op$returntype %||% (if (identical(level, "codelist")) "value" else "code")
+
+  out <- character(0)
+  for (name in wanted) {
+    i <- match(tolower(name), tolower(rows$codelist))
+    if (is.na(i)) {
+      stop("codelist '", name, "' is not in controlled terminology package '",
+           package, "'", call. = FALSE)
+    }
+    out <- c(out, if (identical(level, "codelist")) {
+      if (identical(returntype, "code")) rows$codelist_code[i] else rows$codelist[i]
+    } else {
+      field <- if (identical(returntype, "value")) rows$term_values[i] else rows$term_codes[i]
+      if (nzchar(field)) strsplit(field, "", fixed = TRUE)[[1]] else character(0)
+    })
+  }
+  out
+}
+
+# Every Operations type compute_operation() can actually compute. The single
+# source of truth: the conformance harness reads THIS, rather than keeping its
+# own copy that could drift from what the switch below handles.
+#
+# It exists because the switch used to fall through to NULL for anything it did
+# not recognise, so a rule declaring an unimplemented Operations type produced
+# no binding, and its condition then resolved to literal text - reporting
+# nothing at all, or everything, with no indication either way. CORE-000934
+# (`split_by`) did exactly that: CDISC's engine reports rows 4 and 5 for its
+# own fixture and check_study() reported none.
+implemented_operation_types <- c(
+  "codelist_terms",
+  "dataset_names",
+  "distinct",
+  "domain_is_custom",
+  "domain_label",
+  "dy",
+  "expected_variables",
+  "extract_metadata",
+  "get_column_order_from_dataset",
+  "get_column_order_from_library",
+  "get_dataset_filtered_variables",
+  "get_model_column_order",
+  "get_model_filtered_variables",
+  "get_parent_model_column_order",
+  "max",
+  "max_date",
+  "min_date",
+  "record_count",
+  "required_variables",
+  "study_domains",
+  "valid_codelist_dates",
+  "variable_count",
+  "variable_exists"
+)
+
 #' Compute one Operations spec entry into a binding
 #' @param op One Operations spec entry.
 #' @param study Full study object.
@@ -562,6 +676,13 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   ds <- study$datasets[[domain]]
   dt <- if (!is.null(ds)) ds$data else NULL
 
+  # Refused, not answered with NULL. An unrecognised type used to leave the
+  # binding missing, which resolve_condition_value() then treated as literal
+  # text - the silent-failure shape this package keeps finding. Raising lets
+  # check_study() record a skip with a reason.
+  if (!(op$operator %in% implemented_operation_types)) {
+    stop("unimplemented Operations type: ", op$operator, call. = FALSE)
+  }
   switch(op$operator,
     distinct = {
       if (is.null(dt) || !(op$name %in% names(dt))) {
@@ -648,6 +769,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # terminology itself (see data-raw/ct_packages.R) - which is all this
     # operation needs, and is why the operations that need the terms
     # themselves stay unimplemented.
+    # Membership of a CDISC Controlled Terminology codelist. `level` picks
+    # the codelist itself or its terms; `returntype` picks submission values
+    # or C-codes. The rules use the result as a set, with
+    # `is_contained_by`/`is_not_contained_by`.
+    codelist_terms = scalar_binding(ct_terms_for(op, study)),
     valid_codelist_dates = {
       tbl <- .coreval_env$ct_packages
       types <- toupper(op$ct_package_types %||% op$ct_package_type %||% character(0))

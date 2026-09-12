@@ -348,6 +348,13 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   identical findings, more than Excel can hold. The true count is kept in
 #'   `truncated` and the report shows it, so nothing is under-reported. Use
 #'   `Inf` for every record.
+#' @param ct_package Which CDISC Controlled Terminology package the study
+#'   follows, e.g. `"sdtmct-2026-03-27"`. Rules that ask whether a value is a
+#'   legal term need this, and are skipped with a reason without it - coreval
+#'   will not pick a version for you, because terminology changes between
+#'   releases and judging a study against one it never declared would both
+#'   invent violations and hide real ones. Every published package is bundled;
+#'   `list_ct_packages()` shows them.
 #' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
@@ -364,7 +371,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'     this one: an empty `findings` table can mean clean data *or* rules that
 #'     never ran, and they look identical otherwise. Reasons include a dataset
 #'     you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
-#'     controlled terminology, which is around 438 MB and so is deliberately
+#'     controlled terminology when no `ct_package` was given, which is
 #'     not bundled. Nothing skipped is ever counted as a pass.
 #'   * `truncated` - rules that flagged more records than `max_records` kept,
 #'     with how many they really found.
@@ -379,7 +386,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' @export
 check_study <- function(study, standard = NULL, version = NULL,
                         use_case = NULL, max_records = 1000,
-                        include_deprecated = FALSE) {
+                        include_deprecated = FALSE, ct_package = NULL) {
   validate_check_args(standard = standard, version = version,
                       max_records = max_records)
   # Take the folder directly. Requiring read_study() first made people call
@@ -396,6 +403,13 @@ check_study <- function(study, standard = NULL, version = NULL,
       )
     }
     study <- read_study(study)
+  }
+  # Carried on the study so every operation can reach it without threading an
+  # argument through each layer. Checked here rather than at first use, so a
+  # typo is reported once and immediately instead of as a skip reason on every
+  # rule that needed it.
+  if (!is.null(ct_package)) {
+    study$ct_package <- validate_ct_package(ct_package)
   }
   # Anything that is not a study object went straight through to run_checks(),
   # where `names(study$datasets)` is NULL, nothing runs, and the result prints

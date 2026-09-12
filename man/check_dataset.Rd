@@ -11,7 +11,8 @@ check_dataset(
   version = NULL,
   use_case = NULL,
   max_records = 1000,
-  include_deprecated = FALSE
+  include_deprecated = FALSE,
+  ct_package = NULL
 )
 }
 \arguments{
@@ -46,6 +47,14 @@ than anyone can read or Excel can hold. The true count is kept in
 \item{include_deprecated}{Also run rules CDISC has deprecated. \code{FALSE} by
 default: a deprecated rule has a published replacement, so running both
 reports the same defect twice.}
+
+\item{ct_package}{Which CDISC Controlled Terminology package the study
+follows, e.g. \code{"sdtmct-2026-03-27"}. Rules that ask whether a value is a
+legal term need this, and are skipped with a reason without it - coreval
+will not pick a version for you, because terminology changes between
+releases and judging a study against one it never declared would both
+invent violations and hide real ones. Every published package is bundled;
+\code{list_ct_packages()} shows them.}
 }
 \value{
 An object of class \code{coreval_result}: a list of the three tables
@@ -56,8 +65,8 @@ readable report rather than dumping the list.
 
 \code{skipped} carries a \code{reason} for every rule that did not run - a dataset
 you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
-controlled terminology, which is around 438 MB and deliberately not
-bundled. Nothing skipped is ever counted as a pass.
+controlled terminology, if you did not say which package the study
+follows - see \code{ct_package}. Nothing skipped is ever counted as a pass.
 
 Provenance rides along as attributes: \code{checks_run} (how many rules were
 evaluated), \code{domains}, and \code{excluded_by_standard} (how many rules the

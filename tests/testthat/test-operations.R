@@ -576,3 +576,59 @@ test_that("domain_label is the standard's label, not the study's own", {
     "Laboratory"
   )
 })
+
+test_that("codelist terms come from the CT package the caller names", {
+  study <- list(ct_package = "sdtmct-2026-03-27")
+  op <- list(operator = "codelist_terms", codelists = "SEX",
+             level = "term", returntype = "value")
+  expect_setequal(ct_terms_for(op, study), c("F", "INTERSEX", "M", "U"))
+
+  # Terminology moves between releases, which is why every package is bundled
+  # and none is guessed on the user's behalf: judging a 2014 study by 2026
+  # terms would reject UNDIFFERENTIATED and accept INTERSEX.
+  old <- list(ct_package = "sdtmct-2014-09-26")
+  expect_setequal(ct_terms_for(op, old), c("F", "M", "U", "UNDIFFERENTIATED"))
+
+  # returntype picks values or C-codes; level picks the codelist or its terms.
+  codes <- ct_terms_for(
+    list(operator = "codelist_terms", codelists = "SEX", level = "term",
+         returntype = "code"), study
+  )
+  expect_length(codes, 4L)
+  expect_true(all(grepl("^C[0-9]+$", codes)))
+  expect_equal(
+    ct_terms_for(list(operator = "codelist_terms", codelists = "SEX",
+                      level = "codelist", returntype = "code"), study),
+    "C66731"
+  )
+
+  # A codelist the package does not have must raise, not come back empty -
+  # an empty term set makes `is_not_contained_by` true for every row, so the
+  # whole column would be reported as invalid.
+  expect_error(
+    ct_terms_for(list(operator = "codelist_terms", codelists = "NOSUCHLIST",
+                      level = "term", returntype = "value"), study),
+    "not in controlled terminology package"
+  )
+})
+
+test_that("an unimplemented Operations type is refused, not answered", {
+  # The switch used to fall through to NULL for anything unrecognised, so the
+  # rule's condition resolved to literal text and the rule reported nothing at
+  # all. CORE-000934 did exactly that: CDISC's engine reports rows 4 and 5 on
+  # its own fixture and check_study() reported none.
+  expect_error(
+    compute_operation(list(operator = "no_such_operation", id = "$x"),
+                      list(datasets = list()), "AE", NULL),
+    "unimplemented Operations type: no_such_operation"
+  )
+  # The harness reads this same vector, so the two cannot drift apart.
+  expect_true("codelist_terms" %in% implemented_operation_types)
+  expect_false("split_by" %in% implemented_operation_types)
+})
+
+test_that("a controlled terminology package name is checked up front", {
+  expect_error(validate_ct_package("sdtmct-1999-01-01"), "not a bundled")
+  expect_error(validate_ct_package(42), "single package name")
+  expect_identical(validate_ct_package("sdtmct-2026-03-27"), "sdtmct-2026-03-27")
+})

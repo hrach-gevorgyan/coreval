@@ -228,6 +228,13 @@ infer_domain <- function(dataset, path = NULL) {
 #'   flags every row of a large dataset would otherwise produce more findings
 #'   than anyone can read or Excel can hold. The true count is kept in
 #'   `truncated`. Use `Inf` for every record.
+#' @param ct_package Which CDISC Controlled Terminology package the study
+#'   follows, e.g. `"sdtmct-2026-03-27"`. Rules that ask whether a value is a
+#'   legal term need this, and are skipped with a reason without it - coreval
+#'   will not pick a version for you, because terminology changes between
+#'   releases and judging a study against one it never declared would both
+#'   invent violations and hide real ones. Every published package is bundled;
+#'   `list_ct_packages()` shows them.
 #' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
@@ -239,8 +246,8 @@ infer_domain <- function(dataset, path = NULL) {
 #'
 #'   `skipped` carries a `reason` for every rule that did not run - a dataset
 #'   you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
-#'   controlled terminology, which is around 438 MB and deliberately not
-#'   bundled. Nothing skipped is ever counted as a pass.
+#'   controlled terminology, if you did not say which package the study
+#'   follows - see `ct_package`. Nothing skipped is ever counted as a pass.
 #'
 #'   Provenance rides along as attributes: `checks_run` (how many rules were
 #'   evaluated), `domains`, and `excluded_by_standard` (how many rules the
@@ -261,7 +268,7 @@ infer_domain <- function(dataset, path = NULL) {
 #' @export
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
                           use_case = NULL, max_records = 1000,
-                          include_deprecated = FALSE) {
+                          include_deprecated = FALSE, ct_package = NULL) {
   validate_check_args(standard, version, domain, max_records)
   path <- NULL
   if (is.character(x)) {
@@ -303,6 +310,7 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     datasets = stats::setNames(list(dataset), domain),
     define = NULL,
     ct = NULL,
+    ct_package = if (is.null(ct_package)) NULL else validate_ct_package(ct_package),
     standard = list(
       product = if (is.null(standard)) NA_character_ else toupper(standard),
       version = if (is.null(version)) NA_character_ else version
