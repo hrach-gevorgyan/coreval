@@ -1,49 +1,38 @@
 ## Submission
 
-First submission of coreval to CRAN.
+Update to coreval. The previous version on CRAN is 0.1.0.
+
+This release fixes a class of false positive, adds CDISC Controlled
+Terminology support, and makes checking a large study substantially faster.
+See NEWS.md for the full list.
 
 ## Test environments
 
-* Local: Windows 11, R 4.6.1 — 0 errors | 0 warnings | 0 notes
-* win-builder: R-devel and R-release — 0 errors | 0 warnings | 0 notes
-* Linux (GitHub Actions, ubuntu-latest): R release — *to be run before submission*
-* macOS builder — *to be run before submission*
+* Local: Windows 11, R 4.6.1
+* win-builder: R-devel and R-release
+* GitHub Actions: ubuntu-latest, macOS, Windows (R release)
+* R-hub
 
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes
 
-An earlier win-builder run reported one NOTE, "Possibly misspelled words in
-DESCRIPTION: CDISC". 'CDISC' is the standards body whose rules this package
-evaluates; it is now single-quoted in both Title and Description, per Writing
-R Extensions' convention for names of organisations and external software.
-
-## Bundled third-party material
-
-The package bundles CDISC conformance rule definitions and CDISC standards
-metadata under `inst/extdata` (about 160 KB total). Both come from
-MIT-licensed repositories published by CDISC — `cdisc-org/cdisc-open-rules`
-and `cdisc-org/cdisc-rules-engine` — and are extracted at build time from a
-pinned commit. `inst/COPYRIGHTS` names each bundled file, says which
-repository it came from, and reproduces the MIT notice in full. The
-`Copyright` field in DESCRIPTION points there.
-
-Nothing is downloaded at build, install, check or run time.
-
-## Pre-submission checks run
-
-* `urlchecker::url_check()` — all 12 URLs resolve.
-* `checkhelper` — no exported function missing a `@return`, `@export` or
-  `@noRd`; nothing written outside `tempdir()`, and examples clean up after
-  themselves.
-
 ## Notes for the reviewer
 
-* No internet access is used anywhere in the package, its tests, its examples
-  or its vignette.
-* Nothing is written outside `tempdir()`.
-* `writexl`, `xml2`, `knitr` and `rmarkdown` are Suggests and every use is
-  guarded with `requireNamespace()`.
-* The package is not affiliated with or endorsed by CDISC, and is not a
-  CORE-certified conformance engine. This is stated in DESCRIPTION, the
-  README and the vignette.
+The package bundles CDISC's published conformance rules and the reference
+metadata they need, extracted at build time from two MIT-licensed CDISC
+repositories, each at a pinned commit. `inst/COPYRIGHTS` names each bundled
+file, the repository and commit it came from, and reproduces both MIT notices,
+which differ between the two repositories.
+
+No CDISC API is contacted at build time or at run time, and nothing is
+downloaded. CDISC's own engine requires an API key for the CDISC Library; this
+package does not, and takes its data only from files committed to those public
+repositories under MIT.
+
+Examples and tests write only to `tempdir()`.
+
+The conformance harness that compares this package against CDISC's own
+published expected results is not part of the build. It lives in
+`tests/conformance/` and is excluded via `.Rbuildignore`, because it needs a
+clone of CDISC's rules repository that is far too large to ship.

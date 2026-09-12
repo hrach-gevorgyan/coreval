@@ -390,7 +390,7 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # such column and resolve_condition_value() degrades it to a literal
   # string comparison - silently always-false (CORE-000952 found nothing)
   # or always-true (CORE-000249 flagged all 4452 LB rows). This is also the
-  # principled fix for CLAUDE.md's open question 17: it makes the joined
+  # principled fix for the bare-wildcard question: it makes the joined
   # column visible ONLY under its prefixed name, so a bare "--VISITDY
   # exists" correctly stays FALSE for a domain with no native VISITDY,
   # without touching exists/not_exists semantics at all.
