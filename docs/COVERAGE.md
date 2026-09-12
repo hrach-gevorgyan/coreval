@@ -11,16 +11,33 @@ At the last full sweep: **704 pass, 55 disagree, 38 cannot be measured.**
 
 ## The 38 that cannot be measured
 
-Nothing here is a coreval defect. 36 of the 38 are fixtures with nothing to
-check against.
+36 of the 38 are fixtures with nothing to check against. Two are real gaps in
+coreval, and are marked as such rather than folded in with the rest.
 
-| why | rules |
-|---|---|
-| The fixture ships no data, or data with no answer sheet | 26 |
-| The test data contains no dataset the rule is scoped to | 6 |
-| The rule ships no test cases at all | 4 |
-| The rule's `Check` block is empty upstream | 1 |
-| Needs Define-XML detail coreval does not read (`define_variable_codelist_coded_codes`) | 1 |
+| why | rules | |
+|---|---|---|
+| The fixture ships data but no answer sheet | 26 | unmeasurable |
+| The test data contains no dataset the rule is scoped to | 5 | unmeasurable |
+| The rule ships no test cases at all, only `rule.yml` | 4 | unmeasurable |
+| The rule's `Check` block is empty upstream | 1 | unmeasurable |
+| Needs Define-XML detail coreval does not read (`define_variable_codelist_coded_codes`) | 1 | **coreval gap** |
+| The fixture ships only a `define.xml` and no datasets at all | 1 | **coreval gap** |
+
+Each of the 38 was re-derived from the upstream tree rather than read back off
+the reason string. The five scope skips were the ones worth doubting, because
+every one has an answer sheet that expects findings, which is the exact shape a
+silently mis-scoped rule would take. They were settled against the engine's own
+class table (`standards_details.pkl`) and its own `rule_applies_to_class`:
+under SENDIG 3-1, `DM` is SPECIAL PURPOSE, `VS` is FINDINGS and `TX` is TRIAL
+DESIGN, while CORE-000794, CORE-000847 and CORE-000848 all require EVENTS.
+`RELSUB` is RELATIONSHIP where CORE-000229 requires SPECIAL PURPOSE. The engine
+filters those datasets out too, so those sheets are stale.
+
+That audit is also what turned up the second gap. `FDA.SENDIG.FB6507` was being
+skipped as a scope mismatch when its fixture ships no datasets at all, only a
+`define.xml`, and its rule type is Domain Presence Check against Define XML.
+The outcome was right and no wrong answer was ever produced, but the reason
+made a real limitation read as routine filtering.
 
 A rule with no published expected output cannot pass or fail. Counting these as
 failures understates the package; hiding them overstates it. They are reported
@@ -38,11 +55,30 @@ coreval flags different rows than the answer sheet says it should.
 | SENDIG draft | 5 | yes, marked draft |
 | SDTMIG draft | 1 | yes, marked draft |
 
-### The 16 published ones trace to stale answer sheets
+### What the reference says about all 55
 
-This was settled by installing CDISC's own engine (0.17.1 at commit
-`8740d201`, the commit `cdisc-open-rules` pins) and running it over every case,
-rather than by reading its source and reasoning about it.
+Settled by running CDISC's own engine (0.17.1 at commit `8740d201`) over every
+case of every non-passing rule, not by reading its source and reasoning about
+it. `tests/conformance/compare_engine.py` does this and writes
+`engine_comparison.json`, which records what the engine reported and what the
+committed sheet says, per rule per case. Both are in the repository, so the
+table below can be checked rather than taken on trust.
+
+| | rules | |
+|---|---|---|
+| The engine runs it, and **disagrees with its own committed sheet** | 41 | every single one |
+| The engine cannot run it, but the sheet contradicts its own data | 6 | stale on signature alone |
+| The engine cannot run it, and the sheet is self-consistent | 8 | **unadjudicated, listed below** |
+
+Not one of the 41 is a case where the engine and the sheet agree and coreval is
+the odd one out. That set is empty.
+
+A fixture with no `.env` cannot be run by the engine at all, because CDISC's
+own `test.py` requires one too. Fourteen of the 55 are in that state. Counting
+those as agreement would be the vacuous-truth version of the silent-failure bug
+this package keeps finding in itself, so they are held separate.
+
+### The 16 published ones trace to stale answer sheets
 
 **coreval matched the engine on all sixteen. The committed `results.csv`
 differed from the engine on every one.**
@@ -66,9 +102,24 @@ differed from the engine on every one.**
 | CORE-000866 | `{1,3,5,6}` | `{}` |
 | CORE-000884 | `{2,3,4}` | `{}` |
 
-Two of them need their own standard to run at all: CORE-000554 is
-`SENDIG-DART 1.1` and CORE-000652 is `SENDIG-GENETOX 1.0`. Under SDTMIG the
-engine aborts with "No rules were selected for this standard/version".
+Two of them the engine cannot run: neither CORE-000554 (`SENDIG-DART 1.1`) nor
+CORE-000652 (`SENDIG-GENETOX 1.0`) ships a `.env`, so the standard is never
+declared and the run never starts. CORE-000554's sheet is stale on signature
+anyway. CORE-000652 is the one published rule in the unadjudicated set.
+
+### The 8 nobody can currently settle
+
+For these the engine cannot run the fixture and the sheet does not contradict
+its own data, so neither side can be shown wrong. They are not claimed as
+stale sheets and not conceded as coreval defects. They are open.
+
+| rule | source |
+|---|---|
+| CORE-000652 | published |
+| FDA.SDTMIG.FB0801, FB0802, FB3211 | FDA business rules, draft |
+| CDISC.SENDIG.71, 153, 318, 359 | SENDIG draft |
+
+What would settle them is a `.env` in the fixture, which is upstream's to add.
 
 Across every case that could be run, the live engine disagreed with its own
 published sheets on roughly half of them: the sheets were generated by an

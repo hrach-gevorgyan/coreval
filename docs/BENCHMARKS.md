@@ -263,9 +263,17 @@ predates a deliberate change to an operator. It says nothing about whether a
 rule expresses the right conformance requirement.
 
 The number is bound to those two commits and will move when either moves.
-Reproduce it with CDISC's own tooling rather than anything of ours: `test.py`
-in the rules repository regenerates each case's `results.csv` in place, so
-running it over the non-passing rules and then `git diff` shows the same set.
+Reproduce it with `tests/conformance/compare_engine.py`, which runs the engine
+over each case and writes `engine_comparison.json` beside it; both the script
+and the artifact are in the repository. CDISC's own `test.py` shows the same
+thing from the other direction, since it regenerates each case's `results.csv`
+in place and leaves the difference in `git diff`.
+
+Counted by rule rather than by case, across all 55 non-passing rules: the
+engine can run 41 of them and disagrees with its own committed sheet on **all
+41**. The remaining 14 ship no `.env`, so the engine cannot run them and
+neither can `test.py`. Those are held separate rather than counted as
+agreement.
 
 **coreval against the live engine:** 156 cases match exactly. Every case that
 did not was re-measured individually, and none survived as a coreval defect:

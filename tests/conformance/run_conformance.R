@@ -166,7 +166,17 @@ run_case <- function(rule, case_dir) {
   domains <- names(study$datasets)
   applicable <- Filter(function(d) rule_applies_to_domain(rule, d, dataset = study$datasets[[d]]), domains)
   if (length(applicable) == 0) {
-    return(list(status = "SKIPPED", reason = "no dataset in this test case matches the rule's scope"))
+    # Distinguish "the fixture has datasets, none in scope" from "the fixture
+    # has no datasets at all". The second is a different fact: FB6507 ships
+    # only a define.xml, and the rule reasons about a domain being ABSENT, so
+    # there is nothing for a domain filter to select. Reporting both as a
+    # scope mismatch hid a real gap behind a reason that sounded routine.
+    reason <- if (length(domains) == 0) {
+      "the test case ships no datasets, only define.xml: coreval evaluates rules against datasets"
+    } else {
+      "no dataset in this test case matches the rule's scope"
+    }
+    return(list(status = "SKIPPED", reason = reason))
   }
 
   evaluable <- 0L

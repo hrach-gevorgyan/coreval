@@ -19,6 +19,7 @@ docs/RELEASING.md
 docs/archive/
 docs/reference/
 tests/conformance/audit_fixtures.json
+tests/conformance/.engine-out/
 tests/conformance/audit_fixtures.py
 vignettes/*.html
 vignettes/*.R
