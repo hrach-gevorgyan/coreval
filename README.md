@@ -435,7 +435,7 @@ subset(list_rules(), source == "published")
 
 ```r
 attr(list_rules(), "rules_version")
-#> [1] "b540283d85e88fb8ee5f08ead5f03fac73eb1b8b"
+#> [1] "1fb7b81e40bdb6632375761c561fabd29676a477"
 ```
 
 `write_findings()` records it in every exported file, so you rarely need to
@@ -504,12 +504,12 @@ Every rule falls into exactly one of four buckets. They add up to 797.
 
 | | rules | what it means |
 |---|---|---|
-| **Confirmed** | **695** | Run against CDISC's own example data. Flagged exactly the rows their answer sheet says, no more and no fewer. |
+| **Confirmed** | **696** | Run against CDISC's own example data. Flagged exactly the rows their answer sheet says, no more and no fewer. |
 | Nothing to check against | 37 | CDISC ships no usable answer for these. Not my gap and not theirs to fix quickly — nobody can confirm them, including CDISC. |
-| Blocked on data I don't ship | 10 | The rule is fine and the answer sheet is fine. I'm missing a reference list it needs. |
+| Blocked on data I don't ship | 9 | The rule is fine and the answer sheet is fine. I'm missing a reference list it needs. |
 | Still disagreeing | 55 | coreval flags different rows than the answer sheet says. The actual work left. |
 
-**Of the rules that can be confirmed at all — 695 of 750, 93%.**
+**Of the rules that can be confirmed at all — 696 of 751, 93%.**
 
 #### The 37 nobody can confirm
 
@@ -528,25 +528,26 @@ disagrees with would be guessing.
 **These are never counted as passing.** They're reported as skipped, by name,
 with the reason, every time you run.
 
-#### The 10 blocked on data I don't ship
+#### The 9 blocked on data I don't ship
 
 | | rules | |
 |---|---|---|
 | Need CDISC's terminology lists | 9 | The codelists — which values are legal for `SEX`, `AEOUT` and so on. That's the 438 MB problem below, and it is **not in this release**. |
-| Need a CDISC Library code I don't carry | 1 | One rule wants a variable's controlled-terminology C-code. |
 
-This is the honest "my fault" column, and it's 10 rules — all of them the same
-packaging decision, not bugs.
+This is the honest "my fault" column, and it's 9 rules — all of them the same
+packaging decision, not bugs. It was 10: the tenth needed only a codelist's
+*identity*, not its contents, which turned out to be one extra column on a
+table already bundled. That one now runs.
 
 Put another way, the work that is actually left:
 
 ```
 797 rules
  -37  nobody can confirm these, ever
- -10  blocked until I ship more reference data
+  -9  blocked until I ship more reference data
  ---
- 750  should end up confirmed
- 695  are
+ 751  should end up confirmed
+ 696  are
  ---
   55  still to finish
 ```
@@ -621,7 +622,7 @@ it and compares record by record.
 |---|---|
 | Published rules with reference data — **the meaningful one** | **540 / 562 (96%)** |
 | All published rules, including those with nothing to compare against | 540 / 566 (95%) |
-| Every bundled rule, including deprecated and draft | 695 / 797 (87%) |
+| Every bundled rule, including deprecated and draft | 696 / 797 (87%) |
 
 **30 rules ship no reference data at all.** CDISC publishes the rule but no
 examples, so there's nothing to compare against — they can't pass or fail.

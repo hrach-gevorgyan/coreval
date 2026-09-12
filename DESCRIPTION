@@ -1,6 +1,6 @@
 Package: coreval
 Title: Check Clinical Trial Data Against 'CDISC' Open Rules
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R:
     person("Hrach", "Gevorgyan", email = "hrach.gevorgyan@yandex.com", role = c("aut", "cre", "cph"))
 Description: Finds conformance problems in clinical trial data without

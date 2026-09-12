@@ -1,3 +1,27 @@
+# coreval 0.1.0.9000 (development)
+
+* **Codelist checks against Define-XML now run.** coreval reads the codelist
+  C-code a Define-XML file attaches to each variable, and bundles the code the
+  CDISC Library expects for it, so a rule can tell you when your define
+  declares the wrong codelist for a variable or declares none where the
+  standard has one. One rule (SENDIG SEND49) moves from skipped to running.
+
+  Only the *identity* of a codelist, never its terms: which values are legal
+  for `SEX` is Controlled Terminology, around 438 MB, and still deliberately
+  not bundled. Rules asking what is inside a codelist continue to skip with a
+  reason.
+
+* **Rules refreshed** from a newer upstream commit of CDISC's rule repository.
+  One rule's scope changed (CORE-000892 now applies to Special Purpose domains
+  rather than Findings), which changes the domains it runs on from 62 to 25.
+
+* `write_findings()` names the offending argument when given a path that isn't
+  a single string, instead of surfacing an error from inside `data.table`.
+
+* Documentation fix: `findings` is one row per affected *record*. Three places
+  called it "one row per problem", which is what `summary()` counts and a
+  different number.
+
 # coreval 0.1.0
 
 First release. The API is settled for 0.1.x; anything that changes will go
@@ -15,9 +39,11 @@ qualified validation tool, never instead of it.
   domain. coreval works out the domain from your `DOMAIN` column, or the file
   name. Rules that need a dataset you didn't supply are skipped and say so,
   rather than being run against columns that aren't there.
-* **Check a whole study** with `read_study()` on a folder, then `check_study()`.
-  It reads XPT, SAS and CSV, and picks up Define-XML (2.0 or 2.1) if it's there.
-  Reading everything at once is what makes the cross-dataset rules work.
+* **Check a whole study** with `check_study()` on a folder. It reads XPT, SAS
+  and CSV, and picks up Define-XML (2.0 or 2.1) if it's there. Reading
+  everything at once is what makes the cross-dataset rules work. `read_study()`
+  is there when you want the parsed study itself, or want to check the same
+  large study more than once without re-reading it.
 * **Read what's wrong in plain language.** Printing a result gives you a report
   grouped by problem, worst first, each described in words — "Variable value is
   not in correct ISO 8601 date or datetime format" — with the rows and values
