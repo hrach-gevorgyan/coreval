@@ -223,10 +223,13 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
     "define_variable_origin_type",
     "library_variable_name", "library_variable_label", "library_variable_role",
     "library_variable_data_type", "library_variable_core",
+    "library_variable_ccode", "library_variable_has_codelist",
+    "define_variable_ccode",
     # Not built. The guard must refuse a rule naming these, so it is
-    # reported SKIPPED with a reason rather than answered.
-    "define_variable_ccode", "define_variable_codelist_coded_codes",
-    "library_variable_ccode"
+    # reported SKIPPED with a reason rather than answered. The codelist's
+    # TERMS are Controlled Terminology, which is too large to bundle - the
+    # codelist's C-code above is a fact about the variable and is bundled.
+    "define_variable_codelist_coded_codes"
   )
 
   collect_names <- function(check, acc = character(0)) {

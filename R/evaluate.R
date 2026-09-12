@@ -778,6 +778,20 @@ build_define_item_metadata_dataset <- function(study, domain) {
   data$library_variable_role <- if (nrow(lib) > 0) lib$role[i] else NA_character_
   data$library_variable_data_type <- if (nrow(lib) > 0) lib$type[i] else NA_character_
   data$library_variable_core <- if (nrow(lib) > 0) lib$core[i] else NA_character_
+  # The codelist the Library attaches to this variable, and whether it has one
+  # at all. "" rather than NA for a variable with no codelist, since the rules
+  # gate on `library_variable_ccode non_empty` - NA would make that condition
+  # NA rather than FALSE and the whole check would drop the row.
+  #
+  # Only the EXISTENCE of a codelist and its C-code, never its terms: the
+  # terms are Controlled Terminology, which is far too large to bundle, so
+  # rules asking what is IN a codelist still skip with a reason.
+  data$library_variable_ccode <- if (nrow(lib) > 0) {
+    ifelse(is.na(lib$ccode[i]), "", lib$ccode[i])
+  } else {
+    ""
+  }
+  data$library_variable_has_codelist <- nzchar(data$library_variable_ccode)
 
   # Same Model fallback as the variable-metadata builder: an IG's per-domain
   # list doesn't enumerate every legitimate variable, and the Model's

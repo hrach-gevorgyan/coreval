@@ -37,6 +37,20 @@ FIELDS = [
     ("simpleDatatype", "type"),
 ]
 
+# `ccode` is not a field on the variable - it is the last segment of the
+# codelist link the Library attaches to it, e.g.
+# "/mdr/root/ct/sendct/codelists/C66770" -> "C66770". Derived exactly as the
+# reference engine's base_dataset_builder does: the FIRST codelist link, or
+# "" when the variable has none. Only the presence of a codelist is a fact
+# about the variable; which terms are in it is Controlled Terminology, which
+# is far too large to bundle and stays out.
+def codelist_ccode(meta):
+    links = meta.get("_links") or {}
+    codelists = links.get("codelist") or []
+    if not codelists:
+        return ""
+    return str(codelists[0].get("href", "")).rsplit("/", 1)[-1]
+
 
 def main():
     if not os.path.exists(CACHE):
@@ -81,9 +95,14 @@ def main():
                 for src, dest in FIELDS:
                     value = meta.get(src, "")
                     row[dest] = "" if value is None else str(value)
+                row["ccode"] = codelist_ccode(meta)
                 rows.append(row)
 
-    header = ["standard", "version", "domain", "variable"] + [d for _, d in FIELDS]
+    header = (
+        ["standard", "version", "domain", "variable"]
+        + [d for _, d in FIELDS]
+        + ["ccode"]
+    )
     with open(OUT, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=header)
         writer.writeheader()
@@ -92,6 +111,7 @@ def main():
     standards = sorted({r["standard"] for r in rows})
     print("wrote %s: %d rows" % (OUT, len(rows)))
     print("standards: %s" % ", ".join(standards))
+    print("with a codelist: %d" % sum(1 for r in rows if r["ccode"]))
 
 
 if __name__ == "__main__":

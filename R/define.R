@@ -194,6 +194,42 @@ read_define_xml <- function(path) {
     ),
     stringsAsFactors = FALSE
   )
+
+  # A variable's codelist C-code, e.g. "C66770". Two hops: the ItemDef's
+  # CodeListRef names a CodeList by OID, and that CodeList carries the code
+  # as its own `Alias` with Context "nci:ExtCodeID"
+  # (`_get_codelist_ccode` in the reference's base_define_xml_reader).
+  #
+  # `./Alias` is deliberately a DIRECT child: every EnumeratedItem inside a
+  # codelist has an nci:ExtCodeID Alias too, one per term, and matching those
+  # would pick a term's code instead of the codelist's.
+  #
+  # "" rather than NA where a variable has no codelist, because that is what
+  # the rules test - `define_variable_ccode empty` has to be TRUE for a
+  # variable the define declares no codelist for.
+  code_lists <- xml2::xml_find_all(doc, "//CodeList")
+  codelist_ccode <- stats::setNames(
+    vapply(
+      code_lists,
+      function(cl) {
+        alias <- xml2::xml_find_first(cl, "./Alias[@Context='nci:ExtCodeID']")
+        if (inherits(alias, "xml_missing")) "" else (xml2::xml_attr(alias, "Name") %||% "")
+      },
+      character(1)
+    ),
+    xml2::xml_attr(code_lists, "OID")
+  )
+  item_codelist_oid <- xml2::xml_attr(
+    xml2::xml_find_first(items, "./CodeListRef"), "CodeListOID"
+  )
+  item_defs$define_variable_ccode <- ifelse(
+    is.na(item_codelist_oid), "",
+    ifelse(
+      is.na(codelist_ccode[item_codelist_oid]), "",
+      codelist_ccode[item_codelist_oid]
+    )
+  )
+
   item_defs$define_variable_is_collected <- ifelse(
     is.na(item_defs$define_variable_origin_type),
     NA,

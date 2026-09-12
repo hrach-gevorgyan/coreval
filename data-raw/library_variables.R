@@ -1,6 +1,7 @@
 # Regenerates inst/extdata/library_variables.rds: per standard, per version,
 # per domain, per variable - the Core designation (Req/Exp/Perm), ordinal
-# position, label, role and data type the CDISC Library assigns.
+# position, label, role, data type and codelist C-code the CDISC Library
+# assigns.
 #
 # Supersedes the earlier SDTMIG-only sdtmig_variables.rds. Two things that
 # table couldn't do:
@@ -52,7 +53,12 @@ stopifnot(
   # The two standards the bundled rules actually need must both be present -
   # a silently SDTMIG-only table is exactly the bug this replaces.
   "sdtmig" %in% library_variables$standard,
-  "sendig" %in% library_variables$standard
+  "sendig" %in% library_variables$standard,
+  # A `ccode` column of nothing but "" would make every
+  # `library_variable_ccode non_empty` condition false and quietly switch the
+  # rules that use it off, which looks identical to a clean study.
+  "ccode" %in% names(library_variables),
+  sum(nzchar(library_variables$ccode)) > 1000
 )
 
 saveRDS(

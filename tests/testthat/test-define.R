@@ -249,3 +249,49 @@ test_that("def:Origin is read, and is_collected follows the Define-XML version's
   # No def:Origin at all is not the same as declaring a non-collected one.
   expect_true(is.na(got("CMDOSE", "define_variable_is_collected")))
 })
+
+test_that("a variable's codelist C-code is read from the codelist it references", {
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  writeLines(c(
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3"',
+    '     xmlns:def="http://www.cdisc.org/ns/def/v2.0">',
+    '<Study OID="S"><MetaDataVersion OID="MDV.1" Name="v1">',
+    '<ItemGroupDef OID="IG.VS" Name="VS" Domain="VS" Repeating="Yes">',
+    '<ItemRef ItemOID="IT.VS.VSORRESU" OrderNumber="1" Mandatory="No"/>',
+    '<ItemRef ItemOID="IT.VS.VSTESTCD" OrderNumber="2" Mandatory="Yes"/>',
+    '<ItemRef ItemOID="IT.VS.VSSEQ" OrderNumber="3" Mandatory="Yes"/>',
+    '</ItemGroupDef>',
+    '<ItemDef OID="IT.VS.VSORRESU" Name="VSORRESU" DataType="text">',
+    '<CodeListRef CodeListOID="CL.VSRESU"/></ItemDef>',
+    # References a codelist that carries no nci:ExtCodeID alias at all.
+    '<ItemDef OID="IT.VS.VSTESTCD" Name="VSTESTCD" DataType="text">',
+    '<CodeListRef CodeListOID="CL.NOALIAS"/></ItemDef>',
+    # References no codelist.
+    '<ItemDef OID="IT.VS.VSSEQ" Name="VSSEQ" DataType="integer"/>',
+    '<CodeList OID="CL.VSRESU" Name="Units" DataType="text">',
+    '<Alias Context="nci:ExtCodeID" Name="C66770"/>',
+    # Each TERM carries an nci:ExtCodeID alias too. Matching descendants
+    # instead of direct children would return this term's code, C25613,
+    # in place of the codelist's.
+    '<EnumeratedItem CodedValue="%">',
+    '<Alias Context="nci:ExtCodeID" Name="C25613"/>',
+    '</EnumeratedItem>',
+    '</CodeList>',
+    '<CodeList OID="CL.NOALIAS" Name="Sponsor list" DataType="text">',
+    '<EnumeratedItem CodedValue="X"/>',
+    '</CodeList>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+
+  define <- read_define_xml(path)
+  v <- as.data.frame(define$variables)
+  ccode <- function(name) v$define_variable_ccode[v$define_variable_name == name]
+
+  expect_equal(ccode("VSORRESU"), "C66770")
+  # "" and not NA: the rules test `define_variable_ccode empty`, which has to
+  # be TRUE for a variable the define declares no codelist for.
+  expect_equal(ccode("VSTESTCD"), "")
+  expect_equal(ccode("VSSEQ"), "")
+})
