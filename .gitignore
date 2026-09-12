@@ -14,7 +14,10 @@ data-raw/upstream/
 # repository to rebuild an .rds; this one is past that trade.
 data-raw/ct_codelists.csv
 tests/conformance/scoreboard.csv
-docs/
+# docs/ is public except for the maintainer's own files.
+docs/RELEASING.md
+docs/archive/
+docs/reference/
 tests/conformance/audit_fixtures.json
 tests/conformance/audit_fixtures.py
 vignettes/*.html

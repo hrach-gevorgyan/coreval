@@ -12,7 +12,12 @@
 # an em dash, and a doc showing real output must show it.
 
 files <- c(
-  "README.md", "NEWS.md", "NOTICE.md", "vignettes/coreval.Rmd",
+  "README.md", "NEWS.md", "NOTICE.md", "cran-comments.md",
+  "vignettes/coreval.Rmd",
+  # The public half of docs/. RELEASING.md and archive/ are the maintainer's
+  # own and are not held to this.
+  "docs/README.md", "docs/DECISIONS.md", "docs/COVERAGE.md",
+  "docs/REFERENCE-BEHAVIOUR.md", "docs/BENCHMARKS.md",
   list.files("R", pattern = "[.]R$", full.names = TRUE)
 )
 
