@@ -6,6 +6,8 @@
 \usage{
 check_study(
   study,
+  standard = NULL,
+  version = NULL,
   use_case = NULL,
   max_records = 1000,
   include_deprecated = FALSE
@@ -16,6 +18,14 @@ check_study(
 Passing the path is the usual way; reading first is only worth it when
 you want to check the same large study more than once without re-reading
 it, or to look at what was parsed.}
+
+\item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
+\code{"SENDIG"}. Overrides whatever the study declares about itself. Rules
+are written per standard, so this genuinely narrows what runs; leave it
+unset to run every standard's rules and see everything.}
+
+\item{version}{The standard's version, e.g. \code{"3.4"}. Needs \code{standard}
+too, since a bare version is ambiguous across standards.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}) to further filter
 which rules apply, as in \code{\link[=list_rules]{list_rules()}}.}
@@ -31,15 +41,21 @@ default: a deprecated rule has a published replacement, so running both
 reports the same defect twice.}
 }
 \value{
-Three tables:
+An object of class \code{coreval_result}, holding three tables. Because
+it has a class, typing the result's name prints a readable report rather
+than dumping the list, and provenance rides along as attributes:
+\code{checks_run}, \code{domains} and \code{excluded_by_standard}.
 \itemize{
-\item \code{findings} - what is wrong. One row per problem, with \code{Dataset},
+\item \code{findings} - what is wrong. One row per affected record, with \code{Dataset},
 \code{Record}, \code{Variable}, \code{Value}, the \code{issue} in words, and its \code{triage}.
 \verb{Not in dataset} under \code{Value} means the rule wanted a variable you do
 not have, which is usually the finding itself.
 \item \code{skipped} - what could not be checked, with a \code{reason} for each. Read
 this one: an empty \code{findings} table can mean clean data \emph{or} rules that
-never ran, and they look identical otherwise.
+never ran, and they look identical otherwise. Reasons include a dataset
+you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
+controlled terminology, which is around 438 MB and so is deliberately
+not bundled. Nothing skipped is ever counted as a pass.
 \item \code{truncated} - rules that flagged more records than \code{max_records} kept,
 with how many they really found.
 }
@@ -63,6 +79,14 @@ instead of being run against columns that are not there, which would report
 problems that do not exist. The same goes for any rule needing an operator or
 join coreval does not implement yet.
 }
+\section{Progress}{
+
+A large study takes long enough that silence looks like a hang, so an
+interactive session shows a progress bar. It is off in scripts and
+non-interactive runs, where it would only clutter a log. Force it either
+way with \code{options(coreval.progress = TRUE)} or \code{FALSE}.
+}
+
 \examples{
 dir <- tempfile("coreval_study_")
 dir.create(dir)

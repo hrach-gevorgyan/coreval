@@ -3,7 +3,7 @@
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/coreval)](https://CRAN.R-project.org/package=coreval)
 [![R-CMD-check](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/license/mit)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
@@ -42,10 +42,11 @@ AGEU is missing when AGE is provided.
   ... and 7 more here. See result$findings for all of them.
 
 ────────────────────────────────────────────────────────────────────────────
-45 checks could not run.
-  30 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+53 checks could not run.
+  33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
      → run check_study() on the whole folder to cover these
-  15 need a define.xml
+  18 need a define.xml
+  2 for other reasons, see result$skipped
 
 No standard declared, so rules from every standard ran.
   Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
@@ -174,8 +175,8 @@ coreval doesn't guess. It skips them, and tells you which dataset it wanted:
 head(result$skipped, 3)
 #>       rule_id domain                                        reason
 #> 1 CORE-000138     AE  needs DM, which was not supplied - check ...
-#> 2 CORE-000140     AE  needs TV, which was not supplied - check ...
-#> 3 CORE-000168     AE  needs SV, which was not supplied - check ...
+#> 2 CORE-000139     AE  needs DM, which was not supplied - check ...
+#> 3 CORE-000140     AE  needs TV, which was not supplied - check ...
 ```
 
 Running them anyway would compare your data against columns that aren't there
@@ -215,7 +216,8 @@ check_study(study)
 ```
 
 A study report is grouped by dataset, and tells you where the trouble is before
-showing you any detail:
+showing you any detail. The shape is what matters here — the counts depend on
+your study:
 
 ```
 ── coreval ─────────────────────────────────────────────────────────────
@@ -261,7 +263,7 @@ head(result$findings[, c("Dataset", "Record", "Variable", "Value", "triage", "ru
 (`issue` is dropped from that view only so the table fits the page — it is
 there on every row, and it is the column worth reading.)
 
-One row per problem, pointing at the exact spot:
+One row per affected record, pointing at the exact spot:
 
 | Column | What it tells you |
 |---|---|
@@ -302,8 +304,9 @@ standard it was scoped to, how many checks ran, whether it was filtered before
 export, and whether any counts were capped. A shared spreadsheet outlives the
 console session that made it, and whoever opens it can't see what you saw.
 
-The file has three empty columns — `Status`, `Owner`, `Notes` — for you to fill
-in once it's open. Not every finding is a bug you'll fix: some are expected, some
+Every findings column comes across — `Dataset`, `Record`, `Variable`, `Value`,
+`issue`, `triage`, `rule_id` — followed by three empty ones, `Status`, `Owner`
+and `Notes`, for you to fill in once it's open. Not every finding is a bug you'll fix: some are expected, some
 belong to someone else, some are waiting on a data query. Those decisions belong
 next to the finding, not in a separate document nobody opens.
 
@@ -336,8 +339,9 @@ The other three are there when you need them:
 | `filter_findings(result, ...)` | narrow a result by triage, dataset, rule or variable |
 | `read_study(path)` | read a folder yourself, if you want to inspect it or check it twice without re-reading |
 
-Plus `print()` and `summary()` on a result, which you get by typing the
-result's name.
+Plus `print()` and `summary()` on a result. `print()` is what you get by
+typing the result's name; `summary()` you call yourself, and it returns a
+one-row table you can rbind across datasets.
 
 That's it. If you only ever learn `check_dataset()` and `write_findings()`,
 you have most of the value.
@@ -390,12 +394,15 @@ Returns a result, so it prints as a report. Also takes `dataset`, `rule` and
 **A three-line summary, for a script**
 
 ```r
-summary(result)
-#> 5 problems across 4 records  (111 checks ran, 21 could not)
-#>   wrong value       2
-#>   missing required  1
-#>   missing optional  2
+summary(result)   # result <- check_dataset(dm), the DM frame from the top
+#>   problems records wrong_value missing_required missing_optional
+#> 1        9       6           4                2                3
+#>   checks_run could_not_run capped_rules
+#> 1        170            53            0
 ```
+
+It returns a one-row data frame rather than printing, so it stacks: `rbind()`
+one per dataset and you have a table of where the trouble is.
 
 **Which rules even apply to AE?**
 
@@ -556,11 +563,6 @@ answer it should have. The other 2 are split datasets: coreval finds the same
 problem but reports it against the file it is in, with that file's own row
 numbers, where CDISC reports it against the merged domain. That is deliberate —
 a finding has to point at a file you can open and a row you can find.
-
-Some are bugs on my side. Others are cases where CDISC's own example data
-contradicts itself — a file whose stated answer doesn't match its own rows,
-usually because the data was edited after the answers were generated. Each one
-is investigated individually and written down rather than quietly ignored.
 
 Either way, the honest reading is: **treat a finding from those rules with more
 suspicion than the rest.** That's why every finding carries its rule id — so

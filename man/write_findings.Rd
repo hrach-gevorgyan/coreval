@@ -31,10 +31,13 @@ Both tables are always written, never just the findings. A short findings
 table can mean clean data, or it can mean many rules were skipped, and
 those two situations look identical if the skipped table is dropped:
 \itemize{
-\item \strong{Excel} (\code{.xlsx}) — one workbook, two sheets: \code{findings} and \code{skipped}.
-\item \strong{CSV} (\code{.csv}) — two files, since CSV has no notion of sheets. Findings
-go to \code{path}; skipped rules go to a sibling file with \verb{_skipped} before
-the extension (\code{issues.csv} gives \code{issues_skipped.csv}).
+\item \strong{Excel} (\code{.xlsx}) - one workbook with a sheet per table: \code{findings},
+\code{skipped}, \code{about}, and \code{truncated} when any rule matched more records
+than were kept.
+\item \strong{CSV} (\code{.csv}) - one file per table, since CSV has no notion of sheets.
+Findings go to \code{path}; the others go to sibling files with a suffix
+before the extension, so \code{issues.csv} gives \code{issues_skipped.csv} and
+\code{issues_about.csv}.
 }
 
 Excel output needs the \code{writexl} package. It is a \code{Suggests}, so if it
@@ -43,8 +46,8 @@ isn't installed you get a clear message telling you to install it or use
 }
 \section{Columns for tracking}{
 
-Three empty columns are added to the findings — \code{Status}, \code{Owner} and
-\code{Notes} — for you to fill in by hand once the file is open. They exist so a
+Three empty columns are added to the findings - \code{Status}, \code{Owner} and
+\code{Notes} - for you to fill in by hand once the file is open. They exist so a
 finding you have looked at and decided not to act on ("expected, see
 protocol deviation log") can be recorded next to the finding itself, rather
 than in a separate document nobody reads.

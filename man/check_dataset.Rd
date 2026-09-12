@@ -48,8 +48,21 @@ default: a deprecated rule has a published replacement, so running both
 reports the same defect twice.}
 }
 \value{
-\code{list(findings, skipped, truncated)} - the same shape
-\code{\link[=check_study]{check_study()}} returns, so \code{\link[=write_findings]{write_findings()}} works on it unchanged.
+An object of class \code{coreval_result}: a list of the three tables
+\code{findings}, \code{skipped} and \code{truncated}, the same shape \code{\link[=check_study]{check_study()}}
+returns, so \code{\link[=write_findings]{write_findings()}} and \code{\link[=filter_findings]{filter_findings()}} work on it
+unchanged. Because it has a class, typing the result's name prints a
+readable report rather than dumping the list.
+
+\code{skipped} carries a \code{reason} for every rule that did not run - a dataset
+you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
+controlled terminology, which is around 438 MB and deliberately not
+bundled. Nothing skipped is ever counted as a pass.
+
+Provenance rides along as attributes: \code{checks_run} (how many rules were
+evaluated), \code{domains}, and \code{excluded_by_standard} (how many rules the
+\code{standard}/\code{version} filter set aside). \code{\link[=write_findings]{write_findings()}} writes these
+into the file it saves.
 }
 \description{
 For when you are writing the code that builds a domain and want to know

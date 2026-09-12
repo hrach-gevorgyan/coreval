@@ -171,7 +171,7 @@ You get two tables back, and you want to look at both.
 head(study_result$findings)
 ```
 
-One row per problem, pointing straight at it:
+One row per affected record, pointing straight at it:
 
 | Column | What it tells you |
 |---|---|
@@ -193,6 +193,27 @@ f <- study_result$findings
 head(f[f$Dataset == "DM", ])
 sort(table(f$rule_id), decreasing = TRUE)[1:3]
 ```
+
+Slicing the data frame gives you rows. `filter_findings()` gives you back a
+*result* — the same object, narrowed — which is the difference that matters,
+because a result is what `write_findings()` and `summary()` take:
+
+```{r filter-findings}
+worst <- filter_findings(study_result, triage = "wrong value")
+nrow(worst$findings)
+summary(worst)
+```
+
+The two numbers there are counting different things, and the difference is
+worth knowing: `findings` has a row per affected *record*, while `summary()`
+counts distinct *problems* — one rule going wrong in one dataset, however many
+records it touched. A single missing variable in a 500-row dataset is one
+problem and 500 rows.
+
+`triage` has three levels, worst first: `"wrong value"` is a value that
+contradicts the data around it, `"missing required"` a variable the standard
+says must be there, `"missing optional"` one it merely expects. You can also
+narrow by `dataset`, `rule` or `variable`, and combine them.
 
 ### What couldn't be checked
 
@@ -268,8 +289,9 @@ Six functions, and three of them do the work:
 | `filter_findings(result, ...)` | narrow a result |
 | `read_study(path)` | read a folder yourself, when you want to inspect it |
 
-Plus `print()` and `summary()` on a result, which you get by typing the
-result's name.
+Plus `print()` and `summary()` on a result. `print()` is what you get by
+typing the result's name; `summary()` you call yourself, and it returns a
+one-row table you can rbind across datasets.
 
 ## Two last things
 

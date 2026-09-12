@@ -12,3 +12,7 @@ tests/conformance/scoreboard.csv
 docs/
 tests/conformance/audit_fixtures.json
 tests/conformance/audit_fixtures.py
+vignettes/*.html
+vignettes/*.R
+vignettes/*_cache/
+vignettes/*_files/

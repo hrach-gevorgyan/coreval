@@ -149,8 +149,8 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
 #' `"FINDINGS"`), which is how a rule's `Scope > Classes` is resolved against
 #' real data.
 #'
-#' A domain's class is stable across Implementation Guide versions — `LB` is a
-#' Findings domain in every version of SDTMIG — so one table serves all of
+#' A domain's class is stable across Implementation Guide versions - `LB` is a
+#' Findings domain in every version of SDTMIG - so one table serves all of
 #' them. It covers the SDTM domains plus the SEND-specific ones (`BW`, `MA`,
 #' `TF`, ...), so SDTMIG, SENDIG and TIG rules all resolve. See
 #' `data-raw/domain_classes.R` for provenance.
@@ -170,13 +170,12 @@ sdtm_domain_classes <- function() {
 #' Resolves each rule's `Scope > Classes` and `Scope > Domains` (handling the
 #' `"ALL"`/`"NONE"` sentinels and `"XX--"` prefix wildcards) against `domain`.
 #'
-#' Dynamically-named domains not in the bundled domain-to-class table (e.g. `SUPPAE`,
-#' `SUPPDM`) resolve to the `RELATIONSHIP` class, since every `SUPPxx`
-#' dataset follows the `SUPPQUAL` template. Associated Persons domains
-#' (`APxx`) currently have no class resolution - as of this writing no
-#' bundled rule pairs an `AP--` domain with a specific (non-`"ALL"`) Classes
-#' constraint, so this is a known gap rather than a fix, should that change
-#' upstream.
+#' Dynamically-named domains not in the bundled domain-to-class table resolve
+#' by template: every `SUPPxx` dataset follows `SUPPQUAL`, so `SUPPAE` and
+#' `SUPPDM` are `RELATIONSHIP`; and an Associated Persons dataset holds the
+#' same kind of observation as the domain it is associated with, so `APEG`
+#' takes `EG`'s class. `APID` is excluded from that rule - it is an identifier
+#' variable, not a domain prefix.
 #'
 #' @param domain Domain code, e.g. `"AE"`.
 #' @param use_case Optional use case (e.g. `"INDH"`). When supplied, also

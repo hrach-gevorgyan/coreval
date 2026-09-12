@@ -36,7 +36,9 @@ metadata) is derived from the offline, MIT-licensed caches shipped inside
 No CDISC API is contacted at build time or at run time.
 
 `data-raw/UPSTREAM_SHA` records the exact upstream commit a given release was
-built from; `coreval::rules_version()` reports the same at run time.
+built from. At run time the same value is on the rule table:
+`attr(list_rules(), "rules_version")`, and `write_findings()` records it in
+every file it writes.
 
 ## How much to trust a given rule
 

@@ -15,8 +15,18 @@ filter_findings(
 \arguments{
 \item{result}{A result from \code{\link[=check_dataset]{check_dataset()}} or \code{\link[=check_study]{check_study()}}.}
 
-\item{triage}{Keep only these triage levels, e.g. \code{"wrong value"}. See
-\code{\link[=print.coreval_result]{print.coreval_result()}} for what the levels mean.}
+\item{triage}{Keep only these triage levels. One or more of:
+\itemize{
+\item \code{"wrong value"} - the data contains something that breaks the rule, like
+a month of 13. Nothing about your study explains it away. Start here.
+\item \code{"missing required"} - something the standard marks Required is absent.
+\item \code{"missing optional"} - something Expected is absent, or a value is
+blank. Often legitimate: a screen-failure subject with no reference
+dates, a variable your raw data does not carry yet.
+}
+
+These are coreval's own triage, not a CDISC severity: the rules carry no
+severity field, and this does not map onto anyone's scale.}
 
 \item{dataset}{Keep only these datasets, e.g. \code{"AE"}.}
 

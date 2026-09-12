@@ -19,7 +19,8 @@ inst/extdata/rules.rds
 From cdisc-org/cdisc-open-rules. 797 conformance rule definitions - the check
 logic, scope, messages, cited guidance and conformance-rule identifiers -
 extracted at build time from a pinned commit of that repository. The commit is recorded in
-data-raw/UPSTREAM_SHA and available as attr(list_rules(), "rules_version").
+attr(list_rules(), "rules_version") in the installed package, and in
+data-raw/UPSTREAM_SHA in the source repository (data-raw is not installed).
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds
