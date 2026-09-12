@@ -1,5 +1,11 @@
 # coreval 0.1.0.9000 (development)
 
+* Date columns are scanned once instead of two to four times. Validating a
+  date, detecting its precision and parsing it each re-ran the same expensive
+  regex over the same column; the components are now computed once and passed
+  along. `--DY` comparisons were the worst case, scanning two columns four
+  times.
+
 * The per-rule synthetic datasets are built once per domain instead of once
   per rule. Those builders never depended on the rule, yet about 60 rules each
   asked for the identical answer, and computing one of them scans every

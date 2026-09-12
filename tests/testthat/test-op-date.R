@@ -220,3 +220,30 @@ test_that("a date column that is absent is not an incomplete date", {
                target = c("2019-03-24", "2019-03", "2019"))
   expect_equal(get_operator("is_incomplete_date")(ctx2), c(FALSE, TRUE, TRUE))
 })
+
+test_that("subsetting date components keeps the matched attribute", {
+  # extract_date_components() carries which elements the regex matched as an
+  # attribute, and is_valid_date_str() starts from it. Plain matrix subsetting
+  # drops custom attributes, so a caller computing components once per column
+  # and then taking a subset lost it - and every value read as unmatched, so
+  # the check silently found nothing. That is how --DY comparisons stopped
+  # reporting while the tests for the operators themselves still passed.
+  x <- c("2019-03-24", "not a date", "2019-04", NA_character_)
+  comp <- extract_date_components(ifelse(is.na(x), "", x))
+  expect_false(is.null(attr(comp, "matched")))
+
+  keep <- c(1L, 3L)
+  sub <- subset_date_components(comp, keep)
+  expect_equal(attr(sub, "matched"), attr(comp, "matched")[keep])
+  # And the whole point: validity survives the subset.
+  expect_equal(
+    is_valid_date_str(x[keep], sub),
+    is_valid_date_str(x[keep])
+  )
+  # A logical index works too, which is how pick_date() uses it.
+  lg <- c(TRUE, FALSE, TRUE, FALSE)
+  expect_equal(
+    attr(subset_date_components(comp, lg), "matched"),
+    attr(comp, "matched")[lg]
+  )
+})

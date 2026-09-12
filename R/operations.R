@@ -99,13 +99,18 @@ distinct_values <- function(x) {
 #' @return A single date string, or `NA_character_` if none are valid.
 #' @noRd
 pick_date <- function(x, want_max) {
-  x <- x[is_valid_date_str(x)]
+  # One pass of the date regex, reused three times. Validating, detecting
+  # precision and parsing each recomputed the components over the same vector.
+  comp <- extract_date_components(ifelse(is.na(x), "", x))
+  keep <- is_valid_date_str(x, comp)
+  x <- x[keep]
   if (length(x) == 0) {
     return(NA_character_)
   }
+  comp <- subset_date_components(comp, keep)
   # Vectorised, like compute_dy(): the scalar wrappers re-ran the date regex
   # once per element.
-  values <- as.numeric(parse_date(x, detect_precision(x)))
+  values <- as.numeric(parse_date(x, detect_precision(x, comp), comp))
   x[if (want_max) which.max(values) else which.min(values)]
 }
 
@@ -175,11 +180,20 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   day <- rep(NA_real_, n)
   if (any(usable)) {
     idx <- which(usable)
-    ok <- is_valid_date_str(target_dates[idx]) & is_valid_date_str(rf_dates[idx])
+    # The date regex is the expensive part, so run it ONCE per vector and hand
+    # the components to everything that needs them. Validating and then
+    # parsing each side re-ran it, so the same two columns were scanned four
+    # times instead of twice. `is_valid_date_str()` and `parse_date()` both
+    # take a `comp` argument for exactly this.
+    comp_t <- extract_date_components(ifelse(is.na(target_dates), "", target_dates))
+    comp_r <- extract_date_components(ifelse(is.na(rf_dates), "", rf_dates))
+    ok <- is_valid_date_str(target_dates[idx], subset_date_components(comp_t, idx)) &
+      is_valid_date_str(rf_dates[idx], subset_date_components(comp_r, idx))
     idx <- idx[ok]
     if (length(idx) > 0) {
       delta <- as.numeric(difftime(
-        parse_date(target_dates[idx]), parse_date(rf_dates[idx]),
+        parse_date(target_dates[idx], comp = subset_date_components(comp_t, idx)),
+        parse_date(rf_dates[idx], comp = subset_date_components(comp_r, idx)),
         units = "days"
       ))
       # Study day has no zero: the day before the reference date is -1, the

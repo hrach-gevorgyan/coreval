@@ -109,6 +109,28 @@ is_valid_date_str <- function(x, comp = NULL) {
   valid
 }
 
+#' Subset a date-components matrix, keeping its `matched` attribute
+#'
+#' `extract_date_components()` carries which elements the regex matched as an
+#' attribute on the matrix, and `is_valid_date_str()` reads it as its starting
+#' point. Ordinary matrix subsetting drops custom attributes, so a caller that
+#' computes components once for a whole column and then wants the rows for a
+#' subset has to carry `matched` across by hand - without it every value reads
+#' as unmatched and the check silently finds nothing.
+#'
+#' @param comp A components matrix from `extract_date_components()`.
+#' @param idx Row indices to keep.
+#' @return The subset matrix, with `matched` subset the same way.
+#' @noRd
+subset_date_components <- function(comp, idx) {
+  out <- comp[idx, , drop = FALSE]
+  matched <- attr(comp, "matched")
+  if (!is.null(matched)) {
+    attr(out, "matched") <- matched[idx]
+  }
+  out
+}
+
 date_group_names <- c("year", "month", "day", "hour", "minute", "second", "microsecond", "timezone")
 
 # Extracts the 7 precision components plus a timezone offset for one date
