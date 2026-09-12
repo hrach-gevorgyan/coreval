@@ -231,8 +231,21 @@ infer_domain <- function(dataset, path = NULL) {
 #' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
-#' @return `list(findings, skipped, truncated)` - the same shape
-#'   [check_study()] returns, so [write_findings()] works on it unchanged.
+#' @return An object of class `coreval_result`: a list of the three tables
+#'   `findings`, `skipped` and `truncated`, the same shape [check_study()]
+#'   returns, so [write_findings()] and [filter_findings()] work on it
+#'   unchanged. Because it has a class, typing the result's name prints a
+#'   readable report rather than dumping the list.
+#'
+#'   `skipped` carries a `reason` for every rule that did not run - a dataset
+#'   you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
+#'   controlled terminology, which is around 438 MB and deliberately not
+#'   bundled. Nothing skipped is ever counted as a pass.
+#'
+#'   Provenance rides along as attributes: `checks_run` (how many rules were
+#'   evaluated), `domains`, and `excluded_by_standard` (how many rules the
+#'   `standard`/`version` filter set aside). [write_findings()] writes these
+#'   into the file it saves.
 #' @examples
 #' ae <- data.frame(
 #'   STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "01"),
@@ -260,7 +273,9 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     }
     if (dir.exists(x)) {
       stop(
-        "'", x, "' is a folder - use read_study() then check_study() for a whole study",
+        # check_study() takes the folder directly now; telling people to call
+        # read_study() first is advice from before that simplification.
+        "'", x, "' is a folder - use check_study() for a whole study",
         call. = FALSE
       )
     }

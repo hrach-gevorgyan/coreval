@@ -8,18 +8,21 @@
 #' table can mean clean data, or it can mean many rules were skipped, and
 #' those two situations look identical if the skipped table is dropped:
 #'
-#' * **Excel** (`.xlsx`) — one workbook, two sheets: `findings` and `skipped`.
-#' * **CSV** (`.csv`) — two files, since CSV has no notion of sheets. Findings
-#'   go to `path`; skipped rules go to a sibling file with `_skipped` before
-#'   the extension (`issues.csv` gives `issues_skipped.csv`).
+#' * **Excel** (`.xlsx`) - one workbook with a sheet per table: `findings`,
+#'   `skipped`, `about`, and `truncated` when any rule matched more records
+#'   than were kept.
+#' * **CSV** (`.csv`) - one file per table, since CSV has no notion of sheets.
+#'   Findings go to `path`; the others go to sibling files with a suffix
+#'   before the extension, so `issues.csv` gives `issues_skipped.csv` and
+#'   `issues_about.csv`.
 #'
 #' Excel output needs the `writexl` package. It is a `Suggests`, so if it
 #' isn't installed you get a clear message telling you to install it or use
 #' `.csv` instead, rather than a failure part-way through writing.
 #'
 #' @section Columns for tracking:
-#' Three empty columns are added to the findings — `Status`, `Owner` and
-#' `Notes` — for you to fill in by hand once the file is open. They exist so a
+#' Three empty columns are added to the findings - `Status`, `Owner` and
+#' `Notes` - for you to fill in by hand once the file is open. They exist so a
 #' finding you have looked at and decided not to act on ("expected, see
 #' protocol deviation log") can be recorded next to the finding itself, rather
 #' than in a separate document nobody reads.
@@ -53,6 +56,12 @@ write_findings <- function(result, path, tracking = TRUE) {
       "with a `findings` element.",
       call. = FALSE
     )
+  }
+  # Checked here rather than left to fwrite: a non-string reached it and came
+  # back as "is.character(file) && length(file) == 1L is not TRUE", and a
+  # length-2 path failed even earlier, inside the `if` picking the format.
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
+    stop("`path` must be a single file path, ending in '.xlsx' or '.csv'.", call. = FALSE)
   }
   findings <- data.table::as.data.table(result$findings)
   skipped <- if (is.null(result$skipped)) {

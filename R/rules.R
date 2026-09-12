@@ -102,6 +102,11 @@ build_rules_table <- function() {
 list_rules <- function(id = NULL, domain = NULL, standard = NULL,
                        version = NULL, use_case = NULL,
                        include_deprecated = TRUE) {
+  # Same guard the check entry points use, so an unrecognised standard or a
+  # bare version is refused here too rather than quietly returning a
+  # plausible-looking number. A version with no standard used to be discarded
+  # in silence: list_rules(version = "3.4") returned all 797 rules.
+  validate_check_args(standard = standard, version = version, domain = domain)
   out <- build_rules_table()
 
   # Looking up an id is a different question from "what would run": it should
@@ -133,6 +138,17 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   }
 
   if (!is.null(domain)) {
+    # A domain no standard defines still matches every class-unconstrained
+    # rule, so the count comes back confidently non-zero - 163 for a typo like
+    # "ZZ". Someone asking "does coreval cover my domain?" deserves to be told
+    # it does not recognise the name, not handed a plausible number.
+    if (is.na(domain_class(domain))) {
+      warning(
+        "'", domain, "' is not a domain any bundled standard defines, so this ",
+        "counts only the rules that apply to every domain. Check the spelling.",
+        call. = FALSE
+      )
+    }
     # Asking about a domain implies asking what would RUN against it, so the
     # same scoping check_dataset() uses applies here - otherwise the two would
     # disagree about which rules apply, which is worse than either answer.

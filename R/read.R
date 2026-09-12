@@ -289,7 +289,45 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   if (length(col_classes) > 0) {
     fread_args$colClasses <- col_classes
   }
-  dt <- do.call(data.table::fread, fread_args)
+  # fread warns "Attempt to override column <X> of inherent type 'string'
+  # down to 'float64' ignored" when a column declared Num holds a value it
+  # reads as text - SAS's "." missing token being the usual cause. The
+  # coercion immediately below handles exactly that case properly, so the
+  # warning is noise here rather than information; nothing else fread has to
+  # say is suppressed.
+  dt <- withCallingHandlers(
+    do.call(data.table::fread, fread_args),
+    warning = function(w) {
+      if (grepl("Attempt to override column", conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+
+  # A column declared Num whose data contains SAS's own numeric-missing token
+  # (a lone ".") comes back as character: fread reads "." as a string, and
+  # colClasses cannot down-cast an inherently-string column to double - it
+  # warns and leaves it alone. The column then silently stays character
+  # despite being declared numeric, which is the kind of quiet type drift a
+  # conformance check should never inherit. Confirmed against CORE-000183's
+  # own fixture, where pc.PCSTRESN is declared Num and every value is ".".
+  #
+  # "." and "" both mean missing for a numeric variable, so they become NA
+  # and the column is coerced explicitly. Anything else that will not parse
+  # is left alone rather than destroyed - a declared-Num column carrying real
+  # text is itself a finding, and silently turning it into NA would hide it.
+  declared_num <- vmeta$variable[vmeta$type == "Num"]
+  for (v in intersect(declared_num, names(dt))) {
+    col <- dt[[v]]
+    if (!is.character(col)) {
+      next
+    }
+    blank <- trimws(col) %in% c(".", "")
+    parsed <- suppressWarnings(as.numeric(ifelse(blank, NA_character_, col)))
+    if (all(is.na(parsed) == (blank | is.na(col)))) {
+      data.table::set(dt, j = v, value = parsed)
+    }
+  }
 
   fill_char_blanks(dt)
 

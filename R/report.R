@@ -445,6 +445,10 @@ describe_skipped <- function(skipped, width, g) {
 #' check_dataset(ae)
 #' @export
 print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
+  # An object carrying the class but not the contents printed its banner and
+  # then died on `x$findings` with base R's "argument is of length zero",
+  # which tells the reader nothing about what is wrong.
+  assert_coreval_result(x)
   g <- report_glyphs()
   width <- max(60, min(getOption("width", 80), 100))
   f <- x$findings

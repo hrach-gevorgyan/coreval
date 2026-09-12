@@ -37,8 +37,16 @@ respin_result <- function(result, findings) {
 #' readable report.
 #'
 #' @param result A result from [check_dataset()] or [check_study()].
-#' @param triage Keep only these triage levels, e.g. `"wrong value"`. See
-#'   [print.coreval_result()] for what the levels mean.
+#' @param triage Keep only these triage levels. One or more of:
+#'   * `"wrong value"` - the data contains something that breaks the rule, like
+#'     a month of 13. Nothing about your study explains it away. Start here.
+#'   * `"missing required"` - something the standard marks Required is absent.
+#'   * `"missing optional"` - something Expected is absent, or a value is
+#'     blank. Often legitimate: a screen-failure subject with no reference
+#'     dates, a variable your raw data does not carry yet.
+#'
+#'   These are coreval's own triage, not a CDISC severity: the rules carry no
+#'   severity field, and this does not map onto anyone's scale.
 #' @param dataset Keep only these datasets, e.g. `"AE"`.
 #' @param rule Keep only these rule ids, e.g. `"CORE-000547"`.
 #' @param variable Keep only findings naming these variables.
@@ -103,6 +111,7 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
 #' summary(check_dataset(ae))
 #' @export
 summary.coreval_result <- function(object, ...) {
+  assert_coreval_result(object, "object")
   f <- object$findings
   per_problem <- unique(f[, c("Dataset", "rule_id", "triage")])
   counts <- table(factor(per_problem$triage, levels = TRIAGE_LEVELS))
@@ -149,3 +158,28 @@ summary.coreval_result <- function(object, ...) {
   }
   invisible(out)
 }
+
+#' Refuse an object that carries the class but not the contents
+#'
+#' `print()` and `summary()` both index `$findings` and `$skipped` straight
+#' away, so a malformed object failed with base R's "argument is of length
+#' zero" - after the banner had already printed, which reads like a bug in
+#' the report rather than a bad input.
+#'
+#' @param x The object to check.
+#' @param arg Argument name to name in the message.
+#' @return `invisible(NULL)`; raises an error when `x` is not a result.
+#' @noRd
+assert_coreval_result <- function(x, arg = "x") {
+  needed <- c("findings", "skipped")
+  if (!is.list(x) || !all(needed %in% names(x))) {
+    stop(
+      "`", arg, "` is not a coreval result: it has no ",
+      paste(setdiff(needed, names(x)), collapse = " or "), " table. ",
+      "Results come from check_dataset() or check_study().",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+

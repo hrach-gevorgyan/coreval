@@ -317,8 +317,19 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   Passing the path is the usual way; reading first is only worth it when
 #'   you want to check the same large study more than once without re-reading
 #'   it, or to look at what was parsed.
+#' @param standard The standard the data follows, e.g. `"SDTMIG"` or
+#'   `"SENDIG"`. Overrides whatever the study declares about itself. Rules
+#'   are written per standard, so this genuinely narrows what runs; leave it
+#'   unset to run every standard's rules and see everything.
+#' @param version The standard's version, e.g. `"3.4"`. Needs `standard`
+#'   too, since a bare version is ambiguous across standards.
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
 #'   which rules apply, as in [list_rules()].
+#' @section Progress:
+#' A large study takes long enough that silence looks like a hang, so an
+#' interactive session shows a progress bar. It is off in scripts and
+#' non-interactive runs, where it would only clutter a log. Force it either
+#' way with `options(coreval.progress = TRUE)` or `FALSE`.
 #' @param max_records Most records to keep per rule, default 1000. A rule can
 #'   flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200 000
 #'   identical findings, more than Excel can hold. The true count is kept in
@@ -327,14 +338,21 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
 #'   default: a deprecated rule has a published replacement, so running both
 #'   reports the same defect twice.
-#' @return Three tables:
-#'   * `findings` - what is wrong. One row per problem, with `Dataset`,
+#' @return An object of class `coreval_result`, holding three tables. Because
+#'   it has a class, typing the result's name prints a readable report rather
+#'   than dumping the list, and provenance rides along as attributes:
+#'   `checks_run`, `domains` and `excluded_by_standard`.
+#'
+#'   * `findings` - what is wrong. One row per affected record, with `Dataset`,
 #'     `Record`, `Variable`, `Value`, the `issue` in words, and its `triage`.
 #'     `Not in dataset` under `Value` means the rule wanted a variable you do
 #'     not have, which is usually the finding itself.
 #'   * `skipped` - what could not be checked, with a `reason` for each. Read
 #'     this one: an empty `findings` table can mean clean data *or* rules that
-#'     never ran, and they look identical otherwise.
+#'     never ran, and they look identical otherwise. Reasons include a dataset
+#'     you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
+#'     controlled terminology, which is around 438 MB and so is deliberately
+#'     not bundled. Nothing skipped is ever counted as a pass.
 #'   * `truncated` - rules that flagged more records than `max_records` kept,
 #'     with how many they really found.
 #' @examples
@@ -346,9 +364,11 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' result$findings
 #' unlink(dir, recursive = TRUE)
 #' @export
-check_study <- function(study, use_case = NULL, max_records = 1000,
+check_study <- function(study, standard = NULL, version = NULL,
+                        use_case = NULL, max_records = 1000,
                         include_deprecated = FALSE) {
-  validate_check_args(max_records = max_records)
+  validate_check_args(standard = standard, version = version,
+                      max_records = max_records)
   # Take the folder directly. Requiring read_study() first made people call
   # two functions to do one thing, for no benefit in the common case.
   if (is.character(study)) {
@@ -383,6 +403,18 @@ check_study <- function(study, use_case = NULL, max_records = 1000,
       "Check the folder holds .xpt/.sas7bdat/.csv files.",
       call. = FALSE
     )
+  }
+  # An explicitly supplied standard overrides whatever the study declares
+  # about itself, the same way it does in check_dataset(). Without this,
+  # check_study()'s own report told the reader to pass `standard = "SDTMIG"`
+  # and there was no such argument to pass it to.
+  if (!is.null(standard)) {
+    study$standard <- list(
+      product = toupper(standard),
+      version = if (is.null(version)) NA_character_ else version
+    )
+  } else if (!is.null(version)) {
+    study$standard$version <- version
   }
   run_checks(
     study,
