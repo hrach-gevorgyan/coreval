@@ -13,22 +13,28 @@
 args <- commandArgs(trailingOnly = TRUE)
 do_fetch <- "--fetch" %in% args
 
-pinned_path <- file.path("data-raw", "UPSTREAM_SHA")
-if (!file.exists(pinned_path)) {
-  stop("No pinned SHA at ", pinned_path, call. = FALSE)
+read_pin <- function(file) {
+  path <- file.path("data-raw", file)
+  if (!file.exists(path)) stop("No pinned SHA at ", path, call. = FALSE)
+  trimws(readLines(path, warn = FALSE)[[1]])
 }
-pinned <- trimws(readLines(pinned_path, warn = FALSE)[[1]])
 
+# Both pins are a licensing record as well as a build record: inst/COPYRIGHTS
+# names the commit each bundled file was taken from.
 repos <- list(
   list(
     name = "cdisc-open-rules",
     path = file.path("data-raw", "upstream", "cdisc-open-rules"),
+    pin = read_pin("UPSTREAM_SHA"),
+    rebuild = "data-raw/extract_rules.R",
     why = "the rule definitions and reference test data this package bundles"
   ),
   list(
     name = "cdisc-rules-engine",
     path = file.path("data-raw", "upstream", "cdisc-rules-engine"),
-    why = "the reference implementation, consulted to settle rule semantics"
+    pin = read_pin("UPSTREAM_SHA_ENGINE"),
+    rebuild = "the data-raw/dump_*.py scripts and their .R counterparts",
+    why = "the offline metadata caches bundled in inst/extdata, and the reference implementation"
   )
 )
 
@@ -40,10 +46,9 @@ git <- function(path, ...) {
   if (!is.null(attr(out, "status")) && attr(out, "status") != 0) NA_character_ else out
 }
 
-cat("Pinned rule set:", pinned, "\n\n")
-
 for (repo in repos) {
   cat("--", repo$name, "\n   ", repo$why, "\n")
+  cat("    pinned at:  ", repo$pin, "\n")
   if (!dir.exists(repo$path)) {
     cat("    NOT CLONED at", repo$path, "\n")
     cat("    git clone https://github.com/cdisc-org/", repo$name, ".git ", repo$path, "\n\n", sep = "")
@@ -72,18 +77,16 @@ for (repo in repos) {
     cat("    behind remote: unknown (shallow clone, or no upstream tracking ref)\n")
   }
 
-  if (identical(repo$name, "cdisc-open-rules")) {
-    if (identical(head_sha, pinned)) {
-      cat("    MATCHES the pinned SHA - bundled rules are built from this clone\n")
-    } else {
-      cat("    DIFFERS from the pinned SHA\n")
-      ahead <- git(repo$path, "rev-list", "--count", paste0(pinned, "..HEAD"))
-      if (!is.na(ahead[[1]]) && nzchar(ahead[[1]])) {
-        cat("    clone is", ahead[[1]], "commits ahead of the pin\n")
-      }
-      cat("    -> to adopt: Rscript data-raw/extract_rules.R (rewrites UPSTREAM_SHA),\n")
-      cat("       then re-run the conformance harness and review every status change\n")
+  if (identical(head_sha, repo$pin)) {
+    cat("    MATCHES the pin - the bundled data was built from this clone\n")
+  } else {
+    cat("    DIFFERS from the pin\n")
+    ahead <- git(repo$path, "rev-list", "--count", paste0(repo$pin, "..HEAD"))
+    if (!is.na(ahead[[1]]) && nzchar(ahead[[1]])) {
+      cat("    clone is", ahead[[1]], "commits ahead of the pin\n")
     }
+    cat("    -> to adopt: re-run", repo$rebuild, "\n")
+    cat("       then re-run the conformance harness and review every status change\n")
   }
   cat("\n")
 }

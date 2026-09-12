@@ -4,23 +4,25 @@ Third-party material bundled with coreval
 coreval's own R code is MIT licensed; see the package's LICENSE file.
 
 The files below are NOT coreval's own work. They come from two MIT-licensed
-repositories published by CDISC, and the notice that licence requires is
+repositories published by CDISC, and both notices that licence requires are
 reproduced in full at the end of this file:
 
   * cdisc-org/cdisc-open-rules      - the rule definitions and their test data
   * cdisc-org/cdisc-rules-engine    - the offline standards-metadata caches
                                       that project commits to its own git
 
-Each entry below names which of the two it came from.
+Each entry below names which of the two it came from. The exact commit each
+release was built from is recorded in data-raw/UPSTREAM_SHA (rules) and
+data-raw/UPSTREAM_SHA_ENGINE (metadata) in the source repository; data-raw is
+not installed, so the rules commit is also carried at run time on
+attr(list_rules(), "rules_version") and written into every findings file.
 
 
 inst/extdata/rules.rds
 ----------------------
 From cdisc-org/cdisc-open-rules. 797 conformance rule definitions - the check
 logic, scope, messages, cited guidance and conformance-rule identifiers -
-extracted at build time from a pinned commit of that repository. The commit is recorded in
-attr(list_rules(), "rules_version") in the installed package, and in
-data-raw/UPSTREAM_SHA in the source repository (data-raw is not installed).
+extracted at build time from a pinned commit of that repository.
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds
@@ -33,16 +35,24 @@ inst/extdata/ct_codelists.rds
 From cdisc-org/cdisc-rules-engine. CDISC standards metadata - variable names,
 labels, roles, data types, Core designations, codelist identifiers, observation
 classes, per-standard dataset labels and Controlled Terminology package dates.
+
 Extracted at build time from the offline caches (resources/cache/*.pkl) that
-CDISC's own rules engine commits directly to its repository, not downloaded: no
-CDISC API is contacted at build or run time.
+CDISC's own rules engine commits directly to its repository. This matters for
+licensing, not only for convenience. That engine reaches the CDISC Library
+through an API that requires a CDISC_LIBRARY_API_KEY and is governed by the
+Library's own terms of use. coreval holds no such key and makes no such
+request. The material here is taken only from files CDISC chose to commit to a
+public repository under the MIT licence reproduced below, and is used under
+that licence.
 
 ct_codelists.rds is the Controlled Terminology: every published CT package,
 reduced to the codelist and term submission values and C-codes a conformance
 rule can ask about, plus whether each codelist is extensible. The definitions,
 synonyms and preferred terms that make up most of the source caches are not
 included - no bundled rule asks for them - which is why 438 MB of caches
-becomes 0.54 MB here.
+becomes 0.54 MB here. CDISC Controlled Terminology is developed by CDISC in
+collaboration with the National Cancer Institute's Enterprise Vocabulary
+Services (NCI EVS), which publishes it.
 
 tests/testthat/fixtures/
 ------------------------
@@ -53,6 +63,11 @@ own reference output.
 
 Licence of the bundled material
 -------------------------------
+
+The MIT licence requires its copyright notice to travel with the material. The
+two source repositories carry different notices, so both are reproduced.
+
+From cdisc-org/cdisc-open-rules (rules.rds, tests/testthat/fixtures/):
 
 MIT License
 
@@ -75,6 +90,40 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+From cdisc-org/cdisc-rules-engine (the standards metadata and Controlled
+Terminology in inst/extdata/):
+
+MIT License
+
+Copyright (c) 2022 cdisc
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+Trademarks
+----------
+CDISC, CORE, SDTM, SEND, ADaM, Define-XML and TIG are trademarks or registered
+trademarks of the Clinical Data Interchange Standards Consortium. They appear
+in this package only to identify the standards and rules it reads, which is
+their ordinary descriptive use. No claim to them is made, and their use here
+does not imply CDISC sponsorship or approval.
 
 
 Not a CDISC product

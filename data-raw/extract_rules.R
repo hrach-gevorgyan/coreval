@@ -37,8 +37,8 @@ sha <- system2("git", c("-C", upstream_dir, "rev-parse", "HEAD"), stdout = TRUE)
 # share the same tabular, domain-based dataset shape our engine already
 # reads/evaluates - genuinely extractable, not just "more data". ADaMIG is
 # also kept (a small number of Published/Deprecated rules already cite it
-# alongside SDTMIG) - see data-raw's own README/CLAUDE.md notes for why the
-# much larger Unpublished/ADAMIG draft folder is deliberately NOT pulled in:
+# alongside SDTMIG). The much larger Unpublished/ADAMIG draft folder is
+# deliberately NOT pulled in:
 # every one of its 93 rules has test data but zero reference results.csv,
 # so nothing there can be verified against real CDISC output, unlike every
 # other tier here. USDM (a JSON study-design model, not a tabular dataset
@@ -313,5 +313,11 @@ dir.create(file.path("inst", "extdata"), recursive = TRUE, showWarnings = FALSE)
 saveRDS(rules_data, file.path("inst", "extdata", "rules.rds"), compress = "xz")
 
 writeLines(sha, file.path("data-raw", "UPSTREAM_SHA"))
+# This pins the rules repository only. Everything else in inst/extdata comes
+# from cdisc-rules-engine, pinned separately in UPSTREAM_SHA_ENGINE. Re-record
+# that one whenever the dump_*.py scripts are re-run against a newer clone:
+#   git -C data-raw/upstream/cdisc-rules-engine rev-parse HEAD \
+#     > data-raw/UPSTREAM_SHA_ENGINE
+# Both pins are cited in inst/COPYRIGHTS, so a stale one misstates provenance.
 
 cat(sprintf("Extracted %d rules from upstream SHA %s\n", length(rules), sha))
