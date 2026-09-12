@@ -1,4 +1,4 @@
-# coreval
+# coreval <img src="man/figures/logo.png" align="right" height="132" alt="" />
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/coreval)](https://CRAN.R-project.org/package=coreval)
