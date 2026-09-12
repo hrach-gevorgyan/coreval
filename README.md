@@ -1,6 +1,7 @@
 # coreval
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/coreval)](https://CRAN.R-project.org/package=coreval)
 [![R-CMD-check](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
@@ -109,6 +110,12 @@ to.** It just means the expensive check finds far less, and you found the
 obvious things in seconds instead of half an hour.
 
 ## Install
+
+```r
+install.packages("coreval")
+```
+
+Or the development version, if you want something that isn't in a release yet:
 
 ```r
 # install.packages("pak")
