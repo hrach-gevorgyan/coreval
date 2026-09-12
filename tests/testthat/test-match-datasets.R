@@ -425,3 +425,36 @@ test_that("the child match joins to each row's own RDOMAIN parent", {
   # RDOMAIN naming a dataset the study does not have leaves the row alone.
   expect_true(is.na(d$AETERM[4]))
 })
+
+test_that("the child match leaves the caller's dataset untouched", {
+  # apply_child_match() no longer copies the child dataset up front, because
+  # copying an 18 MB SUPPAE for every rule that needed the join was pure
+  # waste. data.table assigns BY REFERENCE, so the guarantee that replaced the
+  # copy - that nothing here modifies the input - has to be asserted, not
+  # assumed. If it ever does, the caller's dataset silently grows a stray
+  # column and every later rule sees it.
+  ae <- data.table::data.table(
+    STUDYID = "S", DOMAIN = "AE", USUBJID = c("01", "02"),
+    AESEQ = c(1L, 1L), AETERM = c("HEADACHE", "RASH")
+  )
+  supp <- data.table::data.table(
+    STUDYID = "S", RDOMAIN = "AE", USUBJID = c("01", "02"),
+    IDVAR = "AESEQ", IDVARVAL = c("1", "1"),
+    QNAM = c("A", "B"), QVAL = c("x", "y")
+  )
+  study <- list(datasets = list(AE = list(data = ae, meta = NULL)))
+  before_cols <- names(supp)
+  before_rows <- nrow(supp)
+  before <- data.table::copy(supp)
+
+  out <- apply_child_match(list(data = supp, meta = NULL), study,
+                           c("STUDYID", "USUBJID", "IDVAR", "IDVARVAL"))
+
+  expect_equal(names(supp), before_cols)
+  expect_equal(nrow(supp), before_rows)
+  expect_false(".coreval_child_row" %in% names(supp))
+  expect_true(isTRUE(all.equal(as.data.frame(supp), as.data.frame(before))))
+  # And the join still did its job.
+  expect_equal(as.data.frame(out$data)$AETERM, c("HEADACHE", "RASH"))
+  expect_false(".coreval_child_row" %in% names(out$data))
+})

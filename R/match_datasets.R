@@ -195,7 +195,12 @@ apply_supp_match <- function(dataset, supp_dataset) {
 #' @return `dataset` with the matched parent columns joined in.
 #' @noRd
 apply_child_match <- function(dataset, study, keys) {
-  child <- data.table::copy(dataset$data)
+  # NOT copied. Nothing below modifies `child` - the row id that restores the
+  # caller's row order is stamped onto each per-group SUBSET, and `child[idx]`
+  # already returns a new table. Copying the whole child dataset up front only
+  # to add one column meant a full duplicate of, say, an 18 MB SUPPAE for
+  # every rule that needed the join.
+  child <- dataset$data
   if (nrow(child) == 0) {
     return(dataset)
   }
@@ -228,7 +233,6 @@ apply_child_match <- function(dataset, study, keys) {
   # parent column matched a character child value. Coercing both sides keeps
   # that, rather than letting data.table's type rules decide.
   row_id <- ".coreval_child_row"
-  child[[row_id]] <- seq_len(n)
 
   groups <- split(
     seq_len(n),
@@ -245,6 +249,9 @@ apply_child_match <- function(dataset, study, keys) {
   for (gi in seq_along(groups)) {
     idx <- groups[[gi]]
     sub <- child[idx]
+    # Safe to modify: the subset above is already a fresh table, so this never
+    # reaches the caller's dataset.
+    sub[[row_id]] <- idx
     parent <- study$datasets[[rd[idx[1]]]]
     if (is.null(parent) || nrow(parent$data) == 0) {
       # No parent to join: the row keeps only its own columns, exactly as
