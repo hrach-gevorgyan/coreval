@@ -1,5 +1,14 @@
 # coreval 0.1.0.9000 (development)
 
+* **A define.xml that cannot be read now says so.** It used to return the same
+  nothing as a study with no define.xml at all, so a truncated or non-Define
+  file was indistinguishable from one that was never supplied. Worse once the
+  define became a source of the CT version: the rules that needed it skipped
+  saying "this study does not say which terminology it follows, pass
+  ct_package", which is true of the parsed result and useless to someone whose
+  file simply stops mid-element. The warning now names the file and the reason,
+  down to the line.
+
 * **Define-XML now says which controlled terminology a study follows.** A
   Define-XML 2.1 records it in `def:Standards`, the same way TS records it in
   `TSVCDVER`, and coreval reads it instead of asking. TS still wins where both

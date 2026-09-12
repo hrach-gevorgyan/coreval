@@ -89,7 +89,9 @@ test_that("read_define_xml returns NULL rather than erroring on a missing or unp
   bad <- tempfile(fileext = ".xml")
   on.exit(unlink(bad))
   writeLines("this is not xml <<<", bad)
-  expect_null(read_define_xml(bad))
+  # NULL, but not quietly: a file that is there and cannot be read is a
+  # different fact from no file, and the warning is what carries it.
+  expect_warning(expect_null(read_define_xml(bad)), "not well-formed XML")
 })
 
 test_that("find_define_xml prefers a define*.xml over other XML in the directory", {
@@ -371,4 +373,27 @@ test_that("the CT package a Define-XML 2.1 declares is read, and matches the sta
   # nothing to read and guessing is refused.
   send <- list(define = define, standard = list(product = "SENDIG"))
   expect_null(ct_package_from_define(send))
+})
+
+test_that("a define.xml that is present but unreadable says so, and is not read as absent", {
+  skip_if_not_installed("xml2")
+
+  # No define.xml at all: silence. Nothing was supplied, nothing is wrong.
+  expect_silent(expect_null(read_define_xml(NULL)))
+  missing_file <- file.path(tempdir(), "no-such-define.xml")
+  expect_silent(expect_null(read_define_xml(missing_file)))
+
+  # Present but not well-formed. The warning has to name the file, because the
+  # skip reasons downstream describe the parsed result and would otherwise send
+  # someone to pass ct_package when their real problem is a truncated file.
+  broken <- tempfile(fileext = ".xml")
+  writeLines(c('<?xml version="1.0"?>', '<ODM><Study OID="S"><ItemGroupDef'), broken)
+  expect_warning(out <- read_define_xml(broken), "not well-formed XML")
+  expect_null(out)
+
+  # Well-formed XML that describes no dataset is not a Define-XML either.
+  not_define <- tempfile(fileext = ".xml")
+  writeLines(c('<?xml version="1.0"?>', '<notdefine><a/></notdefine>'), not_define)
+  expect_warning(out <- read_define_xml(not_define), "no ItemGroupDef")
+  expect_null(out)
 })

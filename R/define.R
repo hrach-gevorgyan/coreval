@@ -123,14 +123,32 @@ yesno_to_logical <- function(x, default = FALSE) {
 #' Read a define.xml into flat dataset-level and variable-level tables
 #'
 #' @param path Path to a define.xml file.
-#' @return `list(datasets, variables)`, each a [data.table::data.table()], or
-#'   `NULL` if `xml2` is unavailable or the file cannot be parsed. `datasets`
-#'   has one row per `ItemGroupDef`; `variables` one row per
-#'   (dataset, variable) pair.
+#' @return `list(datasets, variables, ct_standards)`, each a
+#'   [data.table::data.table()], or `NULL` with a warning naming the reason if
+#'   the file is present and cannot be read. `datasets` has one row per
+#'   `ItemGroupDef`; `variables` one row per (dataset, variable) pair;
+#'   `ct_standards` one row per controlled terminology package it declares.
 #' @noRd
 read_define_xml <- function(path) {
-  if (!define_xml_available() || is.null(path) || !file.exists(path)) {
+  if (is.null(path) || !file.exists(path)) {
     return(NULL)
+  }
+  # A define.xml that is present but unreadable is NOT the same fact as no
+  # define.xml, and returning NULL for both made them indistinguishable. The
+  # rules that needed it then skipped for whatever reason came next, which
+  # after the define became a source of the CT version meant a corrupt file
+  # was reported as "this study does not say which terminology it follows,
+  # pass ct_package" - true of the parsed result, and useless to someone whose
+  # actual problem is a truncated file. Warn once, at the point the fact is
+  # known, naming the file.
+  unreadable <- function(why) {
+    warning("define.xml found but not read (", why, "): ", basename(path),
+            ". Rules that compare against it will be skipped.",
+            call. = FALSE)
+    NULL
+  }
+  if (!define_xml_available()) {
+    return(unreadable("the 'xml2' package is not installed"))
   }
   # Read the bytes first and parse from memory. xml2::read_xml(<path>) hands
   # libxml2 the filename and lets it open the file itself, and on a parse
@@ -140,18 +158,22 @@ read_define_xml <- function(path) {
   # owns and closes the connection whatever the parser then does.
   raw <- tryCatch(readBin(path, "raw", file.size(path)), error = function(e) NULL)
   if (is.null(raw)) {
-    return(NULL)
+    return(unreadable("the file could not be opened"))
   }
-  doc <- tryCatch(xml2::read_xml(raw), error = function(e) NULL)
-  if (is.null(doc)) {
-    return(NULL)
+  doc <- tryCatch(xml2::read_xml(raw), error = function(e) conditionMessage(e))
+  if (is.character(doc)) {
+    return(unreadable(paste0("not well-formed XML: ", trimws(doc))))
   }
   xml2::xml_ns_strip(doc)
 
   groups <- xml2::xml_find_all(doc, "//ItemGroupDef")
   items <- xml2::xml_find_all(doc, "//ItemDef")
+  # Well-formed XML that declares no dataset is not a Define-XML. Structural,
+  # and enough for what this reader depends on: validating against CDISC's own
+  # schema would mean shipping their XSD, which carries its own terms and is
+  # not the MIT-licensed material this package bundles.
   if (length(groups) == 0) {
-    return(NULL)
+    return(unreadable("no ItemGroupDef elements, so it does not describe any dataset"))
   }
 
   datasets <- data.table::data.table(
