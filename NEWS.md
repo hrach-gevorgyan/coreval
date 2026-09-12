@@ -1,5 +1,11 @@
 # coreval 0.1.0.9000 (development)
 
+* The progress bar now names the domain being checked and how far through the
+  study it is, and its percentage is weighted by how many records each domain
+  holds rather than by a plain count of rules. A check against a 161,600-row
+  `AE` costs hundreds of times one against a 200-row `SJ`, so the old bar
+  sprinted through the small domains and appeared to hang on the big one.
+
 * The one-row-per-(record, variable) table that some rule types need is built
   column by column into a preallocated vector rather than as one table per
   variable stitched together. It is inherently large - 27 columns of a

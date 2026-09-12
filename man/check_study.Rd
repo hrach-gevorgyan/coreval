@@ -82,9 +82,21 @@ join coreval does not implement yet.
 \section{Progress}{
 
 A large study takes long enough that silence looks like a hang, so an
-interactive session shows a progress bar. It is off in scripts and
-non-interactive runs, where it would only clutter a log. Force it either
-way with \code{options(coreval.progress = TRUE)} or \code{FALSE}.
+interactive session shows a progress bar naming the domain being checked
+and how far through the study it is:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{  AE        4/7  |=====================       |  75\%
+}\if{html}{\out{</div>}}
+
+The percentage is weighted by how many records each domain holds, not by a
+plain count of rules, because a check against a 161,600-row \code{AE} costs
+hundreds of times one against a 200-row \code{SJ}. It tracks elapsed time
+closely but is still an estimate - rules differ in cost among themselves
+too - so treat it as "roughly how far through", not a clock.
+
+It is off in scripts and non-interactive runs, where it would only clutter
+a log. Force it either way with \code{options(coreval.progress = TRUE)} or
+\code{FALSE}.
 }
 
 \examples{

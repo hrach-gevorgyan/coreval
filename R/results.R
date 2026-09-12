@@ -327,9 +327,22 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   which rules apply, as in [list_rules()].
 #' @section Progress:
 #' A large study takes long enough that silence looks like a hang, so an
-#' interactive session shows a progress bar. It is off in scripts and
-#' non-interactive runs, where it would only clutter a log. Force it either
-#' way with `options(coreval.progress = TRUE)` or `FALSE`.
+#' interactive session shows a progress bar naming the domain being checked
+#' and how far through the study it is:
+#'
+#' ```
+#'   AE        4/7  |=====================       |  75%
+#' ```
+#'
+#' The percentage is weighted by how many records each domain holds, not by a
+#' plain count of rules, because a check against a 161,600-row `AE` costs
+#' hundreds of times one against a 200-row `SJ`. It tracks elapsed time
+#' closely but is still an estimate - rules differ in cost among themselves
+#' too - so treat it as "roughly how far through", not a clock.
+#'
+#' It is off in scripts and non-interactive runs, where it would only clutter
+#' a log. Force it either way with `options(coreval.progress = TRUE)` or
+#' `FALSE`.
 #' @param max_records Most records to keep per rule, default 1000. A rule can
 #'   flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200 000
 #'   identical findings, more than Excel can hold. The true count is kept in
@@ -423,6 +436,31 @@ check_study <- function(study, standard = NULL, version = NULL,
   )
 }
 
+#' Draw the one-line progress indicator
+#'
+#' `utils::txtProgressBar()` ignores its `label` argument, so naming the domain
+#' being checked means drawing the line here. Carriage return and no newline,
+#' so it overwrites itself; `run_checks()` prints the closing newline on exit.
+#'
+#' @param done,total Progress, in the caller's own weighting.
+#' @param domain Domain currently being checked.
+#' @param index,n Which domain this is, and how many there are.
+#' @param width Bar width in characters.
+#' @return `invisible(NULL)`, called for the side effect.
+#' @noRd
+render_progress <- function(done, total, domain, index, n, width = 28L) {
+  frac <- if (total > 0) min(1, done / total) else 1
+  filled <- as.integer(round(frac * width))
+  cat(sprintf(
+    "
+  %-8s %2d/%-2d |%s%s| %3.0f%%",
+    substr(domain, 1, 8), index, n,
+    strrep("=", filled), strrep(" ", width - filled), frac * 100
+  ))
+  utils::flush.console()
+  invisible(NULL)
+}
+
 #' Evaluate every applicable rule against every domain in a study
 #'
 #' The single evaluation loop behind both [check_study()] and
@@ -508,16 +546,41 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   show_progress <- isTRUE(getOption("coreval.progress", interactive())) &&
     sum(lengths(plans)) > 0
   if (show_progress) {
-    pb <- utils::txtProgressBar(min = 0, max = sum(lengths(plans)), style = 3)
-    on.exit(close(pb), add = TRUE)
-    done <- 0L
+    # Weighted by the number of records each domain holds, not by a plain
+    # count of checks. A check against a 161,600-row AE costs hundreds of
+    # times one against a 200-row SJ, so an evenly weighted bar sprints
+    # through the small domains and then appears to hang on the big one.
+    # Still an approximation - rules differ in cost among themselves too -
+    # but it tracks elapsed time far better than counting checks.
+    # The fixed cost of running one check - scope resolution, building the
+    # per-rule dataset, assembling findings - is worth roughly 700 rows of
+    # scanning. Measured, not guessed: across seven domains from 2 to 17,760
+    # rows, cost per check fits about 0.0005s + 7.4e-7s per row, and the ratio
+    # of those is ~700. Without the constant the four large domains of a test
+    # study accounted for 99.96% of the weight and the bar sat at 100% while
+    # three domains were still to go; with it the model tracks measured
+    # elapsed time to about a percent.
+    per_check_overhead <- 700
+    domain_rows <- vapply(domains, function(d) {
+      dt <- study$datasets[[d]]$data
+      if (is.null(dt)) 1 else max(1, nrow(dt))
+    }, numeric(1)) + per_check_overhead
+    total_weight <- sum(lengths(plans[domains]) * domain_rows)
+    done_weight <- 0
+    domain_index <- 0L
+    n_domains <- length(domains)
+    on.exit(cat("
+"), add = TRUE)
   }
 
   for (domain in domains) {
+    if (show_progress) {
+      domain_index <- domain_index + 1L
+    }
     for (rule_id in plans[[domain]]) {
       if (show_progress) {
-        done <- done + 1L
-        utils::setTxtProgressBar(pb, done)
+        done_weight <- done_weight + domain_rows[[domain]]
+        render_progress(done_weight, total_weight, domain, domain_index, n_domains)
       }
       rule <- .coreval_env$data$rules[[rule_id]]
       if (!rule_type_is_supported(rule$rule_type)) {
