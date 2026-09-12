@@ -1,5 +1,11 @@
 # coreval 0.1.0.9000 (development)
 
+* The per-rule synthetic datasets are built once per domain instead of once
+  per rule. Those builders never depended on the rule, yet about 60 rules each
+  asked for the identical answer, and computing one of them scans every
+  variable against every record. Checking a 511,000-row study went from 77s to
+  about 47s. The cache lives for one sweep only and holds 0.1 MB.
+
 * The bundled rule table is built once per session instead of once per domain.
   It was 600 MB of the 2.9 GB a 51,000-row study allocated - a fifth of
   everything, none of it touching your data. Checking a 511,000-row study went

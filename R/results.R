@@ -440,6 +440,18 @@ check_study <- function(study, standard = NULL, version = NULL,
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
                        max_records = 1000, include_deprecated = FALSE) {
   domains <- names(study$datasets)
+  # Per-run cache for the synthetic datasets prepare_dataset_for_rule() builds.
+  # Those builders take (dataset, define, domain, study) - nothing about the
+  # RULE - yet were rebuilt for every rule taking the same path. On a
+  # 511,000-row study build_variable_metadata_dataset() alone was 19% of
+  # runtime, because computing its null-value stats scans every variable
+  # against every record, and 60 rules asked for the identical answer.
+  #
+  # Scoped to one sweep and torn down after, so it can never serve a stale
+  # answer for a different study. Absent (NULL) outside run_checks(), which
+  # leaves evaluate_rule() behaving exactly as before.
+  .coreval_env$prep_cache <- new.env(parent = emptyenv())
+  on.exit(.coreval_env$prep_cache <- NULL, add = TRUE)
   n_ran <- 0L
   all_findings <- list()
   all_skipped <- list()
