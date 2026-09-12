@@ -16,8 +16,20 @@ rules_version <- function() {
 #' @return A [data.table::data.table()] with the columns [list_rules()] documents.
 #' @noRd
 build_rules_table <- function() {
+  # Cached: this is a pure function of the bundled rules, which are read once
+  # in .onLoad and never replaced. It builds 797 one-row data.tables and
+  # rbindlist()s them, and `rules_for_domain()` calls it once per domain - so
+  # a seven-domain study rebuilt the same table seven times. Allocation
+  # profiling put 600 MB of a 51,000-row study's 2.9 GB total in here, a fifth
+  # of everything allocated, none of it touching the study's data at all.
+  cached <- .coreval_env$rules_table
+  if (!is.null(cached)) {
+    # A copy, so a caller that modifies the table it gets back cannot corrupt
+    # the cache for every later call.
+    return(data.table::copy(cached))
+  }
   rules <- .coreval_env$data$rules
-  data.table::rbindlist(lapply(rules, function(r) {
+  out <- data.table::rbindlist(lapply(rules, function(r) {
     data.table::data.table(
       id = r$id,
       # What the rule is actually about. Without this the table could tell you
@@ -41,6 +53,8 @@ build_rules_table <- function() {
       status = r$status
     )
   }))
+  .coreval_env$rules_table <- out
+  data.table::copy(out)
 }
 
 #' Look up CORE rules

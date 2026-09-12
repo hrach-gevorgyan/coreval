@@ -1,5 +1,10 @@
 # coreval 0.1.0.9000 (development)
 
+* The bundled rule table is built once per session instead of once per domain.
+  It was 600 MB of the 2.9 GB a 51,000-row study allocated - a fifth of
+  everything, none of it touching your data. Checking a 511,000-row study went
+  from 113s to 77s.
+
 * **Checking a large study is dramatically faster.** The cross-dataset match
   that joins a supplemental or related dataset to its parent looped over every
   child row and rescanned the whole parent each time. It was 90% of
