@@ -203,3 +203,20 @@ test_that("the date helpers survive empty and all-missing input", {
   expect_equal(compare_dates(character(0), character(0), "eq"), logical(0))
   expect_equal(is_valid_date_str(c(NA_character_, NA_character_)), c(FALSE, FALSE))
 })
+
+test_that("a date column that is absent is not an incomplete date", {
+  # is_incomplete_date was a plain negation of is_complete_date, which answers
+  # FALSE for a column that is not there - so a missing column came back TRUE.
+  # CORE-000138 asks whether DM.RFSTDTC is incomplete while --STDY is
+  # populated; on a study with no DM, every record carrying a study day was
+  # flagged. 267 of 393 findings on a three-dataset fixture were this, where
+  # CDISC's own engine reports none.
+  ctx <- list(exists = FALSE, n = 3L, target = rep(NA_character_, 3))
+  expect_equal(get_operator("is_incomplete_date")(ctx), rep(FALSE, 3))
+
+  # The positive direction is unchanged: a present, genuinely partial date
+  # still reports as incomplete, and a complete one does not.
+  ctx2 <- list(exists = TRUE, n = 3L,
+               target = c("2019-03-24", "2019-03", "2019"))
+  expect_equal(get_operator("is_incomplete_date")(ctx2), c(FALSE, TRUE, TRUE))
+})

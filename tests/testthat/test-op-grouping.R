@@ -301,3 +301,13 @@ test_that("split_domain_siblings only groups files sharing a DOMAIN, current fil
   # An unsplit domain returns nothing, so callers keep their simple path.
   expect_length(split_domain_siblings(list(study = study, dataset = ae, domain = "AE")), 0)
 })
+
+test_that("uniqueness is not asserted about a column that is absent", {
+  # is_unique_set and is_unique_relationship were plain negations of their
+  # is_not_* counterparts, which answer FALSE for a column that is not there -
+  # so negating them claimed a missing column's values were unique.
+  for (op in c("is_unique_set", "is_unique_relationship")) {
+    ctx <- list(exists = FALSE, n = 3L, target = rep(NA_character_, 3))
+    expect_equal(get_operator(op)(ctx), rep(FALSE, 3), info = op)
+  }
+})

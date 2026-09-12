@@ -444,8 +444,17 @@ register_operator("is_complete_date", function(ctx) {
   unname(present & !is.na(precision) & precision >= 2L)
 })
 
-# Operator: is_incomplete_date - negation of is_complete_date
+# Operator: is_incomplete_date - negation of is_complete_date, EXCEPT for a
+# column that is not there. A plain negation made a missing column report as an
+# incomplete date, because is_complete_date answers FALSE for one. CORE-000138
+# asks whether `DM.RFSTDTC` is incomplete while `--STDY` is populated; run on a
+# study with no DM, every record with a study day was flagged - 267 of 393
+# findings on one three-dataset fixture, where CDISC's own engine reports none.
+# A date that is absent is not an incomplete date.
 register_operator("is_incomplete_date", function(ctx) {
+  if (!ctx$exists) {
+    return(rep(FALSE, ctx$n))
+  }
   !get_operator("is_complete_date")(ctx)
 })
 

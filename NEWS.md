@@ -1,5 +1,19 @@
 # coreval 0.1.0.9000 (development)
 
+* **Fixed a false-positive class: a variable that isn't there is no longer
+  treated as failing a date or uniqueness test.** Three operators were written
+  as plain negations of their positive counterparts, which answer `FALSE` for a
+  column the dataset does not have - so negating them answered `TRUE`.
+  `is_incomplete_date` was the damaging one: CORE-000138/139 ask whether
+  `DM.RFSTDTC` is an incomplete date while `--STDY` is populated, so on a study
+  with no DM every record carrying a study day was reported. On a
+  three-dataset test study that was 267 of 393 findings - noise that buries the
+  real ones. `is_unique_set` and `is_unique_relationship` had the same shape.
+
+  Found by running CDISC's own rules engine over the same data and comparing
+  rule by rule: it reports nothing for those rules, coreval reported hundreds.
+  The conformance pass rate did not move at all, in either direction.
+
 * **Codelist checks against Define-XML now run.** coreval reads the codelist
   C-code a Define-XML file attaches to each variable, and bundles the code the
   CDISC Library expects for it, so a rule can tell you when your define

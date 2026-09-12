@@ -170,6 +170,12 @@ split_domain_siblings <- function(ctx) {
 
 # Operator: is_unique_set - negation of is_not_unique_set
 register_operator("is_unique_set", function(ctx) {
+  # Not a plain negation: is_not_unique_set() answers FALSE for a
+  # column that is not there, so negating it claimed uniqueness of a column
+  # the dataset does not have. Nothing can be asserted about absent data.
+  if (!ctx$exists) {
+    return(rep(FALSE, ctx$n))
+  }
   !get_operator("is_not_unique_set")(ctx)
 })
 
@@ -215,6 +221,12 @@ register_operator("is_not_unique_relationship", function(ctx) {
 
 # Operator: is_unique_relationship - negation of is_not_unique_relationship
 register_operator("is_unique_relationship", function(ctx) {
+  # Not a plain negation: is_not_unique_relationship() answers FALSE for a
+  # column that is not there, so negating it claimed uniqueness of a column
+  # the dataset does not have. Nothing can be asserted about absent data.
+  if (!ctx$exists) {
+    return(rep(FALSE, ctx$n))
+  }
   !get_operator("is_not_unique_relationship")(ctx)
 })
 
