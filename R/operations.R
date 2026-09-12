@@ -998,3 +998,42 @@ resolve_binding <- function(binding, dataset) {
   values <- binding$table[[binding$value_col]]
   if (is.list(values)) values[idx] else values[idx]
 }
+
+#' The controlled terminology version a study declares in TS
+#'
+#' Studies record it themselves: the Trial Summary dataset carries `TSVCDREF`
+#' (the terminology's publisher, "CDISC") and `TSVCDVER` (its version, an ISO
+#' date). Reading it is better than asking the caller, because it is what the
+#' study says about itself - the same principle as taking the standard and
+#' version from the data rather than assuming SDTMIG.
+#'
+#' Rows whose `TSVCDREF` is not CDISC are ignored: they cite someone else's
+#' terminology, which is not what the bundled packages are. Where the remaining
+#' rows disagree - real TS datasets do, usually a stale row or two - the
+#' version most rows agree on wins, and a tie takes the newest.
+#'
+#' @param study A study object.
+#' @return A bundled package name, or `NULL` if TS says nothing usable.
+#' @noRd
+ct_package_from_ts <- function(study) {
+  ts <- study$datasets[["TS"]]$data
+  if (is.null(ts) || !all(c("TSVCDREF", "TSVCDVER") %in% names(ts))) {
+    return(NULL)
+  }
+  ref <- toupper(trimws(as.character(ts$TSVCDREF)))
+  ver <- trimws(as.character(ts$TSVCDVER))
+  keep <- !is.na(ver) & nzchar(ver) & !is.na(ref) & ref == "CDISC"
+  if (!any(keep)) {
+    return(NULL)
+  }
+  counts <- sort(table(ver[keep]), decreasing = TRUE)
+  top <- names(counts)[counts == counts[[1]]]
+  version <- top[order(top, decreasing = TRUE)][1]
+
+  # SEND studies cite SEND terminology, SDTM studies SDTM's, and the two
+  # genuinely differ - SENDIG's LB codelist is not SDTMIG's.
+  product <- toupper(study$standard$product %||% NA_character_)
+  family <- if (!is.na(product) && startsWith(product, "SEND")) "sendct" else "sdtmct"
+  candidate <- paste0(family, "-", version)
+  if (candidate %in% ct_package_names()) candidate else NULL
+}

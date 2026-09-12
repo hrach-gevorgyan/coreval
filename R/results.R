@@ -410,6 +410,11 @@ check_study <- function(study, standard = NULL, version = NULL,
   # rule that needed it.
   if (!is.null(ct_package)) {
     study$ct_package <- validate_ct_package(ct_package)
+  } else if (is.null(study$ct_package)) {
+    # The study usually says so itself, in TS. Asking the caller for something
+    # already recorded in the data would be the same mistake as making them
+    # declare the standard.
+    study$ct_package <- ct_package_from_ts(study)
   }
   # Anything that is not a study object went straight through to run_checks(),
   # where `names(study$datasets)` is NULL, nothing runs, and the result prints

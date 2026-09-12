@@ -529,6 +529,22 @@ assert_referenced_metadata_available <- function(rule, dataset) {
       call. = FALSE
     )
   }
+  # Define-XML fields the reader does not build. Guarded by name rather than by
+  # prefix, because most define_* fields ARE built and a prefix test would
+  # refuse rules that work. Without this, resolve_condition_value()'s
+  # literal-text fallback turns the comparison into one against the field's own
+  # NAME and the rule reports nothing - CORE-000929 did exactly that once
+  # codelist_terms was implemented and stopped shielding it: CDISC's engine
+  # reports FA record 2 and coreval reported none. `test-rules.R` keeps the
+  # list of unbuilt pseudo-columns in step with this one.
+  unbuilt <- unique(targets[targets %in% c("define_variable_codelist_coded_codes")])
+  if (length(unbuilt) > 0) {
+    stop(
+      "needs Define-XML detail coreval does not read: ",
+      paste(unbuilt, collapse = ", "),
+      call. = FALSE
+    )
+  }
   invisible(NULL)
 }
 
@@ -568,9 +584,10 @@ assert_rule_inputs_available <- function(rule, study) {
     )
     if (any(needs_ct)) {
       stop(
-        "needs a controlled terminology package: pass ct_package (e.g. ",
-        "ct_package = \"sdtmct-2026-03-27\") to say which version of the ",
-        "terminology this study follows",
+        "needs controlled terminology, and this study does not say which ",
+        "version it follows: TS has no TSVCDVER naming a CDISC package that ",
+        "is bundled. Pass ct_package (e.g. ct_package = \"sdtmct-2026-03-27\"; ",
+        "see list_ct_packages())",
         call. = FALSE
       )
     }

@@ -1,0 +1,113 @@
+{
+ "_provenance": {
+  "what": "Expected results for rules that need Controlled Terminology, captured by running CDISC's own engine WITH a CT package.",
+  "why": "These rules' committed results.csv files are empty. Their fixtures ship no .env and no TS, so nothing declares a CT version; the engine raises MissingDataError and writes no rows. The empty file records a crash, not an expectation - grading against it would mark a correct answer wrong.",
+  "engine": "cdisc-org/cdisc-rules-engine 0.17.1 at commit 8740d201 (the commit cdisc-open-rules pins)",
+  "command": "python core.py validate -lr <rule.yml> -d <case>/data -s <standard> -v <version> -ct <package> -of JSON",
+  "regenerate": "see docs/RULE_TRIAGE.md; this file is evidence, not an assumption"
+ },
+ "cases": {
+  "CDISC.SDTMIG.CG0555|negative/01": {
+   "dataset": "PP",
+   "records": [
+    1,
+    4,
+    5
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0555|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0556|negative/01": {
+   "dataset": "PP",
+   "records": [
+    2,
+    6,
+    8
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0556|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0557|negative/01": {
+   "dataset": "PP",
+   "records": [
+    3,
+    7,
+    9
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0557|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0558|negative/01": {
+   "dataset": "PP",
+   "records": [
+    1,
+    4,
+    5
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0558|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0559|negative/01": {
+   "dataset": "PP",
+   "records": [
+    2,
+    6,
+    8
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0559|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0560|negative/01": {
+   "dataset": "PP",
+   "records": [
+    3,
+    7,
+    9
+   ],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CDISC.SDTMIG.CG0560|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SDTMIG",
+   "ct_package": "sdtmct-2026-03-27"
+  },
+  "CORE-000934|positive/01": {
+   "dataset": null,
+   "records": [],
+   "standard": "SENDIG",
+   "ct_package": "sendct-2026-03-27"
+  }
+ }
+}

@@ -632,3 +632,44 @@ test_that("a controlled terminology package name is checked up front", {
   expect_error(validate_ct_package(42), "single package name")
   expect_identical(validate_ct_package("sdtmct-2026-03-27"), "sdtmct-2026-03-27")
 })
+
+test_that("the CT version is taken from TS when the study declares one", {
+  # Studies record it themselves: TSVCDREF names the publisher and TSVCDVER
+  # the version. Asking the caller for something already in the data would be
+  # the same mistake as making them declare the standard.
+  ts <- data.table::data.table(
+    STUDYID = "S", DOMAIN = "TS", TSSEQ = 1:3,
+    TSPARMCD = c("A", "B", "C"),
+    TSVCDREF = c("CDISC", "CDISC", "CDISC"),
+    TSVCDVER = c("2020-03-27", "2020-03-27", "2020-03-27")
+  )
+  study <- list(datasets = list(TS = list(data = ts, meta = NULL)),
+                standard = list(product = "SDTMIG"))
+  expect_equal(ct_package_from_ts(study), "sdtmct-2020-03-27")
+
+  # A SEND study cites SEND terminology, and the two genuinely differ.
+  send <- study; send$standard$product <- "SENDIG"
+  expect_equal(ct_package_from_ts(send), "sendct-2020-03-27")
+
+  # Real TS datasets carry stale rows. The version most rows agree on wins.
+  ts2 <- data.table::copy(ts)
+  ts2$TSVCDVER <- c("2020-03-27", "2020-03-27", "2019-03-01")
+  mixed <- study; mixed$datasets$TS$data <- ts2
+  expect_equal(ct_package_from_ts(mixed), "sdtmct-2020-03-27")
+
+  # Rows citing someone else's terminology are not CDISC's and are ignored.
+  ts3 <- data.table::copy(ts)
+  ts3$TSVCDREF <- c("SPONSOR", "SPONSOR", "SPONSOR")
+  other <- study; other$datasets$TS$data <- ts3
+  expect_null(ct_package_from_ts(other))
+
+  # A version CDISC never published as a package is not silently swapped for
+  # a near one - that would judge the study against terms it never declared.
+  ts4 <- data.table::copy(ts)
+  ts4$TSVCDVER <- rep("1999-01-01", 3)
+  unknown <- study; unknown$datasets$TS$data <- ts4
+  expect_null(ct_package_from_ts(unknown))
+
+  # No TS, or no such columns, says nothing.
+  expect_null(ct_package_from_ts(list(datasets = list())))
+})

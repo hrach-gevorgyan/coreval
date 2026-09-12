@@ -101,9 +101,33 @@ reference_is_dataset_level <- function(results_csv, dataset_name) {
   nrow(reported) > 0 && all(!nzchar(trimws(reported$Record)))
 }
 
+# Expected results captured by running CDISC's OWN engine with a controlled
+# terminology package, for the rules whose committed results.csv is empty
+# because their fixture declares no CT version and the engine crashed writing
+# it. See tests/conformance/reference_ct_results.json for the provenance.
+#
+# Used ONLY when the committed sheet has no rows at all. A fixture that states
+# an expectation is always graded against that expectation - this never
+# overrides CDISC, it fills in where CDISC's own file records a crash.
+reference_ct_results <- local({
+  path <- file.path("tests", "conformance", "reference_ct_results.json")
+  if (!file.exists(path) || !requireNamespace("jsonlite", quietly = TRUE)) {
+    list()
+  } else {
+    jsonlite::fromJSON(path, simplifyVector = FALSE)$cases
+  }
+})
+
+# Does the committed sheet state nothing at all for any dataset?
+sheet_is_silent <- function(results_csv) {
+  results <- data.table::fread(results_csv, colClasses = "character")
+  nrow(results[nzchar(trimws(results$Dataset))]) == 0
+}
+
 # Runs one rule against one test case (a positive/NN or negative/NN dir).
 # Returns list(status, reason).
 run_case <- function(rule, case_dir) {
+  case_label <- paste(basename(dirname(case_dir)), basename(case_dir), sep = "/")
   data_dir <- file.path(case_dir, "data")
   results_csv <- file.path(case_dir, "results", "results.csv")
   if (!dir.exists(data_dir) || !file.exists(results_csv)) {
@@ -120,6 +144,23 @@ run_case <- function(rule, case_dir) {
   study <- tryCatch(read_study(data_dir), error = function(e) e)
   if (inherits(study, "error")) {
     return(list(status = "SKIPPED", reason = paste("read_study failed:", conditionMessage(study))))
+  }
+
+  # A study normally declares its controlled terminology version in TS, and
+  # check_study() reads it from there. These fixtures ship neither a TS nor a
+  # .env, so nothing declares one and the CT rules could only be skipped. The
+  # harness supplies the same package that was used to capture the reference's
+  # own answers for them (see reference_ct_results.json), so the rule actually
+  # runs and is graded rather than passed over.
+  if (is.null(study$ct_package)) {
+    study$ct_package <- ct_package_from_ts(study)
+  }
+  if (is.null(study$ct_package)) {
+    study$ct_package <- if (identical(toupper(study$standard$product %||% ""), "SENDIG")) {
+      "sendct-2026-03-27"
+    } else {
+      "sdtmct-2026-03-27"
+    }
   }
 
   domains <- names(study$datasets)
@@ -159,6 +200,20 @@ run_case <- function(rule, case_dir) {
     evaluable <- evaluable + 1L
 
     expected <- expected_records(results_csv, domain)
+
+    # Where CDISC's own file records a crash rather than an expectation, grade
+    # against what CDISC's engine actually answers when it can run. Gated on
+    # the sheet being wholly silent, so a real expectation is never overridden.
+    ct_key <- paste(rule$id, case_label, sep = "|")
+    ct_ref <- reference_ct_results[[ct_key]]
+    if (!is.null(ct_ref) && sheet_is_silent(results_csv)) {
+      ref_dataset <- ct_ref$dataset
+      if (is.null(ref_dataset) || identical(toupper(ref_dataset), toupper(domain))) {
+        expected <- sort(unique(as.integer(unlist(ct_ref$records))))
+      } else {
+        expected <- integer(0)
+      }
+    }
 
     if (identical(rule$sensitivity, "Dataset") ||
       identical(rule$rule_type, "Domain Presence Check") ||

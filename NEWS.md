@@ -1,5 +1,11 @@
 # coreval 0.1.0.9000 (development)
 
+* **The controlled terminology version is read from TS.** Studies record it
+  themselves - `TSVCDREF` names the publisher and `TSVCDVER` the version - so
+  `check_study()` picks it up without being told. `ct_package` stays as the
+  manual override. Rows citing someone other than CDISC are ignored, and where
+  a real TS carries stale rows the version most rows agree on wins.
+
 * **Controlled Terminology checks now run.** Nine rules ask whether a value is
   a legal term - `SEX` may be `F`, `M`, `U` or `INTERSEX` and nothing else -
   and they were skipped because CDISC's terminology caches are 438 MB. Almost
