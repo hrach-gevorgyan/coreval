@@ -66,22 +66,50 @@ verdict_on_first_row <- function(x, n) {
   c(isTRUE(x), rep(FALSE, n - 1L))
 }
 
-# Operator: contains_all - dataset-level: target column's values cover all of value
+# The reference has TWO paths here, and which one applies depends on the shape
+# of the operands (`contains_all` in dataframe_operators.py). When both sides
+# are columns of iterables it compares ROW BY ROW - each row's own collection
+# against its own comparator. Otherwise it asks the dataset-level question,
+# "do this column's values cover that set", and answers once.
+#
+# A list on either side is coreval's signal for "one collection per row", the
+# same convention as_row_collections() already encodes, so it selects the
+# per-row path. CORE-000934 needs it: `split_by` gives each PPSPEC row its own
+# list of specimens and the rule asks whether every part of THAT row is a legal
+# term. Answered dataset-level, the verdict landed on row 1 only and the rule
+# reported nothing at all.
+#' Is every element of each row's comparator collection present in its target?
+#' @param ctx Operator context.
+#' @return A logical vector of length `ctx$n`.
+#' @noRd
+contains_all_per_row <- function(ctx) {
+  targets <- as_row_collections(ctx$target, ctx$n)
+  values <- as_row_collections(ctx$value, ctx$n)
+  vapply(seq_len(ctx$n), function(i) all(values[[i]] %in% targets[[i]]), logical(1))
+}
+
+# Operator: contains_all - per row when either side is a collection, dataset-level otherwise
 register_operator("contains_all", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
     return(NA)
   }
+  if (is.list(ctx$value) || is.list(ctx$target)) {
+    return(contains_all_per_row(ctx))
+  }
   verdict_on_first_row(all(ctx$value %in% ctx$target), ctx$n)
 })
 
-# Operator: not_contains_all - negation of contains_all. The reference
-# engine negates with `~self.contains_all(...)`, i.e. BEFORE any index
+# Operator: not_contains_all - negation of contains_all. On the dataset-level
+# path the reference negates with `~self.contains_all(...)` BEFORE any index
 # alignment, so the negation applies to the scalar verdict and the
-# first-row-only shape is preserved rather than inverted into "every row
-# but the first".
+# first-row-only shape is preserved rather than inverted into "every row but
+# the first". On the per-row path each row's own verdict is negated.
 register_operator("not_contains_all", function(ctx) {
   if (!ctx$exists || is.null(ctx$value)) {
     return(NA)
+  }
+  if (is.list(ctx$value) || is.list(ctx$target)) {
+    return(!contains_all_per_row(ctx))
   }
   verdict_on_first_row(!all(ctx$value %in% ctx$target), ctx$n)
 })

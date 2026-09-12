@@ -607,6 +607,8 @@ ct_terms_for <- function(op, study) {
 # own fixture and check_study() reported none.
 implemented_operation_types <- c(
   "codelist_terms",
+  "get_codelist_attributes",
+  "split_by",
   "dataset_names",
   "distinct",
   "domain_is_custom",
@@ -773,7 +775,51 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # the codelist itself or its terms; `returntype` picks submission values
     # or C-codes. The rules use the result as a set, with
     # `is_contained_by`/`is_not_contained_by`.
+    # One column split on a delimiter, giving each row a LIST of parts rather
+    # than one value - PPSPEC records several specimens as "LIVER;KIDNEY", and
+    # the rule asks whether every part is a legal term. The reference is
+    # `self.evaluation_dataset[target].str.split(delimiter)`.
+    split_by = {
+      target <- resolve_var_name(op$name %||% "", dataset_wildcard(current_dataset, current_domain))
+      if (is.null(op$delimiter) || !nzchar(op$delimiter)) {
+        stop("split_by needs a delimiter", call. = FALSE)
+      }
+      if (is.null(dt) || !(target %in% names(dt))) {
+        NULL
+      } else {
+        per_row_binding(strsplit(as.character(dt[[target]]), op$delimiter, fixed = TRUE))
+      }
+    },
     codelist_terms = scalar_binding(ct_terms_for(op, study)),
+    # Every value of one attribute across a whole CT package - "every term
+    # C-code CDISC published in this version" - for the rows that cite a
+    # bundled package. Refused rather than answered with an empty set when the
+    # data cites none, or when rows cite DIFFERENT versions: an empty set makes
+    # `is_not_contained_by` true for every row, and picking one of several
+    # versions would judge the rest against terminology they did not name.
+    get_codelist_attributes = {
+      pkgs <- ct_packages_per_row(
+        current_dataset$data, op$name %||% "", op$version %||% "",
+        study$standard$product
+      )
+      bundled <- unique(pkgs[nzchar(pkgs) & pkgs %in% ct_package_names()])
+      if (length(bundled) == 0) {
+        stop(
+          "no row names a bundled controlled terminology package in ",
+          op$name %||% "?", "/", op$version %||% "?",
+          call. = FALSE
+        )
+      }
+      if (length(bundled) > 1) {
+        stop(
+          "rows cite more than one controlled terminology version (",
+          paste(bundled, collapse = ", "), "), so there is no single set to ",
+          "check against",
+          call. = FALSE
+        )
+      }
+      scalar_binding(ct_package_attribute(bundled, op$ct_attribute %||% "Term CCODE"))
+    },
     valid_codelist_dates = {
       tbl <- .coreval_env$ct_packages
       types <- toupper(op$ct_package_types %||% op$ct_package_type %||% character(0))
@@ -1036,4 +1082,77 @@ ct_package_from_ts <- function(study) {
   family <- if (!is.na(product) && startsWith(product, "SEND")) "sendct" else "sdtmct"
   candidate <- paste0(family, "-", version)
   if (candidate %in% ct_package_names()) candidate else NULL
+}
+
+#' The CT package each row of a dataset cites, per `get_codelist_attributes`
+#'
+#' Trial Summary rows name their own terminology: a reference column (whose
+#' value is "CDISC", "CDISC CT", or someone else entirely - ISO 8601, SNOMED,
+#' UNII) and a version column. The reference builds a package name per row from
+#' the two, prefixing CDISC's own with the standard family
+#' (`get_codelist_attributes.py`).
+#'
+#' @param dt The dataset.
+#' @param target Column naming the terminology's publisher.
+#' @param version Column naming its version.
+#' @param product The study's standard, e.g. `"SENDIG"`.
+#' @return A character vector, `""` where the row cites nothing usable.
+#' @noRd
+ct_packages_per_row <- function(dt, target, version, product) {
+  n <- nrow(dt)
+  if (!(target %in% names(dt)) || !(version %in% names(dt))) {
+    return(rep("", n))
+  }
+  ref <- trimws(as.character(dt[[target]]))
+  ver <- trimws(as.character(dt[[version]]))
+  std <- toupper(product %||% "")
+  family <- if (grepl("ADAM", std, fixed = TRUE)) {
+    "adamct"
+  } else if (grepl("SEND", std, fixed = TRUE)) {
+    "sendct"
+  } else {
+    "sdtmct"
+  }
+  out <- ifelse(
+    is.na(ver) | !nzchar(ver), "",
+    ifelse(!is.na(ref) & ref %in% c("CDISC", "CDISC CT"),
+           paste0(family, "-", ver),
+           paste0(ref, "-", ver))
+  )
+  out[is.na(out)] <- ""
+  out
+}
+
+#' Every value of one attribute across a whole CT package
+#'
+#' `get_codelist_attributes` asks a package-wide question - "every term C-code
+#' CDISC published in this version" - rather than about one codelist, so this
+#' unions the attribute over all of the package's codelists. The attribute
+#' names are the reference's own (`_extract_codes_by_attribute`).
+#'
+#' @param package A bundled CT package name.
+#' @param attribute One of the `ct_attribute` values the reference accepts.
+#' @return A character vector of values.
+#' @noRd
+ct_package_attribute <- function(package, attribute) {
+  tbl <- ct_codelists()
+  if (is.null(tbl)) {
+    stop("the bundled controlled terminology is not installed", call. = FALSE)
+  }
+  rows <- tbl[tbl$package == package, ]
+  if (nrow(rows) == 0) {
+    return(character(0))
+  }
+  # Preferred terms are not bundled, so a rule asking for them is refused
+  # rather than answered from data that is not here.
+  values <- switch(
+    attribute,
+    "Codelist CCODE" = rows$codelist_code,
+    "Codelist Value" = rows$codelist,
+    "Term CCODE" = unlist(strsplit(rows$term_codes, "\x1f", fixed = TRUE), use.names = FALSE),
+    "Term Value" = unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE),
+    "Term Submission Value" = unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE),
+    stop("unsupported ct_attribute: ", attribute, call. = FALSE)
+  )
+  unique(values[nzchar(values)])
 }

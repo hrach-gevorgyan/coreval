@@ -624,7 +624,10 @@ test_that("an unimplemented Operations type is refused, not answered", {
   )
   # The harness reads this same vector, so the two cannot drift apart.
   expect_true("codelist_terms" %in% implemented_operation_types)
-  expect_false("split_by" %in% implemented_operation_types)
+  # Something CDISC has never defined, so this assertion cannot quietly become
+  # vacuous the way naming a real-but-unimplemented type did: `split_by` was
+  # used here and then implemented.
+  expect_false("no_such_operation" %in% implemented_operation_types)
 })
 
 test_that("a controlled terminology package name is checked up front", {

@@ -1,5 +1,11 @@
 # coreval 0.1.0.9000 (development)
 
+* Three more rule types run: `split_by`, `get_codelist_attributes` and the
+  per-row form of `contains_all`/`not_contains_all`. The last was the reason
+  CORE-000934 found nothing - the reference compares row by row when each row
+  has its own collection, and coreval only had the dataset-level path, so its
+  single verdict landed on row 1.
+
 * **The controlled terminology version is read from TS.** Studies record it
   themselves - `TSVCDREF` names the publisher and `TSVCDVER` the version - so
   `check_study()` picks it up without being told. `ct_package` stays as the
