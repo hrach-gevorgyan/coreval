@@ -1,15 +1,5 @@
 # Expected violation vector from a reference results.csv: one row per
 # (Record, Variable) pair, filtered to one Dataset.
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("value falls back to a literal when no column matches it, even with value_is_literal absent", {
   # CORE-000006: `DTHFL not_equal_to Y` has no value_is_literal at all, and
   # no column named "Y" exists in DM. Found via the conformance harness:

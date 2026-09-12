@@ -105,7 +105,10 @@ test_that("check_dataset refuses input it cannot make sense of, with a usable me
   dir <- tempfile("coreval_folder_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(check_dataset(dir), "read_study")
+  # Points at check_study(), which takes the folder directly. It used to say
+  # "read_study() then check_study()", which was advice from before that
+  # simplification.
+  expect_error(check_dataset(dir), "use check_study()", fixed = TRUE)
 
   bad <- file.path(dir, "data.parquet")
   writeLines("x", bad)

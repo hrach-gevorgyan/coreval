@@ -1,13 +1,3 @@
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("does_not_have_next_corresponding_record matches CDISC's reference results.csv (CORE-000352)", {
   # "SEENDTC does_not_have_next_corresponding_record ordering: SESEQ,
   # value: SESTDTC, within: USUBJID" - flags a subject's row whenever its

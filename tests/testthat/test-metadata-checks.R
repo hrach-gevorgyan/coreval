@@ -5,19 +5,6 @@
 # checked. `n` must be the length of evaluate_rule()'s own result (the
 # synthetic per-variable/per-(record,variable) dataset's row count for these
 # rule types), NOT the real dataset's row count - they usually differ.
-expected_violations_for <- function(results_csv_path, dataset_name, n, sensitivity = "Record") {
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (identical(sensitivity, "Dataset")) {
-    return(rep(nrow(results) > 0, n))
-  }
-  out <- rep(FALSE, n)
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("Variable Metadata Check evaluates one row per variable, not per record (CORE-000182)", {
   # "variable_name longer_than 8", Sensitivity: Dataset - confirmed against
   # real fixtures that "Record" for this rule type (when Sensitivity:
@@ -103,7 +90,7 @@ test_that("Dataset Metadata Check matches CDISC's reference results.csv (CORE-00
     rule <- .coreval_env$data$rules[[id]]
     expect_equal(rule$rule_type, "Dataset Metadata Check")
     for (case in c("negative", "positive")) {
-      case_dirs <- Sys.glob(test_path("fixtures", "core_rules", id, case, "*"))
+      case_dirs <- fixture_cases(id, case)
       for (dir in case_dirs) {
         study <- read_study(file.path(dir, "data"))
         for (domain in names(study$datasets)) {

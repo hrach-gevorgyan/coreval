@@ -41,6 +41,24 @@ test_that("write_findings gives an actionable error for .xlsx without writexl", 
     on.exit(unlink(path))
     expect_equal(write_findings(result, path), path)
     expect_true(file.exists(path))
+    # Assert the CONTENTS, not merely that a file appeared - a workbook with
+    # the right name and the wrong sheets passed before. An .xlsx is a zip,
+    # so this reads the sheet names out of xl/workbook.xml and the cell text
+    # out of sharedStrings.xml with base R: no readxl, so the assertion
+    # actually runs rather than skipping on a machine that lacks it.
+    unpacked <- file.path(tempdir(), "coreval_xlsx_check")
+    on.exit(unlink(unpacked, recursive = TRUE), add = TRUE)
+    utils::unzip(path, exdir = unpacked)
+
+    workbook <- paste(readLines(file.path(unpacked, "xl", "workbook.xml"),
+                                warn = FALSE), collapse = "")
+    for (sheet in c("findings", "skipped", "about")) {
+      expect_match(workbook, paste0('name="', sheet, '"'), fixed = TRUE, info = sheet)
+    }
+
+    strings <- paste(readLines(file.path(unpacked, "xl", "sharedStrings.xml"),
+                               warn = FALSE), collapse = "")
+    expect_match(strings, "CORE-000001", fixed = TRUE)
   } else {
     # The point is that it fails BEFORE writing anything, and says how to
     # fix it - not that it fails part-way through.
@@ -52,4 +70,23 @@ test_that("write_findings gives an actionable error for .xlsx without writexl", 
 test_that("write_findings rejects something that isn't a check_study() result", {
   expect_error(write_findings(list(), tempfile()), "check_study")
   expect_error(write_findings("not a result", tempfile()), "check_study")
+})
+
+test_that("write_findings rejects a path that isn't a single string", {
+  result <- check_dataset(
+    data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"),
+    "DM"
+  )
+  # Left to fwrite, a number came back as
+  # "is.character(file) && length(file) == 1L ... is not TRUE", and two paths
+  # failed inside the `if` choosing the format with "the condition has
+  # length > 1". Both should name the argument instead.
+  expect_error(write_findings(result, 1), "`path` must be a single file path")
+  expect_error(
+    write_findings(result, c("a.csv", "b.csv")),
+    "`path` must be a single file path"
+  )
+  expect_error(write_findings(result, NA_character_), "`path` must be a single file path")
+  expect_error(write_findings(result, ""), "`path` must be a single file path")
+  expect_error(write_findings(result, NULL), "`path` must be a single file path")
 })

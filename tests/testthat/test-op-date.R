@@ -1,13 +1,3 @@
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("invalid_date rejects a syntactically-shaped but calendar-invalid date (Feb 30), and a day without a month", {
   # CORE-000505: TSVAL invalid_date.
   #   negative/01, positive/01: "2023-02-30" matches the date regex's shape

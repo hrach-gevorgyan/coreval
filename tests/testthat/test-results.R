@@ -263,3 +263,28 @@ test_that("read_study() errors on a missing folder rather than returning an empt
   expect_error(read_study(NULL), "single folder path")
   expect_error(read_study(c("a", "b")), "single folder path")
 })
+
+test_that("check_study() takes the standard/version its own report tells you to pass", {
+  # The report printed 'Narrow with standard = "SDTMIG"' and there was no such
+  # argument to pass it to - check_dataset() had them, check_study() did not.
+  dir <- tempfile("coreval_std_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(
+    data.frame(
+      STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2"),
+      RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(30, 65)
+    ),
+    file.path(dir, "dm.xpt")
+  )
+
+  everything <- check_study(dir)
+  narrowed <- check_study(dir, standard = "SDTMIG")
+  versioned <- check_study(dir, standard = "SDTMIG", version = "3.4")
+
+  expect_lt(attr(narrowed, "checks_run"), attr(everything, "checks_run"))
+  expect_lte(attr(versioned, "checks_run"), attr(narrowed, "checks_run"))
+
+  expect_error(check_study(dir, standard = "NOPE"), "no bundled rule targets")
+  expect_error(check_study(dir, version = "3.4"), "needs `standard` too")
+})

@@ -240,3 +240,25 @@ test_that("filtering everything away does not claim the data is clean", {
   # absent, and the data is no cleaner than before the filter.
   expect_false(grepl("Nothing to fix", out))
 })
+
+test_that("print() and summary() refuse an object carrying the class but not the contents", {
+  # Both indexed $findings immediately, so a malformed object printed the
+  # banner and then died on base R's "argument is of length zero" - which
+  # reads like a bug in the reporter rather than a bad input.
+  bad <- structure(list(), class = "coreval_result")
+  expect_error(print(bad), "not a coreval result")
+  expect_error(summary(bad), "not a coreval result")
+  # The message names the offending argument, which differs between the two.
+  expect_error(print(bad), "`x`")
+  expect_error(summary(bad), "`object`")
+
+  # A real result is untouched.
+  ae <- data.frame(
+    STUDYID = "S", DOMAIN = "AE", USUBJID = "1",
+    AETERM = "X", AESTDTC = "2024-13-01"
+  )
+  real <- check_dataset(ae)
+  expect_s3_class(real, "coreval_result")
+  expect_no_error(capture.output(print(real)))
+  expect_equal(nrow(summary(real)), 1L)
+})

@@ -1,13 +1,3 @@
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("empty/non_empty are unresolvable (NA), not TRUE, when the column doesn't exist at all (CORE-000018)", {
   # "--STAT empty" - a domain that structurally has no --STAT variable
   # (e.g. EC has no ECSTAT) must NOT be treated as satisfying "empty",

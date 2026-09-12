@@ -1,13 +1,3 @@
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("distinct (ungrouped) matches CDISC's reference results.csv - cross-dataset binding", {
   # CORE-000036: $tv_visit = distinct VISIT values from the TV dataset,
   # used to check SV.VISIT is_not_contained_by $tv_visit. Needs the full
@@ -123,7 +113,7 @@ test_that("not_equal_to/equal_to matches CDISC's reference results.csv across th
   for (id in c("CORE-000436", "CORE-000529", "CORE-000552", "CORE-000553")) {
     rule <- .coreval_env$data$rules[[id]]
     for (case in c("negative", "positive")) {
-      cases <- Sys.glob(test_path("fixtures", "core_rules", id, case, "*"))
+      cases <- fixture_cases(id, case)
       for (dir in cases) {
         study <- read_study(file.path(dir, "data"))
         results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
@@ -147,7 +137,7 @@ test_that("not_equal_to leaves an unresolvable Operations aggregate's blank comp
   # real fixture (negative/02: EXENDTC blank on every row).
   rule <- .coreval_env$data$rules[["CORE-000454"]]
   for (case in c("negative", "positive")) {
-    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000454", case, "*"))
+    cases <- fixture_cases("CORE-000454", case)
     for (dir in cases) {
       study <- read_study(file.path(dir, "data"))
       results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
@@ -399,7 +389,7 @@ test_that("prefix_is_not_contained_by correctly identifies a missing parent doma
   for (id in c("CORE-000539", "CORE-000540")) {
     rule <- .coreval_env$data$rules[[id]]
     for (polarity in c("negative", "positive")) {
-      case_dirs <- Sys.glob(test_path("fixtures", "core_rules", id, polarity, "*"))
+      case_dirs <- fixture_cases(id, polarity)
       for (dir in case_dirs) {
         study <- read_study(file.path(dir, "data"))
         results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")

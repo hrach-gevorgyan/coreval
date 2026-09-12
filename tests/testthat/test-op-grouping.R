@@ -1,16 +1,6 @@
 # Expected violation vector from a reference results.csv: one row per
 # (Record, Variable) pair, filtered to one Dataset - distinct Record values
 # are the violating rows.
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("is_not_unique_set matches CDISC's reference results.csv (CORE-000186)", {
   # SUBJID is_not_unique_set [STUDYID]: flags duplicate (SUBJID, STUDYID)
   # combinations anywhere in the dataset.

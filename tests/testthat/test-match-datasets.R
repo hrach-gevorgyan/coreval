@@ -1,13 +1,3 @@
-expected_violations_for <- function(results_csv_path, dataset_name, n) {
-  out <- rep(FALSE, n)
-  results <- data.table::fread(results_csv_path, colClasses = "character")
-  results <- results[results$Dataset == dataset_name, ]
-  if (nrow(results) > 0) {
-    out[as.integer(unique(results$Record))] <- TRUE
-  }
-  out
-}
-
 test_that("a simple Match Datasets join (DS matched with DM) matches CDISC's reference results.csv", {
   # CORE-000034: DSSTDTC not_equal_to DM.DTHDTC, joined on USUBJID. DTHDTC
   # doesn't collide with any DS column, so it's referenced by its bare name
@@ -114,7 +104,7 @@ test_that("evaluate_rule collapses an exploded join back to one result per origi
 test_that("Match Datasets with a partial key matches CDISC's reference results.csv across every applicable domain (CORE-000270)", {
   rule <- .coreval_env$data$rules[["CORE-000270"]]
   for (case in c("negative", "positive")) {
-    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000270", case, "*"))
+    cases <- fixture_cases("CORE-000270", case)
     for (dir in cases) {
       study <- read_study(file.path(dir, "data"))
       results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
@@ -227,7 +217,13 @@ test_that("a Child join attaches each child record to the parent it names in RDO
 test_that("apply_match_dataset still refuses a plain RELREC spec it doesn't implement", {
   left <- list(data = data.table::data.table(USUBJID = "S1"), meta = NULL)
   study <- list(datasets = list())
-  expect_error(apply_match_dataset(left, list(Name = "RELREC", Keys = "USUBJID", Child = FALSE), study, "AE"))
+  # Pattern-matched deliberately: a bare expect_error() passes on ANY error,
+  # including one from a typo in the call itself, so it can assert that
+  # something broke without asserting that the right thing broke.
+  expect_error(
+    apply_match_dataset(left, list(Name = "RELREC", Keys = "USUBJID", Child = FALSE), study, "AE"),
+    "unsupported join type"
+  )
   # A SUPP name whose dataset simply isn't in the study is a no-op, not an
   # error - the rule just has nothing to join.
   expect_equal(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"), left)

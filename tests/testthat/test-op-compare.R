@@ -96,7 +96,7 @@ test_that("equal_to/equal_to_case_insensitive treat two blank values as never eq
 test_that("equal_to_case_insensitive matches CDISC's reference results.csv (CORE-000195)", {
   rule <- .coreval_env$data$rules[["CORE-000195"]]
   for (case in c("negative", "positive")) {
-    cases <- Sys.glob(test_path("fixtures", "core_rules", "CORE-000195", case, "*"))
+    cases <- fixture_cases("CORE-000195", case)
     for (dir in cases) {
       study <- read_study(file.path(dir, "data"))
       results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")

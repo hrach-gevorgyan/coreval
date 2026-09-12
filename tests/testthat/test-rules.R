@@ -273,3 +273,25 @@ test_that("a Check naming an unknown pseudo-column is refused, not answered", {
     "does not bundle"
   )
 })
+
+test_that("list_rules() warns on a domain no standard defines, rather than returning a plausible count", {
+  # A domain that matches no class still picks up every class-unconstrained
+  # rule, so a typo came back with a confident 163. Someone asking "does
+  # coreval cover my domain?" needs to be told the name is unrecognised.
+  expect_warning(n <- nrow(list_rules(domain = "ZZ")), "not a domain any bundled standard defines")
+  expect_gt(n, 0) # the count is still returned; it is just not trustworthy
+
+  # Real domains, and the SUPP--/AP-- templates, stay silent.
+  expect_no_warning(list_rules(domain = "AE"))
+  expect_no_warning(list_rules(domain = "SUPPAE"))
+  expect_no_warning(list_rules(domain = "APEG"))
+})
+
+test_that("list_rules() refuses a bare version instead of silently ignoring it", {
+  # list_rules(version = "3.4") used to return all 797 rules - the argument
+  # was documented as needing `standard`, but discarding it in silence is the
+  # same failure mode as an unrecognised standard scoping everything out.
+  expect_error(list_rules(version = "3.4"), "needs `standard` too")
+  expect_error(list_rules(standard = "NOPE"), "no bundled rule targets")
+  expect_equal(nrow(list_rules(standard = "SDTMIG", version = "3.4")), 456L)
+})

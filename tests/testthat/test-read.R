@@ -227,3 +227,57 @@ test_that("read_env_standard tolerates an empty value, a blank line and a commen
   expect_true(is.na(std3$product))
   expect_true(is.na(std3$version))
 })
+
+test_that("a column declared Num holding SAS's '.' missing token becomes numeric NA, not character", {
+  # fread reads a lone "." as text, so the column's inherent type is string
+  # and colClasses cannot down-cast it - it warned and left the column
+  # CHARACTER despite _variables.csv declaring it Num. Quiet type drift like
+  # that is exactly what a conformance check must not inherit. Confirmed
+  # against CORE-000183's fixture, where pc.PCSTRESN is declared Num and
+  # every value is ".".
+  dir <- tempfile("coreval_num_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "lb,USUBJID,Unique Subject Identifier,Char,8",
+    "lb,LBSTRESN,Numeric Result,Num,8",
+    "lb,LBSTRESC,Character Result,Char,20"
+  ), file.path(dir, "_variables.csv"))
+  writeLines(c("Filename,Label", "lb,Lab"), file.path(dir, "_datasets.csv"))
+  writeLines(c(
+    "USUBJID,LBSTRESN,LBSTRESC",
+    "01,.,BELOW LIMIT",
+    "02,4.5,4.5",
+    "03,,MISSING"
+  ), file.path(dir, "lb.csv"))
+
+  # No warning: the down-cast complaint is handled, not merely tolerated.
+  expect_no_warning(study <- read_study(dir))
+  lb <- study$datasets$LB$data
+
+  expect_type(lb$LBSTRESN, "double")
+  expect_equal(lb$LBSTRESN, c(NA, 4.5, NA))
+  # A Char column declared as such is untouched, blanks included.
+  expect_type(lb$LBSTRESC, "character")
+  expect_equal(lb$LBSTRESC, c("BELOW LIMIT", "4.5", "MISSING"))
+})
+
+test_that("a declared-Num column carrying real text is left alone rather than nulled", {
+  # Coercing it would silently destroy the evidence: a Num variable holding
+  # words is itself a finding, and turning it into NA hides it.
+  dir <- tempfile("coreval_numtext_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "ds,DSNOMDY,Nominal Day,Num,8"
+  ), file.path(dir, "_variables.csv"))
+  writeLines(c("Filename,Label", "ds,Disposition"), file.path(dir, "_datasets.csv"))
+  writeLines(c("DSNOMDY", "yesterday", "3"), file.path(dir, "ds.csv"))
+
+  study <- read_study(dir)
+  expect_type(study$datasets$DS$data$DSNOMDY, "character")
+  expect_equal(study$datasets$DS$data$DSNOMDY, c("yesterday", "3"))
+})
