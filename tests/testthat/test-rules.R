@@ -117,6 +117,23 @@ test_that("the bundled CDISC material ships with its required licence notice", {
   for (file in bundled) {
     expect_match(txt, file, fixed = TRUE, info = file)
   }
+
+  # Bundled third-party material is not all .rds. The XHTML schemas are 43
+  # files from two licensors, one of them not CDISC and not MIT, and globbing
+  # only the rds files would not have noticed them arriving. Declared by
+  # DIRECTORY, since naming 43 files would be noise: what the notice has to
+  # carry is who they belong to and under what terms.
+  schema_dirs <- basename(Sys.glob(file.path(
+    system.file("extdata", "schema", "xml", package = "coreval"), "*"
+  )))
+  expect_gt(length(schema_dirs), 0)
+  for (dir in schema_dirs) {
+    expect_match(txt, dir, fixed = TRUE, info = dir)
+  }
+  # And the W3C grant is a condition of redistributing those, so it travels
+  # with them the way the MIT notices do.
+  expect_match(txt, "World Wide Web Consortium", fixed = TRUE)
+  expect_match(txt, "hereby granted in perpetuity", fixed = TRUE)
 })
 
 test_that("listing is not running: the catalog shows everything by default", {

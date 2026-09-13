@@ -65,6 +65,38 @@ and in the same order. A separate file rather than a column of that one because
 reads each file only when a rule reaches for it. Also CDISC Controlled
 Terminology, developed with NCI EVS.
 
+inst/extdata/schema/xml/
+------------------------
+XML Schema files used to validate the XHTML in USDM narrative content, which
+four rules ask about. Two licensors, not one.
+
+cdisc-usdm-xhtml-1.0/ is CDISC's own, from cdisc-org/cdisc-rules-engine, under
+the MIT licence reproduced below. One line differs from upstream: the
+schemaLocation in usdm-xhtml-ns.xsd pointed at a w3.org URL, which libxml2
+fetches over the network on every validation, and coreval does not touch the
+network at run time, so it points at the copy of that file sitting beside it
+instead.
+
+xhtml-1.1/ is the W3C's XHTML Schema modules, redistributed verbatim. They are
+not CDISC's work and not MIT; they carry their own permission, reproduced here
+from xhtml-copyright-1.xsd, which also ships:
+
+    This is XHTML, a reformulation of HTML as a modular XML application
+    The Extensible HyperText Markup Language (XHTML)
+    Copyright (c)1998-2005 World Wide Web Consortium
+    (Massachusetts Institute of Technology, European Research Consortium
+     for Informatics and Mathematics, Keio University).
+    All Rights Reserved.
+
+    Permission to use, copy, modify and distribute the XHTML Schema
+    modules and their accompanying xs:documentation for any purpose
+    and without fee is hereby granted in perpetuity, provided that the above
+    copyright notice and this paragraph appear in all copies.
+    The copyright holders make no representation about the suitability of
+    these XML Schema modules for any purpose.
+
+    They are provided "as is" without expressed or implied warranty.
+
 tests/testthat/fixtures/
 ------------------------
 From cdisc-org/cdisc-open-rules. Test data and expected results published

@@ -965,6 +965,7 @@ implemented_operation_types <- c(
   "get_model_column_order",
   "get_model_filtered_variables",
   "get_parent_model_column_order",
+  "get_xhtml_errors",
   "codelist_extensible",
   "map",
   "max",
@@ -1094,6 +1095,8 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
       }
     },
+    # Every XHTML error in one narrative-content column, per row. See op_xhtml.R.
+    get_xhtml_errors = xhtml_errors_binding(op, dt),
     record_count = {
       if (is.null(dt)) {
         return(NULL)
