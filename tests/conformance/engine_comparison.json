@@ -13371,6 +13371,26 @@
   "folder": "CORE-001076",
   "source": "published"
  },
+ "CORE-001077": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-001077",
+  "source": "published"
+ },
  "CORE-001080": {
   "cases": [
    {
