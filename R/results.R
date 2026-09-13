@@ -77,7 +77,20 @@ rule_type_is_supported <- function(rule_type) {
     "Variable Metadata Check against Define XML",
     "Value Check with Variable Metadata",
     "Value Check with Dataset Metadata",
-    "Define Item Metadata Check against Library Metadata"
+    "Define Item Metadata Check against Library Metadata",
+    # These two are conjunctions of types already listed, evaluated by the same
+    # machinery, and they were missing only because nobody added them. The
+    # conformance harness had been running them all along while check_study()
+    # refused to, so the scoreboard carried two passes a user could never get.
+    # Both are graded against CDISC's own fixtures and match.
+    "Value Check against Define XML Variable",
+    "Variable Metadata Check against Define XML and Library Metadata",
+    # A whole check written as one JSONata expression over a USDM study
+    # document rather than as a Check block. evaluate_rule() refuses per study
+    # when the study is not a USDM document or the evaluator is not installed,
+    # so such a rule is skipped with a reason rather than answered from
+    # nothing. See op_jsonata.R.
+    "JSONata"
   ))
 }
 

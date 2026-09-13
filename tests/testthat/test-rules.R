@@ -134,6 +134,16 @@ test_that("the bundled CDISC material ships with its required licence notice", {
   # with them the way the MIT notices do.
   expect_match(txt, "World Wide Web Consortium", fixed = TRUE)
   expect_match(txt, "hereby granted in perpetuity", fixed = TRUE)
+
+  # Same for anything else bundled under extdata that is not an .rds: the
+  # JSONata evaluator is a third party again, and a fourth licensor.
+  other <- Sys.glob(file.path(system.file("extdata", package = "coreval"),
+                              c("js", "jsonata"), "*"))
+  expect_gt(length(other), 0)
+  for (file in basename(other)) {
+    expect_match(txt, file, fixed = TRUE, info = file)
+  }
+  expect_match(txt, "Copyright IBM Corp", fixed = TRUE)
 })
 
 test_that("listing is not running: the catalog shows everything by default", {

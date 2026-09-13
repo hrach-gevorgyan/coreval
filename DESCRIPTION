@@ -38,6 +38,7 @@ Imports:
 Suggests:
     jsonlite,
     knitr,
+    QuickJSR,
     rmarkdown,
     testthat (>= 3.0.0),
     writexl,

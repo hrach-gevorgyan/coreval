@@ -97,6 +97,34 @@ from xhtml-copyright-1.xsd, which also ships:
 
     They are provided "as is" without expressed or implied warranty.
 
+inst/extdata/jsonata/
+---------------------
+From cdisc-org/cdisc-rules-engine, under the MIT licence reproduced below.
+CDISC's own JSONata utility functions, parse_refs.jsonata and
+sift_tree.jsonata, which the JSONata rules call as `$utils`. Copied unmodified;
+coreval assembles them into the expression prelude the same way CDISC's engine
+does.
+
+inst/extdata/js/jsonata.min.js
+------------------------------
+JSONata 1.8.7, the reference implementation of the JSONata query language, from
+https://cdn.jsdelivr.net/npm/jsonata@1.8.7/jsonata.min.js. Not CDISC's work: it
+is IBM's, and it is bundled because 96 rules are written in that language and
+there is no R implementation of it.
+
+Unmodified apart from a copyright banner restored to the top of the file. The
+minified build carries no banner and the packaged LICENSE omits the copyright
+line its own terms refer to, so the notice is taken verbatim from the source
+file's header at the tagged release and reproduced here:
+
+    (c) Copyright IBM Corp. 2016, 2017 All Rights Reserved
+      Project name: JSONata
+      This project is licensed under the MIT License.
+
+The MIT terms are the same ones reproduced at the end of this file. The
+evaluator runs inside QuickJSR's embedded engine, entirely offline; it is given
+the study document and nothing else.
+
 tests/testthat/fixtures/
 ------------------------
 From cdisc-org/cdisc-open-rules. Test data and expected results published

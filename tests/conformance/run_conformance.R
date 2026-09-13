@@ -322,7 +322,67 @@ run_case <- function(rule, case_dir) {
 # claim a rule is unimplemented that check_study() would happily run, or the
 # reverse. The two lists had already drifted once.
 implemented_operations <- coreval:::implemented_operation_types
+
+# A JSONata rule states its whole check as one expression over a USDM study
+# document, so it is graded on the PATHS it reports rather than on which row of
+# which domain it flagged: there are no domains, and a JSON Pointer into a
+# graph is not a record number. Same fixtures and the same committed sheets,
+# read through the same reader; only the comparison differs, because the answer
+# is a different kind of answer.
+jsonata_case <- function(rule, case_dir) {
+  data_dir <- file.path(case_dir, "data")
+  results_csv <- file.path(case_dir, "results", "results.csv")
+  if (!dir.exists(data_dir) || !file.exists(results_csv)) {
+    return(list(status = "SKIPPED", reason = "missing data/ or results.csv"))
+  }
+  study <- tryCatch(read_study(data_dir), error = function(e) e)
+  if (inherits(study, "error")) {
+    return(list(status = "SKIPPED", reason = paste("read_study failed:", conditionMessage(study))))
+  }
+  found <- tryCatch(coreval:::jsonata_findings(rule, study), error = function(e) e)
+  if (inherits(found, "error")) {
+    return(list(status = "SKIPPED", reason = conditionMessage(found)))
+  }
+  # The raw sheet, not read_reference_results(): that one turns a USDM
+  # `/Entity/<index>` path into a Dataset and a Record number, which is right
+  # for a tabular rule and wrong here. A JSONata path is a JSON Pointer into
+  # the document graph, `/study/versions/0/studyDesigns/1`, and the pointer
+  # itself is the answer being graded.
+  sheet <- data.table::fread(results_csv, colClasses = "character")
+  expected <- if (nrow(sheet) == 0 || !("path" %in% names(sheet))) {
+    character(0)
+  } else {
+    sort(unique(trimws(sheet$path[nzchar(trimws(sheet$attribute))])))
+  }
+  actual <- sort(unique(trimws(found$path)))
+  if (!identical(actual, expected)) {
+    return(list(status = "FAIL", reason = sprintf(
+      "path mismatch: expected %d, got %d; missing {%s}; extra {%s}",
+      length(expected), length(actual),
+      paste(utils::head(setdiff(expected, actual), 3), collapse = ","),
+      paste(utils::head(setdiff(actual, expected), 3), collapse = ",")
+    )))
+  }
+  list(status = "PASS", reason = NA_character_)
+}
+
 run_rule <- function(rule) {
+  # A JSONata rule's check is one expression string, not a tree of conditions,
+  # so the operator and Operations preflight below has nothing to read: walking
+  # it raises "$ operator is invalid for atomic vectors", which the harness
+  # reports as a skip and which looks like a rule that could not run.
+  is_jsonata <- identical(rule$rule_type, "JSONata")
+  # Say which rule TYPE is unimplemented rather than letting the rule fall
+  # through to the dataset path and be skipped for having no datasets. The four
+  # JSON Schema Check rules were reported as "ships no datasets, only
+  # define.xml", and there is no define.xml anywhere near them: the fixture is
+  # a USDM document and the rule needs a JSON Schema validator. A reason that
+  # sounds routine is the hardest kind of gap to notice.
+  if (!coreval:::rule_type_is_supported(rule$rule_type)) {
+    return(list(status = "SKIPPED",
+                reason = paste("unimplemented rule type:", rule$rule_type)))
+  }
+  if (!is_jsonata) {
   ops <- unique(rule_operators(rule$check))
   missing_ops <- setdiff(ops, ls(.operator_registry))
   if (length(missing_ops) > 0) {
@@ -334,6 +394,7 @@ run_rule <- function(rule) {
     if (length(missing) > 0) {
       return(list(status = "SKIPPED", reason = paste("unimplemented Operations type(s):", paste(missing, collapse = ", "))))
     }
+  }
   }
   # By the rule's own upstream folder, not its id: a rule declaring Core$Id can
   # live in a directory named something else entirely, and inferring one from
@@ -357,7 +418,8 @@ run_rule <- function(rule) {
     return(list(status = "SKIPPED", reason = "no test case folders found"))
   }
 
-  results <- lapply(case_dirs, run_case, rule = rule)
+  runner <- if (is_jsonata) jsonata_case else run_case
+  results <- lapply(case_dirs, runner, rule = rule)
   fails <- Filter(function(r) r$status == "FAIL", results)
   if (length(fails) > 0) {
     return(list(status = "FAIL", reason = fails[[1]]$reason))

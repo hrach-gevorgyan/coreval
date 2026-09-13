@@ -14,6 +14,11 @@ data-raw/upstream/
 # an .rds; these two are past that trade.
 data-raw/ct_codelists.csv
 data-raw/ct_pref_terms.csv
+# The pinned JSONata download. data-raw/vendor_jsonata.py says where it comes
+# from and refuses anything whose checksum is not the pinned one, and the copy
+# that ships is tracked under inst/extdata/js, so keeping a second copy here
+# would only be a second thing to keep in step.
+data-raw/vendor/
 tests/conformance/scoreboard.csv
 # docs/ is public except for the maintainer's own files.
 docs/RELEASING.md

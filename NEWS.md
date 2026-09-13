@@ -1,16 +1,45 @@
 # coreval 0.2.0.9000 (development)
 
-* **Every tabular USDM rule CDISC ships a test for now agrees with its answer
-  sheet.** All 157 of the USDM Record Data rules pass against CDISC's own
-  positive and negative fixtures, none skipped. They are not bundled: CDISC
-  publishes their test data as flattened per-entity CSVs, which is its own
-  harness format rather than anything a user has, and reading a real USDM JSON
-  study means porting the reference's own graph flattening. The other 100 USDM
-  rules are JSONata and JSON Schema, which need an evaluator coreval does not
-  have yet.
+* **253 of the 257 USDM rules now agree with their answer sheets**, against
+  CDISC's own positive and negative fixtures: all 157 Record Data rules and all
+  96 JSONata rules. The 4 remaining are JSON Schema Check and are skipped
+  naming the type, because reproducing which errors they report means
+  reproducing one JSON Schema library's internal error tree, and guessing at
+  that would be inventing findings rather than checking data.
 
-  Seven defects came out of getting there, and every one of them made a check
+  These rules are not bundled yet. CDISC publishes the Record Data fixtures as
+  flattened per-entity CSVs, which is its own harness format rather than
+  anything a user has, so running them against a real USDM study still needs a
+  port of the reference's graph flattening.
+
+  Eight defects came out of getting there, and every one of them made a check
   quietly do nothing rather than report something wrong.
+
+* **JSONata rules run.** 96 rules state their whole check as a JSONata
+  expression over a USDM study document rather than as a Check block. coreval
+  bundles the reference JSONata implementation as JavaScript and runs it in
+  QuickJSR's embedded engine, offline, with CDISC's own utility functions
+  assembled into the prelude the way CDISC's engine assembles them. `QuickJSR`
+  is a Suggests, with no dependencies of its own; without it these rules skip
+  with a reason.
+
+  The bundled evaluator is version 1.8.7 rather than the current 2.x. 2.x is
+  built on native `async`/`await`, and settling a promise needs the host to
+  pump the engine's job queue, which QuickJSR cannot; 1.8.7 uses a generator
+  trampoline and returns its result directly. That is a real divergence from
+  the reference, so it is measured and not argued: every one of the 96 rules
+  returns exactly the paths its committed sheet names, on every fixture.
+
+* **Fixed: the conformance harness ran rules `check_study()` would not.** Three
+  bundled rules carry types missing from the supported list, so the harness
+  evaluated them while the package itself skipped them, and the scoreboard
+  carried two passes no user could ever get. Both types are conjunctions of
+  types already supported and are evaluated by the same machinery, so they are
+  now declared rather than quietly exercised. The harness also refuses an
+  unsupported type up front, instead of letting the rule fall through and be
+  skipped for a reason that is not true: the four JSON Schema rules were
+  reported as shipping "no datasets, only define.xml", with no define.xml
+  anywhere near them.
 
 * **Fixed: a dataset was named after its file rather than what the manifest
   declared.** A test case's `_datasets.csv` can carry a `Dataset Name` column,

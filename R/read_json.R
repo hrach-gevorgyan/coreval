@@ -227,3 +227,62 @@ read_study_dataset_json <- function(path) {
        define = read_define_xml(find_define_xml(path)), ct = NULL,
        standard = list(product = NA_character_, version = NA_character_))
 }
+
+#' Is this file a USDM study document?
+#'
+#' A USDM document and a Dataset-JSON file are both `.json` and land in the
+#' same folder scan, so they have to be told apart before either is read. Every
+#' one of the 258 USDM documents CDISC publishes as rule fixtures carries the
+#' same four top-level keys, and `usdmVersion` is the one no Dataset-JSON file
+#' has. Read as a Dataset-JSON, such a file is refused for declaring no
+#' columns, which is a confusing way to say "this is a different format".
+#'
+#' Only the head of the file is read: these documents run to megabytes and the
+#' question is answered in the first line or two.
+#'
+#' @param path Path to a `.json` file.
+#' @return `TRUE` for a USDM study document.
+#' @noRd
+is_usdm_document <- function(path) {
+  head_text <- tryCatch(
+    paste(readLines(path, n = 40L, warn = FALSE, encoding = "UTF-8"), collapse = ""),
+    error = function(e) ""
+  )
+  grepl("\"usdmVersion\"", head_text, fixed = TRUE) ||
+    grepl("\"study\"", head_text, fixed = TRUE)
+}
+
+#' Read a folder holding a USDM study document
+#'
+#' USDM is a graph, not a set of tables, and the rules written against it say
+#' so: they are JSONata expressions over the whole document. So the document is
+#' carried as text and handed to the evaluator unchanged, rather than being
+#' flattened into something table-shaped that nothing would then read.
+#'
+#' The study has no `datasets`, which is the true statement about it. A tabular
+#' rule run against it finds nothing in scope and is skipped with a reason.
+#'
+#' @param path Folder holding the document.
+#' @return A study object carrying `document`.
+#' @noRd
+read_study_usdm <- function(path) {
+  files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
+                      full.names = TRUE)
+  files <- Filter(is_usdm_document, files)
+  if (length(files) > 1) {
+    stop("this folder holds ", length(files), " USDM documents; a study is one",
+         call. = FALSE)
+  }
+  document <- paste(readLines(files[[1]], warn = FALSE, encoding = "UTF-8"),
+                    collapse = "\n")
+  found <- regmatches(document,
+                      regexpr('"usdmVersion"[[:space:]]*:[[:space:]]*"[^"]*"', document))
+  version <- if (length(found) == 1L) {
+    gsub('"', "", sub('^"usdmVersion"[[:space:]]*:[[:space:]]*', "", found), fixed = TRUE)
+  } else {
+    NA_character_
+  }
+  list(datasets = list(), define = NULL, ct = NULL,
+       standard = list(product = "USDM", version = version),
+       document = document)
+}

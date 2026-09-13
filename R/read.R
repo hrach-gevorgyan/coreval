@@ -52,6 +52,14 @@ read_study <- function(path) {
   if (length(list.files(path, pattern = "[.]xpt$", ignore.case = TRUE)) > 0) {
     return(read_study_xpt(path))
   }
+  # A USDM study document is `.json` too, and reading one as a Dataset-JSON
+  # refuses it for declaring no columns, which says nothing useful about what
+  # it actually is.
+  json_files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
+                           full.names = TRUE)
+  if (length(Filter(is_usdm_document, json_files)) > 0) {
+    return(read_study_usdm(path))
+  }
   if (length(list.files(path, pattern = "[.](json|ndjson)$", ignore.case = TRUE)) > 0) {
     return(read_study_dataset_json(path))
   }
