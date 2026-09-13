@@ -4,7 +4,7 @@
 [![CRAN status](https://www.r-pkg.org/badges/version/coreval)](https://CRAN.R-project.org/package=coreval)
 [![R-CMD-check](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hrach-gevorgyan/coreval/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/license/mit)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
 **Check your SDTM data against CDISC rules without leaving R.**
@@ -542,8 +542,10 @@ something.
 
 ## Status
 
-Under active development, and the API may still change. Already useful for
-finding real problems in real data. See [NEWS.md](https://github.com/hrach-gevorgyan/coreval/blob/master/NEWS.md).
+The seven exported functions are stable: `check_dataset()`, `check_study()`,
+`read_study()`, `list_rules()`, `list_ct_packages()`, `filter_findings()` and
+`write_findings()`. Their arguments and the shape of what they return will not
+change without a deprecation cycle. See [NEWS.md](https://github.com/hrach-gevorgyan/coreval/blob/master/NEWS.md).
 
 ## Going deeper
 

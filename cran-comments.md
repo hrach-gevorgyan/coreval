@@ -2,9 +2,16 @@
 
 Update to coreval. The previous version on CRAN is 0.1.0.
 
-This release fixes a class of false positive, adds CDISC Controlled
-Terminology support, and makes checking a large study substantially faster.
-See NEWS.md for the full list.
+This release fixes several defects that made a check quietly report nothing,
+adds CDISC Controlled Terminology support, reads the terminology version a
+study declares in TS or in its Define-XML, and makes checking a large study
+about twenty times faster. See NEWS.md for the full list.
+
+The interface only gains. `list_ct_packages()` is new, and `check_study()` and
+`check_dataset()` take a new optional `ct_package` argument that defaults to
+NULL. `check_study()` also gains `standard` and `version`, both optional.
+Nothing existing changed its meaning, nothing is deprecated, and nothing is
+removed, so code written against 0.1.0 runs unchanged.
 
 ## Test environments
 

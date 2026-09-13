@@ -1,4 +1,4 @@
-# coreval 0.1.0.9000 (development)
+# coreval 0.2.0
 
 * **Fixed: a malformed CSV lost records, or every column name.** Three separate
   ways, all silent, all found by reading the warnings the conformance sweep had
