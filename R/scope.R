@@ -96,7 +96,26 @@ domains_match <- function(domains_spec, domain) {
   include_exclude_matches(domains_spec, function(pattern) pattern_matches_domain(pattern, domain))
 }
 
-#' Test whether a rule's full Scope (Classes, Domains, Use Case) applies to a domain
+#' Test a USDM `Scope: Entities` spec against a dataset name
+#'
+#' USDM entity names arrive as the dataset key, upper-cased like every other
+#' dataset name here (`StudyVersion.csv` becomes `STUDYVERSION`), so the
+#' comparison is case-insensitive. `ALL` is the same sentinel it is for
+#' Domains.
+#'
+#' @param entities_spec The `Entities` element of a rule's scope.
+#' @param domain Dataset key to test.
+#' @return A single logical.
+#' @noRd
+entities_match <- function(entities_spec, domain) {
+  target <- toupper(domain)
+  include_exclude_matches(entities_spec, function(pattern) {
+    pattern <- toupper(as.character(pattern)[[1]])
+    identical(pattern, "ALL") || identical(pattern, target)
+  })
+}
+
+#' Test whether a rule's full Scope (Classes, Domains, Entities, Use Case) applies to a domain
 #' @param rule A rule record.
 #' @param domain Domain code to test.
 #' @param use_case Optional use case to also filter on.
@@ -114,6 +133,20 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
     return(FALSE)
   }
   if (!is.null(scope$Domains) && !domains_match(scope$Domains, domain)) {
+    return(FALSE)
+  }
+  # USDM rules scope by ENTITY, not by domain or class: a study-design document
+  # has a StudyVersion and an Encounter where SDTM has a DM and an AE, and the
+  # rules say `Entities: Include: [StudyVersion]`. Matched on the name, with no
+  # `--` prefix wildcard and no class lookup, because neither exists in that
+  # model.
+  #
+  # A rule with an Entities scope and nothing else used to match EVERY dataset,
+  # since all three tests above are skipped when their key is absent. That is
+  # the default-open shape this file has to be careful about: a scope key the
+  # resolver does not know silently widens scope to everything rather than
+  # narrowing it.
+  if (!is.null(scope$Entities) && !entities_match(scope$Entities, domain)) {
     return(FALSE)
   }
   # `include_split_datasets` narrows or widens scope by whether the dataset

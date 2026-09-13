@@ -1,5 +1,22 @@
 # coreval 0.2.0.9000 (development)
 
+* **Fixed: `max` was a date operation, and should never have been.** The
+  reference has four separate operations where coreval had two: `max`/`min` are
+  plain aggregates over whatever the column holds, and only `max_date`/
+  `min_date` parse ISO 8601. Both went through the date picker here, which
+  validates against a date regex and yields nothing for anything else, so `max`
+  over a text or numeric column produced no binding and the rule using it
+  quietly found nothing.
+
+  Exactly one bundled rule uses `max`, and its column is a date, so no shipped
+  result was wrong. It is fixed because the next rule to use it might not be,
+  and because a missing binding is the silent kind of failure. `min` now exists
+  too.
+
+* A rule can now scope by USDM entity (`Scope: Entities`). A scope key the
+  resolver did not recognise was skipped, which meant every other test passed
+  by default and the rule matched every dataset in the study rather than none.
+
 * **Reads CDISC Dataset-JSON and Dataset-NDJSON.** These are the formats CDISC
   publishes as the successor to transport files, and `check_study()` now takes
   a folder of either. `jsonlite` is a `Suggests`, so the runtime dependencies

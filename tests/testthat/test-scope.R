@@ -138,3 +138,38 @@ test_that("include_split_datasets narrows or widens a rule's domain scope", {
   # nor widens rather than guessing.
   expect_true(rule_applies_to_domain(only_split, "QSCGI"))
 })
+
+test_that("a USDM Entities scope narrows to that entity, and does not match everything", {
+  rule <- list(scope = list(Entities = list(Include = list("StudyVersion"))))
+
+  # Dataset names arrive upper-cased, so the comparison is case-insensitive.
+  expect_true(rule_applies_to_domain(rule, "STUDYVERSION"))
+  expect_true(rule_applies_to_domain(rule, "StudyVersion"))
+
+  # The point of the branch. Before it existed, a scope key the resolver did
+  # not know was skipped, every other test passed by default, and the rule ran
+  # against every dataset in the study.
+  expect_false(rule_applies_to_domain(rule, "ENCOUNTER"))
+  expect_false(rule_applies_to_domain(rule, "DM"))
+
+  several <- list(scope = list(Entities = list(
+    Include = list("StudyDesign", "InterventionalStudyDesign")
+  )))
+  expect_true(rule_applies_to_domain(several, "STUDYDESIGN"))
+  expect_true(rule_applies_to_domain(several, "INTERVENTIONALSTUDYDESIGN"))
+  expect_false(rule_applies_to_domain(several, "OBSERVATIONALSTUDYDESIGN"))
+
+  # ALL is the same sentinel it is for Domains.
+  expect_true(rule_applies_to_domain(
+    list(scope = list(Entities = list(Include = list("ALL")))), "ANYTHING"))
+
+  # Exclude works the same way round.
+  excluded <- list(scope = list(Entities = list(Exclude = list("Code"))))
+  expect_false(rule_applies_to_domain(excluded, "CODE"))
+  expect_true(rule_applies_to_domain(excluded, "TIMING"))
+
+  # An SDTM rule has no Entities key at all and must be unaffected.
+  sdtm <- list(scope = list(Domains = list(Include = list("AE"))))
+  expect_true(rule_applies_to_domain(sdtm, "AE"))
+  expect_false(rule_applies_to_domain(sdtm, "DM"))
+})

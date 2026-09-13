@@ -676,3 +676,42 @@ test_that("the CT version is taken from TS when the study declares one", {
   # No TS, or no such columns, says nothing.
   expect_null(ct_package_from_ts(list(datasets = list())))
 })
+
+test_that("max and min are generic aggregates, and max_date/min_date stay date-aware", {
+  dt <- data.table::data.table(
+    grp = c("A", "A", "B", "B"),
+    txt = c("Code_16", "Code_2", "Zeta", ""),
+    num = c(4, 11, 2, NA),
+    dte = c("2023-12-15", "2024-01-02", "not-a-date", "2020-06-01")
+  )
+  val <- function(op, want_max, fn = extreme_binding) {
+    b <- fn(dt, op, want_max = want_max)
+    if (is.null(b)) NULL else b$value
+  }
+
+  # Text: a plain lexicographic aggregate. The reference's Maximum is a bare
+  # pandas .max(), so "Code_2" beats "Code_16" the way string order says.
+  expect_identical(val(list(name = "txt"), TRUE), "Zeta")
+  expect_identical(val(list(name = "txt"), FALSE), "Code_16")
+
+  # Numbers compare as numbers, not as text, and NA is not a value.
+  expect_identical(val(list(name = "num"), TRUE), 11)
+  expect_identical(val(list(name = "num"), FALSE), 2)
+
+  # The date-specific pair ignores an unparseable value; the generic pair does
+  # not, because for it "not-a-date" is simply the largest string.
+  expect_identical(
+    date_extreme_binding(dt, list(name = "dte"), want_max = TRUE)$value,
+    "2024-01-02"
+  )
+  expect_identical(val(list(name = "dte"), TRUE), "not-a-date")
+
+  # Grouped, which is the shape USDM's CORE-000808 uses.
+  grouped <- extreme_binding(dt, list(name = "txt", group = "grp"), want_max = FALSE)
+  expect_equal(grouped$kind, "grouped")
+  expect_setequal(grouped$table$.value, c("Code_16", "Zeta"))
+
+  # An absent column yields no binding, which check_study() reports as a skip
+  # with a reason rather than answering.
+  expect_null(extreme_binding(dt, list(name = "NOSUCHCOL"), want_max = TRUE))
+})

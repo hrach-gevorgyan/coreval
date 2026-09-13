@@ -224,6 +224,47 @@ date_extreme_binding <- function(dt, op, want_max) {
   }
 }
 
+#' The largest or smallest value of a column, whatever its type
+#'
+#' `max`/`min` and `max_date`/`min_date` are four different operations in the
+#' reference, not two: `Maximum` is a plain aggregate over whatever the column
+#' holds, while `MaxDate` parses ISO 8601 first. Both `max` and `max_date`
+#' routed through the date picker here, which validates against a date regex
+#' and yields NA for anything else, so `max` over a non-date column silently
+#' produced no binding at all and the rule using it quietly found nothing.
+#'
+#' Only one bundled rule uses `max` today and its column is a date, so nothing
+#' shipped was wrong. USDM's CORE-000808 takes `min` of an `id` column holding
+#' values like `Code_16`, which is what made the gap visible.
+#'
+#' Blank strings are dropped before comparing. An empty character is not a
+#' value, and keeping it would make it the minimum of every text column.
+#'
+#' @param dt A data.table, or `NULL`.
+#' @param op The Operations entry.
+#' @param want_max `TRUE` for the maximum.
+#' @return A binding, or `NULL` when the column is absent.
+#' @noRd
+extreme_binding <- function(dt, op, want_max) {
+  if (is.null(dt) || !(op$name %in% names(dt))) {
+    return(NULL)
+  }
+  filtered <- apply_operation_filter(dt, op$filter)
+  picker <- function(x) {
+    if (is.character(x)) x <- x[!is.na(x) & nzchar(x)] else x <- x[!is.na(x)]
+    if (length(x) == 0) {
+      return(if (is.character(x)) NA_character_ else NA_real_)
+    }
+    if (want_max) max(x) else min(x)
+  }
+  if (is.null(op$group)) {
+    scalar_binding(picker(filtered[[op$name]]))
+  } else {
+    agg <- compute_group_agg(filtered, op$group, op$name, picker)
+    if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
+  }
+}
+
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
 # The CDISC Library's own variable metadata, for whichever standard the
@@ -624,6 +665,7 @@ implemented_operation_types <- c(
   "get_parent_model_column_order",
   "max",
   "max_date",
+  "min",
   "min_date",
   "record_count",
   "required_variables",
@@ -751,9 +793,10 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         grouped_binding(group_cols, agg, ".value", regex = op$regex)
       }
     },
-    max_date = ,
-    max = date_extreme_binding(dt, op, want_max = TRUE),
+    max_date = date_extreme_binding(dt, op, want_max = TRUE),
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
+    max = extreme_binding(dt, op, want_max = TRUE),
+    min = extreme_binding(dt, op, want_max = FALSE),
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
     # The standard's expected variable order - see standard_variable_order(),
     # which merges the IG's per-domain list into the Model's skeleton
