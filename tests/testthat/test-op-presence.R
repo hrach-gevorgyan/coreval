@@ -61,3 +61,29 @@ test_that("inconsistent_enumerated_columns is FALSE when there's no numbered sib
   check <- list(name = "COVAL", operator = "inconsistent_enumerated_columns")
   expect_equal(evaluate_check(check, dataset, "CO"), c(FALSE, FALSE))
 })
+
+test_that("an Operations binding that resolved to nothing is empty, a column's NA is not", {
+  # The reference's `empty` is `isin(NULL_FLAVORS) | pd.isna(...)`, so a
+  # merged-in aggregate with no match reads as empty, and 63 USDM rules are
+  # built on that: they ask `empty` of a codelist lookup, where "this code is
+  # not in the codelist" is the finding. Answering NA did not report the row,
+  # it made the enclosing condition NA, and NA is not a violation - so rows
+  # vanished from CORE-000859 while their neighbours were reported.
+  #
+  # A column's NA stays non-blank. Six FDA.SENDIG rules use `empty` on an
+  # unmatched left join to tell "no partner" from "partner with a blank
+  # value", and reading that as blank turns all six into failures.
+  data <- data.table::data.table(JOINED = c("x", NA_character_, ""))
+  dataset <- list(data = data, meta = NULL)
+
+  from_column <- list(
+    name = "JOINED", exists = TRUE, target = data$JOINED, n = 3L,
+    target_is_binding = FALSE, dataset = dataset,
+    condition = list(operator = "empty")
+  )
+  expect_equal(get_operator("empty")(from_column), c(FALSE, NA, TRUE))
+
+  from_binding <- utils::modifyList(from_column, list(target_is_binding = TRUE))
+  expect_equal(get_operator("empty")(from_binding), c(FALSE, TRUE, TRUE))
+  expect_equal(get_operator("non_empty")(from_binding), c(TRUE, FALSE, FALSE))
+})

@@ -47,12 +47,23 @@ that licence.
 
 ct_codelists.rds is the Controlled Terminology: every published CT package,
 reduced to the codelist and term submission values and C-codes a conformance
-rule can ask about, plus whether each codelist is extensible. The definitions,
-synonyms and preferred terms that make up most of the source caches are not
-included - no bundled rule asks for them - which is why 438 MB of caches
-becomes 0.54 MB here. CDISC Controlled Terminology is developed by CDISC in
-collaboration with the National Cancer Institute's Enterprise Vocabulary
-Services (NCI EVS), which publishes it.
+rule can ask about, plus whether each codelist is extensible. The definitions
+and synonyms that make up most of the source caches are not included, which is
+why 438 MB of caches becomes 0.54 MB here. CDISC Controlled Terminology is
+developed by CDISC in collaboration with the National Cancer Institute's
+Enterprise Vocabulary Services (NCI EVS), which publishes it.
+
+inst/extdata/ct_pref_terms.rds
+------------------------------
+From cdisc-org/cdisc-rules-engine, extracted from the same offline caches under
+the same MIT licence, in the same build step, and likewise never through the
+CDISC Library API.
+
+The preferred term of each of the terms in ct_codelists.rds, keyed the same way
+and in the same order. A separate file rather than a column of that one because
+59 rules ask for a preferred term and the rest should not pay for it: the R side
+reads each file only when a rule reaches for it. Also CDISC Controlled
+Terminology, developed with NCI EVS.
 
 tests/testthat/fixtures/
 ------------------------

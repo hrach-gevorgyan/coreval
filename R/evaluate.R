@@ -289,12 +289,17 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   # binding's own `kind` distinguishes it - by the time an operator sees
   # `ctx$target` it is just a character vector.
   target_is_collection <- FALSE
+  # Whether the TARGET is an Operations binding rather than a dataset column.
+  # `empty` turns on it: an aggregate that resolved to nothing is blank, while
+  # a column's NA is not. See op_presence.R.
+  target_is_binding <- FALSE
   if (is.character(condition$name) && startsWith(condition$name, "$")) {
     binding <- bindings[[condition$name]]
     name <- condition$name
     exists <- !is.null(binding)
     target <- if (exists) resolve_binding(binding, dataset) else NULL
     target_is_collection <- exists && identical(binding$kind, "scalar")
+    target_is_binding <- TRUE
   } else {
     name <- resolve_var_name(condition$name, wildcard)
     exists <- name %in% names(dataset$data)
@@ -316,6 +321,7 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     exists = exists,
     target = target,
     target_is_collection = target_is_collection,
+    target_is_binding = target_is_binding,
     value = resolve_condition_value(condition, dataset, wildcard, bindings),
     n = nrow(dataset$data),
     condition = condition,

@@ -33,14 +33,23 @@ register_operator("empty", function(ctx) {
       length(v) == 0 || all(!nzchar(as.character(v)))
     }, logical(1)))
   }
-  # Deliberately NOT treating a character NA as blank. A left join does put a
-  # genuine NA into a character column for every unmatched row, and reading
-  # that as blank is tempting: CORE-000816 asks which epochs no activity
-  # instance points at, which is exactly those rows. It is wrong anyway -
-  # tried, and it turns six passing FDA.SENDIG rules into failures, because
-  # `empty` on an unmatched join is how those rules distinguish "this row has
-  # no partner" from "this row's partner has a blank value". Whatever
-  # CORE-000816 needs, it is not this.
+  # An Operations binding that resolved to nothing IS blank. The reference's
+  # `empty` is `isin(NULL_FLAVORS) | pd.isna(...)`, so a merged-in aggregate
+  # with no match reads as empty there, and these rules are built on that: 63
+  # of them ask `empty` of a codelist lookup, where "this code is not in the
+  # codelist" is the finding. Answering NA instead did not report the row, it
+  # made the whole condition NA, and NA is not a violation - so the row
+  # vanished from rules like CORE-000859 while its neighbours were reported.
+  #
+  # A dataset COLUMN's NA is a different fact and stays non-blank. A left join
+  # puts a genuine NA into a character column for every unmatched row, and six
+  # FDA.SENDIG rules use `empty` to tell "this row has no partner" from "this
+  # row's partner has a blank value"; reading that as blank turns all six into
+  # failures. It was tried. The declared-left-join fill in match_datasets.R is
+  # what serves the rules that do want those rows treated as blank.
+  if (isTRUE(ctx$target_is_binding)) {
+    return(is.na(ctx$target) | (is.character(ctx$target) & ctx$target == ""))
+  }
   if (is.character(ctx$target)) ctx$target == "" else is.na(ctx$target)
 })
 
