@@ -287,30 +287,32 @@ operation_columns_used <- function(op) {
 #' dataset against the CT table on (version, codelist, term) and returns one
 #' column.
 #'
-#' `term_code` and `term_value` say which side the row supplies, `returntype`
-#' says which side it wants, and the match is case-insensitive, all as the
-#' reference has it.
+#' `term_code`, `term_value` and `term_pref_term` say which side the row
+#' supplies, `returntype` says which side it wants, and the match is
+#' case-insensitive, all as the reference has it. The default return differs by
+#' supplied side: a code asks for a value, a value or a preferred term asks for
+#' a code (codelist_terms.py:42-53).
 #'
-#' `returntype: pref_term` is refused rather than answered. Preferred terms are
-#' not in the bundled terminology: they are most of the bulk of CDISC's caches
-#' and no bundled rule needs them, so they were left out. A rule asking for one
-#' gets a skip naming the reason, which is what keeps
-#' this from inventing a term nobody shipped.
+#' Preferred terms come from [ct_pref_terms()], a separate file loaded only when
+#' a rule asks. They used to be refused outright, on the grounds that nothing
+#' bundled needs them; 59 USDM rules do.
 #'
 #' @param op The Operations entry.
 #' @param study Full study object.
 #' @param dt The dataset being checked.
+#' @param bindings The Operations results resolved so far.
 #' @return A [per_row_binding()], one value per row.
 #' @noRd
-ct_terms_per_row <- function(op, study, dt) {
-  returntype <- op$returntype %||% (if (!is.null(op$term_code)) "value" else "code")
-  if (identical(returntype, "pref_term") || !is.null(op$term_pref_term)) {
-    stop("needs controlled terminology preferred terms, which coreval does not ",
-         "bundle: only submission values and C-codes are included",
-         call. = FALSE)
+ct_terms_per_row <- function(op, study, dt, bindings = list()) {
+  supplied <- if (!is.null(op$term_code)) {
+    "code"
+  } else if (!is.null(op$term_value)) {
+    "value"
+  } else {
+    "pref_term"
   }
-  supplied <- if (!is.null(op$term_code)) "code" else "value"
-  source_col <- as.character(op$term_code %||% op$term_value)[[1]]
+  returntype <- op$returntype %||% (if (identical(supplied, "code")) "value" else "code")
+  source_col <- as.character(op$term_code %||% op$term_value %||% op$term_pref_term)[[1]]
   version_col <- as.character(op$version %||% op$ct_version %||% "")[[1]]
   if (is.null(dt) || !(source_col %in% names(dt)) || !(version_col %in% names(dt))) {
     stop("codelist_terms needs columns '", source_col, "' and '", version_col,
@@ -320,11 +322,16 @@ ct_terms_per_row <- function(op, study, dt) {
   if (is.null(tbl)) {
     stop("the bundled controlled terminology is not installed", call. = FALSE)
   }
-  codelist_code <- resolve_operation_reference(op$codelist_code, list(), dt)
+  # `codelist_code` is normally an earlier Operations result, written
+  # `$codelist_code`. Resolved against an empty binding list it fell through to
+  # the literal-text branch, so the lookup key was the string "$codelist_code",
+  # which matches no codelist, and every row of every one of these rules came
+  # back NA. The sibling `codelist_extensible` passed its bindings all along.
+  codelist_code <- resolve_operation_reference(op$codelist_code, bindings, dt)
   if (is.null(codelist_code)) {
     stop("codelist_terms cannot resolve its codelist code", call. = FALSE)
   }
-  family <- ct_family_for(op$ct_package_type %||% study$standard$product)
+  family <- ct_family_for(op$ct_package_type)
   versions <- trimws(as.character(dt[[version_col]]))
   packages <- ifelse(is.na(versions) | !nzchar(versions), NA_character_,
                      paste0(family, "-", versions))
@@ -335,6 +342,27 @@ ct_terms_per_row <- function(op, study, dt) {
   # hold thousands of rows citing a handful of versions.
   wanted <- unique(data.table::data.table(package = packages, codelist_code = codes))
   wanted <- wanted[!is.na(wanted$package), ]
+  # Preferred terms live in their own file, in the same row order, so the row
+  # index found in the main table indexes that one too. Read only when a side
+  # of this operation actually asks for one, which is what keeps its 19 MB out
+  # of every other study.
+  prefs <- if ("pref_term" %in% c(supplied, returntype)) {
+    p <- ct_pref_terms()
+    if (is.null(p)) {
+      stop("needs controlled terminology preferred terms, which are not ",
+           "installed with this build of the package", call. = FALSE)
+    }
+    p$term_pref_terms
+  } else {
+    NULL
+  }
+  term_field <- function(kind, row) {
+    switch(kind,
+      code = tbl$term_codes[row],
+      value = tbl$term_values[row],
+      pref_term = prefs[row]
+    )
+  }
   lookup <- list()
   for (i in seq_len(nrow(wanted))) {
     row <- match(paste(wanted$package[i], wanted$codelist_code[i]),
@@ -342,9 +370,14 @@ ct_terms_per_row <- function(op, study, dt) {
     if (is.na(row)) {
       next
     }
-    split_field <- function(x) if (nzchar(x)) strsplit(x, "", fixed = TRUE)[[1]] else character(0)
-    from <- split_field(if (identical(supplied, "code")) tbl$term_codes[row] else tbl$term_values[row])
-    to <- split_field(if (identical(returntype, "code")) tbl$term_codes[row] else tbl$term_values[row])
+    # The Unit Separator the build joins terms with, as ct_terms_for() has it.
+    # This said "" - an empty separator, which strsplit() reads as "split into
+    # single characters", so a codelist's terms came back as a pile of letters
+    # and no row ever matched. Unreachable while every rule using this function
+    # was skipped for want of preferred terms, which is exactly why it survived.
+    split_field <- function(x) if (nzchar(x)) strsplit(x, "", fixed = TRUE)[[1]] else character(0)
+    from <- split_field(term_field(supplied, row))
+    to <- split_field(term_field(returntype, row))
     if (length(from) == length(to)) {
       lookup[[paste(wanted$package[i], wanted$codelist_code[i])]] <-
         stats::setNames(to, tolower(from))
@@ -355,25 +388,43 @@ ct_terms_per_row <- function(op, study, dt) {
     if (is.null(entry) || is.na(keys[i]) || !nzchar(keys[i])) {
       return(NA_character_)
     }
-    hit <- entry[[keys[i]]]
-    if (is.null(hit)) NA_character_ else hit
+    # match(), not `entry[[key]]`. `[[` on a named CHARACTER vector raises
+    # "subscript out of bounds" for a name that is not there rather than
+    # returning NULL, so the is.null() guard that used to be here never ran and
+    # a value absent from the codelist aborted the whole operation. That value
+    # is the normal case for these rules: it is the violation they look for.
+    j <- match(keys[i], names(entry))
+    if (is.na(j)) NA_character_ else unname(entry[[j]])
   }, character(1))
   per_row_binding(out)
 }
 
-#' Which bundled CT family a package type or standard names
-#' @param what A `ct_package_type` ("SDTM") or a standard product ("SENDIG").
-#' @return One of `"adamct"`, `"sendct"`, `"sdtmct"`.
+#' Which bundled CT family a declared `ct_package_type` names
+#'
+#' The reference builds this name by lower-casing the declared type and
+#' appending "ct" (`_ct_package_type_api_name`, rule_processor.py:339-342), then
+#' uses it as the cache file's own prefix. So DDF means ddfct, which is bundled
+#' like the rest. Matching on ADAM and SEND and defaulting everything else to
+#' sdtmct - the rule `get_codelist_attributes` follows, and which
+#' [ct_packages_per_row()] still implements for it - silently sent all 116 of
+#' the DDF `codelist_terms` operations to sdtmct, where their codelists are not.
+#'
+#' An undeclared type is refused rather than guessed at. This used to fall back
+#' to the study's standard, which is coreval's own invention: the reference
+#' passes None and looks for a "None-<version>" cache that cannot exist, so it
+#' finds no terminology at all. Every operation in the 1054-rule build that
+#' reaches here declares a type, so nothing is lost by saying so out loud.
+#'
+#' @param what A declared `ct_package_type`, e.g. `"SDTM"`, `"DDF"`.
+#' @return A family prefix, e.g. `"sdtmct"`, `"ddfct"`.
 #' @noRd
 ct_family_for <- function(what) {
-  std <- toupper(what %||% "")
-  if (grepl("ADAM", std, fixed = TRUE)) {
-    "adamct"
-  } else if (grepl("SEND", std, fixed = TRUE)) {
-    "sendct"
-  } else {
-    "sdtmct"
+  declared <- trimws(as.character(what %||% "")[[1]])
+  if (!nzchar(declared)) {
+    stop("this operation names no ct_package_type, so there is no terminology ",
+         "package to look its terms up in", call. = FALSE)
   }
+  paste0(tolower(declared), "ct")
 }
 
 #' Resolve an Operations parameter that may name a column, a binding, or a literal
@@ -806,6 +857,29 @@ ct_codelists <- function() {
   .coreval_env$ct_codelists
 }
 
+#' The preferred term of every bundled Controlled Terminology term
+#'
+#' A second file rather than a column of [ct_codelists()], and read on first use
+#' for the same reason that one is: folded in it would take the loaded table
+#' from about 16 MB to about 35 MB, and no rule coreval bundles asks for a
+#' preferred term. 59 USDM rules do. Same rows in the same order as
+#' [ct_codelists()], enforced at build time by data-raw/ct_pref_terms.R, so a
+#' row index into one indexes the other.
+#'
+#' @return A data.frame keyed by `package` and `codelist_code`, or `NULL` if the
+#'   file is not installed.
+#' @noRd
+ct_pref_terms <- function() {
+  if (is.null(.coreval_env$ct_pref_terms)) {
+    path <- system.file("extdata", "ct_pref_terms.rds", package = "coreval")
+    if (!nzchar(path)) {
+      return(NULL)
+    }
+    .coreval_env$ct_pref_terms <- readRDS(path)
+  }
+  .coreval_env$ct_pref_terms
+}
+
 #' Package names of the bundled Controlled Terminology
 #' @return A character vector, e.g. `"sdtmct-2026-03-27"`.
 #' @noRd
@@ -1094,7 +1168,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # terminology version that row cites.
     codelist_terms = if (!is.null(op$term_code) || !is.null(op$term_value) ||
                          !is.null(op$term_pref_term)) {
-      ct_terms_per_row(op, study, dt)
+      ct_terms_per_row(op, study, dt, bindings)
     } else {
       scalar_binding(ct_terms_for(op, study))
     },
@@ -1182,7 +1256,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         stop("codelist_extensible cannot resolve its codelist code: ",
              as.character(op$codelist_code %||% "?"), call. = FALSE)
       }
-      family <- ct_family_for(op$ct_package_type %||% study$standard$product)
+      family <- ct_family_for(op$ct_package_type)
       versions <- trimws(as.character(dt[[version_col]]))
       packages <- ifelse(is.na(versions) | !nzchar(versions), NA_character_,
                          paste0(family, "-", versions))
@@ -1196,7 +1270,16 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       # extensible" and "we have never heard of this codelist in that release"
       # are different answers, and collapsing them would let a rule report a
       # violation about terminology it could not look up.
-      per_row_binding(tbl$extensible[match(key, ref)])
+      #
+      # LOGICAL, not the string the bundled table stores. The rules that read
+      # this binding compare it against YAML `true`, which arrives as R's TRUE
+      # and which R coerces to the string "TRUE" when the other side is
+      # character - so "True" == TRUE was FALSE on every row, that arm of the
+      # rule never fired, and rules like CORE-000924 reported every record in
+      # the dataset. The reference has a real bool here: the extensible flag
+      # comes straight out of the cache as one, and only coreval's CSV build
+      # step ever made it text. `== "True"` keeps NA as NA.
+      per_row_binding(tbl$extensible[match(key, ref)] == "True")
     },
     valid_codelist_dates = {
       tbl <- .coreval_env$ct_packages

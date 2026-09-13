@@ -24,10 +24,14 @@ is "is this value one of the terms of codelist X", so the fields kept here are:
 That subset is 46 MB of CSV and compresses to about half a megabyte, because
 consecutive CT releases are nearly identical and xz collapses the repetition.
 
-`preferredTerm` is deliberately NOT kept. No bundled rule asks for
-`returntype: pref_term`, and carrying it doubles both the file and its
-in-memory size. A rule that ever needs it will be skipped with a reason, which
-is the honest answer, rather than silently answered from data that isn't here.
+`preferredTerm` goes to a SECOND file, ct_pref_terms.csv, rather than into the
+table above. 59 rules ask for one, so it cannot be left out, but it is bulky:
+folded into the main table it takes the rds from 0.54 to 0.97 MB and, which
+matters more, the loaded object from 16.1 to 35.2 MB. No rule coreval bundles
+today asks for a preferred term, so charging every study 19 MB of memory for
+one is not a trade worth making. Split out, it is 0.44 MB installed and costs
+nothing until a rule reaches for it, since the R side loads each file lazily on
+first use.
 
 Every package is kept, not just recent ones. Terminology changes between
 releases - SEX gained INTERSEX and lost UNDIFFERENTIATED - so judging a study
@@ -46,6 +50,7 @@ CACHE_DIR = os.path.join(
     "data-raw", "upstream", "cdisc-rules-engine", "resources", "cache"
 )
 OUT = os.path.join("data-raw", "ct_codelists.csv")
+OUT_PREF = os.path.join("data-raw", "ct_pref_terms.csv")
 
 # The terms of one codelist are joined with the ASCII Unit Separator, which
 # cannot appear in a submission value, so the column can be split back apart
@@ -75,7 +80,7 @@ def main():
 
     rows = 0
     term_count = 0
-    with open(OUT, "w", newline="", encoding="utf-8") as fh:
+    with open(OUT, "w", newline="", encoding="utf-8") as fh,             open(OUT_PREF, "w", newline="", encoding="utf-8") as pfh:
         writer = csv.DictWriter(
             fh,
             fieldnames=[
@@ -84,6 +89,14 @@ def main():
             ],
         )
         writer.writeheader()
+        # Same (package, codelist_code) key as the main table, so a row of one
+        # is matched to a row of the other, and in the same term order, so the
+        # Nth preferred term belongs to the Nth code. Written in one pass for
+        # that reason: two passes could drift.
+        pref_writer = csv.DictWriter(
+            pfh, fieldnames=["package", "codelist_code", "term_pref_terms"]
+        )
+        pref_writer.writeheader()
         for path in files:
             package = os.path.basename(path)[: -len(".pkl")]
             with open(path, "rb") as pf:
@@ -101,9 +114,17 @@ def main():
                     ),
                     "term_codes": SEP.join(t.get("conceptId", "") for t in terms),
                 })
+                pref_writer.writerow({
+                    "package": package,
+                    "codelist_code": codelist.get("conceptId", ""),
+                    "term_pref_terms": SEP.join(
+                        (t.get("preferredTerm") or "") for t in terms
+                    ),
+                })
                 rows += 1
 
     print("wrote %s: %d codelists from %d packages" % (OUT, rows, len(files)))
+    print("wrote %s: the preferred term of each of those terms" % OUT_PREF)
     print("  terms: %d" % term_count)
 
 
