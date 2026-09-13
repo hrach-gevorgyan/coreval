@@ -1,5 +1,60 @@
 # coreval 0.2.0.9000 (development)
 
+* **Every tabular USDM rule CDISC ships a test for now agrees with its answer
+  sheet.** All 157 of the USDM Record Data rules pass against CDISC's own
+  positive and negative fixtures, none skipped. They are not bundled: CDISC
+  publishes their test data as flattened per-entity CSVs, which is its own
+  harness format rather than anything a user has, and reading a real USDM JSON
+  study means porting the reference's own graph flattening. The other 100 USDM
+  rules are JSONata and JSON Schema, which need an evaluator coreval does not
+  have yet.
+
+  Seven defects came out of getting there, and every one of them made a check
+  quietly do nothing rather than report something wrong.
+
+* **Fixed: a dataset was named after its file rather than what the manifest
+  declared.** A test case's `_datasets.csv` can carry a `Dataset Name` column,
+  and where it does, that is the dataset's name. USDM fixtures truncate the
+  file stem to 27 characters, so a rule scoped to
+  `StudyProtocolDocumentVersion` found no dataset in scope at all while the
+  dataset sat there under the truncated spelling. Two files declaring one name
+  now raise rather than silently resolving to the first.
+
+* **Fixed: a declared `Join Type: left` was ignored.** Ten Match Datasets specs
+  declare it, and it is the reference's signal to keep the rows that matched
+  nothing and blank their joined-in columns. Those rows are the point of such a
+  rule: which epochs no activity instance points at, which timings nothing
+  schedules. Both reported nothing.
+
+* **Fixed: a grouped `distinct` collapsed to a plain column when every group
+  held one value,** so an unmatched row read as `NA` instead of the empty set
+  and the rule found nothing there. Comparison operators can now read a
+  set-valued operand rather than raising on one. The ordinal operators refuse
+  it instead, which is a change too: `list(...) < "2"` does not raise in R, it
+  compares the deparsed text and answers `FALSE` for every row.
+
+* **Fixed: `empty` answered `NA` for an Operations binding that resolved to
+  nothing.** 63 rules ask exactly that of a codelist lookup, where "this code is
+  not in the codelist" is the finding, and `NA` is not a violation: it made the
+  enclosing condition `NA` and the row vanished from the report while its
+  neighbours were listed. A dataset column's `NA` still is not blank, which is
+  what keeps the rules that rely on an unmatched join reading as populated.
+
+* **Controlled terminology preferred terms now ship,** in their own lazily read
+  file, so a study with no rule asking for one pays nothing for them. The rules
+  that do ask were refused outright before. Four further defects sat behind that
+  refusal: the CT family for a declared package type was guessed from a short
+  list instead of being derived the way the reference derives it, so every DDF
+  lookup went to the wrong terminology; the codelist code was resolved against
+  an empty binding list; the term separator was the empty string, which splits a
+  codelist into single characters; and a code absent from the codelist aborted
+  the whole operation instead of answering "not found".
+
+* **`get_xhtml_errors` is implemented,** with the XHTML schemas bundled so
+  validation happens offline. The XHTML modules are the W3C's rather than
+  CDISC's, under their own permissive grant, and `inst/COPYRIGHTS` says so.
+  `xml2` stays in Suggests: without it these rules skip with a reason.
+
 * **Fixed: an escaped quote inside a quoted CSV field was read as two quotes.**
   RFC 4180 escapes a quote by doubling it, so `"<ref klass=""Range""/>"` is the
   value `<ref klass="Range"/>`. `fread` does not collapse the pair when the
