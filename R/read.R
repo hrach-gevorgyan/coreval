@@ -209,7 +209,34 @@ read_study_test_case <- function(path) {
   datasets <- lapply(seq_len(nrow(datasets_csv)), function(i) {
     build_dataset_from_csv(path, datasets_csv$Filename[i], variables_csv, datasets_csv$Label[i])
   })
-  names(datasets) <- toupper(datasets_csv$Filename)
+  # A dataset's NAME is what the manifest DECLARES, which need not be its file
+  # name. USDM test cases truncate the file stem to 27 characters while
+  # declaring the full entity: StudyProtocolDocumentVersio.csv carries
+  # `Dataset Name` = StudyProtocolDocumentVersion, and that is the entity a
+  # USDM rule scopes by and an answer sheet names. Keying on the file name
+  # filed CORE-000851's findings under an entity USDM does not have, and left
+  # five more rules skipped as "no dataset matches the rule's scope" with the
+  # scoped dataset sitting right there. The reference reads the same column
+  # (csv_metadata_reader.py:85-89, with upper-cased Filename only as the
+  # fallback) and read_study_dataset_json() already honours the declared name.
+  # Files are still opened by `Filename`, since the CSV on disk and
+  # `_variables.csv`'s `dataset` column both use the truncated form.
+  declared_name <- datasets_csv$Filename
+  if ("Dataset Name" %in% names(datasets_csv)) {
+    given <- datasets_csv[["Dataset Name"]]
+    use <- !is.na(given) & nzchar(trimws(given))
+    declared_name[use] <- trimws(given[use])
+  }
+  names(datasets) <- toupper(declared_name)
+  # Two files declaring one name would make `study$datasets[[dom]]` return the
+  # first and quietly ignore the second. No fixture does this today (0 of the
+  # 2028 manifests upstream), but a split-domain test case declaring `AE` twice
+  # would, and it is not a thing to discover from a wrong pass rate.
+  if (anyDuplicated(names(datasets))) {
+    dup <- unique(names(datasets)[duplicated(names(datasets))])
+    stop("test case declares one dataset name for several files: ",
+         paste(dup, collapse = ", "), call. = FALSE)
+  }
 
   list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = read_env_standard(path))
 }

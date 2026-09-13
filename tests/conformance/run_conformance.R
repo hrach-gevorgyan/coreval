@@ -369,7 +369,23 @@ run_rule <- function(rule) {
   list(status = "PASS", reason = NA_character_)
 }
 
-rules <- .coreval_env$data$rules
+# Normally the bundled registry. `COREVAL_CONFORMANCE_RULES` points the harness
+# at a different extract instead, which is how the USDM rules get measured:
+# they are not bundled (they need operators and rule types coreval does not
+# have yet), so the only way to grade progress on them is to run a build that
+# includes them through the same comparison logic as everything else. Writing
+# a separate USDM sweep script was the alternative and is the mistake this
+# repository has already made once: two code paths for one job, drifting apart.
+# An override never rewrites scoreboard.csv, same as a targeted run.
+rules_override <- Sys.getenv("COREVAL_CONFORMANCE_RULES", "")
+rules <- if (nzchar(rules_override)) {
+  if (!file.exists(rules_override)) {
+    stop("COREVAL_CONFORMANCE_RULES points at no such file: ", rules_override, call. = FALSE)
+  }
+  readRDS(rules_override)$rules
+} else {
+  .coreval_env$data$rules
+}
 
 # Optional targeted mode: any rule IDs after the upstream dir restrict the run
 # to just those rules, which takes seconds instead of the full ~5-minute
@@ -434,7 +450,7 @@ if (nrow(fail_rows) > 0) {
   cat("(none)\n")
 }
 
-if (is.null(target_ids)) {
+if (is.null(target_ids) && !nzchar(rules_override)) {
   out_path <- file.path("tests", "conformance", "scoreboard.csv")
   data.table::fwrite(scoreboard, out_path)
   cat("\nFull scoreboard written to", out_path, "\n")
