@@ -533,6 +533,36 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   merged <- data.table::rbindlist(list(merged_valid, left_blank), use.names = TRUE, fill = TRUE)
   merged <- merged[order(merged$.coreval_row_id)]
 
+  # A spec that DECLARES `Join Type: left` is the one case where the reference
+  # keeps unmatched rows on purpose, and it blanks their joined-in columns
+  # outright: merge_sdtm_datasets() sets every left_only row's right-hand
+  # columns to None (data_processor.py:470-480), and its `empty` counts
+  # pd.isna() as empty (dataframe_operators.py:998-1004). That is the whole
+  # point of such a rule - CORE-000816 asks which epochs no activity instance
+  # points at, CORE-000830 which timings nothing schedules. A blank character
+  # value here is "" and never NA, so write this package's blank and leave the
+  # `empty` operator alone.
+  #
+  # The gate is what makes this safe. The reference's default is an INNER join
+  # (dataset_preprocessor.py:568-569), no bundled spec declares a type at all,
+  # and six FDA.SENDIG rules need an unmatched row to read as populated: that
+  # is how they tell "this row has no partner" from "this row's partner has a
+  # blank value". Teaching `empty` to read a joined NA as blank breaks those,
+  # which is why that was tried and reverted. This cannot reach them.
+  #
+  # Numeric columns are left alone: `empty` already answers TRUE for a numeric
+  # NA, so they need no fill. The key columns are left alone too, and so does
+  # the reference, since after `all.x = TRUE` they hold the LEFT row's own
+  # value rather than a missing right-hand one.
+  if (identical(tolower(as.character(spec[["Join Type"]])), "left")) {
+    for (col in setdiff(names(right), keys)) {
+      v <- merged[[col]]
+      if (is.character(v) && anyNA(v)) {
+        data.table::set(merged, which(is.na(v)), col, "")
+      }
+    }
+  }
+
   list(data = merged, meta = dataset$meta)
 }
 
