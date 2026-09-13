@@ -44,10 +44,21 @@ read_study <- function(path) {
     stop("no such folder: ", path, call. = FALSE)
   }
   if (file.exists(file.path(path, "_variables.csv"))) {
-    read_study_test_case(path)
-  } else {
-    read_study_xpt(path)
+    return(read_study_test_case(path))
   }
+  # XPT first when both are present. A folder holding transport files and a
+  # Dataset-JSON of the same data is a conversion in progress, and the transport
+  # files are the ones a submission is made of.
+  if (length(list.files(path, pattern = "[.]xpt$", ignore.case = TRUE)) > 0) {
+    return(read_study_xpt(path))
+  }
+  if (length(list.files(path, pattern = "[.](json|ndjson)$", ignore.case = TRUE)) > 0) {
+    return(read_study_dataset_json(path))
+  }
+  # No datasets in any readable format. read_study_xpt() returns an empty study
+  # for this, which is the honest answer, and check_study() refuses to call an
+  # empty study clean.
+  read_study_xpt(path)
 }
 
 #' Rewrite `NA` to `""` for every character column of a data.table, in place

@@ -1,6 +1,6 @@
 Package: coreval
 Title: Check Clinical Trial Data Against 'CDISC' Open Rules
-Version: 0.2.0
+Version: 0.2.0.9000
 Authors@R:
     person("Hrach", "Gevorgyan", email = "hrach.gevorgyan@yandex.com", role = c("aut", "cre", "cph"))
 Description: Finds conformance problems in clinical trial data without
@@ -8,7 +8,8 @@ Description: Finds conformance problems in clinical trial data without
     single dataset while you are still writing the code that builds it, or a
     whole study folder once it exists, and get the findings back as a tidy
     data frame pointing at the exact row and variable. Reads transport
-    ('XPT'), 'SAS' and comma-separated files, plus 'Define-XML' when present,
+    ('XPT'), 'SAS', comma-separated and 'Dataset-JSON' files, plus
+    'Define-XML' when present,
     and covers rules for the 'SDTM', 'SEND' and 'TIG' standards. The
     rules are bundled inside the package, so nothing is downloaded and your
     data never leaves your machine: no internet, no API key, no account. When
@@ -35,6 +36,7 @@ Imports:
     data.table,
     haven
 Suggests:
+    jsonlite,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),

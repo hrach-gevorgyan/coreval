@@ -343,7 +343,7 @@ read_define_xml <- function(path) {
 
 #' The bundled CT package a study's define.xml declares, or `NULL`
 #'
-#' Parallel to [ct_package_from_ts()]: the study says which terminology it
+#' Parallel to `ct_package_from_ts()`: the study says which terminology it
 #' follows and coreval reads it rather than guessing. A SEND study cites SEND
 #' terminology and an SDTM study SDTM's, so the publishing set has to match the
 #' standard being checked; the DEFINE-XML set that sits alongside describes the

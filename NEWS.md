@@ -1,3 +1,25 @@
+# coreval 0.2.0.9000 (development)
+
+* **Reads CDISC Dataset-JSON and Dataset-NDJSON.** These are the formats CDISC
+  publishes as the successor to transport files, and `check_study()` now takes
+  a folder of either. `jsonlite` is a `Suggests`, so the runtime dependencies
+  are still `data.table` and `haven`; without it a Dataset-JSON study raises
+  rather than reading as empty. Where a folder holds both, transport files win,
+  since a folder holding both is a conversion in progress and the transport
+  files are what a submission is made of.
+
+  Verified by round-trip rather than against an answer sheet, because CDISC
+  publishes no Dataset-JSON reference data: the same study written as XPT, as
+  Dataset-JSON and as Dataset-NDJSON has to produce the same findings, on the
+  same rows, from the same rules. A dropped row or a shifted column breaks that
+  and keeps the count.
+
+  Two kinds of broken file are refused rather than read. Rows that do not all
+  match the declared column count are malformed, and a file whose `records`
+  count disagrees with the rows it carries has been truncated. CDISC's own
+  engine returns an empty dataset when a Dataset-JSON fails schema validation,
+  which turns a broken file into a clean bill of health.
+
 # coreval 0.2.0
 
 * **Fixed: a malformed CSV lost records, or every column name.** Three separate

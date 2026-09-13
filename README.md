@@ -127,6 +127,7 @@ Needs R 4.1 or newer. Only `data.table` and `haven` to run. Two optional extras:
 
 ```r
 install.packages("xml2")     # to read Define-XML
+install.packages("jsonlite") # to read Dataset-JSON
 install.packages("writexl")  # to write .xlsx
 ```
 
@@ -200,9 +201,16 @@ When you do have the full folder:
 result <- check_study("path/to/study/sdtm")
 ```
 
-A **folder**, not a file. coreval reads everything in it, XPT, SAS, CSV,
-whichever you have, and reading it all at once is what makes the cross-dataset
-rules possible. If there's a Define-XML in there, it finds it and uses it.
+A **folder**, not a file. coreval reads everything in it, XPT, SAS, CSV or
+Dataset-JSON, whichever you have, and reading it all at once is what makes the
+cross-dataset rules possible. If there's a Define-XML in there, it finds it and
+uses it.
+
+Dataset-JSON is CDISC's successor to transport files, and both shapes of it are
+read: one `.json` per dataset, or `.ndjson` with the metadata on the first line
+and a row on each line after. A folder holding transport files *and* a
+Dataset-JSON of the same data is read as XPT, on the grounds that a folder
+holding both is a conversion in progress.
 
 If you want to look at what was parsed, or check the same large study twice
 without re-reading it, do the read yourself:
