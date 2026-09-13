@@ -224,6 +224,119 @@ date_extreme_binding <- function(dt, op, want_max) {
   }
 }
 
+#' The dataset columns an Operations entry needs by name
+#'
+#' Used only to decide whether the raw dataset can answer the operation at all,
+#' so it lists the places a column name can appear rather than trying to be a
+#' complete reading of the spec. A `$`-prefixed value is an earlier binding,
+#' not a column, and is left out.
+#'
+#' @param op An Operations entry.
+#' @return A character vector of column names, possibly empty.
+#' @noRd
+operation_columns_used <- function(op) {
+  names_used <- c(
+    as.character(unlist(op$group %||% character(0))),
+    names(op$filter %||% list())
+  )
+  for (entry in op$map %||% list()) {
+    names_used <- c(names_used, setdiff(names(entry), "output"))
+  }
+  names_used <- names_used[nzchar(names_used) & !startsWith(names_used, "$")]
+  unique(names_used)
+}
+
+#' Which bundled CT family a package type or standard names
+#' @param what A `ct_package_type` ("SDTM") or a standard product ("SENDIG").
+#' @return One of `"adamct"`, `"sendct"`, `"sdtmct"`.
+#' @noRd
+ct_family_for <- function(what) {
+  std <- toupper(what %||% "")
+  if (grepl("ADAM", std, fixed = TRUE)) {
+    "adamct"
+  } else if (grepl("SEND", std, fixed = TRUE)) {
+    "sendct"
+  } else {
+    "sdtmct"
+  }
+}
+
+#' Resolve an Operations parameter that may name a column, a binding, or a literal
+#'
+#' A parameter like `codelist_code` can be `$codelist_code` (an earlier
+#' Operations result), a column of the dataset, or a plain value. The reference
+#' does not distinguish, because it writes every operation result into the
+#' dataset as a column and then just looks for the name; bindings are kept
+#' separate here, so the three cases are tried in that order.
+#'
+#' @param value The parameter, possibly `NULL`.
+#' @param bindings Bindings resolved so far.
+#' @param dt The dataset being checked.
+#' @return A character vector (length 1, or one per row), or `NULL`.
+#' @noRd
+resolve_operation_reference <- function(value, bindings, dt) {
+  if (is.null(value)) {
+    return(NULL)
+  }
+  key <- as.character(value)[[1]]
+  bound <- bindings[[key]]
+  if (!is.null(bound)) {
+    if (identical(bound$kind, "scalar") || identical(bound$kind, "per_row")) {
+      return(as.character(bound$value))
+    }
+    return(NULL)
+  }
+  if (!is.null(dt) && key %in% names(dt)) {
+    return(as.character(dt[[key]]))
+  }
+  # Not a binding and not a column, so the rule means the text itself. A
+  # codelist C-code written out in full is a legitimate way to say it.
+  key
+}
+
+#' Rename a grouped binding's group columns to their `group_aliases`
+#'
+#' An Operations entry can aggregate over one dataset and be used while
+#' checking another: `record_count` with `domain: StudyIdentifier`,
+#' `group: parent_id`, `group_aliases: id` counts StudyIdentifier rows per
+#' `parent_id` and joins the answer onto StudyVersion's `id`. The group columns
+#' are named as the SOURCE holds them, and the aliases name the same columns as
+#' the dataset being checked holds them.
+#'
+#' Positional, per the reference's `_rename_grouping_columns`: alias `i`
+#' replaces group column `i`, and a group column with no alias keeps its name.
+#' Applied to whatever the operation produced rather than inside each type,
+#' because the reference does it once for every grouped result too.
+#'
+#' Without this the join back onto each row matches on a column the dataset
+#' being checked does not have, so every row resolves to nothing and the
+#' condition reads as unresolvable. That is what left CORE-000401's
+#' `$num_sponsor_ids` empty and stopped the rule reporting anything.
+#'
+#' @param binding A binding from `compute_operation()`, possibly `NULL`.
+#' @param op The Operations entry.
+#' @return The binding, with group columns renamed where an alias applies.
+#' @noRd
+apply_group_aliases <- function(binding, op) {
+  aliases <- op$group_aliases
+  if (is.null(binding) || is.null(aliases) || !identical(binding$kind, "grouped")) {
+    return(binding)
+  }
+  aliases <- as.character(unlist(aliases))
+  group <- as.character(unlist(op$group))
+  # The binding's own group_cols, not op$group: a group column that was not a
+  # column of the source data has already been dropped, so positions are taken
+  # from what actually survived.
+  for (i in seq_along(binding$group_cols)) {
+    pos <- match(binding$group_cols[[i]], group)
+    if (!is.na(pos) && pos <= length(aliases) && !identical(aliases[[pos]], binding$group_cols[[i]])) {
+      data.table::setnames(binding$table, binding$group_cols[[i]], aliases[[pos]])
+      binding$group_cols[[i]] <- aliases[[pos]]
+    }
+  }
+  binding
+}
+
 #' The largest or smallest value of a column, whatever its type
 #'
 #' `max`/`min` and `max_date`/`min_date` are four different operations in the
@@ -663,6 +776,8 @@ implemented_operation_types <- c(
   "get_model_column_order",
   "get_model_filtered_variables",
   "get_parent_model_column_order",
+  "codelist_extensible",
+  "map",
   "max",
   "max_date",
   "min",
@@ -717,8 +832,33 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       resolved
     }
   }
-  ds <- study$datasets[[domain]]
+  # An operation that names no domain works on the dataset being CHECKED, which
+  # by this point has had the rule's Match Datasets joins applied - the
+  # reference runs its operations against the same merged evaluation_dataset.
+  # Re-fetching the raw dataset from the study instead threw the join away, so
+  # an operation keying on a joined column (USDM's `parent_rel.Code`) could not
+  # see it.
+  #
+  # Dataset keys are upper-cased by every reader here, and an SDTM rule names
+  # its domain that way already ("DM"), so the lookup below is a no-op for
+  # them. USDM rules name entities in mixed case ("StudyIdentifier"), which
+  # found nothing and left the binding unresolved.
+  ds <- study$datasets[[toupper(domain)]]
   dt <- if (!is.null(ds)) ds$data else NULL
+  # Only when the raw dataset cannot answer. Handing every operation the joined
+  # dataset instead was tried and is wrong: it turned five passing rules
+  # (CORE-000219, -000272, -000573, -000575, -000852) into failures and skips,
+  # because a one-to-many Match Datasets join repeats left rows and so changes
+  # every count and aggregate computed over them. The fallback widens only the
+  # case the raw data genuinely does not cover, which is an operation keying on
+  # a column the join produced.
+  if (is.null(op$domain) && !is.null(current_dataset)) {
+    wanted <- operation_columns_used(op)
+    joined <- current_dataset$data
+    if (length(wanted) > 0 && !all(wanted %in% names(dt)) && all(wanted %in% names(joined))) {
+      dt <- joined
+    }
+  }
 
   # Refused, not answered with NULL. An unrecognised type used to leave the
   # binding missing, which resolve_condition_value() then treated as literal
@@ -727,7 +867,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   if (!(op$operator %in% implemented_operation_types)) {
     stop("unimplemented Operations type: ", op$operator, call. = FALSE)
   }
-  switch(op$operator,
+  binding <- switch(op$operator,
     distinct = {
       if (is.null(dt) || !(op$name %in% names(dt))) {
         return(NULL)
@@ -862,6 +1002,77 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         )
       }
       scalar_binding(ct_package_attribute(bundled, op$ct_attribute %||% "Term CCODE"))
+    },
+    # A lookup table written into the rule itself. Each entry is a record of
+    # key columns plus `output`; the row's output is the one whose keys match.
+    # An entry with no keys at all is the reference's direct-assignment branch
+    # (`if not merge_columns and len(map) == 1`), which every bundled use of
+    # this type takes: `map: [{output: C66797}]` binds that constant.
+    map = {
+      entries <- op$map
+      if (is.null(entries) || length(entries) == 0) {
+        stop("map operation declares no entries", call. = FALSE)
+      }
+      key_names <- setdiff(unique(unlist(lapply(entries, names))), "output")
+      if (length(key_names) == 0) {
+        if (length(entries) != 1L) {
+          stop("map operation has several entries but no keys to choose between them",
+               call. = FALSE)
+        }
+        scalar_binding(as.character(entries[[1]]$output))
+      } else {
+        if (is.null(dt)) {
+          return(NULL)
+        }
+        missing_keys <- setdiff(key_names, names(dt))
+        if (length(missing_keys) > 0) {
+          stop("map operation keys on column(s) the dataset does not have: ",
+               paste(missing_keys, collapse = ", "), call. = FALSE)
+        }
+        lookup <- data.table::rbindlist(lapply(entries, function(e) {
+          as.list(vapply(c(key_names, "output"), function(k) {
+            v <- e[[k]]
+            if (is.null(v)) NA_character_ else as.character(v)[[1]]
+          }, character(1)))
+        }), fill = TRUE)
+        keys <- do.call(paste, c(lapply(key_names, function(k) as.character(dt[[k]])), sep = "\r"))
+        lookup_keys <- do.call(paste, c(lapply(key_names, function(k) lookup[[k]]), sep = "\r"))
+        per_row_binding(lookup$output[match(keys, lookup_keys)])
+      }
+    },
+    # Whether the codelist a row cites is extensible in the CT version that
+    # same row cites. Both vary by row, so this is per-row rather than scalar:
+    # `version` names a column holding the CT release date and `codelist_code`
+    # is usually an earlier binding rather than a column.
+    codelist_extensible = {
+      if (is.null(dt)) {
+        return(NULL)
+      }
+      version_col <- op$version %||% op$ct_version %||% ""
+      if (!(version_col %in% names(dt))) {
+        stop("codelist_extensible needs a column of CT versions; '",
+             version_col, "' is not one", call. = FALSE)
+      }
+      codes <- resolve_operation_reference(op$codelist_code, bindings, dt)
+      if (is.null(codes)) {
+        stop("codelist_extensible cannot resolve its codelist code: ",
+             as.character(op$codelist_code %||% "?"), call. = FALSE)
+      }
+      family <- ct_family_for(op$ct_package_type %||% study$standard$product)
+      versions <- trimws(as.character(dt[[version_col]]))
+      packages <- ifelse(is.na(versions) | !nzchar(versions), NA_character_,
+                         paste0(family, "-", versions))
+      tbl <- ct_codelists()
+      if (is.null(tbl)) {
+        stop("the bundled controlled terminology is not installed", call. = FALSE)
+      }
+      key <- paste(packages, codes, sep = "\r")
+      ref <- paste(tbl$package, tbl$codelist_code, sep = "\r")
+      # NA, not FALSE, where the pair is unknown. "This codelist is not
+      # extensible" and "we have never heard of this codelist in that release"
+      # are different answers, and collapsing them would let a rule report a
+      # violation about terminology it could not look up.
+      per_row_binding(tbl$extensible[match(key, ref)])
     },
     valid_codelist_dates = {
       tbl <- .coreval_env$ct_packages
@@ -1018,6 +1229,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     dy = compute_dy(op, study, current_dataset, current_domain),
     NULL
   )
+  apply_group_aliases(binding, op)
 }
 
 #' Compute all Operations bindings for a rule, keyed by operation id

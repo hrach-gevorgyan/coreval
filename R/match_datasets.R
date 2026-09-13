@@ -356,7 +356,12 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
     stop("Match Datasets: unsupported join type for '", match_name, "'", call. = FALSE)
   }
 
-  match_dataset <- study$datasets[[match_name]]
+  # Upper-cased, because every reader here keys datasets that way and a USDM
+  # rule names its entity in mixed case (`Name: Code` against a `CODE` key).
+  # The lookup silently missed, the join was skipped, and the rule then
+  # compared against a column that was never joined in. SDTM rules name
+  # domains in upper case already, so this changes nothing for them.
+  match_dataset <- study$datasets[[toupper(match_name)]]
   if (is.null(match_dataset)) {
     return(dataset)
   }
@@ -396,8 +401,24 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # without touching exists/not_exists semantics at all.
   rename_referenced_match_columns(right, rule, match_name, keys)
 
+  # A column still colliding after that is one the rule did NOT name, and
+  # pandas' own `suffixes=("", f".{domain}")` SUFFIXES those: `parent_rel`
+  # from a matched `Code` becomes `parent_rel.Code`, not `Code.parent_rel`.
+  # The two halves genuinely use opposite orders, which reads like a mistake
+  # in the reference and is what it does.
+  #
+  # All 12 dotted targets across the 797 bundled rules use the prefix form
+  # handled just above, so this order only shows up in USDM rules, which name
+  # joined columns that way (CORE-000856's `parent_rel.Code`). Both names are
+  # kept: the same column under two spellings costs one shallow copy and means
+  # neither convention resolves to literal text, which is the silent failure
+  # this file exists to avoid.
   collide <- intersect(setdiff(names(right), keys), names(left))
   if (length(collide) > 0) {
+    suffixed <- paste0(collide, ".", match_name)
+    for (i in seq_along(collide)) {
+      right[[suffixed[[i]]]] <- right[[collide[[i]]]]
+    }
     data.table::setnames(right, collide, paste0(match_name, ".", collide))
   }
 

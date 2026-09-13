@@ -715,3 +715,67 @@ test_that("max and min are generic aggregates, and max_date/min_date stay date-a
   # with a reason rather than answering.
   expect_null(extreme_binding(dt, list(name = "NOSUCHCOL"), want_max = TRUE))
 })
+
+test_that("map binds a constant, or looks output up by its key columns", {
+  dt <- data.table::data.table(
+    parent_rel = c("contactModes", "other", "contactModes"),
+    id = c("E1", "E2", "E3")
+  )
+  study <- list(datasets = list(ENC = list(data = dt)),
+                standard = list(product = "USDM"))
+  current <- list(data = dt)
+
+  # The direct-assignment branch: one entry, no keys. Every bundled use of
+  # this operation takes it.
+  const <- compute_operation(
+    list(id = "$c", operator = "map", map = list(list(output = "C66797"))),
+    study, "ENC", current)
+  expect_equal(const$kind, "scalar")
+  expect_identical(const$value, "C66797")
+
+  # Keyed: the row's output is the one whose key matches, NA where none does.
+  keyed <- compute_operation(
+    list(id = "$c", operator = "map",
+         map = list(list(parent_rel = "contactModes", output = "C171445"))),
+    study, "ENC", current)
+  expect_equal(keyed$kind, "per_row")
+  expect_identical(keyed$value, c("C171445", NA_character_, "C171445"))
+
+  # Keying on a column nobody has is refused, not answered. Answering would
+  # bind NA everywhere and the rule would quietly report nothing.
+  expect_error(
+    compute_operation(
+      list(id = "$c", operator = "map",
+           map = list(list(nosuchcol = "x", output = "y"))),
+      study, "ENC", current),
+    "does not have"
+  )
+})
+
+test_that("group_aliases rename a grouped binding's join columns positionally", {
+  binding <- grouped_binding(
+    "parent_id",
+    data.table::data.table(parent_id = c("S1", "S2"), .value = c(1L, 2L)),
+    ".value"
+  )
+  aliased <- apply_group_aliases(binding, list(group = "parent_id", group_aliases = "id"))
+  expect_identical(aliased$group_cols, "id")
+  expect_true("id" %in% names(aliased$table))
+  expect_false("parent_id" %in% names(aliased$table))
+
+  # No aliases, or a scalar binding, must pass through untouched.
+  plain <- grouped_binding("g", data.table::data.table(g = "x", .value = 1L), ".value")
+  expect_identical(apply_group_aliases(plain, list(group = "g"))$group_cols, "g")
+  expect_equal(apply_group_aliases(scalar_binding(1), list(group_aliases = "id"))$kind, "scalar")
+})
+
+test_that("an Operations parameter resolves as a binding, then a column, then itself", {
+  dt <- data.table::data.table(code = c("C1", "C2"))
+  bindings <- list(`$bound` = scalar_binding("C66797"))
+
+  expect_identical(resolve_operation_reference("$bound", bindings, dt), "C66797")
+  expect_identical(resolve_operation_reference("code", bindings, dt), c("C1", "C2"))
+  # Neither a binding nor a column, so the rule means the text itself.
+  expect_identical(resolve_operation_reference("C12345", bindings, dt), "C12345")
+  expect_null(resolve_operation_reference(NULL, bindings, dt))
+})

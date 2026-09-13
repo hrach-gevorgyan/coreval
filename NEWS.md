@@ -1,5 +1,22 @@
 # coreval 0.2.0.9000 (development)
 
+* **A matched dataset is now found whatever case its name is written in.** The
+  lookup was case-sensitive while every reader here upper-cases dataset keys,
+  so a `Match Datasets` entry naming `Code` against a `CODE` key missed
+  silently: the join was skipped and the rule then compared against a column
+  that had never been joined in. SDTM rules name domains in upper case
+  already, so nothing shipped was affected.
+
+* **A column that collides across a join is now reachable under both spellings.**
+  The reference renames the columns a rule explicitly names as
+  `Name.column`, then lets pandas suffix the remaining true collisions as
+  `column.Name`. The two halves use opposite orders. Only the first was
+  implemented, so a rule naming the suffixed form found literal text.
+
+* `map` and `codelist_extensible` run, and an Operations entry can carry
+  `group_aliases` so an aggregate computed over one dataset joins onto another
+  by that dataset's own column names.
+
 * **Fixed: `max` was a date operation, and should never have been.** The
   reference has four separate operations where coreval had two: `max`/`min` are
   plain aggregates over whatever the column holds, and only `max_date`/
