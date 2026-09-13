@@ -105,6 +105,20 @@ def env_file(data_dir):
     return next(iter(glob.glob(os.path.join(data_dir, "*.env"))), None)
 
 
+def save(report):
+    """Merge this run into the artifact rather than replacing it.
+
+    Running for a single rule while chasing that rule is the normal way to use
+    this, and a plain overwrite silently reduced the committed artifact to that
+    one rule.
+    """
+    merged = {}
+    if os.path.isfile(OUTPUT):
+        merged = json.load(io.open(OUTPUT, encoding="utf-8"))
+    merged.update(report)
+    json.dump(merged, io.open(OUTPUT, "w", encoding="utf-8"), indent=1, sort_keys=True)
+
+
 def main():
     python = engine_python()
     board = {r["id"]: r for r in csv.DictReader(io.open(SCOREBOARD, encoding="utf-8-sig"))}
@@ -160,17 +174,13 @@ def main():
         verdict = ("engine could not run any case" if not ran else
                    "engine differs from sheet on %d of %d" % (len(differ), len(ran)) if differ else
                    "engine agrees with sheet on all %d" % len(ran))
-        print("%-22s %-26s %s" % (rule_id, source, verdict))
+        print("%-22s %-26s %s" % (rule_id, source, verdict), flush=True)
+        # Written after every rule, not once at the end. A sweep over the whole
+        # USDM set is hundreds of engine invocations, and losing all of it to a
+        # failure in the last one is not a risk worth carrying.
+        save(report)
 
-    # Merge into whatever is already recorded rather than replacing it. Running
-    # this for a single rule while chasing that rule is the normal way to use
-    # it, and a plain overwrite silently reduced the committed artifact to that
-    # one rule.
-    merged = {}
-    if os.path.isfile(OUTPUT):
-        merged = json.load(io.open(OUTPUT, encoding="utf-8"))
-    merged.update(report)
-    json.dump(merged, io.open(OUTPUT, "w", encoding="utf-8"), indent=1, sort_keys=True)
+    save(report)
     never = sum(1 for v in report.values() if v["cases_engine_ran"] == 0)
     print("\n%d rules; the engine could not run any case for %d of them" % (len(report), never))
     print("wrote", OUTPUT)

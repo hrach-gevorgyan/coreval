@@ -1,5 +1,18 @@
 # coreval 0.2.0.9000 (development)
 
+* **Fixed: an escaped quote inside a quoted CSV field was read as two quotes.**
+  RFC 4180 escapes a quote by doubling it, so `"<ref klass=""Range""/>"` is the
+  value `<ref klass="Range"/>`. `fread` does not collapse the pair when the
+  field contains no separator, and handed back the doubled form;
+  `utils::read.csv` reads the same file correctly, so this was not ambiguity in
+  the data.
+
+  It produced a wrong value rather than a failure, which is why it went
+  unnoticed: a rule matching such a value against a pattern got a confident
+  answer computed from text the file does not contain. Only files that really
+  contain a doubled quote are re-read, so the common case pays one scan and
+  nothing more.
+
 * **A matched dataset is now found whatever case its name is written in.** The
   lookup was case-sensitive while every reader here upper-cases dataset keys,
   so a `Match Datasets` entry naming `Code` against a `CODE` key missed

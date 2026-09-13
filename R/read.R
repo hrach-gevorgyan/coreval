@@ -61,6 +61,56 @@ read_study <- function(path) {
   read_study_xpt(path)
 }
 
+#' Undo `fread`'s handling of an escaped quote inside a quoted CSV field
+#'
+#' RFC 4180 escapes a quote inside a quoted field by doubling it, so
+#' `"<ref klass=""Range""/>"` is the value `<ref klass="Range"/>`. `fread` does
+#' not collapse the pair when the field contains no separator and no newline:
+#' it hands back `<ref klass=""Range""/>`, quotes and all. `utils::read.csv`
+#' reads the same file correctly, so this is not ambiguity in the data.
+#'
+#' The consequence is a wrong value rather than a failure to read, which is why
+#' it went unnoticed: a rule matching the value against a pattern gets a
+#' definite answer computed from text the file does not contain. Found on
+#' CORE-000833, whose values are `usdm:ref` elements full of quoted attributes.
+#'
+#' Only files that actually contain a doubled quote are re-read, so the common
+#' case pays one scan of the raw bytes and nothing else. The re-read is
+#' authoritative for character columns only; every type decision stays with the
+#' `fread` call, which the rest of this function depends on.
+#'
+#' @param dt The data.table just read, mutated by reference.
+#' @param path The file it came from.
+#' @return `invisible(NULL)`; `dt` is modified in place.
+#' @noRd
+repair_doubled_quotes <- function(dt, path) {
+  if (nrow(dt) == 0 || !file.exists(path)) {
+    return(invisible(NULL))
+  }
+  char_cols <- names(dt)[vapply(dt, is.character, logical(1))]
+  if (length(char_cols) == 0) {
+    return(invisible(NULL))
+  }
+  affected <- char_cols[vapply(char_cols, function(v) {
+    any(grepl('""', dt[[v]], fixed = TRUE), na.rm = TRUE)
+  }, logical(1))]
+  if (length(affected) == 0) {
+    return(invisible(NULL))
+  }
+  proper <- tryCatch(
+    utils::read.csv(path, colClasses = "character", check.names = FALSE,
+                    na.strings = character(0)),
+    error = function(e) NULL
+  )
+  if (is.null(proper) || nrow(proper) != nrow(dt)) {
+    return(invisible(NULL))
+  }
+  for (v in intersect(affected, names(proper))) {
+    data.table::set(dt, j = v, value = as.character(proper[[v]]))
+  }
+  invisible(NULL)
+}
+
 #' Rewrite `NA` to `""` for every character column of a data.table, in place
 #' @param dt A data.table, mutated by reference.
 #' @return `invisible(NULL)`; `dt` is modified in place.
@@ -338,6 +388,7 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
       }
     }
   )
+  repair_doubled_quotes(dt, dataset_csv_path(path, fname))
 
   # A column declared Num whose data contains SAS's own numeric-missing token
   # (a lone ".") comes back as character: fread reads "." as a string, and

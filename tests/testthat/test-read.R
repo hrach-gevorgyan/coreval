@@ -344,3 +344,36 @@ test_that("a ragged CSV keeps every record, its real column names, and its comma
   # Trailing whitespace is data, not noise: CORE-000867 exists to catch it.
   expect_equal(study$datasets$SJ$data$RSTGCD[1], "GEST ")
 })
+
+test_that("an escaped quote inside a quoted CSV field is read as one quote", {
+  dir <- tempfile("coreval_quotes_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines(c("Filename,Label", "pm,Parameter Maps"), file.path(dir, "_datasets.csv"))
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "pm,ID,Id,Char,20",
+    "pm,REFERENCE,Reference,Char,200",
+    "pm,PLAIN,Plain,Char,20"
+  ), file.path(dir, "_variables.csv"))
+  # RFC 4180: a quote inside a quoted field is escaped by doubling it. fread
+  # does not collapse the pair when the field holds no separator, so the value
+  # arrived with its quotes still doubled and every pattern match against it
+  # was computed from text the file does not contain.
+  writeLines(c(
+    "ID,REFERENCE,PLAIN",
+    'P1,"<ref klass=""Range"" id=""R_3""/>",ok',
+    'P2,"<ref klass=""Code"", with a comma""/>",ok',
+    "P3,no quotes here,ok"
+  ), file.path(dir, "pm.csv"))
+
+  pm <- suppressWarnings(read_study(dir))$datasets$PM$data
+  expect_identical(pm$REFERENCE[1], '<ref klass="Range" id="R_3"/>')
+  # The field holding a separator is the case fread already got right, so the
+  # repair must not double-collapse it.
+  expect_identical(pm$REFERENCE[2], '<ref klass="Code", with a comma"/>')
+  expect_identical(pm$REFERENCE[3], "no quotes here")
+  expect_identical(pm$PLAIN, c("ok", "ok", "ok"))
+  expect_equal(nrow(pm), 3)
+})
