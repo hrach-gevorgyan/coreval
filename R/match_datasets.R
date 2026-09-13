@@ -472,10 +472,24 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
     data.table::setnames(right, collide, paste0(match_name, ".", collide))
   }
 
+  # A paired key's right-hand column survives the join under its own name too.
+  # The reference merges with left_on/right_on, which keeps BOTH key columns
+  # and suffixes the right one where it collides, so a rule can go on to group
+  # by `id.StudyProtocolDocumentVersion` after joining that entity on its `id`.
+  # Renaming the column into the left's key name consumes it, and the rule then
+  # groups by a column that does not exist. CORE-000801 does exactly that.
+  differing <- key_spec$right != key_spec$left
+  for (i in which(differing)) {
+    original <- key_spec$right[[i]]
+    kept <- if (original %in% names(left)) paste0(original, ".", match_name) else original
+    if (!(kept %in% names(right))) {
+      right[[kept]] <- right[[original]]
+    }
+  }
+
   # Now that nothing else claims those names, give the key columns the
   # left-hand spelling, so the merge and the blank-key handling below work on
   # one set of names rather than carrying a pair everywhere.
-  differing <- key_spec$right != key_spec$left
   if (any(differing)) {
     data.table::setnames(right, key_spec$right[differing], key_spec$left[differing])
   }
