@@ -428,13 +428,6 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
 
   left <- data.table::copy(dataset$data)
   right <- data.table::copy(match_dataset$data)
-  # Renamed to the left-hand spelling so everything downstream - the collision
-  # rule, the merge, the blank-key handling - keeps working on one set of key
-  # names rather than carrying a pair everywhere.
-  differing <- key_spec$right != key_spec$left
-  if (any(differing)) {
-    data.table::setnames(right, key_spec$right[differing], key_spec$left[differing])
-  }
 
   # Prefix the columns the RULE ITSELF references as "<Name>.<col>" first -
   # regardless of whether they collide - then let the collision rule below
@@ -464,13 +457,27 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # kept: the same column under two spellings costs one shallow copy and means
   # neither convention resolves to literal text, which is the silent failure
   # this file exists to avoid.
-  collide <- intersect(setdiff(names(right), keys), names(left))
+  # Keyed off the RIGHT's own key names, because the keys have not been
+  # renamed yet. They cannot be renamed first: a paired key maps the right's
+  # `instanceType` onto the left's `parent_entity`, and the right may carry a
+  # `parent_entity` of its own. Renaming the key first then collides with it,
+  # leaving two columns of one name and a merge that matches nothing.
+  # CORE-000870 joins on exactly that pair and came back all missing.
+  collide <- intersect(setdiff(names(right), key_spec$right), names(left))
   if (length(collide) > 0) {
     suffixed <- paste0(collide, ".", match_name)
     for (i in seq_along(collide)) {
       right[[suffixed[[i]]]] <- right[[collide[[i]]]]
     }
     data.table::setnames(right, collide, paste0(match_name, ".", collide))
+  }
+
+  # Now that nothing else claims those names, give the key columns the
+  # left-hand spelling, so the merge and the blank-key handling below work on
+  # one set of names rather than carrying a pair everywhere.
+  differing <- key_spec$right != key_spec$left
+  if (any(differing)) {
+    data.table::setnames(right, key_spec$right[differing], key_spec$left[differing])
   }
 
   # Only stamp row ids on the first join in a chain - a second Match

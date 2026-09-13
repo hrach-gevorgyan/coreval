@@ -22,6 +22,17 @@ register_operator("empty", function(ctx) {
   if (!ctx$exists) {
     return(rep(NA, ctx$n))
   }
+  # A grouped Operations binding resolves to one SET per row, not one value:
+  # CORE-000807 asks whether the activity instances under this timeline name
+  # any exit at all. `is.na()` on a list is FALSE for every element, including
+  # an empty one, so a row whose set held nothing read as populated and the
+  # rule found no violation anywhere.
+  if (is.list(ctx$target)) {
+    return(vapply(ctx$target, function(v) {
+      v <- v[!is.na(v)]
+      length(v) == 0 || all(!nzchar(as.character(v)))
+    }, logical(1)))
+  }
   if (is.character(ctx$target)) ctx$target == "" else is.na(ctx$target)
 })
 

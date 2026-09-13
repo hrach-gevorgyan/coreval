@@ -37,6 +37,17 @@
   that plainly satisfied its rule read as clean. It worked for `"FALSE"` only
   because that casing happens to match.
 
+* **Fixed: `empty` read a set-valued binding as populated.** A grouped
+  Operations binding resolves to one set per row, and `is.na()` on a list is
+  FALSE for every element including an empty one, so a row whose set held
+  nothing read as populated and the rule found no violation.
+
+* **Fixed: a paired join key could collide with a column the matched dataset
+  already had.** Renaming the right side's `instanceType` onto the left's
+  `parent_entity` collides when the right carries a `parent_entity` of its own,
+  leaving two columns of one name and a merge that matches nothing. The keys
+  are now renamed after the colliding columns have been moved aside.
+
 * **A `Match Datasets` key can now name a different column on each side.**
   A key is usually one column both datasets share, but it can also be a pair,
   `Left: id` / `Right: parent_id`, for a child whose foreign key is spelled
