@@ -59,8 +59,52 @@ rule_operators <- function(check, ops = character(0)) {
   ops
 }
 
-expected_records <- function(results_csv, dataset_name) {
+#' Read a results.csv, whatever schema it uses
+#'
+#' The SDTM/SEND fixtures carry `Dataset,Record,Variable,Value`. The USDM ones
+#' carry `path,attribute,value`, where path is `/Entity/<zero-based index>`:
+#' `/Timing/0,type.code,C201358` is the same statement as
+#' `TIMING,1,type.code,C201358`. All 520 USDM sheets use it and not one uses
+#' the other shape.
+#'
+#' Reading `results$Dataset` off a USDM sheet silently gives NULL, so every
+#' expected record set came back empty and every finding coreval made looked
+#' like an over-report. That is what made 70 USDM rules read as false
+#' positives and the other 17 as passes: both verdicts were measured against
+#' an expectation that was never read.
+#'
+#' @param results_csv Path to a fixture's results.csv.
+#' @return A data.table with `Dataset`, `Record`, `Variable` and `Value`.
+#' @noRd
+read_reference_results <- function(results_csv) {
   results <- data.table::fread(results_csv, colClasses = "character")
+  if (!("path" %in% names(results)) || "Dataset" %in% names(results)) {
+    return(results)
+  }
+  if (nrow(results) == 0) {
+    return(data.table::data.table(
+      Dataset = character(0), Record = character(0),
+      Variable = character(0), Value = character(0)
+    ))
+  }
+  parts <- regmatches(results$path,
+                      regexec("^/([A-Za-z][A-Za-z0-9]*)/([0-9]+)$", results$path))
+  entity <- vapply(parts, function(p) if (length(p) == 3) p[[2]] else NA_character_,
+                   character(1))
+  index <- vapply(parts, function(p) if (length(p) == 3) p[[3]] else NA_character_,
+                  character(1))
+  data.table::data.table(
+    Dataset = toupper(entity),
+    # The path index is zero-based and Record is one-based and positional, the
+    # same convention the SDTM sheets use.
+    Record = as.character(as.integer(index) + 1L),
+    Variable = results$attribute,
+    Value = results$value
+  )
+}
+
+expected_records <- function(results_csv, dataset_name) {
+  results <- read_reference_results(results_csv)
   results <- results[results$Dataset == dataset_name, ]
   # Drop the placeholder rows CDISC's sheets carry - `EG,,,` in CORE-000701,
   # `PP,,,` in CORE-000465 - which name a dataset that was looked at and had
@@ -80,7 +124,7 @@ expected_records <- function(results_csv, dataset_name) {
 # There is nothing to compare against: our result cannot be called right or
 # wrong by an answer sheet that says the grader broke.
 reference_crashed <- function(results_csv) {
-  results <- data.table::fread(results_csv, colClasses = "character")
+  results <- read_reference_results(results_csv)
   isTRUE(any(results$Variable == "EXECUTION_ERROR", na.rm = TRUE))
 }
 
@@ -90,7 +134,7 @@ reference_crashed <- function(results_csv) {
 # meaningless whatever the rule's declared Sensitivity says - the answer sheet
 # is what we are being graded against, not the declaration.
 reference_is_dataset_level <- function(results_csv, dataset_name) {
-  results <- data.table::fread(results_csv, colClasses = "character")
+  results <- read_reference_results(results_csv)
   results <- results[results$Dataset == dataset_name, ]
   # A row with no Variable either is a placeholder, not a finding. CDISC's own
   # files carry lines like `PP,,,` meaning "PP was looked at and had nothing" -
@@ -120,7 +164,7 @@ reference_ct_results <- local({
 
 # Does the committed sheet state nothing at all for any dataset?
 sheet_is_silent <- function(results_csv) {
-  results <- data.table::fread(results_csv, colClasses = "character")
+  results <- read_reference_results(results_csv)
   nrow(results[nzchar(trimws(results$Dataset))]) == 0
 }
 
