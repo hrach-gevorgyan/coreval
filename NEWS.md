@@ -13,6 +13,14 @@
   contain a doubled quote are re-read, so the common case pays one scan and
   nothing more.
 
+* **Fixed: a column called `name` shadowed the column being aggregated.**
+  `data.table` evaluates a grouped expression with the columns in scope, so
+  looking up the variable `name` inside one found a column of that name instead
+  of the function's own argument, and then tried to resolve that column's first
+  value as a variable. No SDTM domain has a column called `name`, which is why
+  it never showed; every USDM entity does. The column is now taken out before
+  the grouped call rather than looked up inside it.
+
 * **`codelist_terms` has a second shape, and it now runs.** One asks for every
   term of a codelist, once for the dataset. The other asks a question per row:
   for this row's code, in the terminology version this row cites, what is the

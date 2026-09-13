@@ -126,7 +126,15 @@ compute_group_agg <- function(dt, group_cols, name, fn) {
   if (length(group_cols) == 0) {
     return(NULL)
   }
-  agg <- dt[, list(.value = list(fn(get(name)))), by = group_cols]
+  # The column is pulled out BEFORE the data.table call rather than looked up
+  # inside it. `dt[, ..., by =]` evaluates its expression with the columns in
+  # scope, so `get(name)` found any column actually called `name` in place of
+  # this function's argument, then tried to look up that column's first VALUE
+  # as a variable: "object 'POP1' not found". No SDTM domain has a column
+  # called `name`, which is why it never showed; every USDM entity does.
+  work <- dt[, group_cols, with = FALSE]
+  work[[".target"]] <- dt[[name]]
+  agg <- work[, list(.value = list(fn(.SD[[1L]]))), by = group_cols, .SDcols = ".target"]
   # Unlist scalar (non-set) results back into a plain column.
   if (all(lengths(agg$.value) == 1) && !is.list(fn(character(0)))) {
     agg$.value <- unlist(agg$.value)

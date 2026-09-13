@@ -779,3 +779,25 @@ test_that("an Operations parameter resolves as a binding, then a column, then it
   expect_identical(resolve_operation_reference("C12345", bindings, dt), "C12345")
   expect_null(resolve_operation_reference(NULL, bindings, dt))
 })
+
+test_that("a column called 'name' does not shadow the aggregated column", {
+  # data.table evaluates `j` with the columns in scope, so a lookup of the
+  # variable `name` inside it found this column instead of the function's own
+  # argument, then tried to resolve that column's first VALUE as a variable:
+  # "object 'POP1' not found". No SDTM domain has a column called `name`;
+  # every USDM entity does.
+  dt <- data.table::data.table(
+    id = c("A", "A", "B"),
+    name = c("POP1", "POP2", "POP3"),
+    parent_id = c("P1", "P2", "P1")
+  )
+  agg <- compute_group_agg(dt, "id", "parent_id", distinct_values)
+  expect_false(is.null(agg))
+  expect_setequal(agg$id, c("A", "B"))
+  expect_setequal(unlist(agg$.value[agg$id == "A"]), c("P1", "P2"))
+  expect_identical(unlist(agg$.value[agg$id == "B"]), "P1")
+
+  # Aggregating the shadowing column itself must also work.
+  named <- compute_group_agg(dt, "id", "name", distinct_values)
+  expect_setequal(unlist(named$.value[named$id == "A"]), c("POP1", "POP2"))
+})
