@@ -33,6 +33,14 @@ register_operator("empty", function(ctx) {
       length(v) == 0 || all(!nzchar(as.character(v)))
     }, logical(1)))
   }
+  # Deliberately NOT treating a character NA as blank. A left join does put a
+  # genuine NA into a character column for every unmatched row, and reading
+  # that as blank is tempting: CORE-000816 asks which epochs no activity
+  # instance points at, which is exactly those rows. It is wrong anyway -
+  # tried, and it turns six passing FDA.SENDIG rules into failures, because
+  # `empty` on an unmatched join is how those rules distinguish "this row has
+  # no partner" from "this row's partner has a blank value". Whatever
+  # CORE-000816 needs, it is not this.
   if (is.character(ctx$target)) ctx$target == "" else is.na(ctx$target)
 })
 

@@ -478,13 +478,17 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # by `id.StudyProtocolDocumentVersion` after joining that entity on its `id`.
   # Renaming the column into the left's key name consumes it, and the rule then
   # groups by a column that does not exist. CORE-000801 does exactly that.
+  # Taken BEFORE the rename and put back after it. Where the right's key name
+  # does not collide with anything on the left it keeps that very name, so
+  # writing the copy first is a no-op and the rename then carries the column
+  # away: CORE-000816 joins on `epochId` and the rule's own `epochId exists`
+  # went on to answer FALSE for every row.
   differing <- key_spec$right != key_spec$left
+  preserved <- list()
   for (i in which(differing)) {
     original <- key_spec$right[[i]]
     kept <- if (original %in% names(left)) paste0(original, ".", match_name) else original
-    if (!(kept %in% names(right))) {
-      right[[kept]] <- right[[original]]
-    }
+    preserved[[kept]] <- right[[original]]
   }
 
   # Now that nothing else claims those names, give the key columns the
@@ -492,6 +496,11 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # one set of names rather than carrying a pair everywhere.
   if (any(differing)) {
     data.table::setnames(right, key_spec$right[differing], key_spec$left[differing])
+  }
+  for (nm in names(preserved)) {
+    if (!(nm %in% names(right))) {
+      right[[nm]] <- preserved[[nm]]
+    }
   }
 
   # Only stamp row ids on the first join in a chain - a second Match
