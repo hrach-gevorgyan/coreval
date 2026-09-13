@@ -281,3 +281,66 @@ test_that("a declared-Num column carrying real text is left alone rather than nu
   expect_type(study$datasets$DS$data$DSNOMDY, "character")
   expect_equal(study$datasets$DS$data$DSNOMDY, c("yesterday", "3"))
 })
+
+test_that("a ragged CSV keeps every record, its real column names, and its comma separator", {
+  dir <- tempfile("coreval_ragged_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines(c(
+    "Filename,Label",
+    "pr,Procedures",
+    "ce,Clinical Events",
+    "sj,Subject Stages"
+  ), file.path(dir, "_datasets.csv"))
+  vars <- function(ds, v) paste0(ds, ",", v, ",", v, ",Char,50")
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    vars("pr", "STUDYID"), vars("pr", "DOMAIN"), vars("pr", "USUBJID"), vars("pr", "PRSCAT"),
+    vars("ce", "STUDYID"), vars("ce", "DOMAIN"), vars("ce", "USUBJID"), vars("ce", "CESCAT"),
+    vars("sj", "STUDYID"), vars("sj", "DOMAIN"), vars("sj", "USUBJID"), vars("sj", "RSTGCD")
+  ), file.path(dir, "_variables.csv"))
+
+  # Last row is SHORT. fread's default reads it as a footer and DISCARDS it,
+  # so a violation on that record could never be reported.
+  writeLines(c(
+    "STUDYID,DOMAIN,USUBJID,PRSCAT",
+    "S1,PR,S1-001,PRIOR",
+    "S1,PR,S1-002"
+  ), file.path(dir, "pr.csv"))
+
+  # A row with MORE fields than the header makes fread abandon the header and
+  # name the columns after the first row's VALUES.
+  writeLines(c(
+    "STUDYID,DOMAIN,USUBJID,CESCAT",
+    "S1,CE,S1-001",
+    "S1,CE,S1-002,COMPLICATIONS"
+  ), file.path(dir, "ce.csv"))
+
+  # Well-formed, but every field carries a trailing space. fread re-runs
+  # separator detection under fill and picked WHITESPACE on a file like this,
+  # returning V1..Vn and losing every declared column.
+  writeLines(c(
+    "STUDYID ,DOMAIN ,USUBJID,RSTGCD",
+    "S1 ,SJ ,S1-001 ,GEST ",
+    "S1 ,SJ ,S1-002 ,UNPLAN"
+  ), file.path(dir, "sj.csv"))
+
+  # Warnings here are fread reporting that _variables.csv declares a column
+  # name the file does not carry, because sj.csv's header has trailing spaces
+  # inside the NAMES. That is about type declarations, never about rows, and
+  # it is not what this test is pinning down.
+  study <- suppressWarnings(read_study(dir))
+
+  expect_equal(nrow(study$datasets$PR$data), 2)
+  expect_equal(study$datasets$PR$data$USUBJID, c("S1-001", "S1-002"))
+
+  expect_true(all(c("STUDYID", "DOMAIN", "USUBJID", "CESCAT") %in%
+                    names(study$datasets$CE$data)))
+  expect_equal(nrow(study$datasets$CE$data), 2)
+
+  expect_true("RSTGCD" %in% names(study$datasets$SJ$data))
+  expect_equal(ncol(study$datasets$SJ$data), 4)
+  # Trailing whitespace is data, not noise: CORE-000867 exists to catch it.
+  expect_equal(study$datasets$SJ$data$RSTGCD[1], "GEST ")
+})

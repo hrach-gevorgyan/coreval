@@ -282,9 +282,33 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   # would otherwise crash the ENTIRE study read over one broken domain.
   # Falling back to auto-detected types for just that one dataset is the
   # only option when upstream's own type declarations are simply absent.
+  # `fill` and `header` are both about a CSV whose rows do not all carry the
+  # same number of fields, which real exports produce and which fread's
+  # defaults handle in two ways that silently lose data:
+  #
+  #   - a SHORT last row is read as a footer and DISCARDED. CORE-000103's
+  #     pr.csv has three records, the third missing its trailing PRSCAT, and
+  #     coreval saw two. A violation on that row could never be reported.
+  #   - a row with MORE fields than the header makes fread decide the header
+  #     is not a header: it invents a `V1` column and names the rest after the
+  #     first row's VALUES. The same fixture's ce.csv came back with columns
+  #     called `1234.0` and `Fracture` and no CETERM, CECAT or CESCAT at all,
+  #     so every rule about them found nothing and looked clean.
+  #
+  # fill = TRUE pads a short row with NA instead of dropping it, which is also
+  # what the reference reads through pandas, and header = TRUE stops the first
+  # line being anything but the header.
+  #
+  # sep = "," is not redundant next to them. fread re-runs separator detection
+  # under fill, and these files carry trailing spaces inside fields
+  # ("STUDYID ,DOMAIN ,"), so on CORE-000549's sj.csv it chose WHITESPACE and
+  # returned 13 columns named V1..V13 from a file whose every line has ten
+  # comma-separated fields. The rule then found no RSTGCD and reported nothing.
+  # These files are comma-separated by definition; there is nothing to detect.
   fread_args <- list(
     dataset_csv_path(path, fname),
-    na.strings = character(0), strip.white = FALSE
+    na.strings = character(0), strip.white = FALSE,
+    fill = TRUE, header = TRUE, sep = ","
   )
   if (length(col_classes) > 0) {
     fread_args$colClasses <- col_classes

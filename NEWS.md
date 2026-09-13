@@ -1,5 +1,25 @@
 # coreval 0.1.0.9000 (development)
 
+* **Fixed: a malformed CSV lost records, or every column name.** Three separate
+  ways, all silent, all found by reading the warnings the conformance sweep had
+  been printing and nobody had opened:
+
+  * A short last row was treated as a footer and discarded. CORE-000103's
+    `pr.csv` holds three records and coreval saw two.
+  * A row with more fields than the header made the reader abandon the header
+    and name the columns after the first row's values, so the same fixture's
+    `ce.csv` came back with columns called `1234.0` and `Fracture` and no
+    `CETERM`, `CECAT` or `CESCAT`. Every rule about them found nothing and the
+    dataset looked clean. Both rules reading it still passed, because finding
+    nothing was what their answer sheet expected.
+  * Separator detection could choose whitespace over the comma on a file whose
+    fields carry trailing spaces, returning `V1`..`V13` from a ten-column file.
+
+  The reader now pads a short row instead of dropping it, as the reference does
+  through pandas, keeps the header as the header, and states the separator
+  rather than letting it be guessed. A row with more fields than its header is
+  still reported, since that file really is invalid.
+
 * **A define.xml that cannot be read now says so.** It used to return the same
   nothing as a study with no define.xml at all, so a truncated or non-Define
   file was indistinguishable from one that was never supplied. Worse once the
