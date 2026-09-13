@@ -458,3 +458,64 @@ test_that("the child match leaves the caller's dataset untouched", {
   expect_equal(as.data.frame(out$data)$AETERM, c("HEADACHE", "RASH"))
   expect_false(".coreval_child_row" %in% names(out$data))
 })
+
+test_that("a Match Datasets key can name a different column on each side", {
+  # Both forms in one Keys list, which is how USDM writes them: a bare string
+  # for a column both sides share, and Left/Right where the child's foreign
+  # key is spelled differently from the parent's id.
+  keys <- list(
+    list(Left = "id", Right = "parent_id"),
+    "rel_type"
+  )
+  resolved <- match_key_columns(keys, "ENCOUNTER")
+  expect_identical(resolved$left, c("id", "rel_type"))
+  expect_identical(resolved$right, c("parent_id", "rel_type"))
+
+  # A mapping giving only one side means the same name on both.
+  one_sided <- match_key_columns(list(list(Left = "id")), "ENCOUNTER")
+  expect_identical(one_sided$left, "id")
+  expect_identical(one_sided$right, "id")
+
+  # A plain character vector, which is what every bundled rule uses, is
+  # unchanged and still resolves a "--" prefix against the domain.
+  plain <- match_key_columns(c("USUBJID", "--SEQ"), "AE")
+  expect_identical(plain$left, c("USUBJID", "AESEQ"))
+  expect_identical(plain$right, c("USUBJID", "AESEQ"))
+})
+
+test_that("a join on differently named keys attaches the right rows", {
+  parent <- data.table::data.table(
+    id = c("E1", "E2", "E3"),
+    rel_type = rep("definition", 3),
+    instanceType = rep("Encounter", 3)
+  )
+  child <- data.table::data.table(
+    parent_id = c("E1", "E3"),
+    rel_type = rep("definition", 2),
+    code = c("C1", "C3")
+  )
+  study <- list(
+    datasets = list(
+      ENCOUNTER = list(data = parent, meta = NULL),
+      CODE = list(data = child, meta = NULL)
+    ),
+    standard = list(product = "USDM", version = NA_character_)
+  )
+  rule <- list(
+    id = "TEST-1",
+    match_datasets = list(list(
+      Name = "Code",
+      Keys = list(list(Left = "id", Right = "parent_id"), "rel_type")
+    )),
+    check = list(all = list(list(name = "code", operator = "exists")))
+  )
+
+  joined <- apply_match_datasets(study$datasets$ENCOUNTER, rule, study, "ENCOUNTER")
+  expect_equal(nrow(joined$data), 3)
+  # E2 has no child row, so its joined value is missing rather than another
+  # encounter's.
+  expect_identical(joined$data$code[joined$data$id == "E1"], "C1")
+  expect_identical(joined$data$code[joined$data$id == "E3"], "C3")
+  expect_true(is.na(joined$data$code[joined$data$id == "E2"]) ||
+                !nzchar(joined$data$code[joined$data$id == "E2"]))
+})

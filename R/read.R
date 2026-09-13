@@ -415,6 +415,23 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
     }
   }
 
+  # A column with no values at all comes back logical, because that is what
+  # fread infers for a file of nothing but NA. It is not a logical column; it
+  # is a column of unknown type that happens to be empty, and every string
+  # operator applied to one raises "non-character object(s)" rather than
+  # answering. That took out 39 USDM rules at once, each reported as an
+  # evaluation failure rather than as the blank column it really is.
+  #
+  # Only the all-missing case. A column holding real TRUE/FALSE values is a
+  # genuine logical, and several USDM rules compare against one, so converting
+  # those would break them instead.
+  for (v in names(dt)) {
+    col <- dt[[v]]
+    if (is.logical(col) && all(is.na(col))) {
+      data.table::set(dt, j = v, value = rep(NA_character_, length(col)))
+    }
+  }
+
   fill_char_blanks(dt)
 
   meta <- data.table::data.table(

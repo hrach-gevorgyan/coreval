@@ -13,6 +13,14 @@
   contain a doubled quote are re-read, so the common case pays one scan and
   nothing more.
 
+* **A `Match Datasets` key can now name a different column on each side.**
+  A key is usually one column both datasets share, but it can also be a pair,
+  `Left: id` / `Right: parent_id`, for a child whose foreign key is spelled
+  differently from its parent's id. Both forms mix inside one `Keys` list.
+  Handing that list to the variable-name resolver raised
+  "non-character object(s)", which surfaced as an evaluation failure saying
+  nothing about keys. No bundled rule uses the paired form.
+
 * **A matched dataset is now found whatever case its name is written in.** The
   lookup was case-sensitive while every reader here upper-cases dataset keys,
   so a `Match Datasets` entry naming `Code` against a `CODE` key missed

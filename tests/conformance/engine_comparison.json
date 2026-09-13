@@ -4351,6 +4351,708 @@
   "folder": "CORE-000814",
   "source": "published"
  },
+ "CORE-000815": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/03",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/04",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 7,
+  "folder": "CORE-000815",
+  "source": "published"
+ },
+ "CORE-000816": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYEPOCH": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYEPOCH": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYEPOCH": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYEPOCH": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000816",
+  "source": "published"
+ },
+ "CORE-000817": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYTITLE": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYTITLE": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000817",
+  "source": "published"
+ },
+ "CORE-000818": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000818",
+  "source": "published"
+ },
+ "CORE-000819": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000819",
+  "source": "published"
+ },
+ "CORE-000820": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000820",
+  "source": "published"
+ },
+ "CORE-000821": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CONDITIONASSIGNMENT": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CONDITIONASSIGNMENT": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000821",
+  "source": "published"
+ },
+ "CORE-000822": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULETIMELINE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULETIMELINE": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "SCHEDULETIMELINE": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULETIMELINE": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000822",
+  "source": "published"
+ },
+ "CORE-000823": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000823",
+  "source": "published"
+ },
+ "CORE-000824": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "1"
+     ],
+     "SCHEDULEDDECISIONINSTANCE": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "1"
+     ],
+     "SCHEDULEDDECISIONINSTANCE": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000824",
+  "source": "published"
+ },
+ "CORE-000825": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000825",
+  "source": "published"
+ },
+ "CORE-000826": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000826",
+  "source": "published"
+ },
+ "CORE-000827": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "2",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "2",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000827",
+  "source": "published"
+ },
+ "CORE-000828": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ALIASCODE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ALIASCODE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000828",
+  "source": "published"
+ },
+ "CORE-000829": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000829",
+  "source": "published"
+ },
+ "CORE-000830": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "TIMING": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000830",
+  "source": "published"
+ },
+ "CORE-000831": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000831",
+  "source": "published"
+ },
+ "CORE-000832": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000832",
+  "source": "published"
+ },
  "CORE-000833": {
   "cases": [
    {
@@ -4393,6 +5095,266 @@
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
   "folder": "CORE-000833",
+  "source": "published"
+ },
+ "CORE-000834": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "GOVERNANCEDATE": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "GOVERNANCEDATE": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000834",
+  "source": "published"
+ },
+ "CORE-000835": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYCELL": [
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYCELL": [
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000835",
+  "source": "published"
+ },
+ "CORE-000836": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYCELL": [
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYCELL": [
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000836",
+  "source": "published"
+ },
+ "CORE-000837": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ACTIVITY": [
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000837",
+  "source": "published"
+ },
+ "CORE-000838": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000838",
+  "source": "published"
+ },
+ "CORE-000839": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYEPOCH": [
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYEPOCH": [
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000839",
+  "source": "published"
+ },
+ "CORE-000840": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ACTIVITY": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000840",
+  "source": "published"
+ },
+ "CORE-000849": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ACTIVITY": [
+      "2"
+     ],
+     "ELIGIBILITYCRITERION": [
+      "2"
+     ],
+     "ENCOUNTER": [
+      "2"
+     ],
+     "NARRATIVECONTENT": [
+      "2"
+     ],
+     "STUDYEPOCH": [
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "2"
+     ],
+     "ELIGIBILITYCRITERION": [
+      "2"
+     ],
+     "ENCOUNTER": [
+      "2"
+     ],
+     "NARRATIVECONTENT": [
+      "2"
+     ],
+     "STUDYEPOCH": [
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000849",
   "source": "published"
  },
  "CORE-000850": {
@@ -4545,6 +5507,330 @@
   "folder": "CORE-000851",
   "source": "published"
  },
+ "CORE-000854": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ELIGIBILITYCRITERION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ELIGIBILITYCRITERION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000854",
+  "source": "published"
+ },
+ "CORE-000855": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000855",
+  "source": "published"
+ },
+ "CORE-000856": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000856",
+  "source": "published"
+ },
+ "CORE-000857": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYCOHORT": [
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYCOHORT": [
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYCOHORT": [
+      "3",
+      "4"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYCOHORT": [
+      "3",
+      "4"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000857",
+  "source": "published"
+ },
+ "CORE-000858": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000858",
+  "source": "published"
+ },
+ "CORE-000859": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000859",
+  "source": "published"
+ },
+ "CORE-000860": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000860",
+  "source": "published"
+ },
+ "CORE-000861": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000861",
+  "source": "published"
+ },
  "CORE-000864": {
   "cases": [
    {
@@ -4676,6 +5962,596 @@
   "folder": "CORE-000866",
   "source": "published"
  },
+ "CORE-000868": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULETIMELINE": [
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULETIMELINE": [
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000868",
+  "source": "published"
+ },
+ "CORE-000869": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "DURATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "DURATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "DURATION": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "DURATION": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000869",
+  "source": "published"
+ },
+ "CORE-000870": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "3",
+      "28"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "3",
+      "28"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "2",
+      "3",
+      "4",
+      "5",
+      "28"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "2",
+      "3",
+      "4",
+      "5",
+      "28"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000870",
+  "source": "published"
+ },
+ "CORE-000871": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "INTERVENTIONALSTUDYDESIGN": [
+      "1",
+      "2"
+     ],
+     "OBSERVATIONALSTUDYDESIGN": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "INTERVENTIONALSTUDYDESIGN": [
+      "1",
+      "2"
+     ],
+     "OBSERVATIONALSTUDYDESIGN": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000871",
+  "source": "published"
+ },
+ "CORE-000872": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000872",
+  "source": "published"
+ },
+ "CORE-000873": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000873",
+  "source": "published"
+ },
+ "CORE-000874": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENDPOINT": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENDPOINT": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000874",
+  "source": "published"
+ },
+ "CORE-000875": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/03",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/04",
+    "engine": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 7,
+  "folder": "CORE-000875",
+  "source": "published"
+ },
+ "CORE-000876": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "NARRATIVECONTENT": [
+      "14",
+      "17",
+      "21",
+      "22"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "NARRATIVECONTENT": [
+      "14",
+      "17",
+      "21",
+      "22"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000876",
+  "source": "published"
+ },
+ "CORE-000877": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "2",
+      "12"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "SCHEDULEDACTIVITYINSTANCE": [
+      "2",
+      "12"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000877",
+  "source": "published"
+ },
+ "CORE-000878": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "BIOMEDICALCONCEPT": [
+      "7",
+      "8",
+      "9"
+     ],
+     "CONDITION": [
+      "3"
+     ],
+     "PROCEDURE": [
+      "2"
+     ],
+     "STRING": [
+      "7",
+      "14"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "BIOMEDICALCONCEPT": [
+      "7",
+      "8",
+      "9"
+     ],
+     "CONDITION": [
+      "3"
+     ],
+     "PROCEDURE": [
+      "2"
+     ],
+     "STRING": [
+      "7",
+      "14"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000878",
+  "source": "published"
+ },
+ "CORE-000879": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CODE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CODE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000879",
+  "source": "published"
+ },
  "CORE-000884": {
   "cases": [
    {
@@ -4709,6 +6585,762 @@
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
   "folder": "CORE-000884",
+  "source": "published"
+ },
+ "CORE-000897": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000897",
+  "source": "published"
+ },
+ "CORE-000900": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CODE": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000900",
+  "source": "published"
+ },
+ "CORE-000904": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000904",
+  "source": "published"
+ },
+ "CORE-000905": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "TIMING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000905",
+  "source": "published"
+ },
+ "CORE-000906": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYCOHORT": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYCOHORT": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "STUDYDESIGNPOPULATION": [
+      "1",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000906",
+  "source": "published"
+ },
+ "CORE-000907": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000907",
+  "source": "published"
+ },
+ "CORE-000908": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "AGENTADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "AGENTADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000908",
+  "source": "published"
+ },
+ "CORE-000909": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000909",
+  "source": "published"
+ },
+ "CORE-000910": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000910",
+  "source": "published"
+ },
+ "CORE-000911": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000911",
+  "source": "published"
+ },
+ "CORE-000912": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000912",
+  "source": "published"
+ },
+ "CORE-000917": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000917",
+  "source": "published"
+ },
+ "CORE-000918": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000918",
+  "source": "published"
+ },
+ "CORE-000919": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000919",
+  "source": "published"
+ },
+ "CORE-000920": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "MASKING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "MASKING": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000920",
+  "source": "published"
+ },
+ "CORE-000921": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYINTERVENTION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000921",
+  "source": "published"
+ },
+ "CORE-000922": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "AGENTADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "AGENTADMINISTRATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000922",
+  "source": "published"
+ },
+ "CORE-000923": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000923",
+  "source": "published"
+ },
+ "CORE-000924": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ORGANIZATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "RESEARCHORGANIZATION": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ORGANIZATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "RESEARCHORGANIZATION": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000924",
+  "source": "published"
+ },
+ "CORE-000925": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "GOVERNANCEDATE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "GOVERNANCEDATE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000925",
   "source": "published"
  },
  "CORE-000929": {
@@ -4769,6 +7401,1608 @@
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
   "folder": "CORE-000929",
+  "source": "published"
+ },
+ "CORE-000930": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYAMENDMENTREASON": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYAMENDMENTREASON": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000930",
+  "source": "published"
+ },
+ "CORE-000931": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000931",
+  "source": "published"
+ },
+ "CORE-000932": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "QUANTITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "QUANTITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000932",
+  "source": "published"
+ },
+ "CORE-000933": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYTITLE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYTITLE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000933",
+  "source": "published"
+ },
+ "CORE-000935": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000935",
+  "source": "published"
+ },
+ "CORE-000936": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CHARACTERISTIC": [
+      "1",
+      "2"
+     ],
+     "CONDITION": [
+      "1",
+      "2"
+     ],
+     "ELIGIBILITYCRITERION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "ENDPOINT": [
+      "1"
+     ],
+     "OBJECTIVE": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CHARACTERISTIC": [
+      "1",
+      "2"
+     ],
+     "CONDITION": [
+      "1",
+      "2"
+     ],
+     "ELIGIBILITYCRITERION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "ENDPOINT": [
+      "1"
+     ],
+     "OBJECTIVE": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000936",
+  "source": "published"
+ },
+ "CORE-000937": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000937",
+  "source": "published"
+ },
+ "CORE-000938": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000938",
+  "source": "published"
+ },
+ "CORE-000939": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "OBJECTIVE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "OBJECTIVE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000939",
+  "source": "published"
+ },
+ "CORE-000940": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENDPOINT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENDPOINT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000940",
+  "source": "published"
+ },
+ "CORE-000941": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYARM": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYARM": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000941",
+  "source": "published"
+ },
+ "CORE-000942": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000942",
+  "source": "published"
+ },
+ "CORE-000943": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDEFINITIONDOCUMENT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDEFINITIONDOCUMENT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000943",
+  "source": "published"
+ },
+ "CORE-000944": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000944",
+  "source": "published"
+ },
+ "CORE-000945": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CHARACTERISTIC": [
+      "1",
+      "2"
+     ],
+     "CONDITION": [
+      "1",
+      "2"
+     ],
+     "ELIGIBILITYCRITERIONITEM": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "ENDPOINT": [
+      "1"
+     ],
+     "INTERCURRENTEVENT": [
+      "1"
+     ],
+     "OBJECTIVE": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CHARACTERISTIC": [
+      "1",
+      "2"
+     ],
+     "CONDITION": [
+      "1",
+      "2"
+     ],
+     "ELIGIBILITYCRITERIONITEM": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "ENDPOINT": [
+      "1"
+     ],
+     "INTERCURRENTEVENT": [
+      "1"
+     ],
+     "OBJECTIVE": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000945",
+  "source": "published"
+ },
+ "CORE-000948": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000948",
+  "source": "published"
+ },
+ "CORE-000949": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000949",
+  "source": "published"
+ },
+ "CORE-000950": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000950",
+  "source": "published"
+ },
+ "CORE-000951": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYDEFINITIONDOCUMENTVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYDEFINITIONDOCUMENTVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000951",
+  "source": "published"
+ },
+ "CORE-000954": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000954",
+  "source": "published"
+ },
+ "CORE-000955": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000955",
+  "source": "published"
+ },
+ "CORE-000956": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000956",
+  "source": "published"
+ },
+ "CORE-000957": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRABLEPRODUCTPROPERTY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRABLEPRODUCTPROPERTY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000957",
+  "source": "published"
+ },
+ "CORE-000958": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "REFERENCEIDENTIFIER": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "REFERENCEIDENTIFIER": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000958",
+  "source": "published"
+ },
+ "CORE-000959": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYAMENDMENTIMPACT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYAMENDMENTIMPACT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000959",
+  "source": "published"
+ },
+ "CORE-000960": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "NARRATIVECONTENT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "NARRATIVECONTENT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000960",
+  "source": "published"
+ },
+ "CORE-000961": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000961",
+  "source": "published"
+ },
+ "CORE-000962": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 7,
+  "folder": "CORE-000962",
+  "source": "published"
+ },
+ "CORE-000963": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 7,
+  "folder": "CORE-000963",
+  "source": "published"
+ },
+ "CORE-000964": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000964",
+  "source": "published"
+ },
+ "CORE-000965": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000965",
+  "source": "published"
+ },
+ "CORE-000966": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000966",
+  "source": "published"
+ },
+ "CORE-000967": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000967",
+  "source": "published"
+ },
+ "CORE-000968": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": null,
+    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 1,
+  "folder": "CORE-000968",
+  "source": "published"
+ },
+ "CORE-000969": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000969",
+  "source": "published"
+ },
+ "CORE-000970": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000970",
+  "source": "published"
+ },
+ "CORE-000971": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000971",
+  "source": "published"
+ },
+ "CORE-000972": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ORGANIZATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ORGANIZATION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000972",
+  "source": "published"
+ },
+ "CORE-000973": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 3,
+  "folder": "CORE-000973",
+  "source": "published"
+ },
+ "CORE-000974": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 5,
+  "folder": "CORE-000974",
+  "source": "published"
+ },
+ "CORE-000975": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "MEDICALDEVICEIDENTIFIER": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "MEDICALDEVICEIDENTIFIER": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000975",
+  "source": "published"
+ },
+ "CORE-000976": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000976",
+  "source": "published"
+ },
+ "CORE-000977": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "MEDICALDEVICE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "MEDICALDEVICE": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000977",
+  "source": "published"
+ },
+ "CORE-000978": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ADMINISTRABLEPRODUCT": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000978",
+  "source": "published"
+ },
+ "CORE-000979": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "INTERVENTIONALSTUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "INTERVENTIONALSTUDYDESIGN": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000979",
+  "source": "published"
+ },
+ "CORE-000980": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000980",
+  "source": "published"
+ },
+ "CORE-000981": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/05",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/05",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/06",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/07",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 12,
+  "folder": "CORE-000981",
   "source": "published"
  },
  "CORE-001080": {

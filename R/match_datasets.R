@@ -62,6 +62,39 @@ collect_rule_targets <- function(rule) {
   unique(c(walk(rule$check, character(0)), if (is.character(declared)) declared))
 }
 
+#' Split a Match Datasets `Keys` list into its left and right column names
+#'
+#' Two forms, mixable in one list. A bare string names a column both sides
+#' share (`- rel_type`). A mapping names them separately
+#' (`- Left: id` / `Right: parent_id`), which is how USDM joins an entity to
+#' its children, whose foreign key is spelled differently.
+#'
+#' Each side goes through [resolve_var_name()] so a `--` prefix still resolves
+#' against the current domain.
+#'
+#' @param spec_keys The `Keys` element of a Match Datasets entry.
+#' @param wildcard The domain a `--` prefix resolves to.
+#' @return `list(left, right)`, two character vectors of equal length.
+#' @noRd
+match_key_columns <- function(spec_keys, wildcard) {
+  entries <- if (is.list(spec_keys)) spec_keys else as.list(spec_keys)
+  left <- character(0)
+  right <- character(0)
+  for (entry in entries) {
+    if (is.list(entry) && (!is.null(entry$Left) || !is.null(entry$Right))) {
+      # A mapping giving only one side means the same name on both.
+      l <- as.character(entry$Left %||% entry$Right)[[1]]
+      r <- as.character(entry$Right %||% entry$Left)[[1]]
+    } else {
+      l <- as.character(entry)[[1]]
+      r <- l
+    }
+    left <- c(left, resolve_var_name(l, wildcard))
+    right <- c(right, resolve_var_name(r, wildcard))
+  }
+  list(left = left, right = right)
+}
+
 #' Rename a matched dataset's columns that the rule explicitly references as `<Name>.<col>`
 #'
 #' The reference engine prefixes the columns a rule NAMES as
@@ -377,13 +410,31 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # violations for a domain this rule can't actually evaluate that way. If
   # any key is missing from either side, the whole join is unresolvable for
   # this domain - skip it entirely rather than degrading to a looser one.
-  keys <- resolve_var_name(spec$Keys, dataset_wildcard(dataset, current_domain))
-  if (!all(keys %in% names(dataset$data)) || !all(keys %in% names(match_dataset$data))) {
+  # A key can name one column shared by both sides, or a PAIR of differently
+  # named columns: USDM joins an Encounter's `id` to a Code's `parent_id`, and
+  # writes that as `- Left: id` / `Right: parent_id`. The two forms mix freely
+  # inside one Keys list. Passing the list straight to resolve_var_name() fed
+  # startsWith() a list and raised "non-character object(s)", which surfaced as
+  # an evaluation failure for 39 rules and said nothing about keys.
+  #
+  # No bundled rule uses the paired form, so this widens the reader without
+  # touching how any of the 797 join today.
+  key_spec <- match_key_columns(spec$Keys, dataset_wildcard(dataset, current_domain))
+  keys <- key_spec$left
+  if (!all(key_spec$left %in% names(dataset$data)) ||
+        !all(key_spec$right %in% names(match_dataset$data))) {
     return(dataset)
   }
 
   left <- data.table::copy(dataset$data)
   right <- data.table::copy(match_dataset$data)
+  # Renamed to the left-hand spelling so everything downstream - the collision
+  # rule, the merge, the blank-key handling - keeps working on one set of key
+  # names rather than carrying a pair everywhere.
+  differing <- key_spec$right != key_spec$left
+  if (any(differing)) {
+    data.table::setnames(right, key_spec$right[differing], key_spec$left[differing])
+  }
 
   # Prefix the columns the RULE ITSELF references as "<Name>.<col>" first -
   # regardless of whether they collide - then let the collision rule below

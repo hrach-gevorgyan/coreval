@@ -237,7 +237,15 @@ date_extreme_binding <- function(dt, op, want_max) {
 operation_columns_used <- function(op) {
   names_used <- c(
     as.character(unlist(op$group %||% character(0))),
-    names(op$filter %||% list())
+    names(op$filter %||% list()),
+    # `version`/`ct_version` and `term_code` name columns too, and for a rule
+    # that joins another entity in they are columns of the JOINED data rather
+    # than the raw dataset. Leaving them out meant the fallback below never
+    # triggered for them and the operation refused a column that was there.
+    as.character(op$version %||% character(0)),
+    as.character(op$ct_version %||% character(0)),
+    as.character(op$term_code %||% character(0)),
+    as.character(op$term_value %||% character(0))
   )
   for (entry in op$map %||% list()) {
     names_used <- c(names_used, setdiff(names(entry), "output"))
