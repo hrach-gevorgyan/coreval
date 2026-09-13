@@ -254,6 +254,89 @@ operation_columns_used <- function(op) {
   unique(names_used)
 }
 
+#' Look one term up per row, in the CT version that row cites
+#'
+#' The other shape of `codelist_terms`. [ct_terms_for()] answers "every term of
+#' this codelist" once for the whole dataset; this one answers "for this row's
+#' code, in this row's terminology version, what is the matching term's other
+#' attribute" - the reference's `_handle_multiple_versions`, which merges the
+#' dataset against the CT table on (version, codelist, term) and returns one
+#' column.
+#'
+#' `term_code` and `term_value` say which side the row supplies, `returntype`
+#' says which side it wants, and the match is case-insensitive, all as the
+#' reference has it.
+#'
+#' `returntype: pref_term` is refused rather than answered. Preferred terms are
+#' not in the bundled terminology: they are most of the bulk of CDISC's caches
+#' and no bundled rule needs them, so they were left out. A rule asking for one
+#' gets a skip naming the reason, which is what keeps
+#' this from inventing a term nobody shipped.
+#'
+#' @param op The Operations entry.
+#' @param study Full study object.
+#' @param dt The dataset being checked.
+#' @return A [per_row_binding()], one value per row.
+#' @noRd
+ct_terms_per_row <- function(op, study, dt) {
+  returntype <- op$returntype %||% (if (!is.null(op$term_code)) "value" else "code")
+  if (identical(returntype, "pref_term") || !is.null(op$term_pref_term)) {
+    stop("needs controlled terminology preferred terms, which coreval does not ",
+         "bundle: only submission values and C-codes are included",
+         call. = FALSE)
+  }
+  supplied <- if (!is.null(op$term_code)) "code" else "value"
+  source_col <- as.character(op$term_code %||% op$term_value)[[1]]
+  version_col <- as.character(op$version %||% op$ct_version %||% "")[[1]]
+  if (is.null(dt) || !(source_col %in% names(dt)) || !(version_col %in% names(dt))) {
+    stop("codelist_terms needs columns '", source_col, "' and '", version_col,
+         "', which this dataset does not have", call. = FALSE)
+  }
+  tbl <- ct_codelists()
+  if (is.null(tbl)) {
+    stop("the bundled controlled terminology is not installed", call. = FALSE)
+  }
+  codelist_code <- resolve_operation_reference(op$codelist_code, list(), dt)
+  if (is.null(codelist_code)) {
+    stop("codelist_terms cannot resolve its codelist code", call. = FALSE)
+  }
+  family <- ct_family_for(op$ct_package_type %||% study$standard$product)
+  versions <- trimws(as.character(dt[[version_col]]))
+  packages <- ifelse(is.na(versions) | !nzchar(versions), NA_character_,
+                     paste0(family, "-", versions))
+  codes <- rep_len(as.character(codelist_code), nrow(dt))
+  keys <- tolower(trimws(as.character(dt[[source_col]])))
+
+  # One split per distinct (package, codelist) rather than per row: a study can
+  # hold thousands of rows citing a handful of versions.
+  wanted <- unique(data.table::data.table(package = packages, codelist_code = codes))
+  wanted <- wanted[!is.na(wanted$package), ]
+  lookup <- list()
+  for (i in seq_len(nrow(wanted))) {
+    row <- match(paste(wanted$package[i], wanted$codelist_code[i]),
+                 paste(tbl$package, tbl$codelist_code))
+    if (is.na(row)) {
+      next
+    }
+    split_field <- function(x) if (nzchar(x)) strsplit(x, "", fixed = TRUE)[[1]] else character(0)
+    from <- split_field(if (identical(supplied, "code")) tbl$term_codes[row] else tbl$term_values[row])
+    to <- split_field(if (identical(returntype, "code")) tbl$term_codes[row] else tbl$term_values[row])
+    if (length(from) == length(to)) {
+      lookup[[paste(wanted$package[i], wanted$codelist_code[i])]] <-
+        stats::setNames(to, tolower(from))
+    }
+  }
+  out <- vapply(seq_len(nrow(dt)), function(i) {
+    entry <- lookup[[paste(packages[i], codes[i])]]
+    if (is.null(entry) || is.na(keys[i]) || !nzchar(keys[i])) {
+      return(NA_character_)
+    }
+    hit <- entry[[keys[i]]]
+    if (is.null(hit)) NA_character_ else hit
+  }, character(1))
+  per_row_binding(out)
+}
+
 #' Which bundled CT family a package type or standard names
 #' @param what A `ct_package_type` ("SDTM") or a standard product ("SENDIG").
 #' @return One of `"adamct"`, `"sendct"`, `"sdtmct"`.
@@ -981,7 +1064,15 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         per_row_binding(strsplit(as.character(dt[[target]]), op$delimiter, fixed = TRUE))
       }
     },
-    codelist_terms = scalar_binding(ct_terms_for(op, study)),
+    # Two shapes. `codelists` asks for a whole codelist's terms, once for the
+    # dataset; `term_code`/`term_value` asks one question per row, against the
+    # terminology version that row cites.
+    codelist_terms = if (!is.null(op$term_code) || !is.null(op$term_value) ||
+                         !is.null(op$term_pref_term)) {
+      ct_terms_per_row(op, study, dt)
+    } else {
+      scalar_binding(ct_terms_for(op, study))
+    },
     # Every value of one attribute across a whole CT package - "every term
     # C-code CDISC published in this version" - for the rows that cite a
     # bundled package. Refused rather than answered with an empty set when the

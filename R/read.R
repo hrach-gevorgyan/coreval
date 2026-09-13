@@ -415,6 +415,35 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
     }
   }
 
+  # A variable the fixture declares Boolean holds the text "True"/"FALSE", and
+  # the rules compare it against a YAML `true`, which reaches here as a logical.
+  # Left as text the comparison is R's coercion of TRUE to "TRUE", which does
+  # not equal "True", so a row that plainly satisfies the rule reads as clean.
+  # It worked for "FALSE" purely because that casing happens to match.
+  #
+  # The reference gets this for free: pandas' CSV parser turns boolean-looking
+  # text into real booleans and leaves NaN for a blank, so its comparison is
+  # bool against bool. This does the same, driven by the declared type rather
+  # than by sniffing values, so a "Y"/"N" or "TRUE"/"FALSE" column that nobody
+  # declared Boolean is untouched.
+  declared_bool <- vmeta$variable[tolower(vmeta$type) == "boolean"]
+  for (v in intersect(declared_bool, names(dt))) {
+    col <- dt[[v]]
+    if (!is.character(col)) {
+      next
+    }
+    key <- toupper(trimws(col))
+    parsed <- ifelse(key %in% c("TRUE", "T", "Y", "YES"), TRUE,
+                     ifelse(key %in% c("FALSE", "F", "N", "NO"), FALSE, NA))
+    # Only when every populated value really is boolean text. Anything else in
+    # a column declared Boolean is itself worth reporting, and quietly turning
+    # it into NA would hide it.
+    populated <- !is.na(col) & nzchar(key)
+    if (all(!is.na(parsed[populated]))) {
+      data.table::set(dt, j = v, value = as.logical(parsed))
+    }
+  }
+
   # A column with no values at all comes back logical, because that is what
   # fread infers for a file of nothing but NA. It is not a logical column; it
   # is a column of unknown type that happens to be empty, and every string

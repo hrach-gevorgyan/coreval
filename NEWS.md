@@ -13,6 +13,22 @@
   contain a doubled quote are re-read, so the common case pays one scan and
   nothing more.
 
+* **`codelist_terms` has a second shape, and it now runs.** One asks for every
+  term of a codelist, once for the dataset. The other asks a question per row:
+  for this row's code, in the terminology version this row cites, what is the
+  matching term's submission value. Only the first was implemented, so the
+  second bound nothing and every rule comparing against it answered from an
+  empty set.
+
+  `returntype: pref_term` is refused rather than answered. Preferred terms are
+  not bundled: they are most of the bulk of CDISC's caches and no bundled rule
+  needs them. A rule asking for one is skipped with that reason.
+
+* A variable a fixture declares `Boolean` is read as a logical. Left as text,
+  `"True"` was compared against R's coercion of `TRUE` to `"TRUE"` and a row
+  that plainly satisfied its rule read as clean. It worked for `"FALSE"` only
+  because that casing happens to match.
+
 * **A `Match Datasets` key can now name a different column on each side.**
   A key is usually one column both datasets share, but it can also be a pair,
   `Left: id` / `Right: parent_id`, for a child whose foreign key is spelled
