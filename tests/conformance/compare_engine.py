@@ -34,6 +34,7 @@ import glob
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -70,6 +71,14 @@ def records(path):
     rows = list(csv.DictReader(io.open(path, encoding="utf-8-sig")))
     found = collections.defaultdict(set)
     for row in rows:
+        # USDM sheets and reports use path,attribute,value, where path is
+        # /Entity/<zero-based index>. Same statement, different spelling, and
+        # reading only the SDTM column names off one gives a silent empty set.
+        if "path" in row and "Dataset" not in row:
+            m = re.fullmatch(r"/([A-Za-z][A-Za-z0-9]*)/(\d+)", (row.get("path") or "").strip())
+            if m and (row.get("attribute") or "").strip():
+                found[m.group(1).upper()].add(str(int(m.group(2)) + 1))
+            continue
         if (row.get("Variable") or "").strip():
             found[(row.get("Dataset") or "").strip()].add((row.get("Record") or "").strip())
     return {k: sorted(v, key=lambda s: (s == "", int(s) if s.isdigit() else 0))
@@ -107,7 +116,9 @@ def main():
     os.makedirs(scratch, exist_ok=True)
 
     for rule_id in wanted:
-        source = board[rule_id]["source"]
+        # A rule the scoreboard does not carry is one this package does not
+        # bundle yet (the USDM set). Those all live under Published/.
+        source = board[rule_id]["source"] if rule_id in board else "published"
         root = os.path.join(UPSTREAM, ROOT[source])
         folder = next((c for c in (rule_id, rule_id.split(".")[-1])
                        if case_dirs(os.path.join(root, c))), rule_id)

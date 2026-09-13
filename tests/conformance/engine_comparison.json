@@ -755,6 +755,42 @@
   "folder": "CORE-000396",
   "source": "published"
  },
+ "CORE-000401": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYVERSION": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000401",
+  "source": "published"
+ },
  "CORE-000468": {
   "cases": [
    {
@@ -1946,6 +1982,354 @@
   "cases_engine_ran": 2,
   "folder": "CORE-000787",
   "source": "deprecated_dir"
+ },
+ "CORE-000797": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "STUDYARM": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "STUDYARM": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000797",
+  "source": "published"
+ },
+ "CORE-000798": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "PROCEDURE": [
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "PROCEDURE": [
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000798",
+  "source": "published"
+ },
+ "CORE-000800": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2",
+      "4",
+      "5"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2",
+      "4",
+      "5"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "GEOGRAPHICSCOPE": [
+      "1",
+      "2"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 4,
+  "folder": "CORE-000800",
+  "source": "published"
+ },
+ "CORE-000803": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "BIOMEDICALCONCEPT": [
+      "1",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "BIOMEDICALCONCEPT": [
+      "1",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000803",
+  "source": "published"
+ },
+ "CORE-000833": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "PARAMETERMAP": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "PARAMETERMAP": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000833",
+  "source": "published"
+ },
+ "CORE-000850": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ENCOUNTER": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "STUDYELEMENT": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "STUDYELEMENT": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "ENCOUNTER": [
+      "1"
+     ],
+     "STUDYELEMENT": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1"
+     ],
+     "STUDYELEMENT": [
+      "1"
+     ]
+    }
+   },
+   {
+    "case": "negative/03",
+    "engine": {
+     "ENCOUNTER": [
+      "1"
+     ],
+     "STUDYELEMENT": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ENCOUNTER": [
+      "1"
+     ],
+     "STUDYELEMENT": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 7,
+  "folder": "CORE-000850",
+  "source": "published"
+ },
+ "CORE-000851": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "BIOMEDICALCONCEPTCATEGORY": [
+      "2"
+     ],
+     "NARRATIVECONTENT": [
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "BIOMEDICALCONCEPTCATEGORY": [
+      "2"
+     ],
+     "NARRATIVECONTENT": [
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "STUDYPROTOCOLDOCUMENTVERSION": [
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "folder": "CORE-000851",
+  "source": "published"
  },
  "CORE-000864": {
   "cases": [
