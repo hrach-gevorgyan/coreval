@@ -1,9 +1,9 @@
 .datatable.aware <- TRUE
 
-# data.table's special in-`[.data.table` symbol, used in operations.R's
-# record_count grouping - not a real global, just needs declaring so
-# R CMD check doesn't flag it as an undefined variable.
-utils::globalVariables(".N")
+# data.table's special in-`[.data.table` symbols: `.N` in record_count's
+# grouping and `.SD` in compute_group_agg's. Not real globals, they just need
+# declaring so R CMD check does not flag them as undefined variables.
+utils::globalVariables(c(".N", ".SD"))
 
 .coreval_env <- new.env(parent = emptyenv())
 

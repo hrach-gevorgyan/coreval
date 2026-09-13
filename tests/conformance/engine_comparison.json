@@ -11245,6 +11245,2132 @@
   "folder": "CORE-001075",
   "source": "published"
  },
+ "CORE-001076": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/02",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/03",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/04",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/05",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/06",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/07",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/08",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/09",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/10",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/11",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/12",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/13",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/14",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/15",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/16",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/17",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/18",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/19",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/20",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/21",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/22",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/23",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/24",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/25",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/26",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/27",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/28",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/29",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/30",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/31",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/32",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/33",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/34",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/35",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/36",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/37",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/38",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/39",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/40",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/41",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/42",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/43",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/44",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/45",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/46",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/47",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/48",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/49",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/50",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/51",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/52",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/53",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/54",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/55",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/56",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/57",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/58",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/59",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/60",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/61",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/62",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "positive/63",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32"
+     ]
+    }
+   },
+   {
+    "case": "negative/02",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/03",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/04",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/05",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/06",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/07",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/08",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/09",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/10",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/11",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/12",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/13",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/14",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/15",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/16",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/17",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/18",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/19",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/20",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/21",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/22",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/23",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/24",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/25",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/26",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/27",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/28",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/29",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/30",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/31",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/32",
+    "engine": {
+     "ACTIVITY": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1"
+     ]
+    }
+   },
+   {
+    "case": "negative/33",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32"
+     ]
+    }
+   },
+   {
+    "case": "negative/34",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/35",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/36",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/37",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/38",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/39",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/40",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/41",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/42",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/43",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/44",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/45",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/46",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/47",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/48",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/49",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16"
+     ]
+    }
+   },
+   {
+    "case": "negative/50",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/51",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/52",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/53",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/54",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/55",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/56",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/57",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ]
+    }
+   },
+   {
+    "case": "negative/58",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/59",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/60",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/61",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ]
+    }
+   },
+   {
+    "case": "negative/62",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/63",
+    "engine": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1",
+      "2"
+     ]
+    }
+   },
+   {
+    "case": "negative/64",
+    "engine": {
+     "ACTIVITY": [
+      "1"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "ACTIVITY": [
+      "1"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 127,
+  "folder": "CORE-001076",
+  "source": "published"
+ },
  "CORE-001080": {
   "cases": [
    {
