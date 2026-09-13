@@ -13,17 +13,73 @@ canonicalize_numeric_string <- function(x) {
   ifelse(is.na(num) | x_chr == "", x_chr, as.character(num))
 }
 
+#' Is this operand a set per row (the shape a grouped Operations binding has)?
+#' @param x An operand.
+#' @return `TRUE` for a list column.
+#' @noRd
+is_set_valued <- function(x) is.list(x) && !is.data.frame(x)
+
+#' Compare set-valued operands row by row
+#'
+#' A grouped Operations binding resolves to one SET per row, not one value, so
+#' `==` on it raises "comparison of these types is not implemented" and the
+#' whole rule stops running. The reference has no such problem: `equal_to` and
+#' `not_equal_to` are `apply(axis=1)` over `_check_equality`/`_check_inequality`
+#' (dataframe_operators.py:307-395), where a cell holding a Python list is
+#' compared with plain `==`, which is ordered element-wise equality. Grouped
+#' `distinct` sorts and deduplicates every group (distinct.py's
+#' `_apply_dropna_list` is `sorted(x.dropna())` over `drop_duplicates`), so on
+#' the operands that actually occur, ordered equality and set equality agree.
+#' Ordered is what is written here, because that is what the reference does.
+#'
+#' Both sides null or empty is FALSE for equality and inequality alike, which
+#' is the reference's own truth table (`both_null -> return False` in both
+#' helpers), and `pd.isna()` on an empty list is vacuously all-true so an empty
+#' set counts as null. The aggregate-provenance exception in the scalar path
+#' below is deliberately NOT applied here: it exists for a scalar aggregate
+#' that resolved to nothing (CORE-000454) and was measured there.
+#'
+#' @param eq `TRUE` for equality, `FALSE` for inequality.
+#' @return A function of `(target, value, n)` returning a logical vector.
+#' @noRd
+set_compare <- function(eq) {
+  function(target, value, n) {
+    as_rows <- function(x) if (is_set_valued(x)) rep_len(x, n) else as.list(rep_len(x, n))
+    t_rows <- as_rows(target)
+    v_rows <- as_rows(value)
+    vapply(seq_len(n), function(i) {
+      a <- t_rows[[i]]
+      b <- v_rows[[i]]
+      a_null <- length(a) == 0 || all(is_blank(a))
+      b_null <- length(b) == 0 || all(is_blank(b))
+      if (a_null && b_null) {
+        return(FALSE)
+      }
+      same <- identical(as.character(a), as.character(b))
+      if (eq) same else !same
+    }, logical(1))
+  }
+}
+
 #' Build a scalar/vector comparison operator from a two-argument comparator
 #' @param fn Function of `(target, value)` returning a logical vector.
+#' @param set_fn Row-wise comparator used when either operand is set-valued.
 #' @return An operator function of `ctx`.
 #' @noRd
-compare_op <- function(fn) {
+compare_op <- function(fn, set_fn = NULL) {
   function(ctx) {
     if (!ctx$exists || is.null(ctx$value)) {
       return(rep(NA, ctx$n))
     }
     target <- ctx$target
     value <- ctx$value
+    if (is_set_valued(target) || is_set_valued(value)) {
+      if (is.null(set_fn)) {
+        stop("comparison of set-valued operands is not implemented for ",
+             ctx$condition$operator, call. = FALSE)
+      }
+      return(set_fn(target, value, ctx$n))
+    }
     # `type_insensitive` means numeric-looking values compare by VALUE, not
     # by formatting - "200.00" and "200" (or the number 200) are equal.
     # Confirmed against CORE-000542's real fixtures: LBSTRESC="200.00"
@@ -103,6 +159,15 @@ ordinal_compare_op <- function(fn) {
     }
     target <- ctx$target
     value <- ctx$value
+    # An ordinal comparison against a SET has no meaning, and R will not say
+    # so: `list(c("1","2"), c("3")) < "2"` does not raise, it deparses each
+    # element and compares `c("1", "2")` as a string, answering FALSE FALSE.
+    # That is an answer nobody can tell from a correct one. Refuse instead,
+    # which check_study() records as a SKIPPED row naming the operator.
+    if (is_set_valued(target) || is_set_valued(value)) {
+      stop("comparison of set-valued operands is not implemented for ",
+           ctx$condition$operator, call. = FALSE)
+    }
     # If one side is numeric and the other is a numeric-looking string
     # (e.g. a quoted literal `value: "65"` against a Num column, or a
     # comparator resolved as text), base R's `<`/`>` would otherwise coerce
@@ -149,11 +214,21 @@ ordinal_compare_op <- function(fn) {
 
 # Operators: equal_to / not_equal_to / less_than / less_than_or_equal_to /
 # greater_than / greater_than_or_equal_to, and case-insensitive equality variants
-register_operator("equal_to", compare_op(function(t, v) t == v))
-register_operator("not_equal_to", compare_op(function(t, v) t != v))
+register_operator("equal_to", compare_op(function(t, v) t == v, set_compare(TRUE)))
+register_operator("not_equal_to", compare_op(function(t, v) t != v, set_compare(FALSE)))
 register_operator("less_than", ordinal_compare_op(function(t, v) t < v))
 register_operator("less_than_or_equal_to", ordinal_compare_op(function(t, v) t <= v))
 register_operator("greater_than", ordinal_compare_op(function(t, v) t > v))
 register_operator("greater_than_or_equal_to", ordinal_compare_op(function(t, v) t >= v))
 register_operator("equal_to_case_insensitive", compare_op(function(t, v) toupper(t) == toupper(v)))
 register_operator("not_equal_to_case_insensitive", compare_op(function(t, v) toupper(t) != toupper(v)))
+# Which of these ever meets a set, across the 1054-rule build: `not_equal_to`
+# on exactly one rule (CORE-000877, two grouped `distinct` operations compared
+# against each other), and `equal_to`, the case-insensitive pair and every
+# ordinal operator on none. So `set_compare(TRUE)` is not exercised by any rule
+# today; it is here because the reference computes equality and inequality from
+# one shared helper pair, inverting a single line
+# (dataframe_operators.py:189-303), and splitting them would be the invention.
+# The ordinal and case-insensitive operators get no set_fn: there is nothing to
+# measure a semantics for them against, and guessing one is how a check comes
+# to quietly answer something plausible. They refuse.

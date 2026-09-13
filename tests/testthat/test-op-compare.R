@@ -151,3 +151,42 @@ test_that("a column mixing numbers and text keeps text comparisons as text", {
   check <- list(name = "A", operator = "less_than", value = "B")
   expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, TRUE, TRUE))
 })
+
+test_that("not_equal_to compares two set-valued operands rather than raising", {
+  # A grouped Operations binding resolves to one SET per row. `==` on a list
+  # column raises "comparison of these types is not implemented", which turns
+  # the rule into an error row: CORE-000877 compares two grouped `distinct`
+  # operations against each other and is the one rule in the 1054-rule build
+  # that does. The reference compares such cells with plain Python `==`, which
+  # is ordered element-wise equality (dataframe_operators.py:189-303), and both
+  # sides null or empty is FALSE in its truth table.
+  set_ne <- set_compare(FALSE)
+  target <- list(c("A", "B"), c("A", "B"), c("A"), character(0), character(0), c("A"))
+  value <- list(c("A", "B"), c("A", "C"), c("A", "B"), character(0), c("A"), NA_character_)
+  expect_equal(
+    set_ne(target, value, 6L),
+    c(FALSE, TRUE, TRUE, FALSE, TRUE, TRUE)
+  )
+})
+
+test_that("a set-valued operand compares against a scalar comparator", {
+  # One side a set, the other a literal. rep_len() carries the scalar across
+  # the rows; a one-element set equal to it is not a difference.
+  set_ne <- set_compare(FALSE)
+  expect_equal(
+    set_ne(list(c("A"), c("A", "B"), character(0)), "A", 3L),
+    c(FALSE, TRUE, TRUE)
+  )
+})
+
+test_that("an operator with no set semantics refuses a set rather than answering", {
+  # less_than against a set has no measured meaning: no rule in the build pairs
+  # them. Refusing gives check_study() a SKIPPED row naming the operator, which
+  # is the honest answer; inventing an ordering would be the silent one.
+  ctx <- list(
+    exists = TRUE, n = 2L,
+    target = list(c("1", "2"), c("3")), value = "2",
+    condition = list(operator = "less_than")
+  )
+  expect_error(get_operator("less_than")(ctx), "not implemented")
+})

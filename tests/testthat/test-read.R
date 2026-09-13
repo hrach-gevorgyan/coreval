@@ -377,3 +377,61 @@ test_that("an escaped quote inside a quoted CSV field is read as one quote", {
   expect_identical(pm$PLAIN, c("ok", "ok", "ok"))
   expect_equal(nrow(pm), 3)
 })
+
+test_that("a dataset is named after the manifest's Dataset Name, not its file", {
+  # USDM test cases truncate the file stem to 27 characters and carry the real
+  # entity name in a separate column, so StudyProtocolDocumentVersio.csv
+  # declares StudyProtocolDocumentVersion. Naming the dataset after the file
+  # left five USDM rules skipped as "no dataset matches the rule's scope" with
+  # the scoped dataset sitting right there, and two more filing findings under
+  # an entity USDM does not have. The reference reads the declared column
+  # (csv_metadata_reader.py:85-89), with the filename only as a fallback.
+  dir <- tempfile("coreval_declared_name_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines(c(
+    "Filename,Dataset Name,Label",
+    "StudyProtocolDocumentVersio,StudyProtocolDocumentVersion,Study Protocol Version",
+    "timing,,Timing"
+  ), file.path(dir, "_datasets.csv"))
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "StudyProtocolDocumentVersio,id,id,Char,50",
+    "timing,id,id,Char,50"
+  ), file.path(dir, "_variables.csv"))
+  writeLines(c("id", "SPDV_1"), file.path(dir, "StudyProtocolDocumentVersio.csv"))
+  writeLines(c("id", "Timing_1"), file.path(dir, "timing.csv"))
+
+  study <- read_study(dir)
+  # The declared name where there is one, the filename where the cell is blank.
+  expect_equal(sort(names(study$datasets)),
+               c("STUDYPROTOCOLDOCUMENTVERSION", "TIMING"))
+  # Still opened by filename: the CSV on disk and _variables.csv's `dataset`
+  # column both use the truncated form.
+  expect_equal(study$datasets$STUDYPROTOCOLDOCUMENTVERSION$data$id, "SPDV_1")
+})
+
+test_that("two files declaring one dataset name raise rather than resolving to the first", {
+  # No fixture upstream does this; a split-domain case declaring AE twice
+  # would, and every study$datasets[[dom]] lookup would silently return the
+  # first of the two.
+  dir <- tempfile("coreval_dup_name_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines(c(
+    "Filename,Dataset Name,Label",
+    "ae1,AE,Adverse Events",
+    "ae2,AE,Adverse Events"
+  ), file.path(dir, "_datasets.csv"))
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "ae1,USUBJID,USUBJID,Char,50",
+    "ae2,USUBJID,USUBJID,Char,50"
+  ), file.path(dir, "_variables.csv"))
+  writeLines(c("USUBJID", "S1-001"), file.path(dir, "ae1.csv"))
+  writeLines(c("USUBJID", "S1-002"), file.path(dir, "ae2.csv"))
+
+  expect_error(read_study(dir), "declares one dataset name for several files")
+})

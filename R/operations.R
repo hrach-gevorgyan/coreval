@@ -119,9 +119,11 @@ pick_date <- function(x, want_max) {
 #' @param group_cols Grouping column names.
 #' @param name Column to aggregate.
 #' @param fn Aggregation function applied to each group's values.
+#' @param set_valued `TRUE` when `fn` returns a SET per group (`distinct`), so
+#'   `.value` must stay a list column however few values a group happens to hold.
 #' @return A data.table with `group_cols` plus a `.value` column, or `NULL` if no valid group columns.
 #' @noRd
-compute_group_agg <- function(dt, group_cols, name, fn) {
+compute_group_agg <- function(dt, group_cols, name, fn, set_valued = FALSE) {
   group_cols <- group_cols[group_cols %in% names(dt)]
   if (length(group_cols) == 0) {
     return(NULL)
@@ -135,8 +137,22 @@ compute_group_agg <- function(dt, group_cols, name, fn) {
   work <- dt[, group_cols, with = FALSE]
   work[[".target"]] <- dt[[name]]
   agg <- work[, list(.value = list(fn(.SD[[1L]]))), by = group_cols, .SDcols = ".target"]
-  # Unlist scalar (non-set) results back into a plain column.
-  if (all(lengths(agg$.value) == 1) && !is.list(fn(character(0)))) {
+  # Unlist scalar (non-set) results back into a plain column. Whether the
+  # aggregation is set-valued is DECLARED by the caller, which knows the
+  # operator. It used to be probed, as `!is.list(fn(character(0)))`, and the
+  # probe was wrong: `distinct_values()` returns an atomic vector, so a grouped
+  # `distinct` read as scalar and got unlisted whenever every group happened to
+  # hold exactly one value. An atomic column then answers `values[NA]` with
+  # NA_character_ where a list column answers with the empty set, so `empty`
+  # returned NA instead of TRUE and CORE-000868 reported nothing for the row
+  # whose set was empty. The reference never collapses: distinct.py's
+  # `_apply_dropna_list` is `sorted(x.dropna())`, a list per group
+  # unconditionally, merged how="left" (base_operation.py:149).
+  #
+  # The length guard stays. `unlist()` on groups holding more than one value
+  # would change the row count rather than fail, which is the silent kind of
+  # wrong.
+  if (!set_valued && all(lengths(agg$.value) == 1)) {
     agg$.value <- unlist(agg$.value)
   }
   agg
@@ -999,7 +1015,8 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       if (is.null(op$group)) {
         scalar_binding(distinct_values(filtered[[op$name]]))
       } else {
-        agg <- compute_group_agg(filtered, op$group, op$name, distinct_values)
+        agg <- compute_group_agg(filtered, op$group, op$name, distinct_values,
+                                 set_valued = TRUE)
         if (is.null(agg)) NULL else grouped_binding(op$group, agg, ".value")
       }
     },

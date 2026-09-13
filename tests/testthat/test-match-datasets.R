@@ -519,3 +519,49 @@ test_that("a join on differently named keys attaches the right rows", {
   expect_true(is.na(joined$data$code[joined$data$id == "E2"]) ||
                 !nzchar(joined$data$code[joined$data$id == "E2"]))
 })
+
+test_that("a declared left join blanks an unmatched row's joined-in columns", {
+  # `Join Type: left` is the reference's signal to keep the rows that matched
+  # nothing and blank their right-hand columns, so `empty` answers TRUE on
+  # them: merge_sdtm_datasets() writes None across a left_only row
+  # (data_processor.py:470-480). Those rows are what the rule is asking about.
+  # CORE-000816 wants the epochs no activity instance points at, CORE-000830
+  # the timings nothing schedules; both reported nothing, because the join
+  # leaves a character NA there and `empty` deliberately answers NA on one.
+  parent <- data.table::data.table(
+    id = c("E1", "E2"),
+    rel_type = rep("definition", 2)
+  )
+  child <- data.table::data.table(
+    parent_id = "E1",
+    rel_type = "definition",
+    code = "C1"
+  )
+  study <- list(
+    datasets = list(
+      ENCOUNTER = list(data = parent, meta = NULL),
+      CODE = list(data = child, meta = NULL)
+    ),
+    standard = list(product = "USDM", version = NA_character_)
+  )
+  spec <- list(
+    Name = "Code",
+    Keys = list(list(Left = "id", Right = "parent_id"), "rel_type")
+  )
+  rule <- function(join_type) {
+    if (!is.null(join_type)) spec[["Join Type"]] <- join_type
+    list(id = "TEST-1", match_datasets = list(spec),
+         check = list(all = list(list(name = "code", operator = "exists"))))
+  }
+
+  declared <- apply_match_datasets(study$datasets$ENCOUNTER, rule("left"), study, "ENCOUNTER")
+  expect_identical(declared$data$code[declared$data$id == "E2"], "")
+  expect_identical(declared$data$code[declared$data$id == "E1"], "C1")
+
+  # With no declared type the reference joins INNER and drops the unmatched
+  # row entirely; coreval keeps it with NA, and six FDA.SENDIG rules depend on
+  # that NA reading as populated rather than blank. So the fill must not reach
+  # a spec that declares nothing.
+  undeclared <- apply_match_datasets(study$datasets$ENCOUNTER, rule(NULL), study, "ENCOUNTER")
+  expect_true(is.na(undeclared$data$code[undeclared$data$id == "E2"]))
+})

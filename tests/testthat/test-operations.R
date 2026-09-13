@@ -801,3 +801,24 @@ test_that("a column called 'name' does not shadow the aggregated column", {
   named <- compute_group_agg(dt, "id", "name", distinct_values)
   expect_setequal(unlist(named$.value[named$id == "A"]), c("POP1", "POP2"))
 })
+
+test_that("a grouped distinct stays a set even when every group holds one value", {
+  # compute_group_agg() used to decide set-vs-scalar by probing
+  # `!is.list(fn(character(0)))`. `distinct_values()` returns an atomic vector,
+  # so a grouped `distinct` read as scalar and the column got unlisted whenever
+  # every group happened to hold exactly one value. An atomic column answers
+  # `values[NA]` with NA_character_ where a list column answers with the empty
+  # set, so `empty` returned NA instead of TRUE and CORE-000868 reported
+  # nothing for the row whose set was empty. The reference never collapses:
+  # distinct.py's `_apply_dropna_list` returns a list per group unconditionally.
+  dt <- data.table::data.table(g = c("a", "b"), v = c("x", "y"))
+  agg <- compute_group_agg(dt, "g", "v", distinct_values, set_valued = TRUE)
+  expect_true(is.list(agg$.value))
+  expect_equal(agg$.value, list("x", "y"))
+
+  # A genuinely scalar aggregation still collapses, so a binding that resolves
+  # one value per row keeps giving a plain column.
+  scalar <- compute_group_agg(dt, "g", "v", function(x) x[[1L]])
+  expect_false(is.list(scalar$.value))
+  expect_equal(scalar$.value, c("x", "y"))
+})
