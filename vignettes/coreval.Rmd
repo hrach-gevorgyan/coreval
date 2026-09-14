@@ -282,12 +282,55 @@ checks:
 ```{r rules-for-domain}
 nrow(list_rules(domain = "AE"))
 
-list_rules(id = "CORE-000547")$issue
+rule <- list_rules(id = "CORE-000547")
+rule$issue
 ```
+
+Two more columns are worth knowing. `legacy_ids` are the names Pinnacle 21 and
+CDISC's older Conformance Rules spreadsheets use for the same rule, which is
+how you match a finding here to a line in a P21 report. `guidance` is the
+sentence from the Implementation Guide the rule exists to enforce: the reason
+behind it.
+
+```{r rule-ids}
+rule$legacy_ids
+```
+
+`print(result, guidance = TRUE)` shows that sentence under each problem in the
+report. It's off by default because it roughly doubles the length.
+
+## Narrowing to your standard
+
+With no standard given, coreval runs the rules for every standard it has, and
+the report says so. Tell it which one your data follows and it runs only
+those, and only for your version of the Implementation Guide:
+
+```{r narrow, eval = FALSE}
+result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
+```
+
+That cuts the list a lot, and it can cut too far. CDISC's coverage is uneven:
+the general "dates must be valid ISO 8601" rule is published for SEND and the
+Tobacco Implementation Guide but not for SDTM, so narrowing to SDTMIG stops a
+month of 13 being reported. The report always says how many rules it set
+aside. Leave `standard` unset if you'd rather see everything.
+
+## USDM study designs
+
+A USDM study file is a single JSON document describing a study design rather
+than a folder of datasets. Put it in a folder and check the folder, the same
+way as any other study. It needs the `jsonlite` and `QuickJSR` packages.
+
+```{r usdm, eval = FALSE}
+result <- check_study("path/to/usdm")
+```
+
+Problems are reported against the part of the design they're about, such as
+`STUDYDESIGN` or `ENCOUNTER`, and the row within it.
 
 ## The whole API
 
-Six functions, and three of them do the work:
+Seven functions, and three of them do the work:
 
 | | |
 |---|---|
@@ -297,6 +340,7 @@ Six functions, and three of them do the work:
 | `list_rules()` | the rule set, one rule, or the rules for a domain |
 | `filter_findings(result, ...)` | narrow a result |
 | `read_study(path)` | read a folder yourself, when you want to inspect it |
+| `list_ct_packages()` | the Controlled Terminology releases you can pass as `ct_package` |
 
 Plus `print()` and `summary()` on a result. `print()` is what you get by
 typing the result's name; `summary()` you call yourself, and it returns a
@@ -310,11 +354,11 @@ and the standards metadata are bundled inside the package.
 **Think of the accuracy number as a floor.** For most rules CDISC publishes an
 answer sheet: some example data, and the exact rows a correct implementation
 should flag. Every rule here is run against those examples and compared row by
-row, and coreval agrees on about 96% of the fully published ones.
+row, and more than nine in ten come back with exactly the answer CDISC gives.
 
 But those examples are small and tidy, and real submissions are neither, so
-agreement is a lower bound on correctness rather than a score. The README says
-where the remaining gaps are. The advice does not change: run your
+agreement is a lower bound on correctness rather than a score. The README lists
+what coreval doesn't do yet. The advice does not change: run your
 qualified tool before you submit.
 
 ```{r cleanup, include = FALSE}

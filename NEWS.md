@@ -1,5 +1,46 @@
 # coreval 0.2.0.9000 (development)
 
+* **Fixed: checking a USDM study ran nothing and reported it clean.** Three
+  separate faults, and the conformance scores could see none of them, because
+  the harness reaches the rules by a route a user never takes.
+
+  A USDM document states its version as "4.0.0" and the rules say "4.0", and
+  versions were compared as exact text, so not one rule was selected. Versions
+  are now compared as versions everywhere: "4.0.0", "4.0" and "4" are one, and
+  "3-4" is "3.4". That comparison had been written out three separate times,
+  with three slightly different normalisations, and is now one function.
+
+  The 96 JSONata rules were only ever run by the harness. `check_study()` now
+  runs them, once per study rather than once per entity table, and reports each
+  finding against the entity and row it is about, the same numbers the other
+  USDM rules report against.
+
+  37 USDM terminology rules were refused for lacking a study-wide Controlled
+  Terminology version, which they never read: a USDM document names the
+  terminology version beside every coded value. The harness always supplied a
+  version, so they scored as passing.
+
+* **A check where nothing ran now stops with an error.** If every rule is
+  filtered away before any can be tried, that is a check that did not happen,
+  and it used to print as a study with no problems.
+
+* **Checking one dataset no longer reports on datasets it was never given.**
+  A DM on its own was told that ADSL and the tobacco-product dataset were
+  missing. Rules about what the whole study contains are now skipped for a
+  single dataset, saying so, the way rules needing another dataset already
+  were.
+
+* **A data frame with no labels is not reported for wrong labels.** A table
+  built in code has no variable labels until someone adds them, and every
+  label rule reported a mismatch against a blank. Those rules now skip for a
+  dataset carrying no labels at all; a dataset with some labels still has every
+  blank one checked.
+
+* **The README is rewritten**, at about a third of its length. The detail it
+  carried now lives in the getting-started vignette, which gains sections on
+  narrowing to one standard, on the Pinnacle 21 IDs and guidance each rule
+  carries, and on USDM.
+
 * **coreval reads USDM studies and runs their rules.** 257 USDM rules are
   bundled and 253 of them agree with CDISC's own answer sheets, on every
   positive and negative fixture: all 157 Record Data rules and all 96 JSONata
