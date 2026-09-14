@@ -221,6 +221,22 @@ apply_supp_match <- function(dataset, supp_dataset) {
 #      columns missing.
 # The parent's values win on a name collision, matching the reference's own
 # `{**child_row, **final_match}` ordering.
+#' A join key as text, the way two datasets agree on it
+#'
+#' IDVARVAL holds a parent record's key as text, and SAS commonly writes a
+#' number into a character field right-aligned: CDISC's own pilot submission
+#' stores the key 1 as `"       1"`. Compared as-is against the parent's
+#' LBSEQ, which reads as `"1"`, nothing matched, the parent columns came back
+#' empty, and CORE-000206 reported all 64,403 SUPPLB rows and all 234 RELREC
+#' rows as pointing at records that do not exist. CDISC's engine reports none.
+#' Surrounding blanks carry no meaning in a key, so they are dropped on both
+#' sides of every comparison.
+#'
+#' @param x A key column or value.
+#' @return A character vector with surrounding whitespace removed.
+#' @noRd
+key_text <- function(x) trimws(as.character(x))
+
 #' Join each child record to the parent record it names via RDOMAIN/IDVAR
 #' @param dataset The child dataset being checked (`list(data, meta)`).
 #' @param study Full study object.
@@ -309,12 +325,12 @@ apply_child_match <- function(dataset, study, keys) {
       pick_idx <- rep(1L, length(idx))
     } else {
       right_key <- data.table::as.data.table(
-        lapply(right_cols, function(cl) as.character(p_data[[cl]]))
+        lapply(right_cols, function(cl) key_text(p_data[[cl]]))
       )
       data.table::setnames(right_key, paste0("k", seq_along(right_cols)))
       right_key[[".coreval_parent_row"]] <- seq_len(nrow(p_data))
       left_key <- data.table::as.data.table(
-        lapply(left_cols, function(cl) as.character(sub[[cl]]))
+        lapply(left_cols, function(cl) key_text(sub[[cl]]))
       )
       data.table::setnames(left_key, paste0("k", seq_along(left_cols)))
       on_cols <- paste0("k", seq_along(right_cols))
@@ -613,7 +629,7 @@ apply_relrec_match <- function(dataset, study, current_domain) {
       next
     }
     left_qualifies <- if (!is_blank(m$IDVARVAL)) {
-      as.character(left[[m$IDVAR]]) == m$IDVARVAL
+      key_text(left[[m$IDVAR]]) == key_text(m$IDVARVAL)
     } else {
       rep(TRUE, nrow(left))
     }
@@ -635,8 +651,8 @@ apply_relrec_match <- function(dataset, study, current_domain) {
       right <- partner_ds$data
 
       for (ri in qualifying_idx) {
-        key_val <- if (!is_blank(p$IDVARVAL)) p$IDVARVAL else as.character(left[[m$IDVAR]][ri])
-        right_idx <- which(as.character(right[[p$IDVAR]]) == key_val)
+        key_val <- if (!is_blank(p$IDVARVAL)) key_text(p$IDVARVAL) else key_text(left[[m$IDVAR]][ri])
+        right_idx <- which(key_text(right[[p$IDVAR]]) == key_val)
         # A GROUP-level relationship (both sides' RELREC row leave USUBJID
         # blank, common when IDVAR/IDVARVAL alone are meant to identify the
         # group) still only ever links records of the SAME subject in

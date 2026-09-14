@@ -119,6 +119,82 @@ repair_doubled_quotes <- function(dt, path) {
   invisible(NULL)
 }
 
+#' Text that is not valid UTF-8, read as the Windows encoding SAS writes
+#'
+#' A transport file carries no statement of its encoding, and SAS on Windows
+#' writes `wlatin1`, so a curly apostrophe arrives as the single byte 0x92.
+#' `haven` hands that back marked as UTF-8, where it is not a character at all.
+#' CDISC's own pilot submission has three such values in TS. Every pattern
+#' rule that met one raised a warning and got NA for that row, and NA is not a
+#' finding: those rows were silently left unchecked, 126 warnings' worth.
+#'
+#' Only strings that are invalid as UTF-8 are converted, so valid text, which
+#' is nearly all of it, is untouched. Windows-1252 rather than Latin-1 because
+#' it is the superset that gives 0x80-0x9F their meaning; those are exactly the
+#' quotes and dashes this goes wrong on. A byte that is not text in that
+#' encoding either keeps its hex escape rather than being dropped.
+#'
+#' @param x A character vector.
+#' @return `x`, with invalid strings re-read as Windows-1252.
+#' @noRd
+fix_invalid_utf8 <- function(x) {
+  if (!is.character(x)) {
+    return(x)
+  }
+  bad <- !is.na(x) & !validUTF8(x)
+  if (!any(bad)) {
+    return(x)
+  }
+  fixed <- iconv(x[bad], from = "CP1252", to = "UTF-8", sub = "byte")
+  Encoding(fixed) <- "UTF-8"
+  x[bad] <- fixed
+  x
+}
+
+#' Remove the conversion noise transport files leave in numbers
+#'
+#' XPT stores numbers as IBM mainframe floating point, often in fewer than
+#' eight bytes, and converting them to the doubles R uses lands them a hair off
+#' the value that was written. The same visit number can then arrive as
+#' 9.2999999999999989 in one dataset and 9.3000000000000007 in another, which
+#' compare unequal. CDISC's own pilot submission does exactly that between LB
+#' and SV, and a rule asking whether each lab visit appears in the subject's
+#' visits reported 250 records whose visit is sitting right there. The same
+#' study read from its Dataset-JSON copy reported none.
+#'
+#' Rounded to 15 significant digits, which is below where the noise lives and
+#' far above any precision clinical data carries; R prints no more than that
+#' by default anyway. Whole numbers and exact values are unchanged.
+#'
+#' @param dt A data.table, mutated by reference.
+#' @return `invisible(NULL)`.
+#' @noRd
+settle_float_noise <- function(dt) {
+  for (v in names(dt)) {
+    col <- dt[[v]]
+    if (is.double(col) && !inherits(col, c("Date", "POSIXt", "difftime", "hms"))) {
+      rounded <- signif(col, 15)
+      attributes(rounded) <- attributes(col)
+      data.table::set(dt, j = v, value = rounded)
+    }
+  }
+  invisible(NULL)
+}
+
+#' Apply [fix_invalid_utf8()] to every character column, in place
+#' @param dt A data.table, mutated by reference.
+#' @return `invisible(NULL)`.
+#' @noRd
+repair_invalid_utf8 <- function(dt) {
+  for (v in names(dt)) {
+    col <- dt[[v]]
+    if (is.character(col) && !all(validUTF8(col[!is.na(col)]))) {
+      data.table::set(dt, j = v, value = fix_invalid_utf8(col))
+    }
+  }
+  invisible(NULL)
+}
+
 #' Rewrite `NA` to `""` for every character column of a data.table, in place
 #' @param dt A data.table, mutated by reference.
 #' @return `invisible(NULL)`; `dt` is modified in place.
@@ -171,6 +247,9 @@ build_dataset_from_data_frame <- function(raw) {
   }
 
   fill_char_blanks(dt)
+  repair_invalid_utf8(dt)
+  labels <- fix_invalid_utf8(labels)
+  settle_float_noise(dt)
 
   meta <- data.table::data.table(
     variable = names(dt),

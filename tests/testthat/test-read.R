@@ -435,3 +435,49 @@ test_that("two files declaring one dataset name raise rather than resolving to t
 
   expect_error(read_study(dir), "declares one dataset name for several files")
 })
+
+test_that("text in the Windows encoding SAS writes is read as text", {
+  # A transport file states no encoding, and SAS on Windows writes wlatin1: a
+  # curly apostrophe is the single byte 0x92, handed back marked as UTF-8 where
+  # it is not a character at all. CDISC's own pilot submission has three such
+  # values in TS, and every pattern rule that met one warned and left that row
+  # unchecked.
+  broken <- rawToChar(as.raw(c(0x41, 0x6c, 0x7a, 0x92, 0x73)))
+  Encoding(broken) <- "UTF-8"
+  expect_false(validUTF8(broken))
+
+  fixed <- coreval:::fix_invalid_utf8(c(broken, "plain", NA))
+  expect_true(all(validUTF8(fixed[!is.na(fixed)])))
+  expect_identical(fixed[[1]], "Alz\u2019s")
+  expect_identical(fixed[2:3], c("plain", NA))
+
+  ts <- data.frame(STUDYID = "S1", DOMAIN = "TS", TSVAL = broken)
+  ds <- coreval:::build_dataset_from_data_frame(ts)
+  expect_identical(ds$data$TSVAL, "Alz\u2019s")
+})
+
+test_that("numbers carry no conversion noise from a transport file", {
+  # IBM floating point converted to a double lands a hair off what was
+  # written, so one visit number can be 9.2999999999999989 in LB and
+  # 9.3000000000000007 in SV. CDISC's pilot submission does this, and 250 lab
+  # records were reported as having a visit that is not among the subject's
+  # visits.
+  dt <- data.table::data.table(
+    LBVIS = c(9.2999999999999989, 1.2000000000000002, 3, NA),
+    SVVIS = c(9.3000000000000007, 1.2, 3, NA),
+    WHEN = as.Date("2024-01-01") + 0:3
+  )
+  coreval:::settle_float_noise(dt)
+  expect_identical(dt$LBVIS, dt$SVVIS)
+  expect_identical(dt$WHEN, as.Date("2024-01-01") + 0:3)
+
+  dir <- tempfile("coreval_noise_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "SV", USUBJID = "S1-1",
+                              VISITNUM = 9.3000000000000007), file.path(dir, "sv.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "LB", USUBJID = "S1-1",
+                              VISITNUM = 9.2999999999999989), file.path(dir, "lb.xpt"))
+  study <- read_study(dir)
+  expect_identical(study$datasets$LB$data$VISITNUM, study$datasets$SV$data$VISITNUM)
+})

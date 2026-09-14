@@ -1,5 +1,31 @@
 # coreval 0.3.0
 
+* **Tested against CDISC's engine on a complete real study.** CDISC's pilot
+  submission, CDISCPILOT01, was checked by both tools with the same settings and
+  every finding compared, rule by rule. docs/REAL-STUDY.md is the record and
+  says how to repeat it. Three defects came out of it, none of which CDISC's
+  small rule examples could have exposed:
+
+* **Fixed: text in the Windows encoding SAS writes was left unchecked.** A
+  transport file does not say how its text is encoded, and a curly apostrophe
+  written on Windows arrives as a byte that is not a character in UTF-8. Every
+  pattern rule meeting one warned and skipped that row. Such text is now read as
+  Windows-1252; valid text is untouched.
+
+* **Fixed: numbers from transport files carried conversion noise.** XPT stores
+  numbers in IBM floating point, and the same visit number could arrive as
+  9.2999999999999989 in LB and 9.3000000000000007 in SV. 250 lab records were
+  reported as having a visit that is not among the subject's visits. Numbers
+  read from XPT and SAS files are now rounded to 15 significant digits, below the
+  noise and above any precision clinical data carries. The pilot study now gives
+  identical findings read from its XPT files and from its Dataset-JSON copy.
+
+* **Fixed: a parent record key written with padding matched nothing.** SAS
+  often writes a number into a character field right-aligned, so IDVARVAL 1
+  becomes `"       1"`. No SUPP or RELREC row found its parent, and CORE-000206
+  reported all 64,637 of them as pointing at records that do not exist. Keys are
+  compared without surrounding blanks.
+
 * **Fixed: checking a USDM study ran nothing and reported it clean.** Three
   separate faults, and the conformance scores could see none of them, because
   the harness reaches the rules by a route a user never takes.

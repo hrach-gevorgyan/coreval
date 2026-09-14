@@ -565,3 +565,30 @@ test_that("a declared left join blanks an unmatched row's joined-in columns", {
   undeclared <- apply_match_datasets(study$datasets$ENCOUNTER, rule(NULL), study, "ENCOUNTER")
   expect_true(is.na(undeclared$data$code[undeclared$data$id == "E2"]))
 })
+
+test_that("a parent key written with padding still finds its record", {
+  # SAS commonly writes a number into a character field right-aligned, and
+  # CDISC's own pilot submission stores IDVARVAL 1 as "       1". Compared
+  # as-is, no SUPPLB or RELREC row found its parent record, and CORE-000206
+  # reported all 64,637 of them as pointing at records that do not exist.
+  study <- list(
+    datasets = list(
+      LB = list(data = data.table::data.table(
+        STUDYID = "S1", DOMAIN = "LB", USUBJID = "S1-1", LBSEQ = c(1, 2),
+        LBTESTCD = c("ALB", "GLUC")
+      ), meta = NULL),
+      SUPPLB = list(data = data.table::data.table(
+        STUDYID = "S1", RDOMAIN = "LB", USUBJID = "S1-1", IDVAR = "LBSEQ",
+        IDVARVAL = c("       1", " 2 "), QNAM = "LBTMSHI", QVAL = "Y"
+      ), meta = NULL)
+    ),
+    standard = list(product = "SDTMIG", version = NA_character_)
+  )
+  joined <- coreval:::apply_child_match(study$datasets$SUPPLB, study,
+                                        c("STUDYID", "USUBJID", "IDVAR", "IDVARVAL"))
+  expect_equal(joined$data$LBTESTCD, c("ALB", "GLUC"))
+
+  rule <- coreval:::.coreval_env$data$rules[["CORE-000206"]]
+  out <- coreval:::run_rule_on_domain(rule, study, "SUPPLB")
+  expect_false(any(out$violations))
+})
