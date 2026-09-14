@@ -156,8 +156,9 @@ are bundled with the package.
   `?write_findings`, `?list_rules`, `?filter_findings`, `?read_study`,
   `?list_ct_packages`.
 - [**docs/**](https://github.com/hrach-gevorgyan/coreval/tree/master/docs) has
-  the detail: which rules pass and why, how CDISC's own engine behaves, speed
-  benchmarks, and the design decisions.
+  the detail: which rules pass and why, a complete real study checked by both
+  coreval and CDISC's engine, how that engine behaves, speed benchmarks, and the
+  design decisions.
 
 ## Please read this
 
