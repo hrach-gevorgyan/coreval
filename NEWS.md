@@ -1,4 +1,4 @@
-# coreval 0.2.0.9000 (development)
+# coreval 0.3.0
 
 * **Fixed: checking a USDM study ran nothing and reported it clean.** Three
   separate faults, and the conformance scores could see none of them, because
