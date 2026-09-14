@@ -92,6 +92,8 @@ test_that("a folder holding a USDM document is read as one, not as Dataset-JSON"
   study <- read_study(dir)
   expect_equal(study$standard$product, "USDM")
   expect_equal(study$standard$version, "4.0")
-  expect_length(study$datasets, 0)
   expect_match(study$document, "usdmVersion", fixed = TRUE)
+  # The document is also flattened into one table per entity, for the 157 USDM
+  # rules that are ordinary record checks rather than JSONata. See read_usdm.R.
+  expect_true("STUDY" %in% names(study$datasets))
 })

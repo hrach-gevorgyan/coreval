@@ -65,6 +65,14 @@ and in the same order. A separate file rather than a column of that one because
 reads each file only when a rule reaches for it. Also CDISC Controlled
 Terminology, developed with NCI EVS.
 
+inst/extdata/usdm_entities.rds
+------------------------------
+From cdisc-org/cdisc-rules-engine, under the MIT licence reproduced below.
+CDISC's map from a USDM key or class name to the entity it holds, extracted
+from its USDM.yaml. Reading a study document into tables needs it: an object
+that does not declare its own instanceType is named after the key that held it,
+and a key like `epochId` names a StudyEpoch.
+
 inst/extdata/schema/xml/
 ------------------------
 XML Schema files used to validate the XHTML in USDM narrative content, which

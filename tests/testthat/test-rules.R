@@ -1,14 +1,14 @@
 test_that("list_rules returns the combined SDTMIG/SENDIG/TIG/ADaMIG rule set", {
   rules <- list_rules()
-  expect_equal(nrow(rules), 797)
+  expect_equal(nrow(rules), 1054)
   expect_true(all(
     c("id", "source", "status", "standard", "authority", "rule_type",
       "executability", "sensitivity") %in% names(rules)
   ))
-  expect_equal(length(unique(rules$id)), 797)
+  expect_equal(length(unique(rules$id)), 1054)
 
   by_source <- table(rules$source)
-  expect_equal(unname(by_source[["published"]]), 566)
+  expect_equal(unname(by_source[["published"]]), 823)
   expect_equal(unname(by_source[["deprecated_dir"]]), 163)
   expect_equal(unname(by_source[["fda_business_rules_draft"]]), 27)
 })
@@ -51,7 +51,9 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
   expect_identical(ev$value, TRUE)
 
   walk_check <- function(check, hits = list()) {
-    if (is.null(check)) {
+    # A JSONata rule's check is one expression string, not a tree of
+    # conditions, so `check$name` on it raises rather than returning NULL.
+    if (is.null(check) || !is.list(check)) {
       return(hits)
     }
     if (!is.null(check$name) && !is.null(check$value) && is.logical(check$value)) {
@@ -69,8 +71,17 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
     }
     hits
   }
+  # USDM rules are excluded, and the reason is that the heuristic carries no
+  # signal for them rather than that they are inconvenient. This guard reads a
+  # bare TRUE/FALSE against a plain name as a coerced SDTM `Y`/`N` literal. In
+  # USDM a nested object is flattened to a column holding exactly TRUE or
+  # FALSE for whether it is populated, so `type equal_to true` is an ordinary
+  # presence check against a real boolean column, and 105 of them are. What
+  # covers those instead is direct: every USDM rule that runs is graded against
+  # CDISC's own answer sheet, and they all match.
+  tabular <- Filter(function(r) !("USDM" %in% r$standards), rules)
   logical_value_checks <- list()
-  for (r in rules) logical_value_checks <- c(logical_value_checks, walk_check(r$check))
+  for (r in tabular) logical_value_checks <- c(logical_value_checks, walk_check(r$check))
   # A genuine logical here is only ever a comparison against a BOOLEAN
   # pseudo-field - `..._exists`, `..._is_...`, `has_no_data` - or an Operations
   # binding. Anything else carrying TRUE/FALSE would mean a bare SDTM `Y`/`N`
@@ -95,7 +106,7 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
 test_that("the bundled CDISC material ships with its required licence notice", {
   # cdisc-open-rules is MIT, and MIT requires the copyright and permission
   # notice to travel with "substantial portions of the Software". coreval
-  # bundles 797 extracted rules plus CDISC standards metadata, so the notice
+  # bundles the extracted rules plus CDISC standards metadata, so the notice
   # has to be IN THE INSTALLED PACKAGE - NOTICE.md at the repo root is
   # Rbuildignored and never reaches anyone who installs it.
   path <- system.file("COPYRIGHTS", package = "coreval")
@@ -259,7 +270,8 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
   )
 
   collect_names <- function(check, acc = character(0)) {
-    if (is.null(check)) {
+    # As in walk_check above: a JSONata check is a string, not a condition tree.
+    if (is.null(check) || !is.list(check)) {
       return(acc)
     }
     if (!is.null(check$name) && is.character(check$name)) acc <- c(acc, check$name)
@@ -276,7 +288,13 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
     acc
   }
 
-  used <- unlist(lapply(.coreval_env$data$rules, function(r) collect_names(r$check)))
+  # Tabular rules only, for the same reason the boolean guard above skips USDM:
+  # this one separates a real column from a pseudo-column by case, and in USDM
+  # every attribute is lowercase, so `city` and `decode` are ordinary columns
+  # rather than fields coreval would have to build. Applying it there would
+  # report most of the USDM vocabulary as unaccounted for and say nothing.
+  tabular <- Filter(function(r) !("USDM" %in% r$standards), .coreval_env$data$rules)
+  used <- unlist(lapply(tabular, function(r) collect_names(r$check)))
   # Real SDTM variables are uppercase and "--" templates start with dashes;
   # the pseudo-columns are the all-lowercase ones.
   pseudo <- sort(unique(grep("^[a-z_]+$", used, value = TRUE)))

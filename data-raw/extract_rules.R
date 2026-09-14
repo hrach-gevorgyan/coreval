@@ -41,11 +41,14 @@ sha <- system2("git", c("-C", upstream_dir, "rev-parse", "HEAD"), stdout = TRUE)
 # deliberately NOT pulled in:
 # every one of its 93 rules has test data but zero reference results.csv,
 # so nothing there can be verified against real CDISC output, unlike every
-# other tier here. USDM (a JSON study-design model, not a tabular dataset
-# format at all) is excluded outright - read_study() has no way to read it
-# as SDTM-shaped domains, so extracting it would only ever produce rules
-# with 0% possible coverage.
-want_standards <- c("SDTMIG", "SENDIG", "SENDIG-AR", "SENDIG-DART", "SENDIG-GENETOX", "TIG", "ADaMIG")
+# other tier here.
+#
+# USDM is included. It was excluded while read_study() had no way to read a
+# study-design document, which made every one of its rules unrunnable; that is
+# no longer so. A USDM study is one JSON document, read_usdm.R flattens it into
+# the per-entity tables the Record Data rules are written against, and the
+# JSONata rules are evaluated against the document itself.
+want_standards <- c("SDTMIG", "SENDIG", "SENDIG-AR", "SENDIG-DART", "SENDIG-GENETOX", "TIG", "ADaMIG", "USDM")
 
 # yaml::yaml.load_file() silently returns NA for whole numbers that overflow
 # 32-bit integer (e.g. byte-size thresholds like 5368709120), instead of
@@ -276,8 +279,7 @@ fda_draft_files <- Filter(function(f) has_results_csv(dirname(f)), fda_draft_fil
 fda_draft <- lapply(fda_draft_files, extract_one, source = "fda_business_rules_draft")
 
 # Unpublished/SDTMIG and Unpublished/SENDIG are SDTM- and SEND-shaped, so this
-# engine can read their data - unlike Unpublished/USDM (a JSON study-design
-# model, not tabular datasets at all). Same rule as the FDA drafts: only the
+# engine can read their data. Same rule as the FDA drafts: only the
 # ones that already ship reference results, since a rule with no expected
 # output cannot be verified against CDISC and shipping it would mean asking
 # people to trust a check nobody has confirmed.
@@ -295,9 +297,19 @@ rules <- c(published, deprecated, fda_draft, sdtmig_draft, sendig_draft)
 rules <- Filter(Negate(is.null), rules)
 names(rules) <- vapply(rules, function(r) r$id, character(1))
 
+counts <- table(vapply(rules, function(r) r$source, character(1)))
+cat("by source:
+"); print(counts)
+cat("by rule type:
+")
+print(table(vapply(rules, function(r) r$rule_type %||% "?", character(1))))
+cat("USDM rules:",
+    sum(vapply(rules, function(r) "USDM" %in% r$standards, logical(1))), "
+")
+
 stopifnot(
   "duplicate rule ids across sources" = !anyDuplicated(names(rules)),
-  "expected 566 published rules" = sum(vapply(rules, function(r) r$source == "published", logical(1))) == 566,
+  "expected 823 published rules" = sum(vapply(rules, function(r) r$source == "published", logical(1))) == 823,
   "expected 163 deprecated_dir rules" = sum(vapply(rules, function(r) r$source == "deprecated_dir", logical(1))) == 163,
   "expected 27 fda_business_rules_draft rules" = sum(vapply(rules, function(r) r$source == "fda_business_rules_draft", logical(1))) == 27,
   "expected 11 sdtmig_draft rules" = sum(vapply(rules, function(r) r$source == "sdtmig_draft", logical(1))) == 11,

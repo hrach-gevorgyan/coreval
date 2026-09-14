@@ -15,8 +15,8 @@ maintainer tooling and never ship.
 | Rules in the engine's bundled `rules.pkl` | 981 |
 | of those, USDM (study-definition JSON, not tabular datasets) | 257 |
 | tabular rules (SDTM/SEND/TIG) | 724 |
-| Rules coreval bundles | 797 |
-| **Overlap** | **723** |
+| Rules coreval bundles | 1,054 |
+| **Overlap** | **980** |
 | Tabular engine rules coreval lacks | **1** (`CORE-000845`) |
 | coreval rules absent from the engine's cache | 74 |
 
@@ -167,7 +167,8 @@ Two fixes came out of this and are in the package:
    | 16,160 x 16,160 | 60.38s | 0.07s |
 
 2. **`build_rules_table()` was rebuilt per domain.** A pure function of the
-   bundled rules, called once per domain, building 797 one-row `data.table`
+   bundled rules, called once per domain, building one one-row `data.table`
+   per rule
    objects each time. Now cached, and callers get a copy so the cache cannot
    be corrupted.
 

@@ -254,16 +254,18 @@ is_usdm_document <- function(path) {
 
 #' Read a folder holding a USDM study document
 #'
-#' USDM is a graph, not a set of tables, and the rules written against it say
-#' so: they are JSONata expressions over the whole document. So the document is
-#' carried as text and handed to the evaluator unchanged, rather than being
-#' flattened into something table-shaped that nothing would then read.
+#' USDM is a graph, and its rules come in two shapes. 96 are JSONata
+#' expressions over the whole document, so the document is carried as text and
+#' handed to the evaluator unchanged. 157 are ordinary Record Data checks over
+#' per-entity tables, so the document is also flattened into those tables, the
+#' way the reference flattens it (see read_usdm.R).
 #'
-#' The study has no `datasets`, which is the true statement about it. A tabular
-#' rule run against it finds nothing in scope and is skipped with a reason.
+#' Flattening needs `jsonlite`, which is a Suggests. Without it the document is
+#' still carried, so the JSONata rules run and the tabular ones find nothing in
+#' scope and are skipped.
 #'
 #' @param path Folder holding the document.
-#' @return A study object carrying `document`.
+#' @return A study object carrying `document` and `datasets`.
 #' @noRd
 read_study_usdm <- function(path) {
   files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
@@ -282,7 +284,12 @@ read_study_usdm <- function(path) {
   } else {
     NA_character_
   }
-  list(datasets = list(), define = NULL, ct = NULL,
+  datasets <- if (requireNamespace("jsonlite", quietly = TRUE)) {
+    usdm_datasets(jsonlite::fromJSON(document, simplifyVector = FALSE))
+  } else {
+    list()
+  }
+  list(datasets = datasets, define = NULL, ct = NULL,
        standard = list(product = "USDM", version = version),
        document = document)
 }

@@ -1,19 +1,40 @@
 # coreval 0.2.0.9000 (development)
 
-* **253 of the 257 USDM rules now agree with their answer sheets**, against
-  CDISC's own positive and negative fixtures: all 157 Record Data rules and all
-  96 JSONata rules. The 4 remaining are JSON Schema Check and are skipped
-  naming the type, because reproducing which errors they report means
-  reproducing one JSON Schema library's internal error tree, and guessing at
-  that would be inventing findings rather than checking data.
+* **coreval reads USDM studies and runs their rules.** 257 USDM rules are
+  bundled and 253 of them agree with CDISC's own answer sheets, on every
+  positive and negative fixture: all 157 Record Data rules and all 96 JSONata
+  rules. The bundle goes from 797 rules to 1,054, and the full sweep from 705
+  passing to 958, with the 55 disagreements unchanged.
 
-  These rules are not bundled yet. CDISC publishes the Record Data fixtures as
-  flattened per-entity CSVs, which is its own harness format rather than
-  anything a user has, so running them against a real USDM study still needs a
-  port of the reference's graph flattening.
+  The 4 that do not run are JSON Schema Check and are skipped naming the type.
+  Which errors they report depends on the internal error tree of one JSON
+  Schema library, including how it walks the branches of an `anyOf`; another
+  validator reports a different shape, and deriving one from the other would be
+  inventing findings rather than checking data.
 
-  Eight defects came out of getting there, and every one of them made a check
+  Ten defects came out of getting there, and every one of them made a check
   quietly do nothing rather than report something wrong.
+
+* **A USDM study is one JSON document, and it is now read as one.** CDISC
+  publishes the Record Data fixtures as flattened per-entity CSVs, which is its
+  own test harness's format rather than anything a user has, so the rules were
+  only ever runnable against CDISC's own files. The document is now flattened
+  into those tables the way the reference flattens it.
+
+  It is a port and not a fresh design, because the traversal order fixes the
+  order of records in each table, which fixes the record number a finding is
+  reported against. The reference walks with the JSONPath query `$..*`, where
+  `*` matches an object's keys and matches nothing on an array, so it is
+  neither breadth- nor depth-first.
+
+  No CDISC fixture pairs a document with the tables it should produce: the
+  Record Data fixtures ship only tables and the JSONata fixtures only
+  documents. So the pairing is made rather than assumed.
+  `tests/conformance/dump_usdm_tables.py` runs CDISC's own service over a
+  document and writes what it produces, and
+  `tests/conformance/compare_usdm_reader.R` diffs coreval's tables against
+  those. Across documents holding 50 to 75 entities and up to 17,593 records,
+  every entity, row, column and cell matches.
 
 * **JSONata rules run.** 96 rules state their whole check as a JSONata
   expression over a USDM study document rather than as a Check block. coreval

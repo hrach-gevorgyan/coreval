@@ -107,11 +107,36 @@ domains_match <- function(domains_spec, domain) {
 #' @param domain Dataset key to test.
 #' @return A single logical.
 #' @noRd
-entities_match <- function(entities_spec, domain) {
+#' Is this dataset a USDM entity table?
+#'
+#' Told by its shape rather than by where it came from, because it can come
+#' from either: a study document flattened by read_usdm.R, or the per-entity
+#' CSVs CDISC publishes as the rules' own test data. Both carry the columns
+#' saying what each record hangs off, which is what makes a graph readable as
+#' tables, and no SDTM dataset has them.
+#'
+#' @param dataset A dataset entry, or `NULL`.
+#' @return A single logical.
+#' @noRd
+is_usdm_entity_table <- function(dataset) {
+  if (is.null(dataset) || is.null(dataset$data)) {
+    return(FALSE)
+  }
+  all(c("parent_entity", "parent_rel", "rel_type") %in% names(dataset$data))
+}
+
+entities_match <- function(entities_spec, domain, dataset = NULL) {
   target <- toupper(domain)
+  # `ALL` means every USDM ENTITY, not every dataset. Scoping by Entities is a
+  # USDM idea, and a study-design rule has nothing to say about an SDTM domain:
+  # left open, eight of them matched every tabular study ever checked and
+  # arrived in the report as rules that could not run, one of them as a bare
+  # "subscript out of bounds". A named entity needs no such guard, since an
+  # SDTM domain code never matches one.
+  usdm <- is_usdm_entity_table(dataset)
   include_exclude_matches(entities_spec, function(pattern) {
     pattern <- toupper(as.character(pattern)[[1]])
-    identical(pattern, "ALL") || identical(pattern, target)
+    (identical(pattern, "ALL") && usdm) || identical(pattern, target)
   })
 }
 
@@ -146,7 +171,7 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   # the default-open shape this file has to be careful about: a scope key the
   # resolver does not know silently widens scope to everything rather than
   # narrowing it.
-  if (!is.null(scope$Entities) && !entities_match(scope$Entities, domain)) {
+  if (!is.null(scope$Entities) && !entities_match(scope$Entities, domain, dataset)) {
     return(FALSE)
   }
   # `include_split_datasets` narrows or widens scope by whether the dataset

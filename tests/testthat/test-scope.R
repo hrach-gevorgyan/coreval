@@ -159,9 +159,16 @@ test_that("a USDM Entities scope narrows to that entity, and does not match ever
   expect_true(rule_applies_to_domain(several, "INTERVENTIONALSTUDYDESIGN"))
   expect_false(rule_applies_to_domain(several, "OBSERVATIONALSTUDYDESIGN"))
 
-  # ALL is the same sentinel it is for Domains.
-  expect_true(rule_applies_to_domain(
-    list(scope = list(Entities = list(Include = list("ALL")))), "ANYTHING"))
+  # ALL means every USDM ENTITY, which is not the same as every dataset. This
+  # used to assert the looser reading, and the looser reading is how eight
+  # study-design rules came to match every tabular study anyone checked.
+  everything <- list(scope = list(Entities = list(Include = list("ALL"))))
+  usdm_table <- list(data = data.table::data.table(
+    parent_entity = "StudyVersion", parent_rel = "encounters",
+    rel_type = "definition", id = "E1"
+  ))
+  expect_true(rule_applies_to_domain(everything, "ENCOUNTER", dataset = usdm_table))
+  expect_false(rule_applies_to_domain(everything, "ANYTHING"))
 
   # Exclude works the same way round.
   excluded <- list(scope = list(Entities = list(Exclude = list("Code"))))
@@ -172,4 +179,33 @@ test_that("a USDM Entities scope narrows to that entity, and does not match ever
   sdtm <- list(scope = list(Domains = list(Include = list("AE"))))
   expect_true(rule_applies_to_domain(sdtm, "AE"))
   expect_false(rule_applies_to_domain(sdtm, "DM"))
+})
+
+test_that("a rule scoped to ALL entities matches USDM tables and not SDTM datasets", {
+  # `Entities: Include: [ALL]` means every USDM ENTITY. Read as every dataset,
+  # eight study-design rules matched every tabular study anyone checked and
+  # arrived in the report as rules that could not run, one of them as a bare
+  # "subscript out of bounds".
+  rule <- list(scope = list(Entities = list(Include = "ALL")))
+
+  sdtm <- list(data = data.table::data.table(USUBJID = "1", AETERM = "Headache"))
+  expect_false(rule_applies_to_domain(rule, "AE", dataset = sdtm))
+
+  # A USDM entity table is told by its shape, not by which reader built it: the
+  # study document and CDISC's own per-entity CSVs both carry the columns
+  # saying what each record hangs off.
+  usdm <- list(data = data.table::data.table(
+    parent_entity = "StudyVersion", parent_id = "SV1",
+    parent_rel = "organizations", rel_type = "definition", id = "O1"
+  ))
+  expect_true(rule_applies_to_domain(rule, "ORGANIZATION", dataset = usdm))
+})
+
+test_that("a rule scoped to a named entity needs no such guard", {
+  # An SDTM domain code never matches an entity name, so the wildcard was the
+  # only way this scope could open onto tabular data.
+  rule <- list(scope = list(Entities = list(Include = "Organization")))
+  sdtm <- list(data = data.table::data.table(USUBJID = "1"))
+  expect_false(rule_applies_to_domain(rule, "AE", dataset = sdtm))
+  expect_true(rule_applies_to_domain(rule, "ORGANIZATION", dataset = sdtm))
 })

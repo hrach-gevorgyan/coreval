@@ -7,7 +7,7 @@ silently re-litigated or accidentally reversed.
 
 ## Rules are data; operators are code
 
-756 rules are driven by a data-defined registry (`inst/extdata/rules.rds`) plus
+Every rule is driven by a data-defined registry (`inst/extdata/rules.rds`) plus
 generic operator implementations. **Never write a per-rule check function.** If a
 change requires touching R code to add a *rule*, something is wrong, only a
 new *operator* justifies new code.
@@ -64,7 +64,7 @@ likewise moved it by zero.
 
 ## Deprecated and draft rules are a lower-value pool
 
-163 of the 756 bundled rules come from `Deprecated/`, and they account for roughly
+163 of the bundled rules come from `Deprecated/`, and they account for roughly
 half the failures. Their fixtures predate current engine conventions, several
 number records counting the CSV header row (one cites record 5 in a four-row
 file). Treat a deprecated failure as presumed-stale until shown otherwise, and

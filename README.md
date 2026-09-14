@@ -126,8 +126,9 @@ pak::pak("hrach-gevorgyan/coreval")
 Needs R 4.1 or newer. Only `data.table` and `haven` to run. Two optional extras:
 
 ```r
-install.packages("xml2")     # to read Define-XML
-install.packages("jsonlite") # to read Dataset-JSON
+install.packages("xml2")     # to read Define-XML, and to check XHTML in USDM
+install.packages("jsonlite") # to read Dataset-JSON and USDM
+install.packages("QuickJSR") # to run the USDM rules written in JSONata
 install.packages("writexl")  # to write .xlsx
 ```
 
@@ -211,6 +212,12 @@ read: one `.json` per dataset, or `.ndjson` with the metadata on the first line
 and a row on each line after. A folder holding transport files *and* a
 Dataset-JSON of the same data is read as XPT, on the grounds that a folder
 holding both is a conversion in progress.
+
+A **USDM** study is the other thing a folder can hold: one JSON document
+describing a study design rather than a set of datasets. Its rules come in two
+shapes and both run. 96 are written as JSONata expressions over the document
+itself, and 157 are ordinary record checks over the document read as one table
+per entity, flattened the way CDISC's own engine flattens it.
 
 If you want to look at what was parsed, or check the same large study twice
 without re-reading it, do the read yourself:
@@ -388,7 +395,7 @@ Three things worth knowing here:
   to enforce: the *why*, which no rule message carries. `print(result,
   guidance = TRUE)` shows it under each problem; it's off by default because it
   roughly doubles the report's length.
-- All 797 rules carry both.
+- Every bundled rule carries both.
 
 **Just the things that are definitely wrong**
 
@@ -474,22 +481,21 @@ nrow(unique(result$findings[, c("Dataset", "Record")]))
 
 ## What's covered, and how much is proven
 
-CDISC publishes 1,348 rules. coreval ships the **797** that are written for
-tabular SDTM/SEND/TIG data and come with a worked example to check against. The
-rest are for study-design documents in JSON (259), or for ADaM, where CDISC
-ships 197 rules and no reference results at all.
+CDISC publishes 1,348 rules. coreval ships the **1,054** that come with a
+worked example to check against: the tabular SDTM/SEND/TIG rules, and the USDM
+study-design rules. What is left out is ADaM, where CDISC ships 197 rules and
+no reference results at all.
 
 Every bundled rule falls into exactly one of four buckets:
 
 | | rules | |
 |---|---|---|
-| **Confirmed** | **704** | Run against CDISC's own example data, and flagged the rows their answer sheet says. No more, no fewer. |
-| Nothing to check against | 37 | CDISC ships no usable answer. Nobody can confirm these, including CDISC. |
+| **Confirmed** | **957** | Run against CDISC's own example data, and flagged the rows their answer sheet says. No more, no fewer. |
+| Nothing to check against | 41 | CDISC ships no usable answer, or the rule needs something coreval does not do. |
 | Blocked on data not shipped | 1 | The rule and the answer sheet are both fine. A piece of Define-XML detail is missing. |
 | Still disagreeing | 55 | coreval flags different rows than the answer sheet says. |
 
-**Of the rules anyone can confirm at all: 704 of 760, 93%.** On published rules
-that ship reference data, 542 of 559, **97%**.
+**Of the rules anyone can confirm at all: 957 of 1,013, 94%.**
 
 Those 55 deserve a word, because the obvious reading is wrong. 27 are
 deprecated rules that never run by default. Of the 16 published ones, **all 16
