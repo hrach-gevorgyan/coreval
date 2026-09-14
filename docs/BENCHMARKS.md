@@ -238,6 +238,55 @@ ceiling needs the LIVE working set down - loading only the columns in-scope
 rules reference, and holding one domain plus its join partners rather than the
 whole study - not more churn work.
 
+## Scale: CDISC's pilot study, up to 5.9 million rows
+
+The test studies above are built from a small fixture. This one starts from a
+complete real submission, CDISCPILOT01 (22 datasets, 294,677 rows; see
+[REAL-STUDY.md](REAL-STUDY.md) for where to get it), and repeats every
+subject-keyed dataset k times under new `USUBJID`s. Trial design datasets stay
+single. At k = 20 QS alone is 2.4 million rows.
+
+```bash
+Rscript tests/conformance/pilot_scale.R <folder of pilot .xpt files> <k>
+```
+
+Time is `system.time()` around `check_study()` only. Peak is the operating
+system's peak working set for the whole R process, study included. Same
+machine as above, one process, all 4,001 checks run at every scale.
+
+| k | rows | before | after | findings |
+|---|---|---|---|---|
+| 1 | 294,677 | 78 s, 644 MB | 32 s, 567 MB | 40,355 |
+| 10 | 2,945,870 | 452 s, 3,833 MB | 226 s, 2,997 MB | 70,779 |
+| 20 | 5,891,640 | 892 s, 7,054 MB | 451 s, 5,412 MB | 88,739 |
+
+"Before" is commit `50c0649`. At k = 3 the two versions return identical
+findings and identical skip lists, compared with `identical()`.
+
+What the per-rule profile showed, and what changed:
+
+- **Date work was done per row.** The three study-day rules (CORE-000436,
+  CORE-000529, CDISC.SENDIG.71) took 40% of the whole check at k = 10, each
+  spending most of its time building a date-time for every row. A column holds
+  far fewer distinct dates than rows, so date parsing, validation and
+  precision now run once per distinct value and are indexed back out. Each of
+  those rules went from about 18 s to about 3 s on a 600,000-row LB.
+- **The Match Datasets join copied the table six times.** The dataset, its
+  blank-key and valid-key halves, the merge, the bind and the reorder were all
+  alive at once, so joining DM onto a 186 MB QS peaked at 1.7 GB. The join now
+  works out the matching row numbers first and builds the result once, reusing
+  the original columns when no row gains a partner: 0.3 GB.
+- **Two per-row loops over IDVAR.** Looking up "the value of the column IDVAR
+  names" and "which IDVARs name a real column of their RDOMAIN" called a
+  closure per row. Both now work per distinct column name. CORE-000712 on
+  SUPPLB went from 9.9 s to 1.7 s.
+
+What still sets the peak is the Value Check with Variable Metadata rule type
+(CORE-000867 and its kind). CDISC defines it over one row per (record,
+variable) pair, so a 1.2 million-row QS with 16 columns becomes 19.5 million
+rows, about 1.3 GB, before the check runs. At the rate measured here, a
+10 million-row study needs roughly 9 GB of free memory.
+
 ## Footprint
 
 | | engine | coreval |

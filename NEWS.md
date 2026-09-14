@@ -1,5 +1,12 @@
 # coreval 0.3.0
 
+* **Twice as fast on large studies, with less memory.** CDISC's pilot study
+  repeated to 5.9 million rows now checks in 451 seconds instead of 892, and
+  peaks at 5.4 GB instead of 7.1 GB, with identical findings. Dates are parsed
+  once per distinct value rather than once per row, and the Match Datasets
+  join no longer holds six copies of the table at once. docs/BENCHMARKS.md has
+  the measurements and the script.
+
 * **Tested against CDISC's engine on a complete real study.** CDISC's pilot
   submission, CDISCPILOT01, was checked by both tools with the same settings and
   every finding compared, rule by rule. docs/REAL-STUDY.md is the record and

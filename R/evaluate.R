@@ -210,14 +210,14 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
       return(NULL)
     }
     per_row_names <- as.character(dataset$data[[ref_name]])
-    return(as_per_row_value(vapply(seq_along(per_row_names), function(i) {
-      col <- per_row_names[i]
-      if (is.na(col) || !(col %in% names(dataset$data))) {
-        NA_character_
-      } else {
-        as.character(dataset$data[[col]][i])
-      }
-    }, character(1))))
+    # One pass per distinct column named, not one closure call per row: a
+    # SUPPLB names LBSEQ on all of its 600,000 rows.
+    out <- rep(NA_character_, length(per_row_names))
+    for (col in intersect(unique(per_row_names), names(dataset$data))) {
+      idx <- which(per_row_names == col)
+      out[idx] <- as.character(dataset$data[[col]][idx])
+    }
+    return(as_per_row_value(out))
   }
   if (isTRUE(condition$value_is_literal)) {
     return(condition$value)

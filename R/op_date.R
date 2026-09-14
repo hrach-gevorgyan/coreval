@@ -89,6 +89,12 @@ is_valid_date_str <- function(x, comp = NULL) {
   if (is.null(comp)) {
     comp <- extract_date_components(xx)
   }
+  # Validate each distinct string once; see extract_date_components().
+  first <- !duplicated(xx)
+  if (!all(first)) {
+    idx <- which(first)
+    return(is_valid_date_str(xx[idx], subset_date_components(comp, idx))[match(xx, xx[idx])])
+  }
   valid <- attr(comp, "matched")
   needs_calendar_check <- valid & !has_date_uncertainty(xx)
   if (any(needs_calendar_check)) {
@@ -147,6 +153,22 @@ date_group_names <- c("year", "month", "day", "hour", "minute", "second", "micro
 #' @return A named character vector, `NA` for missing components.
 #' @noRd
 extract_date_components <- function(x) {
+  # Real columns repeat a small set of dates across many rows, so the regex
+  # runs on the distinct values and the result is indexed back out. On a
+  # 600,000-row LB this is a few thousand strings instead of every row.
+  xx <- ifelse(is.na(x), "", x)
+  u <- unique(xx)
+  if (length(u) == length(xx)) {
+    return(extract_date_components_unique(xx))
+  }
+  comp <- extract_date_components_unique(u)
+  pos <- match(xx, u)
+  out <- comp[pos, , drop = FALSE]
+  attr(out, "matched") <- attr(comp, "matched")[pos]
+  out
+}
+
+extract_date_components_unique <- function(x) {
   n <- length(x)
   out <- matrix(
     NA_character_, nrow = n, ncol = 8,
@@ -258,6 +280,13 @@ detect_precision <- function(x, comp = NULL) {
   if (n == 0) {
     return(out)
   }
+  # Once per distinct string; see extract_date_components().
+  first <- !duplicated(x)
+  if (!all(first)) {
+    idx <- which(first)
+    sub_comp <- if (is.null(comp)) NULL else subset_date_components(comp, idx)
+    return(detect_precision(x[idx], sub_comp)[match(x, x[idx])])
+  }
   if (is.null(comp)) {
     comp <- extract_date_components(ifelse(is.na(x), "", x))
   }
@@ -308,6 +337,16 @@ parse_date <- function(x, precision = NA_integer_, comp = NULL) {
     comp <- extract_date_components(x)
   }
   precision <- rep_len(precision, n)
+  # Same reasoning as extract_date_components(): parse each distinct
+  # (string, precision) pair once. Building a POSIXct is the costliest step of
+  # a study-day check, and a column has far fewer distinct dates than rows.
+  key <- if (all(is.na(precision))) x else paste(x, precision)
+  u <- !duplicated(key)
+  if (!all(u)) {
+    idx <- which(u)
+    parsed <- parse_date(x[idx], precision[idx], subset_date_components(comp, idx))
+    return(parsed[match(key, key[idx])])
+  }
   date_fields <- date_group_names[date_group_names != "timezone"]
 
   values <- matrix(0, nrow = n, ncol = length(date_fields), dimnames = list(NULL, date_fields))

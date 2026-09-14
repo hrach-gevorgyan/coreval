@@ -235,7 +235,12 @@ apply_supp_match <- function(dataset, supp_dataset) {
 #' @param x A key column or value.
 #' @return A character vector with surrounding whitespace removed.
 #' @noRd
-key_text <- function(x) trimws(as.character(x))
+key_text <- function(x) {
+  x <- as.character(x)
+  # trimws() is a regex; keys repeat, so trim each distinct value once.
+  u <- unique(x)
+  trimws(u)[match(x, u)]
+}
 
 #' Join each child record to the parent record it names via RDOMAIN/IDVAR
 #' @param dataset The child dataset being checked (`list(data, meta)`).
@@ -442,7 +447,7 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
     return(dataset)
   }
 
-  left <- data.table::copy(dataset$data)
+  left <- dataset$data
   right <- data.table::copy(match_dataset$data)
 
   # Prefix the columns the RULE ITSELF references as "<Name>.<col>" first -
@@ -522,8 +527,10 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # Only stamp row ids on the first join in a chain - a second Match
   # Datasets entry must keep pointing back to the ORIGINAL row, not to the
   # first join's already-exploded rows.
+  left_cols <- setdiff(names(left), keys)
+  row_id <- NULL
   if (!(".coreval_row_id" %in% names(left))) {
-    left$.coreval_row_id <- seq_len(nrow(left))
+    row_id <- seq_len(nrow(left))
   }
 
   # A blank/missing key must never match another blank/missing key - unlike
@@ -534,20 +541,39 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # from the merge and get NA for every joined-in column instead, matching
   # what a left join against a genuinely missing key should produce.
   is_key_blank <- Reduce(`|`, lapply(keys, function(k) is_blank(left[[k]])))
-  left_valid <- left[!is_key_blank]
-  left_blank <- left[is_key_blank]
+  valid <- which(!is_key_blank)
 
-  merged_valid <- merge(left_valid, right, by = keys, all.x = TRUE, allow.cartesian = TRUE)
+  # The join works out WHICH rows pair up, as two integer vectors, and builds
+  # the result once from them. merge() did the same job on full copies: the
+  # table, its blank and non-blank halves, the merge, the bind and the
+  # reorder, all alive at once. Row order is unchanged: left rows in their own
+  # order, and a row with several partners gets them in the partner table's
+  # order.
+  lookup <- data.table::as.data.table(
+    stats::setNames(lapply(keys, function(k) left[[k]][valid]), keys)
+  )
+  lookup[[".coreval_left"]] <- valid
+  right_keys <- right[, keys, with = FALSE]
+  right_keys[[".coreval_right"]] <- seq_len(nrow(right))
+  hits <- right_keys[lookup, on = keys, allow.cartesian = TRUE]
+  l <- c(hits[[".coreval_left"]], which(is_key_blank))
+  r <- c(hits[[".coreval_right"]], rep(NA_integer_, sum(is_key_blank)))
+  ord <- order(l, method = "radix")
+  l <- l[ord]
+  r <- r[ord]
 
-  if (nrow(left_blank) > 0) {
-    right_only_cols <- setdiff(names(right), keys)
-    for (col in right_only_cols) {
-      left_blank[[col]] <- right[[col]][NA_integer_]
-    }
-  }
-
-  merged <- data.table::rbindlist(list(merged_valid, left_blank), use.names = TRUE, fill = TRUE)
-  merged <- merged[order(merged$.coreval_row_id)]
+  # When every row kept exactly one place, the left columns are reused as
+  # they are rather than copied. Nothing downstream writes into a checked
+  # dataset in place: a rule with no Match Datasets is handed the study's own
+  # table already.
+  left_part <- if (identical(l, seq_len(nrow(left)))) left else left[l, ]
+  right_cols <- setdiff(names(right), keys)
+  merged <- c(
+    as.list(left_part)[c(keys, left_cols)],
+    if (!is.null(row_id)) list(.coreval_row_id = row_id[l]),
+    as.list(right[r, right_cols, with = FALSE])
+  )
+  merged <- data.table::setDT(merged)
 
   # A spec that DECLARES `Join Type: left` is the one case where the reference
   # keeps unmatched rows on purpose, and it blanks their joined-in columns

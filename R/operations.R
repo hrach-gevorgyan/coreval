@@ -186,6 +186,18 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   rf <- dm$data$RFSTDTC[match(usubjid, dm$data$USUBJID)]
   rf <- as.character(rf)
 
+  # Worked out once per distinct (date, reference date) pair and indexed back
+  # out: 1.2 million QS rows hold a few thousand such pairs, and doing the
+  # whole calculation per row held several row-length copies at once.
+  pair <- data.table::data.table(tv = target_vals, rv = rf)
+  first <- which(!duplicated(pair))
+  pos <- if (length(first) == n) seq_len(n) else
+    pair[first][pair, on = c("tv", "rv"), which = TRUE]
+  rm(pair)
+  target_vals <- target_vals[first]
+  rf <- rf[first]
+  n <- length(first)
+
   # Vectorised for the same reason op_date.R is: this ran per row, calling the
   # SCALAR date wrappers, so the date regex was re-run twice for every row of
   # every domain for every rule needing --DY. It was 84% of a whole
@@ -225,7 +237,7 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
       day[idx] <- ifelse(delta < 0, delta, delta + 1)
     }
   }
-  per_row_binding(day)
+  per_row_binding(day[pos])
 }
 
 #' Compute a max_date/max or min_date Operations binding
@@ -1076,9 +1088,15 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         if (!(ref_col %in% names(filtered))) {
           return(NULL)
         }
-        names_seen <- vapply(seq_len(nrow(filtered)), function(i) {
-          referenced <- study$datasets[[toupper(as.character(filtered[[ref_col]][i]))]]
-          candidate <- as.character(filtered[[op$name]][i])
+        # Decided once per distinct (domain, name) pair, which keeps the
+        # first-seen order the row-by-row version produced.
+        pairs <- unique(data.table::data.table(
+          dom = toupper(as.character(filtered[[ref_col]])),
+          name = as.character(filtered[[op$name]])
+        ))
+        names_seen <- vapply(seq_len(nrow(pairs)), function(i) {
+          referenced <- study$datasets[[pairs$dom[i]]]
+          candidate <- pairs$name[i]
           if (is.null(referenced) || is.na(candidate) || !(candidate %in% names(referenced$data))) {
             NA_character_
           } else {
