@@ -86,10 +86,9 @@ rule_type_is_supported <- function(rule_type) {
     "Value Check against Define XML Variable",
     "Variable Metadata Check against Define XML and Library Metadata",
     # A whole check written as one JSONata expression over a USDM study
-    # document rather than as a Check block. evaluate_rule() refuses per study
-    # when the study is not a USDM document or the evaluator is not installed,
-    # so such a rule is skipped with a reason rather than answered from
-    # nothing. See op_jsonata.R.
+    # document rather than as a Check block. run_checks() runs these once per
+    # study against the document, not per dataset, and a study that is not a
+    # USDM document is never offered them. See op_jsonata.R.
     "JSONata"
   ))
 }
@@ -558,6 +557,26 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   })
   names(plans) <- domains
 
+  # JSONata and JSON Schema rules answer one question about a whole USDM
+  # document, so they come out of the per-dataset plans and are dealt with once
+  # each below. Left in, a rule scoped to every entity was tried once per entity
+  # table: a JSONata expression handed to the table evaluator, and each of the
+  # four unsupported schema rules reported as unable to run 63 times over.
+  document_types <- c("JSONata", "JSON Schema Check")
+  document_all <- names(.coreval_env$data$rules)[vapply(
+    .coreval_env$data$rules, function(r) isTRUE(r$rule_type %in% document_types),
+    logical(1)
+  )]
+  plans <- lapply(plans, function(ids) ids[!ids %in% document_all])
+  jsonata_plan <- jsonata_rules_for_study(
+    study, standard = declared, version = declared_version,
+    include_deprecated = include_deprecated
+  )
+  schema_plan <- jsonata_rules_for_study(
+    study, standard = declared, version = declared_version,
+    include_deprecated = include_deprecated, types = "JSON Schema Check"
+  )
+
   # How much the standard filter cost. Scoping is right - a SENDIG rule has
   # nothing to say about an SDTM study - but it is not free, and CDISC's own
   # coverage is uneven: the general "--DTC must be valid ISO 8601" rule
@@ -643,6 +662,23 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
           next
         }
       }
+      # "Is there an ADSL?" and "is the tobacco-product dataset present?" are
+      # questions about what the whole study holds. Checking one dataset on its
+      # own, every such rule could only answer "absent", so a single DM built in
+      # code was told that ADSL and TO were missing. That is a finding about
+      # data nobody supplied, which is exactly what the skip above exists to
+      # refuse.
+      if (require_referenced_domains &&
+            isTRUE(startsWith(rule$rule_type, "Domain Presence Check"))) {
+        all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = domain,
+          reason = paste0(
+            "asks which datasets the whole study contains - check the whole ",
+            "study folder to run this rule"
+          )
+        )
+        next
+      }
       is_study_level <- identical(rule$rule_type, "Domain Presence Check")
       if (is_study_level) {
         if (rule_id %in% study_level_done) {
@@ -699,6 +735,47 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     }
   }
 
+  for (rule_id in schema_plan) {
+    all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+      rule_id = rule_id, domain = "STUDY",
+      reason = "unsupported rule type: JSON Schema Check"
+    )
+  }
+
+  # The document-level rules, once each. A failure is a skip with its reason,
+  # the same as for a table rule: an evaluator that is not installed, or an
+  # expression that will not parse, is a check that did not run, never a clean
+  # result.
+  for (rule_id in jsonata_plan) {
+    rule <- .coreval_env$data$rules[[rule_id]]
+    findings <- tryCatch(
+      jsonata_study_findings(rule, study, max_records = max_records),
+      error = function(e) e
+    )
+    if (inherits(findings, "error")) {
+      all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+        rule_id = rule_id, domain = "STUDY",
+        reason = paste("evaluation failed:", conditionMessage(findings))
+      )
+      next
+    }
+    n_ran <- n_ran + 1
+    found <- attr(findings, "records_found")
+    kept <- nrow(unique(findings[, c("Dataset", "Record")]))
+    if (!is.null(found) && found > kept) {
+      all_truncated[[length(all_truncated) + 1]] <- data.table::data.table(
+        rule_id = rule_id, domain = "STUDY",
+        records_found = found, records_kept = kept
+      )
+    }
+    if (nrow(findings) > 0) {
+      findings$rule_id <- rule_id
+      findings$issue <- rule_message(rule)
+      findings$triage <- finding_triage(findings, rule)
+      all_findings[[length(all_findings) + 1]] <- findings
+    }
+  }
+
   findings <- if (length(all_findings) > 0) {
     data.table::rbindlist(all_findings)[
       , c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
@@ -723,6 +800,25 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     data.table::data.table(
       rule_id = character(0), domain = character(0),
       records_found = integer(0), records_kept = integer(0)
+    )
+  }
+
+  # Nothing ran and nothing was even attempted: every rule was filtered away
+  # before it could be tried. That is not a clean study, it is a check that
+  # never happened, and it used to print as one. A USDM document declaring its
+  # version as "4.0.0" matched no rule written for "4.0", ran nothing, and was
+  # reported with no problems. Refuse, and say what to look at.
+  if (n_ran == 0 && nrow(skipped) == 0) {
+    stop(
+      "no rule applies to this ",
+      if (length(domains) == 1) paste0("dataset (", domains, ")") else "study",
+      if (!is.null(declared)) {
+        paste0(" as declared (", declared,
+               if (!is.null(declared_version)) paste0(" ", declared_version), ")")
+      },
+      ", so nothing was checked. ",
+      "Check the standard and version, or leave them unset to see what applies.",
+      call. = FALSE
     )
   }
 

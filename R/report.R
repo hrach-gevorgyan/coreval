@@ -410,11 +410,18 @@ describe_skipped <- function(skipped, width, g) {
     )
     cat("     ", g$arrow, " run check_study() on the whole folder to cover these\n", sep = "")
   }
+  need_study <- grepl("which datasets the whole study contains", skipped$reason, fixed = TRUE)
+  if (any(need_study)) {
+    cat("  ", sum(need_study), " ask what the whole study contains\n", sep = "")
+    if (!any(need_data)) {
+      cat("     ", g$arrow, " run check_study() on the whole folder to cover these\n", sep = "")
+    }
+  }
   need_define <- grepl("define.xml", skipped$reason, fixed = TRUE)
   if (any(need_define)) {
     cat("  ", sum(need_define), " need a define.xml\n", sep = "")
   }
-  other <- !need_data & !need_define
+  other <- !need_data & !need_study & !need_define
   if (any(other)) {
     cat("  ", sum(other), " for other reasons, see result$skipped\n", sep = "")
   }

@@ -14,8 +14,8 @@
 # Using the file name instead silently mis-resolves every "--" template on
 # a split dataset (`lbae.csv` with `DOMAIN=LB` gave `LBAESEQ`, not
 # `LBSEQ`), so the column simply doesn't exist and the condition quietly
-# evaluates to "unresolvable" rather than checking anything. 251 of the 756
-# bundled rules use a "--" template, and splitting a large domain across
+# evaluates to "unresolvable" rather than checking anything. About a third
+# of the tabular rules use a "--" template, and splitting a large domain across
 # files is routine in real submissions, so this is a correctness bug well
 # beyond the conformance fixtures.
 #
@@ -254,7 +254,7 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
 
 # A condition's `negative` field is NOT a generic "negate this result" flag,
 # despite its name suggesting one - confirmed by checking every rule that
-# uses it (only 4, in the entire 756-rule set) against the upstream Python
+# uses it (only 4 of them) against the upstream Python
 # engine's own source (`Rule.py`'s condition parsing feeds `negative`
 # straight into the operator's own `value` dict, and `invalid_duration` is
 # the only operator that reads it there, as a parameter meaning "allow a
@@ -458,6 +458,7 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
 run_rule_on_domain <- function(rule, study, domain) {
   study <- study_standard_from_rule(study, rule)
   assert_rule_inputs_available(rule, study)
+  assert_labels_available(rule, study, domain)
   dataset <- prepare_dataset_for_rule(rule, study, domain)
   assert_referenced_metadata_available(rule, dataset)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
@@ -559,6 +560,37 @@ assert_referenced_metadata_available <- function(rule, dataset) {
   invisible(NULL)
 }
 
+#' Refuse a label rule when the dataset carries no labels at all
+#'
+#' A data frame built in R has no variable labels until someone adds them, so
+#' every label rule compared a blank against the Implementation Guide's label
+#' and reported a mismatch: checking a DM written a minute ago, the second thing
+#' the report said was that STUDYID's label was wrong. That is a statement about
+#' labels nobody has written yet, not about wrong ones. A dataset with SOME
+#' labels still has every blank one checked, which is where a missing label is
+#' a real defect.
+#'
+#' @param rule A rule record.
+#' @param study Full study object.
+#' @param domain The dataset being checked.
+#' @return `invisible(NULL)`; raises when the rule would compare absent labels.
+#' @noRd
+assert_labels_available <- function(rule, study, domain) {
+  if (!is.list(rule$check) ||
+        !("variable_label" %in% collect_check_names(rule$check))) {
+    return(invisible(NULL))
+  }
+  labels <- study$datasets[[domain]]$meta$label
+  if (is.null(labels) || all(is.na(labels) | !nzchar(trimws(labels)))) {
+    stop(
+      "compares variable labels, and this dataset has none at all ",
+      "(a data frame built in R has no labels until they are added)",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' Refuse a rule whose required input sources are unavailable for this study
 #' @param rule A rule record.
 #' @param study Full study object.
@@ -587,10 +619,25 @@ assert_rule_inputs_available <- function(rule, study) {
   # a version it did not declare would both invent violations and hide real
   # ones. The reference takes the same position: its `-ct` argument is
   # required, and it errors without one.
+  #
+  # Only an operation that actually reads the study-wide package is refused.
+  # `codelist_terms` asked PER ROW names the version on each row itself, in a
+  # column beside the value, and never looks at the study's package at all:
+  # a USDM study states the terminology version on every coded value and has no
+  # TS to declare one in. Refusing those skipped 37 USDM rules for every real
+  # user, while the conformance harness, which always supplies a package,
+  # reported them passing.
   if (!is.null(rule$operations) && is.null(study$ct_package)) {
     needs_ct <- vapply(
       rule$operations,
-      function(o) isTRUE(o$operator %in% c("codelist_terms", "get_codelist_attributes")),
+      function(o) {
+        if (identical(o$operator, "get_codelist_attributes")) {
+          return(TRUE)
+        }
+        per_row <- !is.null(o$term_code) || !is.null(o$term_value) ||
+          !is.null(o$term_pref_term)
+        identical(o$operator, "codelist_terms") && !per_row
+      },
       logical(1)
     )
     if (any(needs_ct)) {

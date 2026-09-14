@@ -70,7 +70,13 @@ test_that("a study read as Dataset-JSON gives the same findings as the same stud
   nd <- file.path(root, "ndjson")
   for (d in c(xpt, js, nd)) dir.create(d)
 
-  haven::write_xpt(dm, file.path(xpt, "dm.xpt"))
+  # The same labels in all three. write_dataset_json() labels every column with
+  # its name, and an XPT written from a bare data frame has none; the two were
+  # never the same data, which stopped being harmless once a dataset with no
+  # labels at all was spared the label rules.
+  labelled <- dm
+  for (v in names(labelled)) attr(labelled[[v]], "label") <- v
+  haven::write_xpt(labelled, file.path(xpt, "dm.xpt"))
   write_dataset_json(dm, file.path(js, "dm.json"), whole = TRUE)
   write_dataset_json(dm, file.path(nd, "dm.ndjson"), whole = FALSE)
 

@@ -17,7 +17,7 @@ rules_version <- function() {
 #' @noRd
 build_rules_table <- function() {
   # Cached: this is a pure function of the bundled rules, which are read once
-  # in .onLoad and never replaced. It builds 797 one-row data.tables and
+  # in .onLoad and never replaced. It builds one one-row data.table per rule and
   # rbindlist()s them, and `rules_for_domain()` calls it once per domain - so
   # a seven-domain study rebuilt the same table seven times. Allocation
   # profiling put 600 MB of a 51,000-row study's 2.9 GB total in here, a fifth
@@ -142,7 +142,7 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
     # The index is computed OUTSIDE the `[`. data.table evaluates `i` with the
     # table's own columns in scope, and this table has a column called `id` -
     # so `out[match(id, out$id), ]` silently becomes
-    # `match(out$id, out$id)`, which is 1:756, and every rule comes back
+    # `match(out$id, out$id)`, which is every row in order, and every rule comes back
     # instead of the one asked for. Naming the index something no column
     # shares removes the collision.
     wanted <- match(id, out$id)
@@ -179,9 +179,8 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
         want %in% toupper(trimws(strsplit(s, ",")[[1]]))
       }, logical(1))
       if (!is.null(version)) {
-        pair <- toupper(paste(standard, gsub("-", ".", version, fixed = TRUE)))
         keep <- keep & vapply(out$standard_version, function(s) {
-          pair %in% toupper(trimws(strsplit(s, ",")[[1]]))
+          targets_standard_version(strsplit(s, ",")[[1]], standard, version)
         }, logical(1))
       }
       out <- out[keep, ]
@@ -280,12 +279,11 @@ validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
     if (is.null(standard)) {
       stop("`version` needs `standard` too - a version alone is ambiguous.", call. = FALSE)
     }
-    # Versions are dashed in the bundled data ("3-4") and usually typed with
-    # dots ("3.4"); both forms are accepted everywhere else, so compare both.
+    # Compared the same way the rule filter compares, so a version accepted
+    # here is one that actually selects rules there.
     prefix <- paste0(toupper(standard), " ")
     have <- sub(prefix, "", grep(prefix, toupper(pairs), value = TRUE), fixed = TRUE)
-    want <- c(toupper(version), gsub("-", ".", toupper(version), fixed = TRUE))
-    if (!any(want %in% gsub("-", ".", have, fixed = TRUE))) {
+    if (!targets_standard_version(pairs, standard, version)) {
       stop(
         "no bundled ", standard, " rule targets version '", version, "'. Available: ",
         paste(sort(unique(have)), collapse = ", "), ".",

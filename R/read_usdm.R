@@ -200,15 +200,6 @@ usdm_pointer <- function(path) {
   paste0("/", pointer)
 }
 
-#' The path of a path's parent
-#' @param path A dotted path.
-#' @return The parent's path, or `NA` when there is none.
-#' @noRd
-usdm_parent_path <- function(path) {
-  parts <- strsplit(path, ".", fixed = TRUE)[[1]]
-  if (length(parts) < 2L) NA_character_ else paste(parts[-length(parts)], collapse = ".")
-}
-
 #' Flatten one record's own values
 #'
 #' Dotted column names for nested objects, and a nested object or array becomes
@@ -375,31 +366,6 @@ usdm_record_metadata <- function(record, entities, wrapper) {
   list(parent_entity = parent_entity, parent_id = parent_id,
        parent_rel = parent_rel, rel_type = record$kind,
        `_path` = usdm_pointer(record$path))
-}
-
-#' The value at a dotted path
-#' @param doc The parsed document.
-#' @param path A dotted path, with `[i]` for array positions.
-#' @return The value, or `NULL` if the path does not resolve.
-#' @noRd
-usdm_at_path <- function(doc, path) {
-  current <- doc
-  for (part in strsplit(path, ".", fixed = TRUE)[[1]]) {
-    index <- regmatches(part, regexpr("\\[[0-9]+\\]$", part))
-    key <- sub("\\[[0-9]+\\]$", "", part)
-    if (!is_json_object(current)) {
-      return(NULL)
-    }
-    current <- current[[key]]
-    if (length(index) == 1L) {
-      position <- as.integer(gsub("[^0-9]", "", index)) + 1L
-      if (!is.list(current) || position > length(current)) {
-        return(NULL)
-      }
-      current <- current[[position]]
-    }
-  }
-  current
 }
 
 #' Assemble records with differing keys into one dataset

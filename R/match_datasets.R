@@ -417,8 +417,8 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # startsWith() a list and raised "non-character object(s)", which surfaced as
   # an evaluation failure for 39 rules and said nothing about keys.
   #
-  # No bundled rule uses the paired form, so this widens the reader without
-  # touching how any of the 797 join today.
+  # No tabular rule uses the paired form, so this widens the reader without
+  # touching how any of them join.
   key_spec <- match_key_columns(spec$Keys, dataset_wildcard(dataset, current_domain))
   keys <- key_spec$left
   if (!all(key_spec$left %in% names(dataset$data)) ||
@@ -451,7 +451,7 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # The two halves genuinely use opposite orders, which reads like a mistake
   # in the reference and is what it does.
   #
-  # All 12 dotted targets across the 797 bundled rules use the prefix form
+  # Every dotted target in the tabular rules uses the prefix form
   # handled just above, so this order only shows up in USDM rules, which name
   # joined columns that way (CORE-000856's `parent_rel.Code`). Both names are
   # kept: the same column under two spellings costs one shallow copy and means

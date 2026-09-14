@@ -196,33 +196,143 @@ jsonata_result_parts <- function(result) {
 #' rule's own expression decides which attributes it reports; they are carried
 #' through under the names it gave them.
 #'
+#' A rule's declared output variables are the attributes a report shows, the
+#' way the reference's report does: the expression may build more (an `id`, an
+#' `instanceType`) to locate the record, and those are not findings in
+#' themselves. A rule that declares none reports everything it built.
+#'
 #' @param rule A JSONata rule.
 #' @param study A study read from a USDM document.
-#' @return A [data.table::data.table()] with `path`, `attribute` and `value`.
+#' @return A [data.table::data.table()] with `entity`, `path`, `attribute` and
+#'   `value`.
 #' @noRd
 jsonata_findings <- function(rule, study) {
   if (is.null(study$document)) {
     stop("a JSONata rule is written against a USDM study document, and this ",
          "study is not one", call. = FALSE)
   }
+  wanted <- as.character(unlist(rule$outcome[["Output Variables"]]))
   results <- evaluate_jsonata_rule(rule, study$document)
   rows <- lapply(results, function(result) {
     parts <- jsonata_result_parts(result)
-    if (length(parts$attributes) == 0) {
+    attributes <- parts$attributes
+    # Every declared output variable, blank where this result lacks it. That is
+    # how the reference writes them, and dropping the absent ones instead lost
+    # whole findings: a result carrying none of its rule's declared variables
+    # vanished from the report, and three rules stopped matching their sheets.
+    if (length(wanted) > 0) {
+      attributes <- stats::setNames(
+        lapply(wanted, function(w) if (w %in% names(attributes)) attributes[[w]] else ""),
+        wanted
+      )
+    }
+    if (length(attributes) == 0) {
       return(NULL)
     }
     data.table::data.table(
+      entity = parts$entity,
       path = parts$path,
-      attribute = names(parts$attributes),
-      value = vapply(parts$attributes, function(v) {
+      attribute = names(attributes),
+      value = vapply(attributes, function(v) {
         if (is.null(v) || length(v) == 0) "" else paste(as.character(unlist(v)), collapse = ", ")
       }, character(1))
     )
   })
   rows <- Filter(Negate(is.null), rows)
   if (length(rows) == 0) {
-    return(data.table::data.table(path = character(0), attribute = character(0),
-                                  value = character(0)))
+    return(data.table::data.table(entity = character(0), path = character(0),
+                                  attribute = character(0), value = character(0)))
   }
   data.table::rbindlist(rows)
+}
+
+#' The JSONata rules a study should be checked against
+#'
+#' A JSONata rule asks one question of a whole document, so it is chosen once
+#' per study rather than per dataset, and by the same standard, version and
+#' deprecation filters as every other rule. Its entity scope is not applied:
+#' the expression walks the document itself, which is how the reference runs it
+#' and how all 96 are verified against CDISC's answer sheets.
+#'
+#' @param study A study.
+#' @param standard,version The declared standard and version, or `NULL`.
+#' @param include_deprecated Whether deprecated rules run.
+#' @param types Which document-level rule types to select.
+#' @return A character vector of rule ids, empty unless the study is a USDM
+#'   document.
+#' @noRd
+jsonata_rules_for_study <- function(study, standard = NULL, version = NULL,
+                                    include_deprecated = FALSE, types = "JSONata") {
+  if (is.null(study$document)) {
+    return(character(0))
+  }
+  rules <- .coreval_env$data$rules
+  keep <- vapply(rules, function(r) {
+    if (!isTRUE(r$rule_type %in% types)) {
+      return(FALSE)
+    }
+    if (!isTRUE(include_deprecated) && identical(r$source, "deprecated_dir")) {
+      return(FALSE)
+    }
+    if (!is.null(standard) && !(toupper(standard) %in% toupper(r$standards))) {
+      return(FALSE)
+    }
+    if (!is.null(standard) && !is.null(version) &&
+          !targets_standard_version(r$standard_versions, standard, version)) {
+      return(FALSE)
+    }
+    TRUE
+  }, logical(1))
+  names(rules)[keep]
+}
+
+#' One JSONata rule's findings, in the shape every other check reports
+#'
+#' `check_study()` reports `Dataset`, `Record`, `Variable` and `Value`, and a
+#' USDM finding is a place in a document. The two meet through the entity
+#' tables the document is also read into: every row of those carries the JSON
+#' Pointer of the object it came from, so a finding's path names a row, and the
+#' finding is reported against that entity and that row number. Those are the
+#' same numbers the record-data USDM rules report against, so both kinds of
+#' finding on one record line up. A path matching no row keeps its entity and
+#' is reported with no row number rather than a guessed one.
+#'
+#' @param rule A JSONata rule.
+#' @param study A study read from a USDM document.
+#' @param max_records Most records to keep.
+#' @return A findings table, with attribute `records_found`.
+#' @noRd
+jsonata_study_findings <- function(rule, study, max_records = 1000) {
+  raw <- jsonata_findings(rule, study)
+  entities <- usdm_entities()
+  dataset_for <- function(entity) {
+    if (is.na(entity) || !nzchar(entity)) {
+      return("STUDY")
+    }
+    mapped <- if (is.null(entities)) NA_character_ else entity_lookup(entities, entity)
+    toupper(if (is.na(mapped)) entity else mapped)
+  }
+  datasets <- vapply(raw$entity, dataset_for, character(1), USE.NAMES = FALSE)
+  records <- mapply(function(ds, path) {
+    table <- study$datasets[[ds]]$data
+    if (is.null(table) || is.na(path) || !("_path" %in% names(table))) {
+      return(NA_integer_)
+    }
+    hit <- match(path, table[["_path"]])
+    if (is.na(hit)) NA_integer_ else as.integer(hit)
+  }, datasets, raw$path, USE.NAMES = FALSE)
+
+  findings <- data.table::data.table(
+    Dataset = datasets,
+    Record = as.integer(records),
+    Variable = raw$attribute,
+    Value = raw$value
+  )
+  located <- paste(findings$Dataset, findings$Record, raw$path)
+  found <- length(unique(located))
+  if (found > max_records) {
+    findings <- findings[located %in% utils::head(unique(located), max_records)]
+  }
+  attr(findings, "records_found") <- found
+  findings
 }

@@ -450,8 +450,9 @@ rules <- if (nzchar(rules_override)) {
 }
 
 # Optional targeted mode: any rule IDs after the upstream dir restrict the run
-# to just those rules, which takes seconds instead of the full ~5-minute
-# 756-rule sweep. Use it to verify one fix in a tight loop; run the full sweep
+# to just those rules, which takes seconds instead of the full sweep, which
+# runs for a quarter of an hour now that USDM documents are read for every case.
+# Use it to verify one fix in a tight loop; run the full sweep
 # (no IDs) before committing, since a shared operator change can regress a
 # rule outside the targeted set. A targeted run does NOT rewrite
 # scoreboard.csv - that file always reflects a full run, so it can't be

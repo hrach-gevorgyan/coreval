@@ -96,17 +96,6 @@ domains_match <- function(domains_spec, domain) {
   include_exclude_matches(domains_spec, function(pattern) pattern_matches_domain(pattern, domain))
 }
 
-#' Test a USDM `Scope: Entities` spec against a dataset name
-#'
-#' USDM entity names arrive as the dataset key, upper-cased like every other
-#' dataset name here (`StudyVersion.csv` becomes `STUDYVERSION`), so the
-#' comparison is case-insensitive. `ALL` is the same sentinel it is for
-#' Domains.
-#'
-#' @param entities_spec The `Entities` element of a rule's scope.
-#' @param domain Dataset key to test.
-#' @return A single logical.
-#' @noRd
 #' Is this dataset a USDM entity table?
 #'
 #' Told by its shape rather than by where it came from, because it can come
@@ -125,6 +114,18 @@ is_usdm_entity_table <- function(dataset) {
   all(c("parent_entity", "parent_rel", "rel_type") %in% names(dataset$data))
 }
 
+#' Test a USDM `Scope: Entities` spec against a dataset name
+#'
+#' USDM entity names arrive as the dataset key, upper-cased like every other
+#' dataset name here (`StudyVersion.csv` becomes `STUDYVERSION`), so the
+#' comparison is case-insensitive. `ALL` means every USDM entity, which is
+#' narrower than it means for Domains: see [is_usdm_entity_table()].
+#'
+#' @param entities_spec The `Entities` element of a rule's scope.
+#' @param domain Dataset key to test.
+#' @param dataset The dataset itself, so `ALL` can be limited to entity tables.
+#' @return A single logical.
+#' @noRd
 entities_match <- function(entities_spec, domain, dataset = NULL) {
   target <- toupper(domain)
   # `ALL` means every USDM ENTITY, not every dataset. Scoping by Entities is a
@@ -152,7 +153,7 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   # widen scope to every domain: both still have to match. Tested directly -
   # letting Domains=ALL override Classes turns CORE-000794/847/848 green but
   # breaks 11 other rules, a net loss of 8. Whatever the reference does for
-  # those three, it is not this. 121 of the 797 rules pair the two, so do not
+  # those three, it is not this. Over a hundred rules pair the two, so do not
   # retry this without measuring the whole sweep.
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain)) {
     return(FALSE)
@@ -223,6 +224,46 @@ sdtm_domain_classes <- function() {
   data.table::as.data.table(.coreval_env$domain_classes)
 }
 
+#' One standard version, written any of the ways people write it
+#'
+#' A CORE test case writes "3-4" where the rules say "3.4", and a USDM study
+#' document says "4.0.0" where the rules say "4.0". All name one version. They
+#' were compared as exact text, and a USDM study declaring "4.0.0" matched no
+#' rule at all: nothing ran, and the study was reported clean. Separators are
+#' made dots and trailing zero components dropped, so "4.0.0", "4.0" and "4"
+#' compare equal while "3.1" and "3.10" stay apart.
+#'
+#' @param version A character vector of versions.
+#' @return The normalised versions.
+#' @noRd
+normalise_version <- function(version) {
+  v <- toupper(trimws(as.character(version)))
+  v <- gsub("-", ".", v, fixed = TRUE)
+  sub("([.]0+)+$", "", v)
+}
+
+#' Does any "STANDARD VERSION" pair name this standard at this version?
+#'
+#' The one place a declared version is compared with the versions a rule
+#' targets. It used to be done three times, with three slightly different
+#' normalisations, which is how one of them came to miss "4.0.0".
+#'
+#' @param pairs Entries like `"SDTMIG 3.4"`, as a rule's `standard_versions`.
+#' @param standard The declared standard.
+#' @param version The declared version.
+#' @return A single logical.
+#' @noRd
+targets_standard_version <- function(pairs, standard, version) {
+  pairs <- trimws(as.character(pairs))
+  pairs <- pairs[nzchar(pairs)]
+  if (length(pairs) == 0) {
+    return(FALSE)
+  }
+  names_ <- toupper(sub("[[:space:]].*$", "", pairs))
+  versions <- normalise_version(sub("^[^[:space:]]+[[:space:]]*", "", pairs))
+  any(names_ == toupper(standard) & versions == normalise_version(version))
+}
+
 #' Rules that apply to a given SDTM domain
 #'
 #' Resolves each rule's `Scope > Classes` and `Scope > Domains` (handling the
@@ -290,13 +331,12 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
     # 445 for 3.4, and 86 apply to exactly one version. Without this a study
     # on 3.2 is measured against rules written for a guide it does not follow.
     #
-    # A CORE test case writes its version as "3-4" in .env while the rules say
-    # "3.4", so the separator is normalised rather than requiring the caller
-    # to know which form to use.
+    # The version is compared through targets_standard_version(), which reads
+    # "3-4" as "3.4" and "4.0.0" as "4.0".
     if (!is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)) {
-      want_pair <- toupper(paste(standard, gsub("-", ".", version, fixed = TRUE)))
       keep <- keep & vapply(
-        rules, function(r) want_pair %in% toupper(r$standard_versions), logical(1)
+        rules, function(r) targets_standard_version(r$standard_versions, standard, version),
+        logical(1)
       )
     }
   }
