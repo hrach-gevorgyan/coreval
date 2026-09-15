@@ -120,7 +120,8 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   # bare version is refused here too rather than quietly returning a
   # plausible-looking number. A version with no standard used to be discarded
   # in silence: list_rules(version = "3.4") returned all 797 rules.
-  validate_check_args(standard = standard, version = version, domain = domain)
+  validate_check_args(standard = standard, version = version, domain = domain,
+                      use_case = use_case, include_deprecated = include_deprecated)
   out <- build_rules_table()
 
   # Looking up an id is a different question from "what would run": it should
@@ -185,6 +186,16 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
       }
       out <- out[keep, ]
     }
+    # Documented as a filter, and applied only on the domain branch above, so
+    # without a domain it was accepted and ignored.
+    if (!is.null(use_case)) {
+      rules <- .coreval_env$data$rules
+      keep <- vapply(out$id, function(i) {
+        uc <- rules[[i]]$scope[["Use Case"]]
+        is.null(uc) || toupper(use_case) %in% trimws(strsplit(uc, ",")[[1]])
+      }, logical(1))
+      out <- out[keep, ]
+    }
     if (!isTRUE(include_deprecated)) {
       out <- out[out$source != "deprecated_dir", ]
     }
@@ -243,7 +254,8 @@ validate_ct_package <- function(ct_package) {
 #' @return `invisible(NULL)`; raises an error naming the offending argument.
 #' @noRd
 validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
-                                max_records = NULL) {
+                                max_records = NULL, use_case = NULL,
+                                include_deprecated = FALSE) {
   one_string <- function(x, arg) {
     if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(x)) {
       stop("`", arg, "` must be a single, non-empty string.", call. = FALSE)
@@ -256,6 +268,28 @@ validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
     if (!is.numeric(max_records) || length(max_records) != 1L ||
       is.na(max_records) || max_records < 1) {
       stop("`max_records` must be a single number of 1 or more.", call. = FALSE)
+    }
+  }
+  # Anything but TRUE was quietly taken as FALSE, so `include_deprecated =
+  # "yes"` ran without the retired rules the caller asked for.
+  if (!isTRUE(include_deprecated) && !isFALSE(include_deprecated)) {
+    stop("`include_deprecated` must be TRUE or FALSE.", call. = FALSE)
+  }
+  # A use case narrows which rules run, so a misspelt one ("IND") silently ran
+  # only the rules that name no use case at all and reported the rest as never
+  # having applied.
+  if (!is.null(use_case)) {
+    one_string(use_case, "use_case")
+    known <- unique(unlist(lapply(.coreval_env$data$rules, function(r) {
+      uc <- r$scope[["Use Case"]]
+      if (is.null(uc)) NULL else trimws(strsplit(uc, ",")[[1]])
+    })))
+    if (!(toupper(use_case) %in% known)) {
+      stop(
+        "'", use_case, "' is not a use case any bundled rule names. Available: ",
+        paste(sort(known), collapse = ", "), ".",
+        call. = FALSE
+      )
     }
   }
   if (is.null(standard) && is.null(version)) {

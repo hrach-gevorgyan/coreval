@@ -102,11 +102,8 @@ missing_referenced_domains <- function(rule, study, domain) {
 #' @noRd
 read_one_dataset_file <- function(path) {
   ext <- tolower(tools::file_ext(path))
-  if (ext == "xpt") {
-    return(build_dataset_from_data_frame(haven::read_xpt(path)))
-  }
-  if (ext == "sas7bdat") {
-    return(build_dataset_from_data_frame(haven::read_sas(path)))
+  if (ext %in% c("xpt", "sas7bdat")) {
+    return(build_dataset_from_data_frame(read_sas_file(path)))
   }
   if (ext == "csv") {
     # A bare CSV declares no types, unlike an XPT (which carries its own) or a
@@ -115,23 +112,89 @@ read_one_dataset_file <- function(path) {
     # a numeric-looking identifier such as "007" becomes 7, and a rule about
     # its text form can no longer see the original. Prefer .xpt when the
     # distinction matters.
-    dt <- data.table::fread(path, na.strings = character(0), strip.white = FALSE)
-    fill_char_blanks(dt)
-    return(list(
-      data = dt,
-      meta = data.table::data.table(
-        variable = names(dt),
-        label = NA_character_,
-        type = vapply(dt, function(col) if (is.character(col)) "Char" else "Num", character(1))
-      ),
-      label = NA_character_
-    ))
+    return(build_dataset_from_data_frame(read_csv_dataset(path)))
   }
   stop(
     "don't know how to read '", basename(path),
     "': expected a .xpt, .sas7bdat or .csv file",
     call. = FALSE
   )
+}
+
+#' Read one bare CSV dataset, refusing one that could not be read whole
+#'
+#' Ways a CSV went wrong without stopping the check:
+#'
+#' - An empty file became a dataset with no columns, and rules ran against it.
+#' - A row with too few values made `fread` stop there with only a warning, so
+#'   the rows after it were never checked.
+#' - A numeric column written by `write.csv()` holds the text `NA` for a
+#'   missing value, and was read as a text column.
+#' - `fread` turns ISO 8601 dates into R dates. Rules compare the text an SDTM
+#'   date is written as, and read back as a date that text changes
+#'   (`2014-01-02T10:00` loses its `T`), so the same DM gave several times the
+#'   findings from a CSV that it gave from the data frame it was written from.
+#'   Such columns are read again as the text in the file.
+#'
+#' The result goes through the same clean-up as every other reader, which the
+#' CSV path used to skip, so text in the Windows encoding is repaired here too.
+#'
+#' @param path A `.csv` file.
+#' @return A data.table.
+#' @noRd
+read_csv_dataset <- function(path) {
+  name <- basename(path)
+  if (isTRUE(file.size(path) == 0)) {
+    stop("'", name, "' is empty (0 bytes), so there is no dataset in it to check.",
+         call. = FALSE)
+  }
+  read <- function(...) {
+    # Noted and raised once fread has returned: stopping inside its warning
+    # leaves fread's own state half torn down for the next call.
+    stopped <- NULL
+    dt <- withCallingHandlers(
+      data.table::fread(path, na.strings = character(0), strip.white = FALSE, ...),
+      warning = function(w) {
+        if (grepl("Stopped early", conditionMessage(w), fixed = TRUE)) {
+          stopped <<- sub("[.] Consider.*$", "", conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+    if (!is.null(stopped)) {
+      stop("could not read all of '", name, "': a row has a different number ",
+           "of values from the header (", stopped, "). Nothing was checked.",
+           call. = FALSE)
+    }
+    dt
+  }
+  dt <- read()
+  dated <- names(dt)[vapply(dt, function(col) {
+    inherits(col, c("Date", "POSIXt", "ITime"))
+  }, logical(1))]
+  if (length(dated) > 0) {
+    text <- read(select = dated, colClasses = "character")
+    for (v in dated) {
+      data.table::set(dt, j = v, value = text[[v]])
+    }
+  }
+  # R's write.csv() writes a missing number as the text NA, and reading
+  # "NA" as a value (rightly, for text: it can be real data) turned a numeric
+  # column with gaps into text. A blank DMDY then read as filled in, and
+  # CORE-000354 reported every such record. A column holding nothing but
+  # numbers, blanks and NA is a numeric column with missing values.
+  for (v in names(dt)[vapply(dt, is.character, logical(1))]) {
+    x <- dt[[v]]
+    gap <- x %in% c("", "NA")
+    if (all(gap)) next
+    num <- suppressWarnings(as.numeric(x[!gap]))
+    if (!anyNA(num)) {
+      out <- rep(NA_real_, length(x))
+      out[!gap] <- num
+      data.table::set(dt, j = v, value = out)
+    }
+  }
+  dt
 }
 
 #' Work out which domain a dataset is
@@ -269,7 +332,8 @@ infer_domain <- function(dataset, path = NULL) {
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
                           use_case = NULL, max_records = 1000,
                           include_deprecated = FALSE, ct_package = NULL) {
-  validate_check_args(standard, version, domain, max_records)
+  validate_check_args(standard, version, domain, max_records,
+                      use_case = use_case, include_deprecated = include_deprecated)
   path <- NULL
   if (is.character(x)) {
     if (length(x) != 1) {

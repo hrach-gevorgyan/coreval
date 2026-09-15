@@ -252,7 +252,7 @@ test_that("check_study() refuses anything that is not a study, instead of report
   empty <- tempfile("coreval_empty_")
   dir.create(empty)
   on.exit(unlink(empty, recursive = TRUE), add = TRUE)
-  expect_error(check_study(empty), "no datasets in it")
+  expect_error(check_study(empty), "no datasets found")
 })
 
 test_that("read_study() errors on a missing folder rather than returning an empty study", {

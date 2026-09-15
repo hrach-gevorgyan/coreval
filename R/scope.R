@@ -195,7 +195,7 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   }
   if (!is.null(use_case) && !is.null(scope[["Use Case"]])) {
     allowed <- trimws(strsplit(scope[["Use Case"]], ",")[[1]])
-    if (!(use_case %in% allowed)) {
+    if (!(toupper(use_case) %in% allowed)) {
       return(FALSE)
     }
   }

@@ -63,6 +63,15 @@ write_findings <- function(result, path, tracking = TRUE) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
     stop("`path` must be a single file path, ending in '.xlsx' or '.csv'.", call. = FALSE)
   }
+  # fwrite's own messages for these ask about permissions and disk space.
+  if (dir.exists(path)) {
+    stop("`path` is a folder. Give a file name inside it, e.g. ",
+         "file.path(\"", path, "\", \"findings.xlsx\").", call. = FALSE)
+  }
+  if (!dir.exists(dirname(path))) {
+    stop("the folder ", dirname(path), " does not exist. Create it first.",
+         call. = FALSE)
+  }
   findings <- data.table::as.data.table(result$findings)
   skipped <- if (is.null(result$skipped)) {
     data.table::data.table(rule_id = character(0), domain = character(0), reason = character(0))

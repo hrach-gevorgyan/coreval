@@ -400,9 +400,11 @@ check_study <- function(study, standard = NULL, version = NULL,
                         use_case = NULL, max_records = 1000,
                         include_deprecated = FALSE, ct_package = NULL) {
   validate_check_args(standard = standard, version = version,
-                      max_records = max_records)
+                      max_records = max_records, use_case = use_case,
+                      include_deprecated = include_deprecated)
   # Take the folder directly. Requiring read_study() first made people call
   # two functions to do one thing, for no benefit in the common case.
+  folder <- NULL
   if (is.character(study)) {
     if (length(study) != 1) {
       stop("`study` must be one folder path, or a study from read_study().", call. = FALSE)
@@ -414,7 +416,23 @@ check_study <- function(study, standard = NULL, version = NULL,
         call. = FALSE
       )
     }
+    folder <- study
     study <- read_study(study)
+  }
+  # Anything that is not a study object went straight through to run_checks(),
+  # where `names(study$datasets)` is NULL, nothing runs, and the result prints
+  # "Nothing to fix in the 0 checks that ran." A data frame passed by mistake
+  # (check_dataset()'s argument, not this one), or a NULL left by an earlier
+  # failed step, was therefore reported as clean data. That is the one thing
+  # this package must never do.
+  # Checked before anything reads `study$...`: a number reached the CT lookup
+  # first and died there with "$ operator is invalid for atomic vectors".
+  if (!is.list(study) || is.null(study$datasets)) {
+    stop(
+      "`study` must be a folder path, or a study object from read_study(). ",
+      "To check a single dataset or data frame, use check_dataset().",
+      call. = FALSE
+    )
   }
   # Carried on the study so every operation can reach it without threading an
   # argument through each layer. Checked here rather than at first use, so a
@@ -433,25 +451,8 @@ check_study <- function(study, standard = NULL, version = NULL,
     # CDISC version, the define is still a declaration and beats guessing.
     study$ct_package <- ct_package_from_ts(study) %||% ct_package_from_define(study)
   }
-  # Anything that is not a study object went straight through to run_checks(),
-  # where `names(study$datasets)` is NULL, nothing runs, and the result prints
-  # "Nothing to fix in the 0 checks that ran." A data frame passed by mistake
-  # (check_dataset()'s argument, not this one), or a NULL left by an earlier
-  # failed step, was therefore reported as clean data. That is the one thing
-  # this package must never do.
-  if (!is.list(study) || is.null(study$datasets)) {
-    stop(
-      "`study` must be a folder path, or a study object from read_study(). ",
-      "To check a single dataset or data frame, use check_dataset().",
-      call. = FALSE
-    )
-  }
   if (length(study$datasets) == 0) {
-    stop(
-      "this study has no datasets in it - nothing could be checked. ",
-      "Check the folder holds .xpt/.sas7bdat/.csv files.",
-      call. = FALSE
-    )
+    stop(no_datasets_message(folder), call. = FALSE)
   }
   # An explicitly supplied standard overrides whatever the study declares
   # about itself, the same way it does in check_dataset(). Without this,
@@ -830,4 +831,44 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     standard = declared,
     excluded_by_standard = excluded
   )
+}
+
+#' Say why a study folder gave no datasets, and what to do instead
+#'
+#' The old message told people to check the folder held .sas7bdat or .csv
+#' files, which a study folder is not read from, so a folder of CSVs was
+#' refused with advice to supply CSVs.
+#'
+#' @param folder The folder that was read, or `NULL` for a study object.
+#' @return One message string.
+#' @noRd
+no_datasets_message <- function(folder) {
+  msg <- "this study has no datasets in it, so nothing could be checked."
+  if (is.null(folder)) {
+    return(msg)
+  }
+  readable <- "[.](xpt|json|ndjson)$"
+  msg <- paste0(
+    "no datasets found in ", folder, ", so nothing could be checked. ",
+    "A study folder is read from .xpt files, Dataset-JSON (.json, .ndjson) ",
+    "or a USDM .json document."
+  )
+  singles <- list.files(folder, pattern = "[.](csv|sas7bdat)$", ignore.case = TRUE)
+  if (length(singles) > 0) {
+    msg <- paste0(
+      msg, " It holds ", length(singles), " .csv/.sas7bdat file",
+      if (length(singles) > 1) "s", ", which are checked one at a time: ",
+      "check_dataset(\"", file.path(folder, singles[[1]]), "\")."
+    )
+  }
+  nested <- list.files(folder, pattern = readable, ignore.case = TRUE,
+                       recursive = TRUE)
+  nested <- nested[dirname(nested) != "."]
+  if (length(nested) > 0) {
+    msg <- paste0(
+      msg, " Datasets were found in a subfolder: pass \"",
+      file.path(folder, dirname(nested[[1]])), "\" instead."
+    )
+  }
+  msg
 }

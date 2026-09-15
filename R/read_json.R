@@ -285,7 +285,13 @@ read_study_usdm <- function(path) {
     NA_character_
   }
   datasets <- if (requireNamespace("jsonlite", quietly = TRUE)) {
-    usdm_datasets(jsonlite::fromJSON(document, simplifyVector = FALSE))
+    usdm_datasets(tryCatch(
+      jsonlite::fromJSON(document, simplifyVector = FALSE),
+      error = function(e) {
+        stop("not valid JSON: ", basename(files[[1]]), " (", conditionMessage(e), ")",
+             call. = FALSE)
+      }
+    ))
   } else {
     list()
   }

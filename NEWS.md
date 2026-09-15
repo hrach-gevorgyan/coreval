@@ -1,5 +1,28 @@
 # coreval 0.3.0
 
+* **Broken input is refused, not checked in part.** 95 broken and odd inputs
+  were fed through every public function. What changed as a result:
+  - A transport file cut off part-way, as an interrupted copy leaves it, was
+    read up to the break and checked as if that were the whole dataset. It is
+    now refused. An empty file, a damaged one, or a file that is not a
+    transport file at all is named in the error.
+  - A CSV with a row of the wrong length was checked up to that row, with only
+    a warning. It is now refused.
+  - A CSV gave different findings from the data it was written from: dates
+    were read as R dates, and a numeric column with gaps, which `write.csv()`
+    writes as the text `NA`, was read as text. Both now read as the file says,
+    and CSV text in the Windows encoding is repaired like any other input.
+  - Two columns with one name are refused. Which one a rule read was left to
+    chance.
+  - A misspelt `use_case`, or `include_deprecated = "yes"`, quietly changed
+    which rules ran. Both are refused. `list_rules(use_case =)` now filters
+    without a domain too, as documented.
+  - A folder with no readable datasets said to supply .csv files, which a
+    study folder is not read from. It now names what it found instead: CSV
+    files to check one at a time, or datasets in a subfolder.
+  - `check_study(42)` and `write_findings()` to a missing folder gave internal
+    messages. They now say what is wrong.
+
 * **Twice as fast on large studies, with less memory.** CDISC's pilot study
   repeated to 5.9 million rows now checks in 451 seconds instead of 892, and
   peaks at 5.4 GB instead of 7.1 GB, with identical findings. Dates are parsed

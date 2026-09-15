@@ -214,9 +214,57 @@ fill_char_blanks <- function(dt) {
 #' @noRd
 read_study_xpt <- function(path) {
   files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
-  datasets <- lapply(files, function(f) build_dataset_from_data_frame(haven::read_xpt(f)))
+  datasets <- lapply(files, function(f) build_dataset_from_data_frame(read_sas_file(f)))
   names(datasets) <- toupper(tools::file_path_sans_ext(basename(files)))
   list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = list(product = NA_character_, version = NA_character_))
+}
+
+#' Read one SAS transport or SAS dataset file, refusing one that is not whole
+#'
+#' A transport file cut off part-way (an interrupted copy or download) read
+#' without complaint: haven returned the rows before the break, and the study
+#' was checked as if that were all of AE. Every problem in the missing half
+#' went unreported. A transport file is built from 80-byte records, so one
+#' whose size is not a multiple of 80 has lost its end. A cut that lands on a
+#' record boundary cannot be told from a shorter file, since the format stores
+#' no row count.
+#'
+#' haven's own error names the full path and says only "Unable to read from
+#' file", so an empty or damaged file is reported by its name instead.
+#'
+#' @param path A `.xpt` or `.sas7bdat` file.
+#' @return The data frame haven reads.
+#' @noRd
+read_sas_file <- function(path) {
+  name <- basename(path)
+  xpt <- tolower(tools::file_ext(path)) == "xpt"
+  size <- file.size(path)
+  if (is.na(size) || size == 0) {
+    stop("'", name, "' is empty (0 bytes), so there is no dataset in it to check. ",
+         "Replace it with the real file, or remove it.", call. = FALSE)
+  }
+  # Every transport file opens with this record, v5 and v8 alike. Testing it
+  # first keeps a CSV saved under a .xpt name from being called cut off.
+  if (xpt && !identical(suppressWarnings(readChar(path, 20L, useBytes = TRUE)),
+                       "HEADER RECORD*******")) {
+    stop("'", name, "' is not a SAS transport file, whatever its name says. ",
+         "Nothing was checked.", call. = FALSE)
+  }
+  if (xpt && size %% 80 != 0) {
+    stop("'", name, "' is damaged: it ends part-way through the data, the way a ",
+         "file does when a copy or download was interrupted. Nothing was checked, ",
+         "because checking part of a dataset would miss problems in the rest.",
+         call. = FALSE)
+  }
+  tryCatch(
+    if (xpt) haven::read_xpt(path) else haven::read_sas(path),
+    error = function(e) {
+      stop("could not read '", name, "': it is damaged, or is not a ",
+           if (xpt) "SAS transport (.xpt)" else "SAS (.sas7bdat)", " file (",
+           sub("^Failed to parse .*: ", "", conditionMessage(e)), ")",
+           call. = FALSE)
+    }
+  )
 }
 
 #' Convert a data frame into a `list(data, meta)` dataset entry
@@ -229,6 +277,14 @@ read_study_xpt <- function(path) {
 #' @return `list(data, meta)`, see [read_study()].
 #' @noRd
 build_dataset_from_data_frame <- function(raw) {
+  # Two columns of one name were checked without a word, and which of the two
+  # a rule read depended on how it looked the column up.
+  dup <- unique(names(raw)[duplicated(names(raw))])
+  if (length(dup) > 0) {
+    stop("more than one column is named ", paste0("'", dup, "'", collapse = ", "),
+         ". Give each column its own name; otherwise there is no telling which ",
+         "one a rule checked.", call. = FALSE)
+  }
   dt <- data.table::as.data.table(raw)
   labels <- vapply(raw, function(col) {
     lbl <- attr(col, "label")
