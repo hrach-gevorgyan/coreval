@@ -41,8 +41,12 @@ test_that("empty and unreadable files are named in the error", {
   good <- tempfile("coreval_good_", fileext = ".xpt")
   on.exit(unlink(good), add = TRUE)
   haven::write_xpt(small_dm(), good, name = "DM")
+  # A valid opening record followed by filler: the reader refuses the missing
+  # member header the same way on every platform. Zeroing bytes inside the
+  # variable records instead built a string from a null pointer in the
+  # reader: an error on Windows, and no promise of one anywhere else.
   bytes <- readBin(good, "raw", file.size(good))
-  bytes[801:880] <- as.raw(0L)
+  bytes[241:length(bytes)] <- charToRaw("A")
   writeBin(bytes, file.path(dir, "dm.xpt"))
   expect_error(check_study(dir), "could not read 'dm.xpt'")
 
