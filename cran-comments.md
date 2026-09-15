@@ -1,18 +1,38 @@
 ## Submission
 
-Update to coreval. The previous version on CRAN is 0.1.0.
+Update to coreval. The previous version on CRAN is 0.1.0, published on
+2026-09-12.
+
+## Why this update follows so soon
+
+I know updates are expected no more often than every one to two months, and I
+would not ask for an exception without a reason. 0.1.0 has defects that make
+checks quietly report nothing, which for a conformance checker means data with
+problems is reported as clean. Anyone installing it today gets that version.
+
+Since 0.1.0 the package has been checked against CDISC's own engine on a
+complete real submission (CDISC's pilot study), rule by rule, which found and
+fixed three defects in how real transport files are read. It was also run on
+studies of up to 5.9 million rows, and fed 95 broken or malformed inputs, which
+found cases where a damaged file was checked in part instead of refused. Those
+are fixed too.
 
 This release fixes several defects that made a check quietly report nothing,
 adds CDISC Controlled Terminology support, reads the terminology version a
 study declares in TS or in its Define-XML, adds support for CDISC's USDM
 study-design model, and makes checking a large study about twenty times
-faster. See NEWS.md for the full list.
+faster, with a further halving of time and lower memory use on large studies.
+See NEWS.md for the full list.
 
 The interface only gains. `list_ct_packages()` is new, and `check_study()` and
 `check_dataset()` take a new optional `ct_package` argument that defaults to
 NULL. `check_study()` also gains `standard` and `version`, both optional.
 Nothing existing changed its meaning, nothing is deprecated, and nothing is
-removed, so code written against 0.1.0 runs unchanged.
+removed, so code written against 0.1.0 runs unchanged. The one exception is
+input that was never valid and used to be accepted silently: a misspelt
+`use_case`, a non-logical `include_deprecated`, duplicate column names, and
+damaged or truncated files are now refused with an error that says what is
+wrong.
 
 The installed size grows, from about 1.2 MB to about 1.9 MB. All of it is
 bundled CDISC reference data and the two third-party files described below,
@@ -24,11 +44,15 @@ would need an API key and a network call at check time.
 * Local: Windows 11, R 4.6.1
 * win-builder: R-devel and R-release
 * GitHub Actions: ubuntu-latest, macOS, Windows (R release)
-* R-hub
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 1 note
+
+* win-builder (R-devel and R-release): `Days since last update: 3`. This is
+  the early update explained above.
+* Local `R CMD check --as-cran`, and GitHub Actions on Linux, macOS and
+  Windows: no notes.
 
 ## Notes for the reviewer
 

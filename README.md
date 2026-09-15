@@ -71,6 +71,14 @@ so those come last.
 install.packages("coreval")
 ```
 
+CRAN can lag behind a release by a few days. The newest version is always on
+GitHub:
+
+```r
+# install.packages("pak")
+pak::pak("hrach-gevorgyan/coreval")
+```
+
 It needs R 4.1 or newer. A few extras switch on more checks, and coreval tells
 you when a check was skipped because one is missing:
 
