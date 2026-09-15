@@ -66,9 +66,9 @@ python tests/conformance/compare_pilot.py <out>/report.json <out>
 
 | | |
 |---|---|
-| coreval | commit `fd0fbf9`, rules from cdisc-open-rules `1fb7b81e40bdb6632375761c561fabd29676a477` |
+| coreval | commit `55a6765`, rules from cdisc-open-rules `1fb7b81e40bdb6632375761c561fabd29676a477` |
 | CDISC engine | 0.17.1, cdisc-rules-engine `8740d201c4a3816a8fff93745d698486cb0ea504` |
-| Time | coreval 63 s, engine 443 s, on the same machine |
+| Time | coreval 32 s, engine 443 s, on the same machine |
 
 ## What came out
 
