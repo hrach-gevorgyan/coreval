@@ -1,0 +1,853 @@
+# Changelog
+
+## coreval 0.3.0
+
+CRAN release: 2026-09-15
+
+- **Broken input is refused, not checked in part.** 95 broken and odd
+  inputs were fed through every public function. What changed as a
+  result:
+
+  - A transport file cut off part-way, as an interrupted copy leaves it,
+    was read up to the break and checked as if that were the whole
+    dataset. It is now refused. An empty file, a damaged one, or a file
+    that is not a transport file at all is named in the error.
+  - A CSV with a row of the wrong length was checked up to that row,
+    with only a warning. It is now refused.
+  - A CSV gave different findings from the data it was written from:
+    dates were read as R dates, and a numeric column with gaps, which
+    [`write.csv()`](https://rdrr.io/r/utils/write.table.html) writes as
+    the text `NA`, was read as text. Both now read as the file says, and
+    CSV text in the Windows encoding is repaired like any other input.
+  - Two columns with one name are refused. Which one a rule read was
+    left to chance.
+  - A misspelt `use_case`, or `include_deprecated = "yes"`, quietly
+    changed which rules ran. Both are refused. `list_rules(use_case =)`
+    now filters without a domain too, as documented.
+  - A folder with no readable datasets said to supply .csv files, which
+    a study folder is not read from. It now names what it found instead:
+    CSV files to check one at a time, or datasets in a subfolder.
+  - `check_study(42)` and
+    [`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+    to a missing folder gave internal messages. They now say what is
+    wrong.
+
+- **Twice as fast on large studies, with less memory.** CDISC’s pilot
+  study repeated to 5.9 million rows now checks in 451 seconds instead
+  of 892, and peaks at 5.4 GB instead of 7.1 GB, with identical
+  findings. Dates are parsed once per distinct value rather than once
+  per row, and the Match Datasets join no longer holds six copies of the
+  table at once. docs/BENCHMARKS.md has the measurements and the script.
+
+- **Tested against CDISC’s engine on a complete real study.** CDISC’s
+  pilot submission, CDISCPILOT01, was checked by both tools with the
+  same settings and every finding compared, rule by rule.
+  docs/REAL-STUDY.md is the record and says how to repeat it. Three
+  defects came out of it, none of which CDISC’s small rule examples
+  could have exposed:
+
+- **Fixed: text in the Windows encoding SAS writes was left unchecked.**
+  A transport file does not say how its text is encoded, and a curly
+  apostrophe written on Windows arrives as a byte that is not a
+  character in UTF-8. Every pattern rule meeting one warned and skipped
+  that row. Such text is now read as Windows-1252; valid text is
+  untouched.
+
+- **Fixed: numbers from transport files carried conversion noise.** XPT
+  stores numbers in IBM floating point, and the same visit number could
+  arrive as 9.2999999999999989 in LB and 9.3000000000000007 in SV. 250
+  lab records were reported as having a visit that is not among the
+  subject’s visits. Numbers read from XPT and SAS files are now rounded
+  to 15 significant digits, below the noise and above any precision
+  clinical data carries. The pilot study now gives identical findings
+  read from its XPT files and from its Dataset-JSON copy.
+
+- **Fixed: a parent record key written with padding matched nothing.**
+  SAS often writes a number into a character field right-aligned, so
+  IDVARVAL 1 becomes `" 1"`. No SUPP or RELREC row found its parent, and
+  CORE-000206 reported all 64,637 of them as pointing at records that do
+  not exist. Keys are compared without surrounding blanks.
+
+- **Fixed: checking a USDM study ran nothing and reported it clean.**
+  Three separate faults, and the conformance scores could see none of
+  them, because the harness reaches the rules by a route a user never
+  takes.
+
+  A USDM document states its version as “4.0.0” and the rules say “4.0”,
+  and versions were compared as exact text, so not one rule was
+  selected. Versions are now compared as versions everywhere: “4.0.0”,
+  “4.0” and “4” are one, and “3-4” is “3.4”. That comparison had been
+  written out three separate times, with three slightly different
+  normalisations, and is now one function.
+
+  The 96 JSONata rules were only ever run by the harness.
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  now runs them, once per study rather than once per entity table, and
+  reports each finding against the entity and row it is about, the same
+  numbers the other USDM rules report against.
+
+  37 USDM terminology rules were refused for lacking a study-wide
+  Controlled Terminology version, which they never read: a USDM document
+  names the terminology version beside every coded value. The harness
+  always supplied a version, so they scored as passing.
+
+- **A check where nothing ran now stops with an error.** If every rule
+  is filtered away before any can be tried, that is a check that did not
+  happen, and it used to print as a study with no problems.
+
+- **Checking one dataset no longer reports on datasets it was never
+  given.** A DM on its own was told that ADSL and the tobacco-product
+  dataset were missing. Rules about what the whole study contains are
+  now skipped for a single dataset, saying so, the way rules needing
+  another dataset already were.
+
+- **A data frame with no labels is not reported for wrong labels.** A
+  table built in code has no variable labels until someone adds them,
+  and every label rule reported a mismatch against a blank. Those rules
+  now skip for a dataset carrying no labels at all; a dataset with some
+  labels still has every blank one checked.
+
+- **The README is rewritten**, at about a third of its length. The
+  detail it carried now lives in the getting-started vignette, which
+  gains sections on narrowing to one standard, on the Pinnacle 21 IDs
+  and guidance each rule carries, and on USDM.
+
+- **coreval reads USDM studies and runs their rules.** 257 USDM rules
+  are bundled and 253 of them agree with CDISC’s own answer sheets, on
+  every positive and negative fixture: all 157 Record Data rules and all
+  96 JSONata rules. The bundle goes from 797 rules to 1,054, and the
+  full sweep from 705 passing to 958, with the 55 disagreements
+  unchanged.
+
+  The 4 that do not run are JSON Schema Check and are skipped naming the
+  type. Which errors they report depends on the internal error tree of
+  one JSON Schema library, including how it walks the branches of an
+  `anyOf`; another validator reports a different shape, and deriving one
+  from the other would be inventing findings rather than checking data.
+
+  Ten defects came out of getting there, and every one of them made a
+  check quietly do nothing rather than report something wrong.
+
+- **A USDM study is one JSON document, and it is now read as one.**
+  CDISC publishes the Record Data fixtures as flattened per-entity CSVs,
+  which is its own test harness’s format rather than anything a user
+  has, so the rules were only ever runnable against CDISC’s own files.
+  The document is now flattened into those tables the way the reference
+  flattens it.
+
+  It is a port and not a fresh design, because the traversal order fixes
+  the order of records in each table, which fixes the record number a
+  finding is reported against. The reference walks with the JSONPath
+  query `$..*`, where `*` matches an object’s keys and matches nothing
+  on an array, so it is neither breadth- nor depth-first.
+
+  No CDISC fixture pairs a document with the tables it should produce:
+  the Record Data fixtures ship only tables and the JSONata fixtures
+  only documents. So the pairing is made rather than assumed.
+  `tests/conformance/dump_usdm_tables.py` runs CDISC’s own service over
+  a document and writes what it produces, and
+  `tests/conformance/compare_usdm_reader.R` diffs coreval’s tables
+  against those. Across documents holding 50 to 75 entities and up to
+  17,593 records, every entity, row, column and cell matches.
+
+- **JSONata rules run.** 96 rules state their whole check as a JSONata
+  expression over a USDM study document rather than as a Check block.
+  coreval bundles the reference JSONata implementation as JavaScript and
+  runs it in QuickJSR’s embedded engine, offline, with CDISC’s own
+  utility functions assembled into the prelude the way CDISC’s engine
+  assembles them. `QuickJSR` is a Suggests, with no dependencies of its
+  own; without it these rules skip with a reason.
+
+  The bundled evaluator is version 1.8.7 rather than the current 2.x.
+  2.x is built on native `async`/`await`, and settling a promise needs
+  the host to pump the engine’s job queue, which QuickJSR cannot; 1.8.7
+  uses a generator trampoline and returns its result directly. That is a
+  real divergence from the reference, so it is measured and not argued:
+  every one of the 96 rules returns exactly the paths its committed
+  sheet names, on every fixture.
+
+- **Fixed: the conformance harness ran rules
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  would not.** Three bundled rules carry types missing from the
+  supported list, so the harness evaluated them while the package itself
+  skipped them, and the scoreboard carried two passes no user could ever
+  get. Both types are conjunctions of types already supported and are
+  evaluated by the same machinery, so they are now declared rather than
+  quietly exercised. The harness also refuses an unsupported type up
+  front, instead of letting the rule fall through and be skipped for a
+  reason that is not true: the four JSON Schema rules were reported as
+  shipping “no datasets, only define.xml”, with no define.xml anywhere
+  near them.
+
+- **Fixed: a dataset was named after its file rather than what the
+  manifest declared.** A test case’s `_datasets.csv` can carry a
+  `Dataset Name` column, and where it does, that is the dataset’s name.
+  USDM fixtures truncate the file stem to 27 characters, so a rule
+  scoped to `StudyProtocolDocumentVersion` found no dataset in scope at
+  all while the dataset sat there under the truncated spelling. Two
+  files declaring one name now raise rather than silently resolving to
+  the first.
+
+- **Fixed: a declared `Join Type: left` was ignored.** Ten Match
+  Datasets specs declare it, and it is the reference’s signal to keep
+  the rows that matched nothing and blank their joined-in columns. Those
+  rows are the point of such a rule: which epochs no activity instance
+  points at, which timings nothing schedules. Both reported nothing.
+
+- **Fixed: a grouped `distinct` collapsed to a plain column when every
+  group held one value,** so an unmatched row read as `NA` instead of
+  the empty set and the rule found nothing there. Comparison operators
+  can now read a set-valued operand rather than raising on one. The
+  ordinal operators refuse it instead, which is a change too:
+  `list(...) < "2"` does not raise in R, it compares the deparsed text
+  and answers `FALSE` for every row.
+
+- **Fixed: `empty` answered `NA` for an Operations binding that resolved
+  to nothing.** 63 rules ask exactly that of a codelist lookup, where
+  “this code is not in the codelist” is the finding, and `NA` is not a
+  violation: it made the enclosing condition `NA` and the row vanished
+  from the report while its neighbours were listed. A dataset column’s
+  `NA` still is not blank, which is what keeps the rules that rely on an
+  unmatched join reading as populated.
+
+- **Controlled terminology preferred terms now ship,** in their own
+  lazily read file, so a study with no rule asking for one pays nothing
+  for them. The rules that do ask were refused outright before. Four
+  further defects sat behind that refusal: the CT family for a declared
+  package type was guessed from a short list instead of being derived
+  the way the reference derives it, so every DDF lookup went to the
+  wrong terminology; the codelist code was resolved against an empty
+  binding list; the term separator was the empty string, which splits a
+  codelist into single characters; and a code absent from the codelist
+  aborted the whole operation instead of answering “not found”.
+
+- **`get_xhtml_errors` is implemented,** with the XHTML schemas bundled
+  so validation happens offline. The XHTML modules are the W3C’s rather
+  than CDISC’s, under their own permissive grant, and `inst/COPYRIGHTS`
+  says so. `xml2` stays in Suggests: without it these rules skip with a
+  reason.
+
+- **Fixed: an escaped quote inside a quoted CSV field was read as two
+  quotes.** RFC 4180 escapes a quote by doubling it, so
+  `"<ref klass=""Range""/>"` is the value `<ref klass="Range"/>`.
+  `fread` does not collapse the pair when the field contains no
+  separator, and handed back the doubled form;
+  [`utils::read.csv`](https://rdrr.io/r/utils/read.table.html) reads the
+  same file correctly, so this was not ambiguity in the data.
+
+  It produced a wrong value rather than a failure, which is why it went
+  unnoticed: a rule matching such a value against a pattern got a
+  confident answer computed from text the file does not contain. Only
+  files that really contain a doubled quote are re-read, so the common
+  case pays one scan and nothing more.
+
+- **Fixed: a column called `name` shadowed the column being
+  aggregated.** `data.table` evaluates a grouped expression with the
+  columns in scope, so looking up the variable `name` inside one found a
+  column of that name instead of the function’s own argument, and then
+  tried to resolve that column’s first value as a variable. No SDTM
+  domain has a column called `name`, which is why it never showed; every
+  USDM entity does. The column is now taken out before the grouped call
+  rather than looked up inside it.
+
+- **`codelist_terms` has a second shape, and it now runs.** One asks for
+  every term of a codelist, once for the dataset. The other asks a
+  question per row: for this row’s code, in the terminology version this
+  row cites, what is the matching term’s submission value. Only the
+  first was implemented, so the second bound nothing and every rule
+  comparing against it answered from an empty set.
+
+  `returntype: pref_term` is refused rather than answered. Preferred
+  terms are not bundled: they are most of the bulk of CDISC’s caches and
+  no bundled rule needs them. A rule asking for one is skipped with that
+  reason.
+
+- A variable a fixture declares `Boolean` is read as a logical. Left as
+  text, `"True"` was compared against R’s coercion of `TRUE` to `"TRUE"`
+  and a row that plainly satisfied its rule read as clean. It worked for
+  `"FALSE"` only because that casing happens to match.
+
+- **Fixed: `empty` read a set-valued binding as populated.** A grouped
+  Operations binding resolves to one set per row, and
+  [`is.na()`](https://rdrr.io/r/base/NA.html) on a list is FALSE for
+  every element including an empty one, so a row whose set held nothing
+  read as populated and the rule found no violation.
+
+- **Fixed: a paired join key could collide with a column the matched
+  dataset already had.** Renaming the right side’s `instanceType` onto
+  the left’s `parent_entity` collides when the right carries a
+  `parent_entity` of its own, leaving two columns of one name and a
+  merge that matches nothing. The keys are now renamed after the
+  colliding columns have been moved aside.
+
+- **A `Match Datasets` key can now name a different column on each
+  side.** A key is usually one column both datasets share, but it can
+  also be a pair, `Left: id` / `Right: parent_id`, for a child whose
+  foreign key is spelled differently from its parent’s id. Both forms
+  mix inside one `Keys` list. Handing that list to the variable-name
+  resolver raised “non-character object(s)”, which surfaced as an
+  evaluation failure saying nothing about keys. No bundled rule uses the
+  paired form.
+
+- **A matched dataset is now found whatever case its name is written
+  in.** The lookup was case-sensitive while every reader here
+  upper-cases dataset keys, so a `Match Datasets` entry naming `Code`
+  against a `CODE` key missed silently: the join was skipped and the
+  rule then compared against a column that had never been joined in.
+  SDTM rules name domains in upper case already, so nothing shipped was
+  affected.
+
+- **A column that collides across a join is now reachable under both
+  spellings.** The reference renames the columns a rule explicitly names
+  as `Name.column`, then lets pandas suffix the remaining true
+  collisions as `column.Name`. The two halves use opposite orders. Only
+  the first was implemented, so a rule naming the suffixed form found
+  literal text.
+
+- `map` and `codelist_extensible` run, and an Operations entry can carry
+  `group_aliases` so an aggregate computed over one dataset joins onto
+  another by that dataset’s own column names.
+
+- **Fixed: `max` was a date operation, and should never have been.** The
+  reference has four separate operations where coreval had two:
+  `max`/`min` are plain aggregates over whatever the column holds, and
+  only `max_date`/ `min_date` parse ISO 8601. Both went through the date
+  picker here, which validates against a date regex and yields nothing
+  for anything else, so `max` over a text or numeric column produced no
+  binding and the rule using it quietly found nothing.
+
+  Exactly one bundled rule uses `max`, and its column is a date, so no
+  shipped result was wrong. It is fixed because the next rule to use it
+  might not be, and because a missing binding is the silent kind of
+  failure. `min` now exists too.
+
+- A rule can now scope by USDM entity (`Scope: Entities`). A scope key
+  the resolver did not recognise was skipped, which meant every other
+  test passed by default and the rule matched every dataset in the study
+  rather than none.
+
+- **Reads CDISC Dataset-JSON and Dataset-NDJSON.** These are the formats
+  CDISC publishes as the successor to transport files, and
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  now takes a folder of either. `jsonlite` is a `Suggests`, so the
+  runtime dependencies are still `data.table` and `haven`; without it a
+  Dataset-JSON study raises rather than reading as empty. Where a folder
+  holds both, transport files win, since a folder holding both is a
+  conversion in progress and the transport files are what a submission
+  is made of.
+
+  Verified by round-trip rather than against an answer sheet, because
+  CDISC publishes no Dataset-JSON reference data: the same study written
+  as XPT, as Dataset-JSON and as Dataset-NDJSON has to produce the same
+  findings, on the same rows, from the same rules. A dropped row or a
+  shifted column breaks that and keeps the count.
+
+  Two kinds of broken file are refused rather than read. Rows that do
+  not all match the declared column count are malformed, and a file
+  whose `records` count disagrees with the rows it carries has been
+  truncated. CDISC’s own engine returns an empty dataset when a
+  Dataset-JSON fails schema validation, which turns a broken file into a
+  clean bill of health.
+
+## coreval 0.2.0
+
+- **Fixed: a malformed CSV lost records, or every column name.** Three
+  separate ways, all silent, all found by reading the warnings the
+  conformance sweep had been printing and nobody had opened:
+
+  - A short last row was treated as a footer and discarded.
+    CORE-000103’s `pr.csv` holds three records and coreval saw two.
+  - A row with more fields than the header made the reader abandon the
+    header and name the columns after the first row’s values, so the
+    same fixture’s `ce.csv` came back with columns called `1234.0` and
+    `Fracture` and no `CETERM`, `CECAT` or `CESCAT`. Every rule about
+    them found nothing and the dataset looked clean. Both rules reading
+    it still passed, because finding nothing was what their answer sheet
+    expected.
+  - Separator detection could choose whitespace over the comma on a file
+    whose fields carry trailing spaces, returning `V1`..`V13` from a
+    ten-column file.
+
+  The reader now pads a short row instead of dropping it, as the
+  reference does through pandas, keeps the header as the header, and
+  states the separator rather than letting it be guessed. A row with
+  more fields than its header is still reported, since that file really
+  is invalid.
+
+- **A define.xml that cannot be read now says so.** It used to return
+  the same nothing as a study with no define.xml at all, so a truncated
+  or non-Define file was indistinguishable from one that was never
+  supplied. Worse once the define became a source of the CT version: the
+  rules that needed it skipped saying “this study does not say which
+  terminology it follows, pass ct_package”, which is true of the parsed
+  result and useless to someone whose file simply stops mid-element. The
+  warning now names the file and the reason, down to the line.
+
+- **Define-XML now says which controlled terminology a study follows.**
+  A Define-XML 2.1 records it in `def:Standards`, the same way TS
+  records it in `TSVCDVER`, and coreval reads it instead of asking. TS
+  still wins where both say; the define is used when TS is absent or
+  cites no CDISC version.
+
+  This is what CORE-000929 was actually blocked on. The rule compares
+  the term codes in a variable’s codelist against the `DOMAIN`
+  codelist’s, and that codelist has 150 terms in the 2020-12-18
+  terminology its fixture’s define cites and 85 in the newest. Answered
+  from the wrong release it flagged a clean `CM`.
+
+- **The term codes inside a variable’s Define-XML codelist are read**
+  (`define_variable_codelist_coded_codes`). These come from the study’s
+  own define.xml and were previously refused as detail coreval does not
+  read, which was the wrong diagnosis: nothing about them needs
+  bundling.
+
+- **Fixed: `is_contained_by` ignored a collection on the target side.**
+  The operator handled a comparator that varies per row but not a target
+  that is itself a set per row, so it compared the set against the
+  values and reported a violation for every row. The reference treats a
+  row as contained when ANY of its items is in the comparator, which
+  reads as too weak and is what it does.
+
+- Three more rule types run: `split_by`, `get_codelist_attributes` and
+  the per-row form of `contains_all`/`not_contains_all`. The last was
+  the reason CORE-000934 found nothing - the reference compares row by
+  row when each row has its own collection, and coreval only had the
+  dataset-level path, so its single verdict landed on row 1.
+
+- **The controlled terminology version is read from TS.** Studies record
+  it themselves - `TSVCDREF` names the publisher and `TSVCDVER` the
+  version - so
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  picks it up without being told. `ct_package` stays as the manual
+  override. Rows citing someone other than CDISC are ignored, and where
+  a real TS carries stale rows the version most rows agree on wins.
+
+- **Controlled Terminology checks now run.** Nine rules ask whether a
+  value is a legal term - `SEX` may be `F`, `M`, `U` or `INTERSEX` and
+  nothing else - and they were skipped because CDISC’s terminology
+  caches are 438 MB. Almost all of that is definitions and synonyms no
+  rule asks for; the submission values, C-codes and extensible flags
+  that conformance actually needs are 0.54 MB, so every published
+  package is now bundled.
+
+  Tell it which version your study follows:
+
+  ``` r
+
+  check_study(dir, ct_package = "sdtmct-2026-03-27")
+  list_ct_packages("sdtm")
+  ```
+
+  coreval will not choose for you. Terminology moves between releases -
+  `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED` - so judging a
+  study against a version it never declared would both invent violations
+  and hide real ones. Without `ct_package` those rules are skipped
+  saying exactly that. The table is read on first use, so a session that
+  never runs one pays nothing.
+
+- **Fixed: an Operations id without a `$` was treated as literal text.**
+  Six rules (`CDISC.SDTMIG.CG0555`-`CG0560`) declare ids like
+  `pkunit_terms` bare, so `PPORRESU is_not_contained_by pkunit_terms`
+  compared the column against the *string* “pkunit_terms” - never
+  contained by it, so every row whose `PPTEST` lacked “norm” was
+  reported, in a clean dataset as much as a dirty one.
+
+- **Fixed: an unimplemented Operations type reported nothing instead of
+  saying so.** The dispatch fell through to no binding, so the rule’s
+  condition degraded to literal text and the rule quietly found nothing.
+  CORE-000934 did this: CDISC’s engine reports two rows on its own
+  fixture and
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  reported none. It now names the operation it cannot run.
+
+- The progress bar now names the domain being checked and how far
+  through the study it is, and its percentage is weighted by how many
+  records each domain holds rather than by a plain count of rules. A
+  check against a 161,600-row `AE` costs hundreds of times one against a
+  200-row `SJ`, so the old bar sprinted through the small domains and
+  appeared to hang on the big one.
+
+- The one-row-per-(record, variable) table that some rule types need is
+  built column by column into a preallocated vector rather than as one
+  table per variable stitched together. It is inherently large - 27
+  columns of a 161,600-row AE is 4.4 million rows - and the old shape
+  held every converted column and the finished table at the same time.
+  R’s reported high-water on a 511,000-row study fell from 744 MB to 589
+  MB.
+
+- Date columns are scanned once instead of two to four times. Validating
+  a date, detecting its precision and parsing it each re-ran the same
+  expensive regex over the same column; the components are now computed
+  once and passed along. `--DY` comparisons were the worst case,
+  scanning two columns four times.
+
+- The per-rule synthetic datasets are built once per domain instead of
+  once per rule. Those builders never depended on the rule, yet about 60
+  rules each asked for the identical answer, and computing one of them
+  scans every variable against every record. Checking a 511,000-row
+  study went from 77s to about 47s. The cache lives for one sweep only
+  and holds 0.1 MB.
+
+- The bundled rule table is built once per session instead of once per
+  domain. It was 600 MB of the 2.9 GB a 51,000-row study allocated - a
+  fifth of everything, none of it touching your data. Checking a
+  511,000-row study went from 113s to 77s.
+
+- **Checking a large study is dramatically faster.** The cross-dataset
+  match that joins a supplemental or related dataset to its parent
+  looped over every child row and rescanned the whole parent each time.
+  It was 90% of
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)’s
+  entire runtime and got worse than linearly with size. It is now a
+  single grouped join per distinct `(RDOMAIN, IDVAR)` combination.
+
+  On a CDISCPILOT-shaped study:
+
+  | rows    | before  | after |
+  |---------|---------|-------|
+  | 5,000   | 18.4s   | 4.9s  |
+  | 51,000  | 122s    | 11.1s |
+  | 511,000 | ~21 min | 73s   |
+
+  The answers are unchanged: the new join was compared against the old
+  one on 173 fixture cases and is bit-identical, the conformance sweep
+  is unmoved at 697/54/46, and no failing rule’s reported records
+  changed either.
+
+- **`domain_label` now means what the standard calls a domain**, not
+  what your own dataset metadata happens to call it. The two differ:
+  SENDIG calls `LB` “Laboratory” where SDTMIG calls it “Laboratory Test
+  Results”. CORE-000272 asks whether `--CAT` equals that label, so on a
+  SEND study coreval was answering a different question and missing the
+  finding. Per-standard dataset labels are now bundled (483 of them, 4
+  standards). A domain no standard defines still falls back to your own
+  label.
+
+- **Fixed a false-positive class: a variable that isn’t there is no
+  longer treated as failing a date or uniqueness test.** Three operators
+  were written as plain negations of their positive counterparts, which
+  answer `FALSE` for a column the dataset does not have - so negating
+  them answered `TRUE`. `is_incomplete_date` was the damaging one:
+  CORE-000138/139 ask whether `DM.RFSTDTC` is an incomplete date while
+  `--STDY` is populated, so on a study with no DM every record carrying
+  a study day was reported. On a three-dataset test study that was 267
+  of 393 findings - noise that buries the real ones. `is_unique_set` and
+  `is_unique_relationship` had the same shape.
+
+  Found by running CDISC’s own rules engine over the same data and
+  comparing rule by rule: it reports nothing for those rules, coreval
+  reported hundreds. The conformance pass rate did not move at all, in
+  either direction.
+
+- **Codelist checks against Define-XML now run.** coreval reads the
+  codelist C-code a Define-XML file attaches to each variable, and
+  bundles the code the CDISC Library expects for it, so a rule can tell
+  you when your define declares the wrong codelist for a variable or
+  declares none where the standard has one. One rule (SENDIG SEND49)
+  moves from skipped to running.
+
+  Only the *identity* of a codelist, never its terms: which values are
+  legal for `SEX` is Controlled Terminology, around 438 MB, and still
+  deliberately not bundled. Rules asking what is inside a codelist
+  continue to skip with a reason.
+
+- **Rules refreshed** from a newer upstream commit of CDISC’s rule
+  repository. One rule’s scope changed (CORE-000892 now applies to
+  Special Purpose domains rather than Findings), which changes the
+  domains it runs on from 62 to 25.
+
+- [`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+  names the offending argument when given a path that isn’t a single
+  string, instead of surfacing an error from inside `data.table`.
+
+- Documentation fix: `findings` is one row per affected *record*. Three
+  places called it “one row per problem”, which is what
+  [`summary()`](https://rdrr.io/r/base/summary.html) counts and a
+  different number.
+
+## coreval 0.1.0
+
+CRAN release: 2026-09-12
+
+First release. The API is settled for 0.1.x; anything that changes will
+go through a deprecation cycle rather than disappearing.
+
+A personal open-source project. Not affiliated with or endorsed by
+CDISC, and not a CORE-certified engine. It’s a quick local check to run
+*before* your qualified validation tool, never instead of it.
+
+### What you can do with it
+
+- **Check one dataset** with
+  [`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md):
+  a data frame you already have open, or a single `.xpt`, `.sas7bdat` or
+  `.csv` file. No study folder needed. This is the one for when you’re
+  mid-way through writing the code that builds a domain. coreval works
+  out the domain from your `DOMAIN` column, or the file name. Rules that
+  need a dataset you didn’t supply are skipped and say so, rather than
+  being run against columns that aren’t there.
+- **Check a whole study** with
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  on a folder. It reads XPT, SAS and CSV, and picks up Define-XML (2.0
+  or 2.1) if it’s there. Reading everything at once is what makes the
+  cross-dataset rules work.
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  is there when you want the parsed study itself, or want to check the
+  same large study more than once without re-reading it.
+- **Read what’s wrong in plain language.** Printing a result gives you a
+  report grouped by problem, worst first, each described in words,
+  “Variable value is not in correct ISO 8601 date or datetime format”,
+  with the rows and values that caused it and the rule number at the
+  end. The same description is on every row of `$findings` as an `issue`
+  column, so a rule number is never the only thing you get.
+- **Findings are triaged**, so the ones that are definitely wrong come
+  first. CDISC Open Rules carry no severity field. Pinnacle 21’s
+  Notes/Minor/Major/ Critical is P21’s own layer, not CDISC’s, so
+  coreval does not report one and does not invent one. What it does is
+  separate `wrong value` (your data breaks the rule: a month of 13, a
+  value outside its codelist) from `missing required` and
+  `missing optional` (often legitimate: a screen-failure subject, a
+  variable your raw data does not carry yet). Sorting by row count alone
+  put those in the wrong order. It is a `triage` column on every
+  finding, so a spreadsheet can be sorted by it too.
+- **A whole-study report is grouped by dataset**, with a summary of
+  which dataset has the most problems before any detail, so you can see
+  where the trouble is at a glance. `print(result, n = 20, rows = 5)`
+  shows more.
+- **Rules that only say “at least one variable is missing” now name
+  which ones.** Both sets the rule compared are in the finding, so the
+  difference between them is shown:
+  `missing required variables: SUBJID, SITEID, COUNTRY`.
+- **See what couldn’t be checked**, always, in a second table with a
+  reason for each. An empty findings table can mean clean data *or*
+  rules that never ran, and those look identical otherwise.
+- **Save it and track it** with
+  [`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+  to Excel or CSV. You get `findings`, `skipped`, an `about` sheet and -
+  when a rule matched more records than were kept - `truncated`. The
+  file carries empty `Status`, `Owner` and `Notes` columns for you to
+  fill in, so “expected, see protocol deviation log” lives next to the
+  finding instead of in another document. Pass `tracking = FALSE` to
+  leave those out.
+- **Provenance travels with the exported file.** `about` records which
+  standard the run was scoped to, how many checks ran, whether the
+  result was filtered before export, and whether any counts were capped.
+  A shared spreadsheet outlives the console session that made it, and
+  whoever opens it cannot otherwise tell that it is partial.
+- **Cross-refer to Pinnacle 21.** Every rule now carries the legacy
+  conformance-rule ids it descends from - `CG0665`, `SEND66`, `TIG0699`,
+  `FB0801` - which are the ids P21 and the published Conformance Rules
+  spreadsheets use. The report shows them next to the CORE id, so a
+  finding here can be matched to a finding there, including to a
+  severity CDISC itself does not publish. All 797 rules have at least
+  one.
+- **The “why”, from the Implementation Guide itself.** Each rule carries
+  the sentence it exists to enforce, with document and section: *“The
+  SENDIG requires dates and times of day to be stored according to the
+  international standard ISO 8601 (SENDIG v3.0 4.4)”*.
+  `print(result, guidance = TRUE)` shows it under each problem - off by
+  default, since it roughly doubles the report - and
+  [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+  always returns it.
+- **One function for every question about the rule set.**
+  [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+  now answers all three:
+  [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+  for the catalog, `list_rules(id = "CORE-000547")` to look up a rule
+  the report named, `list_rules(domain = "AE")` for what applies to a
+  domain. The columns are the same whatever you ask, so the result is
+  safe to filter, join and script against. `rule_info()`,
+  `rules_for_domain()` and `rules_version()` are gone - the last is now
+  `attr(list_rules(), "rules_version")`, and
+  [`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+  records it in every exported file anyway.
+- **[`summary()`](https://rdrr.io/r/base/summary.html)** gives the
+  counts in three lines, for a script or a quick “did that fix help?”,
+  and returns them as a row you can log.
+- **[`filter_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/filter_findings.md)**
+  narrows a result by triage, dataset, rule or variable, and returns a
+  result - so it still prints as a readable report, and says it is a
+  subset rather than passing for the whole picture.
+- A **Getting started** vignette walks through all of it, on a small
+  study built as you read, so it runs without any data of your own.
+
+### Speed
+
+- Checking is **dramatically faster** - roughly 50x on large data. Four
+  things were doing per-row work on whole columns: the date operators
+  called
+  [`grepl()`](https://rdrr.io/r/base/grep.html)/[`regexpr()`](https://rdrr.io/r/base/grep.html)
+  once per value; findings were assembled one `data.table` per violating
+  record; the code building reported values re-decided what kind of
+  thing each variable was for every row; and the uniqueness operators
+  answered “does this key repeat?” by building an interaction factor and
+  sorting it, rather than by hashing.
+
+  | rows      | before  | after |
+  |-----------|---------|-------|
+  | 10 000    | 37 s    | 1.1 s |
+  | 200 000   | ~12 min | 18 s  |
+  | 1 000 000 | ~1 hour | 71 s  |
+
+  Finding counts are identical at every size.
+
+- Findings are **capped at 1000 records per rule** by default. A rule
+  can flag every row - a missing `EPOCH` on a 200 000-row `LB` is 200
+  000 identical findings, beyond what anyone reads or Excel can hold.
+  The true count is kept in the new `truncated` table and shown in the
+  report (“1 000 000 records (first 1 000 kept)”), so nothing is
+  under-reported. `max_records = Inf` keeps everything.
+
+- A progress bar appears for long checks when running interactively, so
+  a slow study no longer looks like a hang.
+  `options(coreval.progress = FALSE)` turns it off; it is already off in
+  scripts.
+
+### Fixed
+
+- **Factor columns no longer crash the check.** A factor is text to
+  every rule but an integer vector underneath, so the whole run died
+  with `'nzchar()' requires a character vector`.
+  `read.csv(stringsAsFactors = TRUE)` and plenty of older code still
+  produce factors, so they are converted rather than refused.
+- **A trailing blank in `DOMAIN` no longer changes the answer.** `"AE "`
+  was treated as a domain of that name: it scoped to a different rule
+  set, and resolved `"--STDTC"` to `"AE STDTC"` - a column nothing has -
+  so every `"--"` rule silently found nothing. (The padded value is
+  still reported as a problem in its own right, by the rules that exist
+  to catch exactly that.)
+- **A dataset with no rows, or an all-blank `DOMAIN`, says which it
+  is.** The old message claimed there was “no single DOMAIN value”,
+  which reads as “your column is inconsistent” to someone whose data
+  simply has no rows yet.
+- `days_in_month()` was wrong for vector input: it built its lookup
+  table with `c(31, ifelse(leap, 29, 28), 31, ...)`, which produces one
+  element per YEAR rather than one per month, so for n years the table
+  was 11 + n long and every month from March on read the wrong slot.
+  Correct for a single value and wrong for a column - which the old
+  per-row date code hid completely. `"2003-11-31"` was rejected when
+  checked alone and accepted when checked as part of a column.
+
+### Fewer rules, better aimed
+
+- **Rules are scoped to the standard your data follows.**
+  `standard = "SDTMIG"` was accepted and silently ignored before, so an
+  SDTM study was also measured against SENDIG rules - 73 of the 270
+  rules in scope for DM are SENDIG-only. Declaring it now halves the
+  rules and more than halves the reported problems, losing no real
+  coverage. Matched exactly, so a `SENDIG` study does not pick up
+  `SENDIG-DART` rules.
+- **Rules are scoped to the Implementation Guide VERSION too**, when you
+  declare one:
+  `check_dataset(dm, standard = "SDTMIG", version = "3.4")`. Rules are
+  written per version - 408 SDTMIG rules exist for 3.2 against 445 for
+  3.4, and 86 apply to exactly one version - so without this a 3.2 study
+  is measured against rules written for a guide it does not follow.
+  `"3-4"` and `"3.4"` are both accepted, since CORE test cases write the
+  first and the rules the second.
+- **Deprecated rules are no longer run** unless you ask for them with
+  `include_deprecated = TRUE`. A deprecated rule has a published
+  replacement, so running both reports the same defect twice.
+- Together these are why one problem could appear three times: once from
+  the SDTMIG rule, once from its SENDIG equivalent, once from a
+  deprecated predecessor. Declaring the standard now reports it once.
+- When no standard is declared, every standard’s rules still run -
+  coreval does not guess - but the report **says so**, instead of
+  quietly reporting SEND findings on SDTM data.
+
+### Licensing and API
+
+- **The MIT notice for the bundled CDISC material now ships with the
+  package**, in `inst/COPYRIGHTS`. cdisc-open-rules is MIT licensed, and
+  MIT requires the copyright and permission notice to accompany
+  substantial portions of the work - coreval bundles 797 extracted rules
+  and CDISC standards metadata, but the notice lived only in
+  `NOTICE.md`, which is excluded from the build and so never reached
+  anyone who installed the package. A test now guards it.
+- **[`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  takes a folder path**, so
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  is now optional: `check_study("study/sdtm")` instead of reading first.
+  Reading yourself is still worth it to inspect what was parsed, or to
+  check the same large study twice without re-reading it.
+- `sdtm_domain_classes()` is no longer exported - a domain-to-class
+  lookup table answers a question nobody working with their own data
+  has.
+- `evaluate_rule()` is no longer exported. It returned a raw logical
+  vector, needed a rule record fetched from package internals, and had
+  no story a user could follow now that
+  [`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md)
+  exists.
+
+### Coverage
+
+- **41 more rules**, from `Unpublished/SDTMIG` and
+  `Unpublished/SENDIG` - folders the extractor never opened. Both are
+  SDTM- and SEND-shaped, so this engine can read their data, and only
+  the ones CDISC already ships expected results for are taken (11 of
+  128, and 30 of 77). That is the whole remaining gap: of the 767
+  upstream rules in a readable format that CDISC ships results for,
+  coreval now has 767.
+- Still excluded, and why: **USDM** (259 rules) is a JSON study-design
+  model, not tabular datasets -
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  cannot read it at all. **Unpublished/ADAMIG** (93) ships test data but
+  *no* expected results for a single rule, so nothing there can be
+  verified. Another 292 readable rules have no expected results either.
+- Two new operators, `contains_case_insensitive` and
+  `does_not_contain_case_insensitive`.
+- **13 TIG domains added to the domain-to-class table.** It claimed to
+  cover TIG and did not: 42 of the 55 TIG domains happen to be shared
+  with SDTM/SEND and resolved by accident, while `TO`, `PT`, `IN`,
+  `RELREF` and nine others resolved to nothing. Every rule scoped to one
+  failed its `Scope > Classes` check and was skipped as “no dataset
+  matches the rule’s scope” - with the right dataset sitting in the test
+  case. Taken from the same CDISC cache as the rest of the table, and
+  checked against the 42 shared domains first: no conflicts.
+
+### What’s covered
+
+- **797 rules** for SDTM, SEND and TIG, bundled inside the package.
+  Nothing is downloaded. No internet, no API key, no account, and your
+  data stays put.
+- **Around 60 rule operators**, including comparison of partial dates
+  (SDTM dates are legitimately incomplete, like `2024-03`), grouping and
+  uniqueness checks, and set membership.
+- **Cross-dataset joins**: RELREC relationships, SUPP/SQ supplemental
+  qualifiers, and parent-child joins, plus the `Operations` pipeline
+  that pre-computes values rules refer to.
+- **CDISC Library variable metadata** for SDTM, SEND, ADaM and TIG, so
+  rules comparing your variables against the standard’s can actually
+  run, and SEND studies are checked against SEND metadata rather than
+  refused. Taken at build time from the offline cache CDISC’s own engine
+  ships with; no CDISC API is contacted, ever.
+
+### How much you can trust it
+
+- Checked by replaying CDISC’s own reference test cases and comparing
+  flagged records one by one. It currently agrees with CDISC on **540 of
+  562** published, fully executable rules that ship reference data,
+  about 96%. The README explains the other denominators and why there’s
+  more than one.
+- A rule that can’t be evaluated is always reported as skipped, with a
+  reason, never counted as a pass.
+
+### What it can’t do yet
+
+- **No ADaM rules.** CDISC publishes 93 of them, but none currently
+  ships reference results, so there’s no published expected output to
+  check an implementation against. Including them would mean asking you
+  to trust checks nobody has verified. They go in as soon as that data
+  exists.
+- **No Controlled Terminology term lists.** That data runs to roughly
+  438 MB and belongs in a separate package. The CT package *dates* are
+  bundled, so rules checking that a study cites a real terminology
+  version do run.
+- **Split domains** are handled for uniqueness: a value appearing once
+  in each of two files is correctly reported as a duplicate. A few rules
+  that expect findings merged under one dataset name, rather than
+  reported per file, are still skipped.
+- **Numbers are reported as parsed**, so a source value of `0.0` comes
+  back as `0`.
+- **Not a CORE-certified engine.** These figures describe agreement with
+  CDISC’s published reference data. They aren’t certification.
