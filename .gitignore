@@ -31,3 +31,7 @@ vignettes/*.html
 vignettes/*.R
 vignettes/*_cache/
 vignettes/*_files/
+# Promotional video material, kept locally and never published or built.
+video/
+# The package website, built by pkgdown and published from its own branch.
+site/

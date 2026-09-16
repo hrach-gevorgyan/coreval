@@ -11,3 +11,7 @@
 ^docs$
 ^CODE_OF_CONDUCT\.md$
 ^cran-comments\.md$
+^video$
+^_pkgdown\.yml$
+^site$
+^pkgdown$

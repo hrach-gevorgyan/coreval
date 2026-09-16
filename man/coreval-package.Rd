@@ -46,6 +46,7 @@ coreval does not remove that step - it just leaves that step less to find.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://hrach-gevorgyan.github.io/coreval/}
   \item \url{https://github.com/hrach-gevorgyan/coreval}
   \item Report bugs at \url{https://github.com/hrach-gevorgyan/coreval/issues}
 }

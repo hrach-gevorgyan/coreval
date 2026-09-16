@@ -1,0 +1,57 @@
+url: https://hrach-gevorgyan.github.io/coreval/
+
+# docs/ already holds the project's written records, so the site builds elsewhere.
+destination: site
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#B8741A"
+    link-color: "#9A6012"
+    base_font: {google: "Inter"}
+    code_font: {google: "Source Code Pro"}  # no ligatures, so <- stays <-
+
+home:
+  title: "coreval: check clinical trial data against CDISC Open Rules"
+  description: >
+    Run CDISC's published conformance rules on SDTM, SEND and USDM data
+    from R, offline, while you write the code.
+
+navbar:
+  structure:
+    left: [intro, reference, evidence, news]
+    right: [search, github]
+  components:
+    evidence:
+      text: Evidence
+      menu:
+        - text: Checked on a real study
+          href: https://github.com/hrach-gevorgyan/coreval/blob/master/docs/REAL-STUDY.md
+        - text: Rule coverage
+          href: https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COVERAGE.md
+        - text: Speed and memory
+          href: https://github.com/hrach-gevorgyan/coreval/blob/master/docs/BENCHMARKS.md
+        - text: Design decisions
+          href: https://github.com/hrach-gevorgyan/coreval/blob/master/docs/DECISIONS.md
+
+reference:
+  - title: The package
+    contents:
+      - coreval-package
+  - title: Check data
+    desc: Run the rules on one dataset or a whole study.
+    contents:
+      - check_dataset
+      - check_study
+      - read_study
+  - title: Work with the results
+    contents:
+      - filter_findings
+      - write_findings
+      - print.coreval_result
+      - summary.coreval_result
+  - title: What is bundled
+    desc: The rules and controlled terminology that ship with the package.
+    contents:
+      - list_rules
+      - list_ct_packages
