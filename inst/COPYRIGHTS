@@ -20,7 +20,7 @@ attr(list_rules(), "rules_version") and written into every findings file.
 
 inst/extdata/rules.rds
 ----------------------
-From cdisc-org/cdisc-open-rules. 797 conformance rule definitions - the check
+From cdisc-org/cdisc-open-rules. The conformance rule definitions - the check
 logic, scope, messages, cited guidance and conformance-rule identifiers -
 extracted at build time from a pinned commit of that repository.
 
