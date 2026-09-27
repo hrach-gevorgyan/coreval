@@ -16,6 +16,15 @@
 #'   before the extension, so `issues.csv` gives `issues_skipped.csv` and
 #'   `issues_about.csv`.
 #'
+#' An existing file at `path`, or at a sibling path, is replaced.
+#'
+#' In CSV files, a text value that begins with `=`, `+`, `-` or `@` and is not
+#' a plain number is written with a leading `'`. Findings quote the submission
+#' data, and a spreadsheet program opening the CSV would otherwise run such a
+#' value as a formula. Excel files store every value as text and need no such
+#' change. CSV files are written as UTF-8 with a byte order mark, which Excel
+#' needs to show non-English text correctly.
+#'
 #' Excel output needs the `writexl` package. It is a `Suggests`, so if it
 #' isn't installed you get a clear message telling you to install it or use
 #' `.csv` instead, rather than a failure part-way through writing.
@@ -138,24 +147,51 @@ write_findings <- function(result, path, tracking = TRUE) {
     return(invisible(path))
   }
 
+  # The suffix goes before the extension of the FILE name only. Matched on the
+  # whole path, "john.smith/issues" put the siblings in a folder called
+  # "john_skipped.smith".
   sibling <- function(suffix) {
-    p <- sub("(\\.[^.]+)$", paste0("_", suffix, "\\1"), path)
+    file <- basename(path)
+    p <- sub("(\\.[^.]+)$", paste0("_", suffix, "\\1"), file)
     # No extension to insert before, so append rather than silently
     # overwriting the findings file with another table.
-    if (identical(p, path)) paste0(path, "_", suffix) else p
+    if (identical(p, file)) p <- paste0(file, "_", suffix)
+    file.path(dirname(path), p)
   }
   skipped_path <- sibling("skipped")
   about_path <- sibling("about")
 
-  data.table::fwrite(findings, path)
-  data.table::fwrite(skipped, skipped_path)
-  data.table::fwrite(about, about_path)
+  write_csv <- function(x, file) {
+    data.table::fwrite(csv_safe(x), file, bom = TRUE)
+  }
+  write_csv(findings, path)
+  write_csv(skipped, skipped_path)
+  write_csv(about, about_path)
   written <- c(path, skipped_path, about_path)
 
   if (nrow(truncated) > 0) {
     truncated_path <- sibling("truncated")
-    data.table::fwrite(truncated, truncated_path)
+    write_csv(truncated, truncated_path)
     written <- c(written, truncated_path)
   }
   invisible(written)
+}
+
+# Findings quote submission data verbatim, so a value like `=HYPERLINK(...)`
+# reached the CSV as it stood and a spreadsheet program ran it on opening. A
+# leading apostrophe makes it text. Plain numbers are left alone: "-5" is a
+# study day, not a formula, and cannot be one.
+csv_safe <- function(x) {
+  x <- data.table::copy(x)
+  number <- "^[-+]?([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][-+]?[0-9]+)?$"
+  for (col in names(x)) {
+    v <- x[[col]]
+    if (!is.character(v)) next
+    risky <- !is.na(v) & grepl("^[-=+@\t\r]", v) & !grepl(number, v)
+    if (any(risky)) {
+      v[risky] <- paste0("'", v[risky])
+      data.table::set(x, j = col, value = v)
+    }
+  }
+  x
 }

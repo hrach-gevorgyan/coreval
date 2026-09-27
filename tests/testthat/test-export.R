@@ -90,3 +90,44 @@ test_that("write_findings rejects a path that isn't a single string", {
   expect_error(write_findings(result, ""), "`path` must be a single file path")
   expect_error(write_findings(result, NULL), "`path` must be a single file path")
 })
+
+test_that("write_findings stops CSV cells from running as spreadsheet formulas", {
+  # Findings quote the submission data, so a value beginning with `=` reached
+  # the CSV as written and Excel ran it on opening.
+  result <- list(
+    findings = data.table::data.table(
+      rule_id = "CORE-000001", Dataset = "AE", Record = 1:5,
+      Variable = "AESTDTC",
+      Value = c("=cmd|' /C calc'!A0", "+1+1", "@SUM(A1)", "-5", "2024-01-01")
+    ),
+    skipped = data.table::data.table(rule_id = character(0), domain = character(0),
+                                     reason = character(0))
+  )
+  dir <- tempfile("coreval_out_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  out <- file.path(dir, "issues.csv")
+  write_findings(result, out, tracking = FALSE)
+
+  back <- data.table::fread(out, colClasses = "character")
+  expect_equal(back$Value, c("'=cmd|' /C calc'!A0", "'+1+1", "'@SUM(A1)", "-5", "2024-01-01"))
+  # UTF-8 with a byte order mark, so Excel shows non-English text correctly.
+  expect_equal(readBin(out, "raw", 3), as.raw(c(0xEF, 0xBB, 0xBF)))
+})
+
+test_that("write_findings puts CSV siblings next to the file even in a dotted folder", {
+  result <- list(
+    findings = data.table::data.table(rule_id = "CORE-000001"),
+    skipped = data.table::data.table(rule_id = character(0), domain = character(0),
+                                     reason = character(0))
+  )
+  dir <- file.path(tempfile("coreval_out_"), "study.v2")
+  dir.create(dir, recursive = TRUE)
+  on.exit(unlink(dirname(dir), recursive = TRUE))
+
+  written <- write_findings(result, file.path(dir, "issues"))
+  # Compared by basename and folder so the test can fail on any platform.
+  expect_equal(basename(written), c("issues", "issues_skipped", "issues_about"))
+  expect_true(all(basename(dirname(written)) == "study.v2"))
+  expect_true(all(file.exists(written)))
+})
