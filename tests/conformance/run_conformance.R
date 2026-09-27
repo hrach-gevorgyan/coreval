@@ -503,8 +503,8 @@ rules <- if (nzchar(rules_override)) {
 }
 
 # Optional targeted mode: any rule IDs after the upstream dir restrict the run
-# to just those rules, which takes seconds instead of the full sweep, which
-# runs for a quarter of an hour now that USDM documents are read for every case.
+# to just those rules, which takes seconds instead of the few minutes a full
+# sweep takes on eight worker processes.
 # Use it to verify one fix in a tight loop; run the full sweep
 # (no IDs) before committing, since a shared operator change can regress a
 # rule outside the targeted set. A targeted run does NOT rewrite
@@ -523,7 +523,7 @@ if (!is.null(target_ids)) {
 
 cat(sprintf("Running conformance harness on %d rules...\n", length(rules)))
 
-scoreboard <- data.table::rbindlist(lapply(rules, function(rule) {
+grade_rule <- function(rule) {
   outcome <- tryCatch(run_rule(rule), error = function(e) {
     list(status = "SKIPPED", reason = paste("harness error:", conditionMessage(e)))
   })
@@ -536,7 +536,32 @@ scoreboard <- data.table::rbindlist(lapply(rules, function(rule) {
     status = outcome$status,
     reason = outcome$reason
   )
-}))
+}
+
+# Rules are graded independently, so a full sweep spreads them over worker
+# processes; each loads the package and this file's functions, and results come
+# back in rule order, so the scoreboard is the same as from one process.
+# COREVAL_WORKERS sets the number; 1 runs in this process. A targeted run of a
+# few rules stays in-process, where starting workers would cost more than it
+# saves.
+workers <- as.integer(Sys.getenv("COREVAL_WORKERS",
+                                 if (length(rules) > 50) "8" else "1"))
+if (is.na(workers) || workers < 1) workers <- 1L
+graded <- if (workers > 1) {
+  cl <- parallel::makeCluster(workers)
+  parallel::clusterCall(cl, function(root) {
+    setwd(root)
+    suppressMessages(devtools::load_all(quiet = TRUE))
+    NULL
+  }, getwd())
+  parallel::clusterExport(cl, setdiff(ls(globalenv()), "rules"), envir = globalenv())
+  result <- tryCatch(parallel::parLapplyLB(cl, rules, grade_rule),
+                     finally = parallel::stopCluster(cl))
+  result
+} else {
+  lapply(rules, grade_rule)
+}
+scoreboard <- data.table::rbindlist(graded)
 
 cat("\n=== Overall ===\n")
 print(table(scoreboard$status))
