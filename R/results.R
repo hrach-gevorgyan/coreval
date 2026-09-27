@@ -594,7 +594,9 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         standard = NULL, include_deprecated = include_deprecated
       )$id
     })
-    excluded <- sum(lengths(wider)) - sum(lengths(plans))
+    # Distinct rules, not rule-and-dataset pairs: counted per pair, a USDM
+    # study reported 11,379 excluded rules out of 1,054.
+    excluded <- length(setdiff(unique(unlist(wider)), unique(unlist(plans))))
   }
 
   # A big study still takes long enough that silence reads as a hang, and
@@ -650,18 +652,20 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       # Refused deliberately, so it is reported as its own reason rather than
       # through the generic "evaluation failed" path below: nothing failed,
       # the rule simply asks about data that was not supplied.
-      if (require_referenced_domains) {
-        absent <- missing_referenced_domains(rule, study, domain)
-        if (length(absent) > 0) {
-          all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
-            rule_id = rule_id, domain = domain,
-            reason = paste0(
-              "needs ", paste(absent, collapse = ", "),
-              ", which was not supplied - check the whole study folder to run this rule"
-            )
-          )
-          next
-        }
+      absent <- missing_referenced_domains(rule, study, domain,
+                                           child = require_referenced_domains)
+      if (length(absent) > 0) {
+        all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = domain,
+          reason = if (require_referenced_domains) {
+            paste0("needs ", paste(absent, collapse = ", "),
+                   ", which was not supplied - check the whole study folder to run this rule")
+          } else {
+            paste0("needs ", paste(absent, collapse = ", "),
+                   ", which is not in this study")
+          }
+        )
+        next
       }
       # "Is there an ADSL?" and "is the tobacco-product dataset present?" are
       # questions about what the whole study holds. Checking one dataset on its
@@ -764,8 +768,10 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     found <- attr(findings, "records_found")
     kept <- nrow(unique(findings[, c("Dataset", "Record")]))
     if (!is.null(found) && found > kept) {
+      # Under the table the findings name, so the report and a filter find it.
       all_truncated[[length(all_truncated) + 1]] <- data.table::data.table(
-        rule_id = rule_id, domain = "STUDY",
+        rule_id = rule_id,
+        domain = if (length(unique(findings$Dataset)) == 1) findings$Dataset[[1]] else "STUDY",
         records_found = found, records_kept = kept
       )
     }

@@ -136,17 +136,24 @@ rename_referenced_match_columns <- function(right, rule, match_name, keys) {
 # when the parent's key is numeric both sides are string-converted first,
 # since IDVARVAL is always character (`1` must match `"1"`).
 #' Pivot a SUPP/SQ dataset's QNAM/QVAL pairs into one column per QNAM
+#'
+#' One row per parent record, keyed on the columns that identify it. QORIG and
+#' QEVAL describe one qualifier, not the record, so they are not part of the
+#' key: kept in it, a record whose qualifiers came from different origins
+#' pivoted into several rows, and the parent record was joined more than once.
+#'
 #' @param supp The supplemental dataset's data.
 #' @return A data.table with one row per parent record and one column per QNAM.
 #' @noRd
 pivot_supp_dataset <- function(supp) {
   qnams <- unique(supp$QNAM[!is_blank(supp$QNAM)])
-  drop_cols <- intersect(c("QNAM", "QVAL", "QLABEL"), names(supp))
-  group_cols <- setdiff(names(supp), c(qnams, drop_cols))
-
-  out <- unique(supp[, group_cols, with = FALSE])
+  id_cols <- intersect(
+    c("STUDYID", "RDOMAIN", "USUBJID", "APID", "POOLID", "SPDEVID", "IDVAR", "IDVARVAL"),
+    names(supp)
+  )
+  out <- unique(supp[, id_cols, with = FALSE])
   key <- function(dt) {
-    do.call(paste, c(lapply(group_cols, function(c) as.character(dt[[c]])), sep = "\x1f"))
+    do.call(paste, c(lapply(id_cols, function(c) as.character(dt[[c]])), sep = "\x1f"))
   }
   out_key <- key(out)
   supp_key <- key(supp)
@@ -157,7 +164,18 @@ pivot_supp_dataset <- function(supp) {
   out
 }
 
-#' Left-join a pivoted SUPP/SQ dataset onto its parent domain
+#' Join a SUPP/SQ dataset's qualifiers onto its parent domain
+#'
+#' The key is the static identifiers present in both datasets plus, when the
+#' SUPP's IDVAR names one, the parent's record key, compared through
+#' [key_text()] so the "       1" SAS writes, "1.0" and 1 all name the same
+#' record. Compared as plain text, those matched nothing and every rule reading
+#' a qualifier found nothing. A SUPP whose rows name different IDVARs (a
+#' record-level AESEQ beside a subject-level blank) is joined one IDVAR at a
+#' time, as the reference does.
+#'
+#' Every parent row is kept, once, in its own order.
+#'
 #' @param dataset The parent dataset being checked (`list(data, meta)`).
 #' @param supp_dataset The supplemental dataset (`list(data, meta)`).
 #' @return `dataset` with one joined-in column per QNAM.
@@ -167,42 +185,47 @@ apply_supp_match <- function(dataset, supp_dataset) {
   if (!all(c("QNAM", "QVAL") %in% names(supp)) || nrow(supp) == 0) {
     return(dataset)
   }
-  idvars <- unique(supp$IDVAR)
-  if (length(idvars) > 1) {
-    stop(
-      "Match Datasets: SUPP dataset uses multiple IDVAR values, which is not implemented",
-      call. = FALSE
-    )
-  }
-
-  pivoted <- pivot_supp_dataset(supp)
   left <- data.table::copy(dataset$data)
-  static_keys <- c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
-  keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
-
-  idvar <- if (length(idvars) == 1) idvars[[1]] else NA_character_
-  if (!is_blank(idvar) && idvar %in% names(left) && "IDVARVAL" %in% names(pivoted)) {
-    # IDVARVAL holds the parent record's key VALUE; rename it to the key's
-    # own name so the join lines up, and compare as text on both sides
-    # (IDVARVAL is character even when the parent's key is numeric).
-    data.table::setnames(pivoted, "IDVARVAL", idvar)
-    left[[idvar]] <- as.character(left[[idvar]])
-    pivoted[[idvar]] <- as.character(pivoted[[idvar]])
-    keys <- c(keys, idvar)
-  }
-  for (col in intersect(c("IDVAR", "IDVARVAL", "RDOMAIN"), names(pivoted))) {
-    pivoted[[col]] <- NULL
-  }
-  if (length(keys) == 0) {
-    return(dataset)
-  }
-
   if (!(".coreval_row_id" %in% names(left))) {
     left$.coreval_row_id <- seq_len(nrow(left))
   }
-  merged <- merge(left, pivoted, by = keys, all.x = TRUE, sort = FALSE)
-  merged <- merged[order(merged$.coreval_row_id)]
-  list(data = merged, meta = dataset$meta)
+  static_keys <- c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
+  idvar_of <- if ("IDVAR" %in% names(supp)) trimws(as.character(supp$IDVAR)) else rep("", nrow(supp))
+  idvar_of[is.na(idvar_of)] <- ""
+
+  for (iv in unique(idvar_of)) {
+    pivoted <- pivot_supp_dataset(supp[idvar_of == iv])
+    keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
+    left_key <- lapply(keys, function(k) key_text(left[[k]]))
+    right_key <- lapply(keys, function(k) key_text(pivoted[[k]]))
+    if (nzchar(iv)) {
+      # Refused rather than joined on the subject alone: a looser key attaches
+      # one record's qualifiers to every record of the subject.
+      if (!iv %in% names(left)) {
+        stop("Match Datasets: the supplemental dataset's IDVAR names ", iv,
+             ", which the parent dataset does not have", call. = FALSE)
+      }
+      if ("IDVARVAL" %in% names(pivoted)) {
+        numeric_key <- is.numeric(left[[iv]])
+        left_key <- c(left_key, list(key_text(left[[iv]])))
+        right_key <- c(right_key, list(key_text(pivoted$IDVARVAL, numeric = numeric_key)))
+      }
+    }
+    if (length(left_key) == 0) {
+      next
+    }
+    at <- match(do.call(paste, c(left_key, sep = "\x1f")),
+                do.call(paste, c(right_key, sep = "\x1f")))
+    qnams <- setdiff(names(pivoted), c(static_keys, "RDOMAIN", "IDVAR", "IDVARVAL"))
+    for (q in qnams) {
+      vals <- pivoted[[q]][at]
+      if (q %in% names(left)) {
+        vals <- ifelse(is.na(left[[q]]), vals, left[[q]])
+      }
+      data.table::set(left, j = q, value = vals)
+    }
+  }
+  list(data = left, meta = dataset$meta)
 }
 
 # A "Child" join runs the OTHER way round from the ordinary one: the dataset
@@ -232,14 +255,29 @@ apply_supp_match <- function(dataset, supp_dataset) {
 #' Surrounding blanks carry no meaning in a key, so they are dropped on both
 #' sides of every comparison.
 #'
+#' Numbers are written out in full, since `as.character(100000)` is "1e+05"
+#' and matched no IDVARVAL of "100000".
+#'
 #' @param x A key column or value.
+#' @param numeric Whether the key being matched is numeric, in which case text
+#'   holding a number is compared as that number.
 #' @return A character vector with surrounding whitespace removed.
 #' @noRd
-key_text <- function(x) {
+key_text <- function(x, numeric = is.numeric(x)) {
+  if (is.numeric(x)) {
+    return(number_text(x))
+  }
   x <- as.character(x)
   # trimws() is a regex; keys repeat, so trim each distinct value once.
   u <- unique(x)
-  trimws(u)[match(x, u)]
+  t <- trimws(u)
+  # Against a numeric key, "1.0" and "1" name the same record, as they do in
+  # the reference (custom_str_conversion, utils.py).
+  if (numeric) {
+    n <- suppressWarnings(as.numeric(t))
+    t <- ifelse(is.na(n), t, number_text(n))
+  }
+  t[match(x, u)]
 }
 
 #' Join each child record to the parent record it names via RDOMAIN/IDVAR
@@ -306,7 +344,7 @@ apply_child_match <- function(dataset, study, keys) {
     # Safe to modify: the subset above is already a fresh table, so this never
     # reaches the caller's dataset.
     sub[[row_id]] <- idx
-    parent <- study$datasets[[rd[idx[1]]]]
+    parent <- domain_dataset(study, rd[idx[1]])
     if (is.null(parent) || nrow(parent$data) == 0) {
       # No parent to join: the row keeps only its own columns, exactly as
       # before. rbindlist(fill = TRUE) below pads the parent columns.
@@ -334,8 +372,11 @@ apply_child_match <- function(dataset, study, keys) {
       )
       data.table::setnames(right_key, paste0("k", seq_along(right_cols)))
       right_key[[".coreval_parent_row"]] <- seq_len(nrow(p_data))
+      # IDVARVAL is text; against a numeric parent key it is read as a number.
       left_key <- data.table::as.data.table(
-        lapply(left_cols, function(cl) key_text(sub[[cl]]))
+        lapply(seq_along(left_cols), function(i) {
+          key_text(sub[[left_cols[[i]]]], numeric = is.numeric(p_data[[right_cols[[i]]]]))
+        })
       )
       data.table::setnames(left_key, paste0("k", seq_along(left_cols)))
       on_cols <- paste0("k", seq_along(right_cols))
@@ -350,11 +391,24 @@ apply_child_match <- function(dataset, study, keys) {
     # whether IDVARVAL really is the value of the parent variable IDVAR
     # names needs that column to EXIST and be empty in order to report the
     # mismatch. Drop it and the violation disappears silently.
+    #
+    # The parent's value wins where both have a column and a parent was found,
+    # as in the reference. Where none was found the child keeps its own: taking
+    # the empty parent row there blanked the child's USUBJID on exactly the
+    # rows reported as orphans, so the finding named no subject.
     keep <- setdiff(names(sub), names(p_data))
-    pieces[[gi]] <- cbind(
-      sub[, keep, with = FALSE],
-      p_data[pick_idx]
-    )
+    p_part <- p_data[pick_idx]
+    unmatched <- is.na(pick_idx)
+    if (any(unmatched)) {
+      for (col in intersect(names(sub), names(p_data))) {
+        v <- p_part[[col]]
+        if (typeof(v) == typeof(sub[[col]])) {
+          v[unmatched] <- sub[[col]][unmatched]
+          data.table::set(p_part, j = col, value = v)
+        }
+      }
+    }
+    pieces[[gi]] <- cbind(sub[, keep, with = FALSE], p_part)
   }
 
   out <- data.table::rbindlist(pieces, use.names = TRUE, fill = TRUE)
@@ -394,9 +448,10 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   if (grepl("^(SUPP|SQ)", match_name) && !isTRUE(spec$Child) &&
       !grepl("^(SUPP|SQ)", toupper(current_domain))) {
     supp_name <- sub("--$", dataset_wildcard(dataset, current_domain), match_name)
-    supp_dataset <- study$datasets[[toupper(supp_name)]]
+    supp_dataset <- domain_dataset(study, supp_name)
     if (is.null(supp_dataset)) {
-      return(dataset)
+      stop("Match Datasets: needs ", toupper(supp_name), ", which is not in this study",
+           call. = FALSE)
     }
     return(apply_supp_match(dataset, supp_dataset))
   }
@@ -415,9 +470,13 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # The lookup silently missed, the join was skipped, and the rule then
   # compared against a column that was never joined in. SDTM rules name
   # domains in upper case already, so this changes nothing for them.
-  match_dataset <- study$datasets[[toupper(match_name)]]
+  #
+  # Absent, the rule is refused rather than evaluated unjoined: the joined
+  # columns would not exist and the rule would compare against their names.
+  match_dataset <- domain_dataset(study, match_name)
   if (is.null(match_dataset)) {
-    return(dataset)
+    stop("Match Datasets: needs ", toupper(match_name), ", which is not in this study",
+         call. = FALSE)
   }
 
   # A Match Datasets `Keys` list is a COMPLETE composite key (e.g.
@@ -635,18 +694,26 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
 apply_relrec_match <- function(dataset, study, current_domain) {
   relrec <- study$datasets[["RELREC"]]
   if (is.null(relrec)) {
-    return(dataset)
+    stop("Match Datasets: needs RELREC, which is not in this study", call. = FALSE)
   }
   rr <- relrec$data
-  my_side <- rr[toupper(rr$RDOMAIN) == toupper(current_domain), ]
-  if (nrow(my_side) == 0) {
-    return(dataset)
-  }
-
   left <- data.table::copy(dataset$data)
   if (!(".coreval_row_id" %in% names(left))) {
     left$.coreval_row_id <- seq_len(nrow(left))
   }
+  # No relationship names this domain, so no record of it is related to
+  # anything and there is nothing to compare: the join is empty, as in the
+  # reference (merge_relrec_datasets). Returned unjoined instead, every
+  # RELREC.x column was missing and each record was compared against the
+  # column's name, so every FA record in a study relating only CM and AE was
+  # reported.
+  my_side <- rr[toupper(trimws(rr$RDOMAIN)) == toupper(current_domain), ]
+  if (nrow(my_side) == 0) {
+    return(list(data = left[0, ], meta = dataset$meta))
+  }
+  rr_subject <- if ("USUBJID" %in% names(rr)) key_text(rr$USUBJID) else rep("", nrow(rr))
+  rr_subject[is.na(rr_subject)] <- ""
+  my_subject <- rr_subject[toupper(trimws(rr$RDOMAIN)) == toupper(current_domain)]
 
   matched <- list()
   for (i in seq_len(nrow(my_side))) {
@@ -655,7 +722,8 @@ apply_relrec_match <- function(dataset, study, current_domain) {
       next
     }
     left_qualifies <- if (!is_blank(m$IDVARVAL)) {
-      key_text(left[[m$IDVAR]]) == key_text(m$IDVARVAL)
+      key_text(left[[m$IDVAR]]) ==
+        key_text(m$IDVARVAL, numeric = is.numeric(left[[m$IDVAR]]))
     } else {
       rep(TRUE, nrow(left))
     }
@@ -667,18 +735,29 @@ apply_relrec_match <- function(dataset, study, current_domain) {
       next
     }
 
-    partners <- rr[rr$RELID == m$RELID & toupper(rr$RDOMAIN) != toupper(current_domain), ]
+    # A RELID identifies a relationship within one subject: the reference
+    # pairs RELREC rows on STUDYID, USUBJID and RELID (filter_relrec_for_domain,
+    # data_processor.py). Paired on RELID alone, subject 001's record was
+    # related to subject 002's whenever the two reused a RELID.
+    partners <- rr[rr$RELID == m$RELID &
+                     toupper(trimws(rr$RDOMAIN)) != toupper(current_domain) &
+                     rr_subject == my_subject[[i]], ]
     for (j in seq_len(nrow(partners))) {
       p <- partners[j, ]
-      partner_ds <- study$datasets[[toupper(p$RDOMAIN)]]
+      partner_ds <- domain_dataset(study, trimws(p$RDOMAIN))
       if (is.null(partner_ds) || !(p$IDVAR %in% names(partner_ds$data))) {
         next
       }
       right <- partner_ds$data
 
+      right_key <- key_text(right[[p$IDVAR]])
       for (ri in qualifying_idx) {
-        key_val <- if (!is_blank(p$IDVARVAL)) key_text(p$IDVARVAL) else key_text(left[[m$IDVAR]][ri])
-        right_idx <- which(key_text(right[[p$IDVAR]]) == key_val)
+        key_val <- if (!is_blank(p$IDVARVAL)) {
+          key_text(p$IDVARVAL, numeric = is.numeric(right[[p$IDVAR]]))
+        } else {
+          key_text(left[[m$IDVAR]][ri], numeric = is.numeric(right[[p$IDVAR]]))
+        }
+        right_idx <- which(right_key == key_val)
         # A GROUP-level relationship (both sides' RELREC row leave USUBJID
         # blank, common when IDVAR/IDVARVAL alone are meant to identify the
         # group) still only ever links records of the SAME subject in
@@ -687,11 +766,20 @@ apply_relrec_match <- function(dataset, study, current_domain) {
         # against CORE-000744's real fixture: with no subject constraint,
         # an FA row's FALNKGRP matched an AE row sharing that same numeric
         # AELNKID under a COMPLETELY DIFFERENT USUBJID, fabricating a bogus
-        # cross-subject relationship. Only applies when RELREC didn't
-        # already pin an explicit partner USUBJID itself (`p$USUBJID`) -
-        # that case already narrows correctly on its own.
-        if (is_blank(p$USUBJID) && "USUBJID" %in% names(right) && "USUBJID" %in% names(left)) {
-          right_idx <- right_idx[as.character(right$USUBJID[right_idx]) == as.character(left$USUBJID[ri])]
+        # cross-subject relationship. A record-level partner names its own
+        # subject, and the partner record must be that subject's: its
+        # IDVARVAL ("FASEQ = 1") is only unique within a subject.
+        if ("USUBJID" %in% names(right)) {
+          subject <- if (!is_blank(p$USUBJID)) {
+            p$USUBJID
+          } else if ("USUBJID" %in% names(left)) {
+            left$USUBJID[ri]
+          } else {
+            NA_character_
+          }
+          if (!is_blank(subject)) {
+            right_idx <- right_idx[key_text(right$USUBJID[right_idx]) == key_text(subject)]
+          }
         }
         for (rj in right_idx) {
           right_row <- right[rj, ]

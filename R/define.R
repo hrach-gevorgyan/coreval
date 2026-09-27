@@ -34,10 +34,15 @@
 #' @noRd
 dataset_unsplit_name <- function(dataset, domain) {
   up <- toupper(domain)
+  # Only a value that can be a domain code is taken as one. A file whose
+  # label row was saved as data (one of CDISC's own rule fixtures) otherwise
+  # belonged to a domain called "DOMAIN ABBREVIATION", had no class, and no
+  # class-scoped rule ran on it.
+  code_like <- function(x) grepl("^[A-Za-z][A-Za-z0-9]{1,7}$", x)
   dom_col <- dataset$data[["DOMAIN"]]
   if (!is.null(dom_col) && length(dom_col) > 0) {
-    first <- as.character(dom_col[1])
-    if (!is.na(first) && nzchar(first)) {
+    first <- trimws(as.character(dom_col[1]))
+    if (!is.na(first) && nzchar(first) && code_like(first)) {
       return(toupper(first))
     }
   }
@@ -45,8 +50,8 @@ dataset_unsplit_name <- function(dataset, domain) {
   # RDOMAIN, so SUPPLBAE unsplits to SUPPLB.
   rdom <- dataset$data[["RDOMAIN"]]
   if (grepl("^(SUPP|SQ)", up) && !is.null(rdom) && length(rdom) > 0) {
-    first <- as.character(rdom[1])
-    if (!is.na(first) && nzchar(first)) {
+    first <- trimws(as.character(rdom[1]))
+    if (!is.na(first) && nzchar(first) && code_like(first)) {
       prefix <- if (startsWith(up, "SUPP")) "SUPP" else "SQ"
       return(paste0(prefix, toupper(first)))
     }
@@ -61,6 +66,48 @@ dataset_unsplit_name <- function(dataset, domain) {
 #' @noRd
 dataset_is_split <- function(dataset, domain) {
   !identical(toupper(domain), dataset_unsplit_name(dataset, domain))
+}
+
+#' A domain's data, whole, however many files it is split across
+#'
+#' A rule that joins another domain, or computes over one, names it by its
+#' domain code. Looked up by file name, LB was never found when it arrived as
+#' LBCH and LBHE: every SUPPLB row was reported as pointing at a record that
+#' does not exist, and every rule reading LB from another dataset lost it.
+#'
+#' The parts are stacked once per sweep and kept in the per-run cache.
+#'
+#' @param study The study object.
+#' @param code A domain code, e.g. `"LB"` or `"SUPPLB"`.
+#' @return A dataset entry (`list(data, meta, label)`), or `NULL` if the study
+#'   has no dataset of that domain.
+#' @noRd
+domain_dataset <- function(study, code) {
+  code <- toupper(code)
+  keys <- names(study$datasets)
+  parts <- keys[vapply(keys, function(k) {
+    identical(dataset_unsplit_name(study$datasets[[k]], k), code)
+  }, logical(1))]
+  direct <- study$datasets[[code]]
+  if (length(parts) <= 1) {
+    return(if (!is.null(direct)) direct else if (length(parts) == 1) study$datasets[[parts]] else NULL)
+  }
+  cache <- .coreval_env$prep_cache
+  cache_key <- paste0("domain_dataset:", code)
+  if (!is.null(cache) && exists(cache_key, envir = cache, inherits = FALSE)) {
+    return(get(cache_key, envir = cache, inherits = FALSE))
+  }
+  first <- study$datasets[[parts[[1]]]]
+  out <- list(
+    data = data.table::rbindlist(lapply(parts, function(k) study$datasets[[k]]$data),
+                                 use.names = TRUE, fill = TRUE),
+    meta = first$meta,
+    label = first$label
+  )
+  if (!is.null(cache)) {
+    assign(cache_key, out, envir = cache)
+  }
+  out
 }
 
 #' Is define.xml support available (i.e. is `xml2` installed)?

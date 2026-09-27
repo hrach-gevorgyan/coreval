@@ -30,14 +30,18 @@
 #' @param domain The domain being checked, used to expand templates.
 #' @param dataset Optional dataset entry, needed only to resolve a `Child`
 #'   spec's parent domains from `RDOMAIN`.
+#' @param child Whether to include a `Child` spec's parent domains.
 #' @return An upper-case character vector of other domains, possibly empty.
 #' @noRd
-rule_external_domains <- function(rule, domain, dataset = NULL) {
+rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
   named <- character(0)
 
   for (spec in rule$match_datasets %||% list()) {
     name <- if (is.null(spec$Name)) NA_character_ else as.character(spec$Name)
     if (isTRUE(spec$Child)) {
+      if (!child) {
+        next
+      }
       rdomain <- if (is.null(dataset)) NULL else dataset$data$RDOMAIN
       named <- c(named, if (is.null(rdomain)) {
         # No data to look in: the parent is genuinely unknown rather than
@@ -67,33 +71,36 @@ rule_external_domains <- function(rule, domain, dataset = NULL) {
   setdiff(unique(toupper(named)), toupper(domain))
 }
 
-#' Refuse a rule that needs a domain this study does not contain
+#' The domains a rule needs that the study does not contain
 #'
-#' Applied when checking a SINGLE dataset, never for a whole study, and the
-#' difference is deliberate.
+#' A rule that joins another dataset, or computes a value over one, cannot be
+#' answered without it. Evaluated anyway, the joined columns do not exist and
+#' the rule compares against their names as text: CORE-000034, with no DM,
+#' reported both death records in DS for not matching the word "DTHDTC". An
+#' Operations block over a missing TV answered "no violation" for every row.
+#' The reference skips such a rule ("operation domain not found", or the
+#' column it needed was not found), and so does this package, with a reason.
 #'
-#' `apply_match()` returns the dataset unchanged when a referenced domain is
-#' absent, and an `Operations` block over a missing domain yields `NA`. For a
-#' whole study that is the right, forgiving behaviour: a study legitimately has
-#' no `SUPPAE` or `RELREC`, and the reference engine also carries on. Making
-#' those hard requirements would refuse rules that have nothing to join, so
-#' `check_study()` does not.
+#' For a single dataset every cross-domain rule is refused this way, including
+#' a `Child` join whose parent is named in the data. For a whole study the
+#' `Child` parent is left out (`child = FALSE`): a SUPP or RELREC row pointing
+#' at a dataset the study lacks is exactly what CORE-000206 exists to report.
 #'
-#' For a single dataset the same silence is dangerous rather than forgiving.
-#' The user has supplied one domain and *every* cross-domain rule would find
-#' its counterpart missing, so instead of a handful of no-op joins there would
-#' be a systematic stream of rules quietly comparing against columns that do
-#' not exist. A short findings table would then read as "my dataset is clean"
-#' when it actually means "most of the applicable rules never really ran."
+#' A split dataset (LB1, LB2) counts as its domain (LB).
 #'
 #' @param rule A rule record.
-#' @param study The study object (here, one holding a single dataset).
+#' @param study The study object.
 #' @param domain The domain being checked.
+#' @param child Whether a `Child` join's parent domains are required.
 #' @return The domains the rule needs that `study` does not have, possibly empty.
 #' @noRd
-missing_referenced_domains <- function(rule, study, domain) {
-  needed <- rule_external_domains(rule, domain, study$datasets[[domain]])
-  setdiff(needed, toupper(names(study$datasets)))
+missing_referenced_domains <- function(rule, study, domain, child = TRUE) {
+  needed <- rule_external_domains(rule, domain, study$datasets[[domain]], child = child)
+  have <- toupper(names(study$datasets))
+  have <- c(have, vapply(names(study$datasets), function(k) {
+    dataset_unsplit_name(study$datasets[[k]], k)
+  }, character(1), USE.NAMES = FALSE))
+  setdiff(needed, have)
 }
 
 #' Read a single dataset file into the internal representation

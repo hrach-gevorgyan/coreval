@@ -224,9 +224,13 @@ test_that("apply_match_dataset still refuses a plain RELREC spec it doesn't impl
     apply_match_dataset(left, list(Name = "RELREC", Keys = "USUBJID", Child = FALSE), study, "AE"),
     "unsupported join type"
   )
-  # A SUPP name whose dataset simply isn't in the study is a no-op, not an
-  # error - the rule just has nothing to join.
-  expect_equal(apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"), left)
+  # A SUPP name whose dataset isn't in the study cannot be joined, and
+  # evaluated unjoined the rule would compare against columns that do not
+  # exist, so it is refused and the rule is skipped with that reason.
+  expect_error(
+    apply_match_dataset(left, list(Name = "SUPPAE", Keys = "USUBJID"), study, "AE"),
+    "needs SUPPAE, which is not in this study"
+  )
 })
 
 test_that("a SUPP dataset is pivoted from QNAM/QVAL into one column per QNAM and joined to its parent", {
@@ -591,4 +595,149 @@ test_that("a parent key written with padding still finds its record", {
   rule <- coreval:::.coreval_env$data$rules[["CORE-000206"]]
   out <- coreval:::run_rule_on_domain(rule, study, "SUPPLB")
   expect_false(any(out$violations))
+})
+
+# A small study written as transport files, checked the way a user checks one.
+study_on_disk <- function(...) {
+  dir <- tempfile("coreval_join_")
+  dir.create(dir)
+  datasets <- list(...)
+  for (nm in names(datasets)) {
+    haven::write_xpt(datasets[[nm]], file.path(dir, paste0(tolower(nm), ".xpt")), name = nm)
+  }
+  dir
+}
+rule_records <- function(result, rule_id) {
+  f <- result$findings
+  sort(unique(f$Record[f$rule_id == rule_id]))
+}
+
+test_that("a RELREC link relates records of one subject only", {
+  # Each subject's FA record is related to that subject's AE record, and the
+  # terms agree. Paired on RELID alone, each FA was also related to the other
+  # subject's AE and both were reported.
+  dir <- study_on_disk(
+    DM = data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("S1-001", "S1-002")),
+    AE = data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = c("S1-001", "S1-002"),
+                    AESEQ = c(1, 1), AETERM = c("HEADACHE", "NAUSEA"), AEDECOD = ""),
+    FA = data.frame(STUDYID = "S1", DOMAIN = "FA", USUBJID = c("S1-001", "S1-002"),
+                    FASEQ = c(1, 1), FATESTCD = "SEV", FATEST = "Severity",
+                    FAOBJ = c("HEADACHE", "NAUSEA"), FAORRES = "MILD"),
+    RELREC = data.frame(STUDYID = "S1", RDOMAIN = c("AE", "FA", "AE", "FA"),
+                        USUBJID = c("S1-001", "S1-001", "S1-002", "S1-002"),
+                        IDVAR = c("AESEQ", "FASEQ", "AESEQ", "FASEQ"), IDVARVAL = "1",
+                        RELTYPE = "", RELID = c("1", "1", "1", "1"))
+  )
+  on.exit(unlink(dir, recursive = TRUE))
+  expect_length(rule_records(check_study(dir), "CORE-000744"), 0)
+})
+
+test_that("records of a domain RELREC does not mention are not compared with anything", {
+  dir <- study_on_disk(
+    DM = data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "S1-001"),
+    FA = data.frame(STUDYID = "S1", DOMAIN = "FA", USUBJID = "S1-001", FASEQ = c(1, 2),
+                    FATESTCD = "SEV", FATEST = "Severity", FAOBJ = "HEADACHE", FAORRES = "MILD"),
+    CM = data.frame(STUDYID = "S1", DOMAIN = "CM", USUBJID = "S1-001", CMSEQ = 1, CMTRT = "X"),
+    AE = data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-001", AESEQ = 1, AETERM = "Y"),
+    RELREC = data.frame(STUDYID = "S1", RDOMAIN = c("CM", "AE"), USUBJID = "S1-001",
+                        IDVAR = c("CMSEQ", "AESEQ"), IDVARVAL = "1", RELTYPE = "", RELID = "1")
+  )
+  on.exit(unlink(dir, recursive = TRUE))
+  expect_length(rule_records(check_study(dir), "CORE-000744"), 0)
+})
+
+test_that("a rule joining a dataset the study lacks is skipped with the reason, not evaluated", {
+  # CORE-000034 compares DS with DM.DTHDTC. Without DM it compared with the
+  # word "DTHDTC" and reported both death records.
+  dir <- study_on_disk(
+    DS = data.frame(STUDYID = "S1", DOMAIN = "DS", USUBJID = c("S1-001", "S1-002"),
+                    DSSEQ = 1, DSTERM = "DEATH", DSDECOD = "DEATH", DSCAT = "DISPOSITION EVENT",
+                    DSSTDTC = c("2024-01-01", "2024-02-01")),
+    AE = data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-001", AESEQ = 1, AETERM = "Y")
+  )
+  on.exit(unlink(dir, recursive = TRUE))
+  result <- check_study(dir)
+  expect_length(rule_records(result, "CORE-000034"), 0)
+  why <- result$skipped$reason[result$skipped$rule_id == "CORE-000034"]
+  expect_match(why, "needs DM, which is not in this study")
+})
+
+test_that("SUPP qualifiers join whatever way the record key is written", {
+  # SAS writes IDVARVAL right-aligned; "1.0" and 100000 are the same keys.
+  # Compared as plain text, none matched and CORE-000597 found nothing.
+  for (case in list(list(idvarval = "       1", seq = 1),
+                    list(idvarval = "1.0", seq = 1),
+                    list(idvarval = "100000", seq = 100000))) {
+    dir <- study_on_disk(
+      DM = data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("S-1", "S-2")),
+      AE = data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = c("S-1", "S-2"),
+                      AESEQ = case$seq, AETERM = "X", AEDECOD = "X", AESER = "Y",
+                      AESMIE = "N", AESDTH = "N", AESHOSP = "N", AESLIFE = "N",
+                      AESCONG = "N", AESDISAB = "N"),
+      SUPPAE = data.frame(STUDYID = "S", RDOMAIN = "AE", USUBJID = c("S-1", "S-2"),
+                          IDVAR = "AESEQ", IDVARVAL = case$idvarval, QNAM = "AESOSP",
+                          QLABEL = "Other", QVAL = "Something", QORIG = "CRF", QEVAL = "")
+    )
+    result <- check_study(dir)
+    expect_equal(rule_records(result, "CORE-000597"), c(1L, 2L), info = case$idvarval)
+    # ...and no SUPP row is reported as pointing at a record that does not exist.
+    expect_length(rule_records(result, "CORE-000206"), 0)
+    unlink(dir, recursive = TRUE)
+  }
+})
+
+test_that("a SUPP row with no parent record keeps its own subject in the finding", {
+  dir <- study_on_disk(
+    DM = data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("S-1", "S-2")),
+    AE = data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = c("S-1", "S-2"), AESEQ = 1,
+                    AETERM = "X"),
+    SUPPAE = data.frame(STUDYID = "S", RDOMAIN = "AE", USUBJID = c("S-1", "S-2"),
+                        IDVAR = "AESEQ", IDVARVAL = c("1", "99"), QNAM = "AETRTEM",
+                        QLABEL = "Treatment emergent", QVAL = "Y", QORIG = "DERIVED", QEVAL = "")
+  )
+  on.exit(unlink(dir, recursive = TRUE))
+  f <- check_study(dir)$findings
+  orphan <- f[f$rule_id == "CORE-000206", ]
+  expect_equal(unique(orphan$Record), 2L)
+  expect_equal(unique(orphan$Value[orphan$Variable == "USUBJID"]), "S-2")
+})
+
+test_that("SUPP rows find their parent in a domain split across files", {
+  dir <- study_on_disk(
+    DM = data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "S-1"),
+    LBCH = data.frame(STUDYID = "S", DOMAIN = "LB", USUBJID = "S-1", LBSEQ = c(1, 2),
+                      LBTESTCD = "GLUC"),
+    LBHE = data.frame(STUDYID = "S", DOMAIN = "LB", USUBJID = "S-1", LBSEQ = c(3, 4),
+                      LBTESTCD = "HGB"),
+    SUPPLB = data.frame(STUDYID = "S", RDOMAIN = "LB", USUBJID = "S-1", IDVAR = "LBSEQ",
+                        IDVARVAL = c("1", "3", "99"), QNAM = "LBX", QLABEL = "X",
+                        QVAL = "Y", QORIG = "CRF", QEVAL = "")
+  )
+  on.exit(unlink(dir, recursive = TRUE))
+  expect_equal(rule_records(check_study(dir), "CORE-000206"), 3L)
+})
+
+test_that("a SUPP whose IDVAR the parent lacks is refused, not joined on the subject alone", {
+  parent <- list(data = data.table::data.table(STUDYID = "S", USUBJID = "P1", AESEQ = c(1, 2)),
+                 meta = NULL)
+  supp <- list(data = data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "P1",
+                                             IDVAR = "AESPID", IDVARVAL = "1",
+                                             QNAM = "AESOSP", QVAL = "x"),
+               meta = NULL)
+  expect_error(apply_supp_match(parent, supp), "IDVAR names AESPID")
+})
+
+test_that("a SUPP mixing record-level and subject-level rows joins both", {
+  parent <- list(data = data.table::data.table(STUDYID = "S", USUBJID = c("P1", "P1"),
+                                               AESEQ = c(1, 2)),
+                 meta = NULL)
+  supp <- list(data = data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "P1",
+                                             IDVAR = c("AESEQ", ""), IDVARVAL = c("2", ""),
+                                             QNAM = c("AESOSP", "AEXSUBJ"),
+                                             QVAL = c("rec2", "subj")),
+               meta = NULL)
+  joined <- apply_supp_match(parent, supp)$data
+  expect_equal(joined$AESOSP, c(NA, "rec2"))
+  expect_equal(joined$AEXSUBJ, c("subj", "subj"))
+  expect_equal(joined$AESEQ, c(1, 2))
 })
