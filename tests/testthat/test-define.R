@@ -432,3 +432,25 @@ test_that("a Define-XML 2.1 def:Class child element gives the dataset class", {
   ), path)
   expect_equal(read_define_xml(path)$datasets$define_dataset_class, "TRIAL DESIGN")
 })
+
+test_that("a dataset the define declares with data, but that is not there, is reported once", {
+  skip_if_not_installed("xml2")
+  # The rules asking this (FB6501 and nine more) marked the missing file as
+  # NA, which `empty` does not count as blank, so none of them could fire.
+  dir <- tempfile("coreval_defpres_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = 1),
+                   file.path(dir, "ae.xpt"))
+  writeLines(c(
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study><MetaDataVersion>',
+    '<ItemGroupDef OID="IG.AE" Name="AE" Domain="AE"/>',
+    '<ItemGroupDef OID="IG.DS" Name="DS" Domain="DS"/>',
+    '</MetaDataVersion></Study></ODM>'
+  ), file.path(dir, "define.xml"))
+  f <- check_study(dir, standard = "SENDIG")$findings
+  hit <- f[f$rule_id == "FDA.SENDIG.FB6501", ]
+  expect_equal(unique(hit$Dataset), "STUDY")
+  expect_true(all(is.na(hit$Record)))
+})

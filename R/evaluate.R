@@ -850,8 +850,12 @@ build_domain_list_with_define_dataset <- function(study) {
 
   data <- data.table::copy(define_datasets)
   idx <- match(toupper(data$define_dataset_name), toupper(present))
-  data$domain <- ifelse(is.na(idx), NA_character_, data$define_dataset_name)
-  data$filename <- ifelse(is.na(idx), NA_character_, names(study$datasets)[idx])
+  # Blank, not NA, where the define declares a dataset the study does not
+  # have. `empty` reads NA as not blank, so with NA every one of these rules
+  # ("define.xml says DS has data, but there is no DS file") could never
+  # fire; the reference's filename is None there, which it counts as empty.
+  data$domain <- ifelse(is.na(idx), "", data$define_dataset_name)
+  data$filename <- ifelse(is.na(idx), "", names(study$datasets)[idx])
   list(data = data, meta = NULL)
 }
 

@@ -684,7 +684,10 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         )
         next
       }
-      is_study_level <- identical(rule$rule_type, "Domain Presence Check")
+      # Both presence rule types answer one question about the whole study,
+      # the define-based one included: reported per dataset, it repeated one
+      # fact under every dataset name, against a row of the define.
+      is_study_level <- isTRUE(startsWith(rule$rule_type, "Domain Presence Check"))
       if (is_study_level) {
         if (rule_id %in% study_level_done) {
           next
@@ -723,6 +726,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       if (nrow(findings) > 0) {
         if (is_study_level) {
           findings$Dataset <- "STUDY"
+          findings$Record <- NA_integer_
         }
         findings$rule_id <- rule_id
         # The rule's own one-line statement of what is wrong. It is the single
