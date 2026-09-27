@@ -188,18 +188,6 @@ usdm_entity_name <- function(value, key, entities) {
   if (is.na(mapped)) api_type else mapped
 }
 
-#' A path's JSON Pointer form
-#'
-#' `study.versions[0].organizations[1]` is `/study/versions/0/organizations/1`.
-#' @param path A dotted path.
-#' @return A JSON Pointer.
-#' @noRd
-usdm_pointer <- function(path) {
-  pointer <- gsub(".", "/", path, fixed = TRUE)
-  pointer <- gsub("\\[([0-9]+)\\]", "/\\1", pointer)
-  paste0("/", pointer)
-}
-
 #' Flatten one record's own values
 #'
 #' Dotted column names for nested objects, and a nested object or array becomes
@@ -233,7 +221,9 @@ usdm_record_data <- function(value, prefix = "") {
 #' @return A length-one vector.
 #' @noRd
 usdm_scalar <- function(x) {
-  if (is.null(x) || length(x) == 0L) NA_character_ else x[[1]]
+  # A plain NA, not NA_character_: an empty value has no type, and a typed one
+  # would make a column of true/false values read as text.
+  if (is.null(x) || length(x) == 0L) NA else x[[1]]
 }
 
 #' Build every entity table in a USDM document
@@ -295,12 +285,26 @@ usdm_datasets <- function(doc) {
   }, character(1))
 
   wrapper <- entity_lookup(entities, "`this`")
+  meta <- usdm_parent_columns(records, entities, wrapper)
   built <- lapply(split(seq_along(records), entity_of), function(idx) {
+    # The row number travels with each record's values, so a record with no
+    # values of its own (an empty object) still has a row; combined without
+    # it, such rows were dropped and the next record's values filled the gap.
     rows <- lapply(idx, function(i) {
-      r <- records[[i]]
-      c(usdm_record_metadata(r, entities, wrapper), usdm_record_data(r$value))
+      values <- usdm_record_data(records[[i]]$value)
+      c(list(.coreval_row = i), values[!names(values) %in% names(meta)])
     })
-    build_dataset_from_records(rows)
+    values <- data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
+    stopifnot(identical(values$.coreval_row, idx))
+    data.table::set(values, j = ".coreval_row", value = NULL)
+    data <- data.table::as.data.table(lapply(meta, `[`, idx))
+    if (ncol(values) > 0) {
+      data <- cbind(data, values)
+    }
+    for (column in names(data)) {
+      data.table::set(data, j = column, value = usdm_column(data[[column]]))
+    }
+    list(data = data, meta = NULL, label = NA_character_)
   })
   # split() sorts its groups; traversal order within each entity is what
   # matters and is preserved, but the entity ORDER should be first-seen, the
@@ -314,101 +318,79 @@ usdm_datasets <- function(doc) {
 
 #' The parent columns every USDM record carries
 #'
-#' `parent_entity`, `parent_id` and `parent_rel` say what this record hangs off
-#' and under which key, and `rel_type` says whether it was written out in place
-#' or referenced by id. Rules read all four.
+#' `parent_entity`, `parent_id` and `parent_rel` say what a record hangs off and
+#' under which key, `rel_type` says whether it was written out in place or
+#' referenced by id, and `_path` is its JSON Pointer. Rules read all of them.
 #'
-#' @param record One record from [usdm_datasets()].
+#' Worked out for every record at once rather than one record at a time, which
+#' with some sixteen thousand records in a real study was most of the reading
+#' time.
+#'
+#' @param records The records from [usdm_datasets()].
 #' @param entities The entity map.
 #' @param wrapper The entity name for a top-level attribute.
-#' @return A named list of four values plus `_path`.
+#' @return A named list of five columns, one value per record.
 #' @noRd
-usdm_record_metadata <- function(record, entities, wrapper) {
-  parent_entity <- ""
-  parent_id <- ""
-  if (grepl(".", record$path, fixed = TRUE)) {
-    parent <- record$parent
-    if (is_json_object(parent)) {
-      instance <- parent[["instanceType"]]
-      if (is.character(instance) && length(instance) == 1L && nzchar(instance)) {
-        mapped <- entity_lookup(entities, instance)
-        parent_entity <- if (is.na(mapped)) instance else mapped
-        id <- parent[["id"]]
-        parent_id <- if (is.character(id) && length(id) == 1L) id else ""
-      }
-    }
+usdm_parent_columns <- function(records, entities, wrapper) {
+  lookup <- function(keys) {
+    at <- match(keys, names(entities))
+    ifelse(is.na(at), NA_character_, unname(entities)[at])
   }
-  without_index <- sub("\\[[0-9]+\\]$", "", record$path)
-  parent_rel <- if (grepl(".", without_index, fixed = TRUE)) {
-    sub("^.*\\.", "", without_index)
-  } else {
-    without_index
-  }
+  path <- vapply(records, `[[`, character(1), "path")
+  kind <- vapply(records, `[[`, character(1), "kind")
+  dotted <- grepl(".", path, fixed = TRUE)
+  instance <- vapply(records, function(r) {
+    parent <- r$parent
+    if (!is_json_object(parent)) return(NA_character_)
+    it <- parent[["instanceType"]]
+    if (is.character(it) && length(it) == 1L && nzchar(it)) it else NA_character_
+  }, character(1))
+  own_id <- vapply(records, function(r) {
+    id <- if (is_json_object(r$parent)) r$parent[["id"]] else NULL
+    if (is.character(id) && length(id) == 1L) id else ""
+  }, character(1))
+
+  has_parent <- dotted & !is.na(instance)
+  mapped <- lookup(instance)
+  parent_entity <- ifelse(has_parent, ifelse(is.na(mapped), instance, mapped), "")
+  parent_id <- ifelse(has_parent, own_id, "")
+  without_index <- sub("\\[[0-9]+\\]$", "", path)
+  parent_rel <- ifelse(grepl(".", without_index, fixed = TRUE),
+                       sub("^.*\\.", "", without_index), without_index)
   # A top-level attribute of the document hangs off the wrapper, not off an
   # entity.
-  if (startsWith(record$path, "`this`") || !grepl(".", record$path, fixed = TRUE)) {
-    parent_entity <- wrapper
+  parent_entity[startsWith(path, "`this`") | !dotted] <- wrapper
+  unknown <- !nzchar(parent_entity)
+  if (any(unknown)) {
+    by_kind <- lookup(kind[unknown])
+    key <- ifelse(dotted[unknown], sub("^.*\\.", "", path[unknown]), path[unknown])
+    by_key <- lookup(key)
+    parent_entity[unknown] <- ifelse(!is.na(by_kind), by_kind, ifelse(is.na(by_key), key, by_key))
   }
-  if (!nzchar(parent_entity)) {
-    by_kind <- entity_lookup(entities, record$kind)
-    parent_entity <- if (!is.na(by_kind)) {
-      by_kind
-    } else {
-      key <- if (grepl(".", record$path, fixed = TRUE)) {
-        sub("^.*\\.", "", record$path)
-      } else {
-        record$path
-      }
-      mapped <- entity_lookup(entities, key)
-      if (is.na(mapped)) key else mapped
-    }
-  }
-  list(parent_entity = parent_entity, parent_id = parent_id,
-       parent_rel = parent_rel, rel_type = record$kind,
-       `_path` = usdm_pointer(record$path))
-}
-
-#' Assemble records with differing keys into one dataset
-#'
-#' Columns are the union of every record's keys, in the order first seen, which
-#' is what `from_records` gives the reference. A record missing a column gets a
-#' blank rather than a dropped row.
-#'
-#' @param rows A list of named lists.
-#' @return A `list(data, meta, label)` dataset entry.
-#' @noRd
-build_dataset_from_records <- function(rows) {
-  columns <- unique(unlist(lapply(rows, names), use.names = FALSE))
-  data <- data.table::as.data.table(stats::setNames(lapply(columns, function(column) {
-    values <- lapply(rows, function(row) {
-      if (is.null(row[[column]])) NA else row[[column]]
-    })
-    simplify_usdm_column(values)
-  }), columns))
-  list(data = data, meta = NULL, label = NA_character_)
+  # study.versions[0].organizations[1] is /study/versions/0/organizations/1
+  pointer <- paste0("/", gsub("\\[([0-9]+)\\]", "/\\1", gsub(".", "/", path, fixed = TRUE)))
+  list(parent_entity = parent_entity, parent_id = parent_id, parent_rel = parent_rel,
+       rel_type = kind, `_path` = pointer)
 }
 
 #' Give a column the narrowest type its values allow
 #'
 #' Text stays text with `""` for blank, the convention every other reader here
 #' follows. A column that is all logical or all numeric keeps that type, so a
-#' rule comparing against a number is not comparing against its spelling.
+#' rule comparing against a number is not comparing against its spelling. A
+#' column with no value at all is blank text.
 #'
-#' @param values A list of length-one values.
-#' @return An atomic vector.
+#' @param column One column as combined from the records.
+#' @return The column.
 #' @noRd
-simplify_usdm_column <- function(values) {
-  present <- values[!vapply(values, function(v) length(v) == 0L || all(is.na(v)), logical(1))]
-  if (length(present) == 0L) {
-    return(rep("", length(values)))
+usdm_column <- function(column) {
+  if (is.logical(column) || is.numeric(column)) {
+    if (all(is.na(column))) {
+      return(rep("", length(column)))
+    }
+    return(if (is.logical(column)) column else as.numeric(column))
   }
-  if (all(vapply(present, is.logical, logical(1)))) {
-    return(vapply(values, function(v) if (length(v) == 0L) NA else as.logical(v[[1]]), logical(1)))
-  }
-  if (all(vapply(present, function(v) is.numeric(v) && !is.logical(v), logical(1)))) {
-    return(vapply(values, function(v) if (length(v) == 0L) NA_real_ else as.numeric(v[[1]]), numeric(1)))
-  }
-  vapply(values, function(v) {
-    if (length(v) == 0L || all(is.na(v))) "" else as.character(v[[1]])
-  }, character(1))
+  column <- as.character(column)
+  column[is.na(column)] <- ""
+  column
 }
