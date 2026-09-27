@@ -14,7 +14,11 @@ respin_result <- function(result, findings) {
   kept <- unique(paste(findings$Dataset, findings$rule_id))
   truncated <- result$truncated
   if (!is.null(truncated) && nrow(truncated) > 0) {
-    truncated <- truncated[paste(truncated$domain, truncated$rule_id) %in% kept, ]
+    # A study-level cap (a USDM document rule) is recorded under STUDY while
+    # its findings name the entity table, so it is matched on the rule too.
+    keep <- paste(truncated$domain, truncated$rule_id) %in% kept |
+      (truncated$domain == "STUDY" & truncated$rule_id %in% findings$rule_id)
+    truncated <- truncated[keep, ]
   }
   structure(
     list(findings = findings, skipped = result$skipped, truncated = truncated),
@@ -49,7 +53,9 @@ respin_result <- function(result, findings) {
 #'   severity field, and this does not map onto anyone's scale.
 #' @param dataset Keep only these datasets, e.g. `"AE"`.
 #' @param rule Keep only these rule ids, e.g. `"CORE-000547"`.
-#' @param variable Keep only findings naming these variables.
+#' @param variable Keep only findings naming these variables, including a
+#'   finding that lists the variable as missing (a Required variable the
+#'   dataset lacks).
 #' @return A `coreval_result` holding the matching findings. `$skipped` is
 #'   left alone: what could not be checked does not become less true because
 #'   you narrowed what you are looking at.
@@ -86,9 +92,28 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
     }
     keep <- keep & f$triage %in% triage
   }
-  if (!is.null(dataset)) keep <- keep & f$Dataset %in% toupper(dataset)
+  # Refused rather than matched: a typo, NA or a number used to match nothing
+  # and read as "no findings of that kind".
+  text_arg <- function(x, name) {
+    if (!is.null(x) && (!is.character(x) || length(x) == 0 || anyNA(x) || any(!nzchar(x)))) {
+      stop("`", name, "` must be one or more names, e.g. ",
+           switch(name, dataset = "\"AE\"", rule = "\"CORE-000547\"", "\"AESTDTC\""),
+           ".", call. = FALSE)
+    }
+    if (is.null(x)) NULL else toupper(trimws(x))
+  }
+  dataset <- text_arg(dataset, "dataset")
+  rule <- text_arg(rule, "rule")
+  variable <- text_arg(variable, "variable")
+  if (!is.null(dataset)) keep <- keep & f$Dataset %in% dataset
   if (!is.null(rule)) keep <- keep & f$rule_id %in% rule
-  if (!is.null(variable)) keep <- keep & f$Variable %in% variable
+  if (!is.null(variable)) {
+    # A rule comparing sets of variables reports the missing names inside one
+    # finding ("$required_variables = ['AEDECOD']"), so a variable is looked
+    # for there too. Matched on Variable alone, asking about AEDECOD answered
+    # "no findings" while the report listed it as a missing Required variable.
+    keep <- keep & (f$Variable %in% variable | names_missing(f, variable))
+  }
 
   respin_result(result, f[keep, ])
 }
@@ -121,7 +146,7 @@ summary.coreval_result <- function(object, ...) {
 
   out <- data.table::data.table(
     problems = nrow(per_problem),
-    records = if (nrow(f) == 0) 0L else nrow(unique(f[, c("Dataset", "Record")])),
+    records = count_records(f),
     wrong_value = as.integer(counts[["wrong value"]]),
     missing_required = as.integer(counts[["missing required"]]),
     missing_optional = as.integer(counts[["missing optional"]]),
@@ -183,3 +208,32 @@ assert_coreval_result <- function(x, arg = "x") {
   invisible(NULL)
 }
 
+
+#' Which findings report one of these variables as missing
+#'
+#' The rules that compare the standard's variables with the dataset's report
+#' both sets, and what is missing is the difference, the same arithmetic the
+#' printed report does ([binding_gap()]).
+#'
+#' @param f Findings.
+#' @param variable Upper-case variable names.
+#' @return A logical vector, one per finding row.
+#' @noRd
+names_missing <- function(f, variable) {
+  out <- rep(FALSE, nrow(f))
+  binds <- which(startsWith(f$Variable, "$"))
+  if (length(binds) == 0) {
+    return(out)
+  }
+  key <- paste(f$Dataset, f$rule_id, f$Record)
+  for (k in unique(key[binds])) {
+    rows <- binds[key[binds] == k]
+    sets <- lapply(f$Value[rows], parse_set_value)
+    names(sets) <- f$Variable[rows]
+    gap <- binding_gap(sets)
+    if (!is.null(gap) && any(toupper(gap$missing) %in% variable)) {
+      out[key == k] <- TRUE
+    }
+  }
+  out
+}

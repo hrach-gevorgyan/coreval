@@ -114,6 +114,11 @@ test_that("filter_findings accepts the other selectors, and refuses nonsense", {
   both <- filter_findings(result, triage = "wrong value", rule = "CORE-000189")
   expect_true(all(both$findings$rule_id == "CORE-000189"))
 
+  # Lower case works; nonsense is refused rather than matching nothing.
+  expect_equal(nrow(filter_findings(result, rule = "core-000189")$findings), nrow(by_rule$findings))
+  expect_error(filter_findings(result, rule = 547), "must be one or more names")
+  expect_error(filter_findings(result, variable = NA_character_), "must be one or more names")
+
   expect_error(filter_findings(result, triage = "critical"), "no such triage level")
   expect_error(filter_findings(result, triage = "critical"), "wrong value")
   expect_error(filter_findings(list()), "check_dataset")
@@ -261,4 +266,22 @@ test_that("print() and summary() refuse an object carrying the class but not the
   expect_s3_class(real, "coreval_result")
   expect_no_error(capture.output(print(real)))
   expect_equal(nrow(summary(real)), 1L)
+})
+
+test_that("filtering by a variable finds the finding that reports it missing", {
+  # AEDECOD is Required and absent. The finding lists it inside the rule's
+  # variable sets, and filtering on AEDECOD answered "no findings".
+  ae <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = 1, AETERM = "X")
+  result <- check_dataset(ae, standard = "SDTMIG")
+  hit <- filter_findings(result, variable = "AEDECOD")
+  expect_true("CORE-000355" %in% hit$findings$rule_id)
+  # ...and a variable the dataset has is not reported as missing.
+  expect_false("CORE-000355" %in% filter_findings(result, variable = "AETERM")$findings$rule_id)
+})
+
+test_that("a finding about the whole dataset is not counted as a record", {
+  ae <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = c(1, 2),
+                   AETERM = "X", AESTDTC = c("2024-13-01", "2024-02-30"))
+  s <- summary(check_dataset(ae))
+  expect_lte(s$records, 2L)
 })

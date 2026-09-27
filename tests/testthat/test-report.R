@@ -272,11 +272,24 @@ test_that("finding_triage classifies from the finding itself", {
   )
   expect_equal(finding_triage(absent), "missing optional")
 
-  # A blank value is absent, not wrong.
+  # A value the rule requires, left blank, is missing and required: it is
+  # not "often legitimate". Only Expected and Permissible things are.
   blank <- data.table::data.table(
     Variable = "RFSTDTC", Value = "", issue = "no value"
   )
-  expect_equal(finding_triage(blank), "missing optional")
+  expect_equal(finding_triage(blank), "missing required")
+  optional <- data.table::data.table(
+    Variable = "RFSTDTC", Value = "", issue = "an Expected variable is blank"
+  )
+  expect_equal(finding_triage(optional), "missing optional")
+
+  # The identifiers that say which record is meant are not evidence: a blank
+  # ACTARM reported with its USUBJID is the same defect as one without.
+  with_id <- data.table::data.table(
+    Variable = c("USUBJID", "ACTARM"), Value = c("02", ""),
+    issue = "ACTARM is empty, but ARMNRS is not completed."
+  )
+  expect_equal(finding_triage(with_id), "missing required")
 })
 
 test_that("the report leads with wrong values, not with things merely absent", {

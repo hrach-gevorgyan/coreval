@@ -111,10 +111,11 @@ binding_gap <- function(sets) {
 #' * `"wrong value"` - the data contains something that breaks the rule: a
 #'   month of 13, a value outside its codelist, two variables that contradict
 #'   each other. Nothing about your study explains these away.
-#' * `"missing required"` - something CDISC marks Required is absent.
-#' * `"missing optional"` - something Expected or Permissible is absent, or a
-#'   value is simply blank. Often legitimate: a screen-failure subject with no
-#'   reference dates, a variable your raw data does not carry yet.
+#' * `"missing required"` - something the standard or the rule requires is
+#'   absent: a Required variable, or a value the rule says must be filled in.
+#' * `"missing optional"` - something Expected or Permissible is absent. Often
+#'   legitimate: a screen-failure subject with no reference dates, a variable
+#'   your raw data does not carry yet.
 #'
 #' This is coreval's own ordering, derived from the findings themselves. It is
 #' not a regulatory judgement and does not map onto anyone's severity scale.
@@ -132,10 +133,17 @@ TRIAGE_LEVELS <- c("wrong value", "missing required", "missing optional")
 #' @noRd
 finding_triage <- function(sub, rule = NULL) {
   real <- sub[!startsWith(sub$Variable, "$"), ]
+  # The identifiers a rule reports to say WHICH record it means are not
+  # evidence about the record. Counted as evidence, one rule reporting a blank
+  # ACTARM alongside USUBJID came out "wrong value" while its twin reporting
+  # the blank ACTARMCD alone came out "often legitimate", for the same defect.
+  identifier <- real$Variable %in% c("STUDYID", "DOMAIN", "USUBJID", "POOLID", "APID", "SPDEVID") |
+    grepl("^[A-Z]{2}SEQ$", real$Variable)
+  evidence <- real[!identifier, ]
 
   # Something is present and breaks the rule. This is the only class where
   # the data itself is the evidence, so it comes first.
-  if (nrow(real) > 0 && any(real$Value != "Not in dataset" & nzchar(real$Value))) {
+  if (nrow(evidence) > 0 && any(evidence$Value != "Not in dataset" & nzchar(evidence$Value))) {
     return("wrong value")
   }
 
@@ -151,6 +159,18 @@ finding_triage <- function(sub, rule = NULL) {
   }
   msg <- if (is.null(rule)) sub$issue[1] else rule_message(rule)
   if (isTRUE(grepl("required", msg, ignore.case = TRUE))) {
+    return("missing required")
+  }
+  if (isTRUE(grepl("expected|permissible", msg, ignore.case = TRUE))) {
+    return("missing optional")
+  }
+  # A variable the dataset simply does not have may be legitimately absent.
+  # A VALUE the rule requires, left blank in a variable that is there, is not:
+  # this used to fall through to "missing optional", printed as "often
+  # legitimate", so "ORRES is blank and STAT is blank too" and "both USUBJID
+  # and POOLID are empty" were filed as probably fine, and filtering to what
+  # matters left them out.
+  if (nrow(evidence) > 0 && any(evidence$Value != "Not in dataset")) {
     return("missing required")
   }
   "missing optional"
@@ -273,7 +293,8 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
 
   for (grp in utils::head(groups, n)) {
     sub <- f[key == grp, ]
-    n_rec <- nrow(unique(sub[, c("Dataset", "Record")]))
+    # A finding about the dataset as a whole names no record.
+    n_rec <- count_records(sub)
 
     cat("\n[", sub$triage[1], "]\n", sep = "")
     for (ln in wrap_lines(sub$issue[1], width - 2, 2)) cat(ln, "\n", sep = "")
@@ -293,11 +314,12 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
     # every row of the dataset as though it affected a thousand.
     total_rec <- n_rec
     if (!is.null(truncated) && nrow(truncated) > 0) {
-      hit <- truncated$rule_id == sub$rule_id[1] & truncated$domain == sub$Dataset[1]
+      hit <- truncated$rule_id == sub$rule_id[1] &
+        truncated$domain %in% c(sub$Dataset[1], "STUDY")
       if (any(hit)) total_rec <- truncated$records_found[which(hit)[1]]
     }
     cat(
-      "  ", total_rec, if (total_rec == 1) " record" else " records",
+      "  ", if (total_rec == 0) "the dataset" else paste(total_rec, if (total_rec == 1) "record" else "records"),
       if (total_rec > n_rec) paste0(" (first ", n_rec, " kept)") else "",
       if (length(vars)) paste0(" ", g$dot, " ", paste(utils::head(vars, 4), collapse = ", ")) else "",
       "\n",
@@ -477,7 +499,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   }
 
   n_problems <- length(unique(paste(f$Dataset, f$rule_id)))
-  n_records <- if (nrow(f) == 0) 0L else nrow(unique(f[, c("Dataset", "Record")]))
+  n_records <- count_records(f)
 
   if (nrow(f) == 0 && isTRUE(attr(x, "filtered"))) {
     # "Nothing to fix" would be a lie here: findings were filtered away, not
@@ -580,4 +602,21 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     cat("Run check_study() on the full folder for the checks that could not run here.\n")
   }
   invisible(x)
+}
+
+#' How many records a set of findings is about
+#'
+#' A finding about a whole dataset (a variable it lacks) has no record, and was
+#' counted as one: two bad dates and three dataset-level findings on a two-row
+#' AE printed as "across 3 records".
+#'
+#' @param f Findings.
+#' @return An integer.
+#' @noRd
+count_records <- function(f) {
+  if (nrow(f) == 0) {
+    return(0L)
+  }
+  keyed <- unique(f[, c("Dataset", "Record")])
+  sum(!is.na(keyed$Record))
 }
