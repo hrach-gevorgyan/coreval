@@ -1,3 +1,63 @@
+# coreval (development version)
+
+* **Findings that were not real.**
+  - A RELREC relationship linked records of different subjects whenever the
+    subjects reused a RELID, so a findings-about record was compared with
+    another subject's adverse event (CORE-000744, CORE-000757).
+  - With a domain RELREC does not mention, or no RELREC at all, every record
+    of that domain was reported.
+  - A Define-XML 1.0 was read with every label blank, so the rule comparing
+    labels with the define reported every labelled variable. CDISC's pilot
+    submission uses Define-XML 1.0.
+  - Less-than and greater-than compared text as text where the reference
+    compares numbers, so "150" was less than "LOW".
+  - A rule joining a dataset the study lacks compared against the missing
+    columns' names: with no DM, every death in DS was reported by CORE-000034.
+    Such a rule is now skipped, saying which dataset it needs.
+  - An SDTM study checked with no standard declared was told that ADSL and the
+    tobacco dataset TO were missing.
+  - A few smaller cases: `has_same_values` ignored blanks, and
+    `is_not_unique_relationship` against a missing column depended on row
+    order.
+
+* **Problems that were never looked for.**
+  - A dataset split across files (LB1, LB2) was scoped, classed and looked up
+    under its file name, and about a hundred rules per domain passed it by.
+    Split files now get the rules of their domain.
+  - Sponsor-defined domains got no class, so every class-scoped rule skipped
+    them; Findings About domains (FA, SR) got none of the rules written for
+    Findings.
+  - SUPP qualifiers written the way SAS writes them ("       1"), or as "1.0",
+    or for sequence numbers of 100,000 and more, joined nothing.
+  - One word such as BLQ in a results column switched off every numeric
+    comparison in it.
+  - A folder holding any .xpt file ignored its .sas7bdat and Dataset-JSON files,
+    and then reported their datasets as missing. Every dataset file is now read.
+  - Date-time columns, from R or from a SAS DATETIME variable, were not read as
+    ISO 8601, so the date rules found nothing in them.
+  - An operation over a dataset the study lacks answered "no violation" for
+    every row. It is now skipped with the reason.
+  - Ten define-based presence rules for SEND could never fire.
+  - A Dataset-JSON cell holding the word "study" made the whole folder read as
+    an empty USDM study.
+
+* **Reports and exports.**
+  - CSV exports no longer let a data value run as a spreadsheet formula, and
+    are written so Excel shows non-English text correctly.
+  - A value the rule requires, left blank, is "missing required", not "often
+    legitimate".
+  - `filter_findings(variable =)` finds a variable reported as missing, and
+    refuses a typo instead of matching nothing.
+
+* **Faster.** CDISC's pilot submission is checked in about 21 seconds against
+  26 before, with the same findings, and USDM study documents are read in half
+  the time.
+
+* **Stricter testing.** The conformance harness no longer counts a rule as
+  passing when the only cases it could grade were the ones expecting nothing,
+  and split fixtures are graded. See docs/COVERAGE.md for the current counts
+  and every rule that moved.
+
 # coreval 0.3.0
 
 * **Broken input is refused, not checked in part.** 95 broken and odd inputs
