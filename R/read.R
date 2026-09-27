@@ -1,10 +1,11 @@
 #' Read a study into coreval's internal representation
 #'
-#' Detects whether `path` is a directory of XPT datasets (a real study) or a
-#' CORE test-case `data/` directory (`_variables.csv` + one CSV per dataset,
-#' usually also `.env` and `_datasets.csv`), and reads either into the same
-#' internal representation, so the evaluator never has to know which one it
-#' got.
+#' Reads a study folder: SAS transport (`.xpt`) and SAS (`.sas7bdat`) files,
+#' Dataset-JSON (`.json`, `.ndjson`), or a USDM study document, plus a
+#' Define-XML when one is there. A CORE test-case `data/` folder
+#' (`_variables.csv` and one CSV per dataset) is read too. All of them come out
+#' in the same internal representation, so the evaluator never has to know
+#' which one it got.
 #'
 #' Character columns use `""` for blank/missing (never `NA`) to match how
 #' SAS XPT round-trips blanks; numeric columns use `NA`. Column types are
@@ -17,13 +18,14 @@
 #'   list(data, meta, label)>, define, ct = NULL, standard =
 #'   list(product, version))`. `define` is the parsed Define-XML if one was
 #'   found in `path` and the `xml2` package is installed, and `NULL`
-#'   otherwise; `ct` is always `NULL` (controlled terminology is not
-#'   bundled). Each `data` is a [data.table::data.table()];
+#'   otherwise; `ct` is always `NULL`. Each `data` is a
+#'   [data.table::data.table()];
 #'   each `meta` is a data.table with columns `variable`, `label`, `type`;
 #'   `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
 #'   unavailable. `standard` is the study's declared standard/version (e.g.
 #'   `list(product = "SDTMIG", version = "3-4")`), read from a CORE test
-#'   case's `.env` file - both `NA` for a real XPT-based study (no `.env`).
+#'   case's `.env` file or a USDM document, and both `NA` for a folder of
+#'   datasets, which does not declare one.
 #' @examples
 #' dir <- tempfile("coreval_study_")
 #' dir.create(dir)

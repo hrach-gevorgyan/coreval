@@ -115,10 +115,9 @@ So the version comes from the study's own TS (`TSVCDREF` names the publisher,
 hand. With neither, those rules skip and say so. CDISC's engine takes the same
 position: its `-ct` is required and it errors without one.
 
-Preferred terms are deliberately not bundled. No rule asks for
-`returntype: pref_term`, and carrying them doubles both the file and its
-in-memory size. A rule that ever needs one is skipped with a reason rather than
-answered from data that is not there.
+Preferred terms are bundled in a file of their own, read only when a rule asks
+for one, so a study with no such rule pays nothing for them. They are about as
+large again as the rest of the terminology, which is why they are kept apart.
 
 ## `Depends: R (>= 4.1)` stays, though nothing needs it (decided 2026-09-12)
 

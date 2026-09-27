@@ -12,20 +12,22 @@ read_study(path)
 \value{
 A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was
 found in \code{path} and the \code{xml2} package is installed, and \code{NULL}
-otherwise; \code{ct} is always \code{NULL} (controlled terminology is not
-bundled). Each \code{data} is a \code{\link[data.table:data.table]{data.table::data.table()}};
+otherwise; \code{ct} is always \code{NULL}. Each \code{data} is a
+\code{\link[data.table:data.table]{data.table::data.table()}};
 each \code{meta} is a data.table with columns \code{variable}, \code{label}, \code{type};
 \code{label} is the dataset's own label (e.g. \code{"Adverse Events"}), or \code{NA} if
 unavailable. \code{standard} is the study's declared standard/version (e.g.
 \code{list(product = "SDTMIG", version = "3-4")}), read from a CORE test
-case's \code{.env} file - both \code{NA} for a real XPT-based study (no \code{.env}).
+case's \code{.env} file or a USDM document, and both \code{NA} for a folder of
+datasets, which does not declare one.
 }
 \description{
-Detects whether \code{path} is a directory of XPT datasets (a real study) or a
-CORE test-case \verb{data/} directory (\verb{_variables.csv} + one CSV per dataset,
-usually also \code{.env} and \verb{_datasets.csv}), and reads either into the same
-internal representation, so the evaluator never has to know which one it
-got.
+Reads a study folder: SAS transport (\code{.xpt}) and SAS (\code{.sas7bdat}) files,
+Dataset-JSON (\code{.json}, \code{.ndjson}), or a USDM study document, plus a
+Define-XML when one is there. A CORE test-case \verb{data/} folder
+(\verb{_variables.csv} and one CSV per dataset) is read too. All of them come out
+in the same internal representation, so the evaluator never has to know
+which one it got.
 }
 \details{
 Character columns use \code{""} for blank/missing (never \code{NA}) to match how

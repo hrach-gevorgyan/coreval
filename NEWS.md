@@ -230,9 +230,6 @@
   second bound nothing and every rule comparing against it answered from an
   empty set.
 
-  `returntype: pref_term` is refused rather than answered. Preferred terms are
-  not bundled: they are most of the bulk of CDISC's caches and no bundled rule
-  needs them. A rule asking for one is skipped with that reason.
 
 * A variable a fixture declares `Boolean` is read as a logical. Left as text,
   `"True"` was compared against R's coercion of `TRUE` to `"TRUE"` and a row

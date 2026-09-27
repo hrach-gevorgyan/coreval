@@ -7,8 +7,8 @@
 #'
 #' * [check_dataset()] - one dataset, either a data frame you already have open
 #'   or a single file. Use this while writing code.
-#' * [read_study()] then [check_study()] - a whole study folder. Use this once
-#'   the datasets exist, since the cross-dataset rules need everything present.
+#' * [check_study()] - a whole study folder. Use this once the datasets exist,
+#'   since the cross-dataset rules need everything present.
 #'
 #' Both entry points give you two tables, and **both matter**. `$findings` is what
 #' is wrong. `$skipped` is what could not be checked, with a reason for each. An

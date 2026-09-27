@@ -20,9 +20,9 @@ check_dataset(
 \code{.xpt}, \code{.sas7bdat} or \code{.csv} file.}
 
 \item{domain}{Two-letter domain code, e.g. \code{"AE"}. Left as \code{NULL}, coreval
-takes it from your \code{DOMAIN} column, or the file name if there isn't one -
-so \code{ae1.xpt} from a split dataset is still checked as \code{AE}. Set it
-yourself if that guess is wrong.}
+takes it from your \code{DOMAIN} column, or the file name if there isn't one.
+For one file of a split dataset with no \code{DOMAIN} column, such as
+\code{ae1.xpt}, set it yourself.}
 
 \item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
 \code{"SENDIG"}. Rules are scoped to it, which is usually what you want - a
@@ -88,9 +88,8 @@ coreval does not guess. Those rules are skipped, and \verb{$skipped} names the
 dataset each one wanted. Running them anyway would compare your data against
 columns that are not there and report problems that do not exist.
 
-Most rules still run - across AE, DM, LB and VS, 76-84\% of the applicable
-ones work on a single dataset. But the ones that cannot are the cross-dataset
-checks, which are often the ones that matter.
+Most rules still run on a single dataset. But the ones that cannot are the
+cross-dataset checks, which are often the ones that matter.
 
 \strong{So a short \verb{$findings} table here does not mean the data is clean.} It is
 a quick first pass, not a verdict. Run \code{\link[=check_study]{check_study()}} on the whole folder

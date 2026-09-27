@@ -19,8 +19,8 @@ Two ways in, depending on what you have:
 \itemize{
 \item \code{\link[=check_dataset]{check_dataset()}} - one dataset, either a data frame you already have open
 or a single file. Use this while writing code.
-\item \code{\link[=read_study]{read_study()}} then \code{\link[=check_study]{check_study()}} - a whole study folder. Use this once
-the datasets exist, since the cross-dataset rules need everything present.
+\item \code{\link[=check_study]{check_study()}} - a whole study folder. Use this once the datasets exist,
+since the cross-dataset rules need everything present.
 }
 
 Both entry points give you two tables, and \strong{both matter}. \verb{$findings} is what

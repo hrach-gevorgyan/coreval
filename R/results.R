@@ -382,9 +382,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   * `skipped` - what could not be checked, with a `reason` for each. Read
 #'     this one: an empty `findings` table can mean clean data *or* rules that
 #'     never ran, and they look identical otherwise. Reasons include a dataset
-#'     you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
-#'     controlled terminology when no `ct_package` was given, which is
-#'     not bundled. Nothing skipped is ever counted as a pass.
+#'     the study does not have, a missing Define-XML, and a controlled
+#'     terminology version that neither the study nor `ct_package` names.
+#'     Nothing skipped is ever counted as a pass.
 #'   * `truncated` - rules that flagged more records than `max_records` kept,
 #'     with how many they really found.
 #' @examples

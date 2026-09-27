@@ -32,7 +32,9 @@ severity field, and this does not map onto anyone's scale.}
 
 \item{rule}{Keep only these rule ids, e.g. \code{"CORE-000547"}.}
 
-\item{variable}{Keep only findings naming these variables.}
+\item{variable}{Keep only findings naming these variables, including a
+finding that lists the variable as missing (a Required variable the
+dataset lacks).}
 }
 \value{
 A \code{coreval_result} holding the matching findings. \verb{$skipped} is

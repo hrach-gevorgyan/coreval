@@ -62,9 +62,9 @@ not have, which is usually the finding itself.
 \item \code{skipped} - what could not be checked, with a \code{reason} for each. Read
 this one: an empty \code{findings} table can mean clean data \emph{or} rules that
 never ran, and they look identical otherwise. Reasons include a dataset
-you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
-controlled terminology when no \code{ct_package} was given, which is
-not bundled. Nothing skipped is ever counted as a pass.
+the study does not have, a missing Define-XML, and a controlled
+terminology version that neither the study nor \code{ct_package} names.
+Nothing skipped is ever counted as a pass.
 \item \code{truncated} - rules that flagged more records than \code{max_records} kept,
 with how many they really found.
 }

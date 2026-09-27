@@ -3,9 +3,10 @@ Third-party material bundled with coreval
 
 coreval's own R code is MIT licensed; see the package's LICENSE file.
 
-The files below are NOT coreval's own work. They come from two MIT-licensed
+The files below are NOT coreval's own work. Most come from two MIT-licensed
 repositories published by CDISC, and both notices that licence requires are
-reproduced in full at the end of this file:
+reproduced in full at the end of this file. Two more, the W3C's XHTML schema
+modules and IBM's JSONata, are described in their own sections below.
 
   * cdisc-org/cdisc-open-rules      - the rule definitions and their test data
   * cdisc-org/cdisc-rules-engine    - the offline standards-metadata caches

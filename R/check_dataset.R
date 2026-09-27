@@ -268,9 +268,8 @@ infer_domain <- function(dataset, path = NULL) {
 #' dataset each one wanted. Running them anyway would compare your data against
 #' columns that are not there and report problems that do not exist.
 #'
-#' Most rules still run - across AE, DM, LB and VS, 76-84% of the applicable
-#' ones work on a single dataset. But the ones that cannot are the cross-dataset
-#' checks, which are often the ones that matter.
+#' Most rules still run on a single dataset. But the ones that cannot are the
+#' cross-dataset checks, which are often the ones that matter.
 #'
 #' **So a short `$findings` table here does not mean the data is clean.** It is
 #' a quick first pass, not a verdict. Run [check_study()] on the whole folder
@@ -279,9 +278,9 @@ infer_domain <- function(dataset, path = NULL) {
 #' @param x A data frame (or [data.table::data.table()]), or the path to one
 #'   `.xpt`, `.sas7bdat` or `.csv` file.
 #' @param domain Two-letter domain code, e.g. `"AE"`. Left as `NULL`, coreval
-#'   takes it from your `DOMAIN` column, or the file name if there isn't one -
-#'   so `ae1.xpt` from a split dataset is still checked as `AE`. Set it
-#'   yourself if that guess is wrong.
+#'   takes it from your `DOMAIN` column, or the file name if there isn't one.
+#'   For one file of a split dataset with no `DOMAIN` column, such as
+#'   `ae1.xpt`, set it yourself.
 #' @param standard The standard the data follows, e.g. `"SDTMIG"` or
 #'   `"SENDIG"`. Rules are scoped to it, which is usually what you want - a
 #'   SENDIG rule has nothing to say about an SDTM study.

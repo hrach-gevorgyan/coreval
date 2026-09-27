@@ -124,9 +124,8 @@ Without it those rules are reported as skipped, by name, saying exactly that -
 coreval will not pick a version for you, because judging your data against
 terminology it never declared would invent violations and hide real ones.
 
-Most rules do still run. Across AE, DM, LB and VS, 76–84% of the applicable
-ones work on a single dataset. But the ones that can't are the cross-dataset
-checks, and those are often the ones you care about.
+Most rules do still run on a single dataset. But the ones that can't are the
+cross-dataset checks, and those are often the ones you care about.
 
 **So a short findings list here doesn't mean your data is clean.** It's a quick
 first pass, not a verdict.

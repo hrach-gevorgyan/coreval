@@ -59,16 +59,17 @@ would need an API key and a network call at check time.
 The package bundles CDISC's published conformance rules and the reference
 metadata they need, extracted at build time from two MIT-licensed CDISC
 repositories, each at a pinned commit. `inst/COPYRIGHTS` names each bundled
-file, the repository and commit it came from, and reproduces both MIT notices,
-which differ between the two repositories.
+file and the repository it came from, and reproduces both MIT notices, which
+differ between the two repositories. The rules commit is recorded in the
+package too, and written into every findings file.
 
 No CDISC API is contacted at build time or at run time, and nothing is
 downloaded. CDISC's own engine requires an API key for the CDISC Library; this
 package does not, and takes its data only from files committed to those public
 repositories under MIT.
 
-Two bundled files are not CDISC's and not MIT, and `inst/COPYRIGHTS` says so
-for each:
+Two bundled components are not CDISC's, and `inst/COPYRIGHTS` describes the terms
+of each:
 
 * `inst/extdata/schema/xml/xhtml-1.1/` is the W3C's XHTML Schema modules,
   redistributed verbatim to validate XHTML offline. They carry the W3C's own

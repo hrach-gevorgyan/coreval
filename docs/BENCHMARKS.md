@@ -26,7 +26,8 @@ engine's cache came from the CDISC Library API, coreval extracts from the public
 rules repository, and the two disagree. The 74 the other way are draft and
 unpublished rules the repo ships and the cache does not.
 
-USDM is out of scope by design, it is protocol JSON, not tabular datasets.
+The comparison above is for tabular data. USDM study designs are read too, and
+their rules are compared separately.
 
 ## Performance
 
@@ -292,7 +293,7 @@ rows, about 1.3 GB, before the check runs. At the rate measured here, a
 | | engine | coreval |
 |---|---|---|
 | Runtime dependencies | 26 packages (dask, fastparquet, pyreadstat, redis, ...) | 2 (`data.table`, `haven`) |
-| Installed size | 328 MB of packages + 463 MB metadata cache | 178 KB bundled data |
+| Installed size | 328 MB of packages + 463 MB metadata cache | under 2 MB of bundled data |
 | Network needed to refresh rules | yes (`update-cache`, CDISC Library API key) | no - rules ship as data |
 
 ## Agreement across every non-passing rule
@@ -392,13 +393,10 @@ other - which is the point: the fixtures do not exercise these shapes.
 
 ### Where the engine is ahead
 
-* **Controlled Terminology.** `-ct` validates values against real codelists.
-  coreval bundles only which codelist applies, not its terms - 438 MB is the
-  reason, and it means nine rules skip.
 * **External dictionaries.** WHODrug, MedDRA, LOINC, MEDRT, UNII, SNOMED.
   coreval has none.
-* **USDM.** 257 rules for study-definition JSON. coreval reads tabular data only.
-* **Input formats.** Dataset-JSON, NDJSON, XLSX. coreval reads XPT, sas7bdat, CSV.
+* **Input formats.** The engine also reads XLSX. coreval reads XPT, sas7bdat,
+  CSV, Dataset-JSON, NDJSON and USDM documents.
 * **It is the reference.** Where they disagree and no third source settles it,
   the engine is by definition right.
 * **XML schema validation** of Define-XML (`-vx`), which coreval does not do.
@@ -410,7 +408,7 @@ other - which is the point: the fixtures do not exercise these shapes.
 
 * **Speed**: 21.8x on the 511k-row study, single-process against 13 workers.
 * **Memory**: 833 MB against ~5 GB on that study.
-* **Install**: two R packages against 26 Python ones; 178 KB against ~790 MB.
+* **Install**: two R packages against 26 Python ones; under 2 MB against ~790 MB.
 * **Offline by construction.** No API key, no cache to populate.
 * **It says what it could not check.** Every skipped rule comes back with a
   reason, in the result object, beside the findings.

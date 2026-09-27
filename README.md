@@ -30,13 +30,14 @@ dm <- data.frame(
   AGEU    = c("YEARS", "YEARS", "")
 )
 
-check_dataset(dm)
+result <- check_dataset(dm)
+print(result, n = 2)   # the two most important problems; the default shows ten
 ```
 
 ```
-── coreval — DM ────────────────────────────────────────────────────────────
+── coreval — DM ────────────────────────────────────────────────────────────────
 
-6 problems across 4 records  (164 checks ran)
+6 problems across 3 records  (163 checks ran)
 
   wrong value         3   the data breaks the rule - start here
   missing required    1   the standard requires it
@@ -55,6 +56,20 @@ Variable value is not in correct ISO 8601 date or datetime format
     CORE-000547  · also SEND66, SEND67, SEND68, ...
 
   ... and 4 more here. See result$findings for all of them.
+
+────────────────────────────────────────────────────────────────────────────────
+58 checks could not run.
+  33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+     → run check_study() on the whole folder to cover these
+  14 ask what the whole study contains
+  7 need a define.xml
+  4 for other reasons, see result$skipped
+
+No standard declared, so rules from every standard ran.
+  Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
+
+Fix what you can, then run this again.
+To track the rest:  write_findings(result, "issues.xlsx")
 ```
 
 Each problem says what's wrong, which row, and the value that caused it. The
