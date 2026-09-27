@@ -515,6 +515,8 @@ render_progress <- function(done, total, domain, index, n, width = 28L) {
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
                        max_records = 1000, include_deprecated = FALSE) {
   domains <- names(study$datasets)
+  # The domain each dataset belongs to, worked out once: every rule asks, for
+  # every dataset. See dataset_unsplit_name().
   for (k in domains) {
     study$datasets[[k]]$unsplit <- dataset_unsplit_name(study$datasets[[k]], k)
   }
