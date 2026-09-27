@@ -187,5 +187,10 @@ xhtml_errors_binding <- function(op, dt) {
   # error: `empty` reads a zero-length element as blank, which is what turns
   # this into a per-row violation flag, and an atomic column cannot say
   # "no errors" that way.
-  per_row_binding(lapply(values, xhtml_errors, schema = schema, nsdec = nsdec))
+  #
+  # Each distinct text is validated once. Validation is the slow part, and a
+  # column repeats the same text across many rows.
+  distinct <- unique(values)
+  errors <- lapply(distinct, xhtml_errors, schema = schema, nsdec = nsdec)
+  per_row_binding(errors[match(values, distinct)])
 }
