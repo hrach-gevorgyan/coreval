@@ -33,6 +33,27 @@
 #' @return A single string.
 #' @noRd
 dataset_unsplit_name <- function(dataset, domain) {
+  if (!is.null(dataset$unsplit)) {
+    return(dataset$unsplit)
+  }
+  # Asked about a million times in a study sweep (every rule, every dataset),
+  # so during a sweep each dataset's answer is worked out once. A dataset key
+  # names one dataset for the whole sweep.
+  cache <- .coreval_env$prep_cache
+  if (!is.null(cache) && length(domain) == 1L) {
+    cache_key <- paste0("unsplit:", domain)
+    hit <- cache[[cache_key]]
+    if (!is.null(hit)) {
+      return(hit)
+    }
+    answer <- compute_unsplit_name(dataset, domain)
+    assign(cache_key, answer, envir = cache)
+    return(answer)
+  }
+  compute_unsplit_name(dataset, domain)
+}
+
+compute_unsplit_name <- function(dataset, domain) {
   up <- toupper(domain)
   # Only a value that can be a domain code is taken as one. A file whose
   # label row was saved as data (one of CDISC's own rule fixtures) otherwise

@@ -478,24 +478,12 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
   # Matched exactly, not by prefix: a study declaring SENDIG should not pick
   # up SENDIG-DART rules, which are for a different kind of study.
   if (!is.null(standard) && length(standard) == 1 && !is.na(standard) && nzchar(standard)) {
-    want <- toupper(standard)
-    keep <- keep & vapply(
-      rules, function(r) want %in% toupper(r$standards), logical(1)
-    )
-
-    # Narrow further to the Implementation Guide VERSION when one is given.
+    # Narrowed to the Implementation Guide VERSION too when one is given.
     # Rules are written per version: 408 SDTMIG rules exist for 3.2 against
     # 445 for 3.4, and 86 apply to exactly one version. Without this a study
-    # on 3.2 is measured against rules written for a guide it does not follow.
-    #
-    # The version is compared through targets_standard_version(), which reads
-    # "3-4" as "3.4" and "4.0.0" as "4.0".
-    if (!is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)) {
-      keep <- keep & vapply(
-        rules, function(r) targets_standard_version(r$standard_versions, standard, version),
-        logical(1)
-      )
-    }
+    # on 3.2 is measured against rules written for a guide it does not
+    # follow. "3-4" reads as "3.4" and "4.0.0" as "4.0".
+    keep <- keep & rules_for_standard(rules, standard, version)
   }
 
   # Deprecated rules have been superseded by a published replacement, so
@@ -511,4 +499,41 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
   # for scoping, so calling it back would recurse forever.
   rules_table <- build_rules_table()
   rules_table[rules_table$id %in% ids, ]
+}
+
+#' Which rules target a standard, and a version of it
+#'
+#' The answer depends on the standard and version alone, not on the dataset,
+#' and working it out per rule per dataset was the largest single cost of a
+#' study check: every rule's version list was re-normalised with regular
+#' expressions once for each dataset. It is worked out once per standard and
+#' version and kept for the session; the bundled rules do not change while it
+#' runs.
+#'
+#' @param rules The bundled rules.
+#' @param standard A standard, e.g. `"SDTMIG"`.
+#' @param version A version or `NULL`.
+#' @return A logical vector over `rules`.
+#' @noRd
+rules_for_standard <- function(rules, standard, version = NULL) {
+  has_version <- !is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)
+  cache_key <- paste0("std:", toupper(standard), ":", if (has_version) normalise_version(version) else "")
+  if (is.null(.coreval_env$standard_filter)) {
+    .coreval_env$standard_filter <- new.env(parent = emptyenv())
+  }
+  hit <- .coreval_env$standard_filter[[cache_key]]
+  if (!is.null(hit) && length(hit) == length(rules) && identical(names(hit), names(rules))) {
+    return(unname(hit))
+  }
+  want <- toupper(standard)
+  keep <- vapply(rules, function(r) want %in% toupper(r$standards), logical(1))
+  if (has_version) {
+    keep <- keep & vapply(
+      rules, function(r) targets_standard_version(r$standard_versions, standard, version),
+      logical(1)
+    )
+  }
+  names(keep) <- names(rules)
+  assign(cache_key, keep, envir = .coreval_env$standard_filter)
+  unname(keep)
 }

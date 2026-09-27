@@ -515,6 +515,9 @@ render_progress <- function(done, total, domain, index, n, width = 28L) {
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
                        max_records = 1000, include_deprecated = FALSE) {
   domains <- names(study$datasets)
+  for (k in domains) {
+    study$datasets[[k]]$unsplit <- dataset_unsplit_name(study$datasets[[k]], k)
+  }
   # Per-run cache for the synthetic datasets prepare_dataset_for_rule() builds.
   # Those builders take (dataset, define, domain, study) - nothing about the
   # RULE - yet were rebuilt for every rule taking the same path. On a
