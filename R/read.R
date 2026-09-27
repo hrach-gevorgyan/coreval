@@ -46,27 +46,102 @@ read_study <- function(path) {
   if (file.exists(file.path(path, "_variables.csv"))) {
     return(read_study_test_case(path))
   }
-  # XPT first when both are present. A folder holding transport files and a
-  # Dataset-JSON of the same data is a conversion in progress, and the transport
-  # files are the ones a submission is made of.
-  if (length(list.files(path, pattern = "[.]xpt$", ignore.case = TRUE)) > 0) {
-    return(read_study_xpt(path))
-  }
   # A USDM study document is `.json` too, and reading one as a Dataset-JSON
   # refuses it for declaring no columns, which says nothing useful about what
-  # it actually is.
+  # it actually is. A folder holding datasets as well is read as datasets.
   json_files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
                            full.names = TRUE)
-  if (length(Filter(is_usdm_document, json_files)) > 0) {
+  usdm <- Filter(is_usdm_document, json_files)
+  tabular <- list.files(path, pattern = "[.](xpt|sas7bdat|ndjson)$",
+                        ignore.case = TRUE)
+  if (length(usdm) > 0 && length(tabular) == 0 &&
+      length(json_files) == length(usdm)) {
     return(read_study_usdm(path))
   }
-  if (length(list.files(path, pattern = "[.](json|ndjson)$", ignore.case = TRUE)) > 0) {
-    return(read_study_dataset_json(path))
+  # With no datasets in any readable format this returns an empty study, which
+  # is the honest answer, and check_study() refuses to call an empty study
+  # clean.
+  read_study_folder(path, skip = usdm)
+}
+
+#' Read every dataset file in a study folder
+#'
+#' A folder holding any `.xpt` file used to be read as XPT only, and every
+#' `.sas7bdat`, `.json` and `.ndjson` file beside them was dropped without a
+#' word. A study whose DM was a SAS dataset then reported "DM dataset is
+#' missing", and every rule comparing another dataset with DM lost its other
+#' half.
+#'
+#' Every dataset file is now read. When two files hold the same dataset, which
+#' is what a conversion in progress looks like, the transport file wins, then
+#' the SAS dataset, then Dataset-JSON, and the one left out is named in a
+#' warning. Two files of the same format for one dataset cannot be ranked, so
+#' that is refused. CSV files are not read from a folder, since a CSV carries no
+#' types or labels; they are named in a warning so they are not missed.
+#'
+#' @param path The folder.
+#' @param skip Files already accounted for (a USDM document) and not to warn
+#'   about.
+#' @return A study list, see [read_study()].
+#' @noRd
+read_study_folder <- function(path, skip = character(0)) {
+  rank <- c(xpt = 1L, sas7bdat = 2L, json = 3L, ndjson = 4L)
+  files <- list.files(path, pattern = "[.](xpt|sas7bdat|json|ndjson)$",
+                      ignore.case = TRUE, full.names = TRUE)
+  files <- files[!normalizePath(files, mustWork = FALSE) %in%
+                   normalizePath(skip, mustWork = FALSE)]
+  ext <- tolower(tools::file_ext(files))
+  datasets <- lapply(seq_along(files), function(i) {
+    switch(ext[[i]],
+      xpt = , sas7bdat = build_dataset_from_data_frame(read_sas_file(files[[i]])),
+      json = read_dataset_json(files[[i]]),
+      ndjson = read_dataset_ndjson(files[[i]])
+    )
+  })
+  # The name a Dataset-JSON file declares for itself is used over its file
+  # name: a file renamed on the way out of a transfer should not rename the
+  # dataset with it.
+  declared <- vapply(datasets, function(d) {
+    nm <- attr(d, "dataset_name")
+    if (is.null(nm)) NA_character_ else nm
+  }, character(1))
+  keys <- ifelse(is.na(declared),
+                 toupper(tools::file_path_sans_ext(basename(files))), declared)
+
+  keep <- rep(TRUE, length(files))
+  for (key in unique(keys[duplicated(keys)])) {
+    idx <- which(keys == key)
+    best <- min(rank[ext[idx]])
+    winners <- idx[rank[ext[idx]] == best]
+    if (length(winners) > 1) {
+      stop("more than one file holds the dataset ", key, ": ",
+           paste(basename(files[winners]), collapse = ", "),
+           ". Keep one, since there is no telling which should be checked.",
+           call. = FALSE)
+    }
+    dropped <- setdiff(idx, winners)
+    keep[dropped] <- FALSE
+    warning(basename(files[winners]), " and ",
+            paste(basename(files[dropped]), collapse = ", "),
+            " both hold the dataset ", key, "; only ", basename(files[winners]),
+            " was checked.", call. = FALSE)
   }
-  # No datasets in any readable format. read_study_xpt() returns an empty study
-  # for this, which is the honest answer, and check_study() refuses to call an
-  # empty study clean.
-  read_study_xpt(path)
+  datasets <- datasets[keep]
+  names(datasets) <- keys[keep]
+
+  csv <- list.files(path, pattern = "[.]csv$", ignore.case = TRUE)
+  if (length(datasets) > 0 && length(csv) > 0) {
+    warning("not read: ", paste(csv, collapse = ", "), ". A study folder is read ",
+            "from .xpt, .sas7bdat and Dataset-JSON files; check a CSV on its own ",
+            "with check_dataset().", call. = FALSE)
+  }
+  if (length(datasets) > 0 && length(skip) > 0) {
+    warning("not read: ", paste(basename(skip), collapse = ", "), ", a USDM ",
+            "document in a folder of datasets. Check it from a folder of its own.",
+            call. = FALSE)
+  }
+  list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
+       ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
 #' Undo `fread`'s handling of an escaped quote inside a quoted CSV field
@@ -151,6 +226,36 @@ fix_invalid_utf8 <- function(x) {
   x
 }
 
+#' A number as the text a person would write
+#'
+#' `as.character(100000)` is `"1e+05"`, so every place that turned a number
+#' into text to compare it with text failed on round numbers from 100,000 up:
+#' a SUPP row with IDVARVAL "100000" found no parent with AESEQ 100000, and a
+#' study day of 100000 failed the pattern for a study day. Fifteen significant
+#' digits, the same precision [settle_float_noise()] keeps.
+#'
+#' @param x A numeric vector.
+#' @return A character vector, `NA` where `x` is `NA`.
+#' @noRd
+number_text <- function(x) {
+  out <- trimws(formatC(as.double(x), format = "fg", digits = 15))
+  out[is.na(x)] <- NA_character_
+  out
+}
+
+#' Values from a Dataset-JSON rows matrix as text
+#'
+#' jsonlite turns the rows into a numeric matrix when every value is a number,
+#' so a text column holding numbers comes back as doubles and must be written
+#' out the way the file wrote it.
+#'
+#' @param values One column of the rows matrix.
+#' @return A character vector.
+#' @noRd
+json_text <- function(values) {
+  if (is.numeric(values)) number_text(values) else as.character(values)
+}
+
 #' Remove the conversion noise transport files leave in numbers
 #'
 #' XPT stores numbers as IBM mainframe floating point, often in fewer than
@@ -206,17 +311,6 @@ fill_char_blanks <- function(dt) {
     }
   }
   invisible(NULL)
-}
-
-#' Read a directory of XPT datasets into the internal study representation
-#' @param path Directory containing `.xpt` files.
-#' @return A study list, see [read_study()].
-#' @noRd
-read_study_xpt <- function(path) {
-  files <- list.files(path, pattern = "\\.xpt$", ignore.case = TRUE, full.names = TRUE)
-  datasets <- lapply(files, function(f) build_dataset_from_data_frame(read_sas_file(f)))
-  names(datasets) <- toupper(tools::file_path_sans_ext(basename(files)))
-  list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
 #' Read one SAS transport or SAS dataset file, refusing one that is not whole
@@ -286,10 +380,38 @@ build_dataset_from_data_frame <- function(raw) {
          "one a rule checked.", call. = FALSE)
   }
   dt <- data.table::as.data.table(raw)
+  # exact = TRUE: `attr(col, "label")` also matches the `labels` attribute
+  # haven gives a column with value labels, so a column with value labels and
+  # no variable label either stopped the check or took a value label as its
+  # variable label.
   labels <- vapply(raw, function(col) {
-    lbl <- attr(col, "label")
-    if (is.null(lbl)) NA_character_ else lbl
+    lbl <- attr(col, "label", exact = TRUE)
+    if (is.null(lbl) || length(lbl) != 1L) NA_character_ else as.character(lbl)
   }, character(1))
+
+  for (v in names(dt)) {
+    col <- dt[[v]]
+    # Value labels are a display format; the rules read the stored values.
+    if (inherits(col, "haven_labelled")) {
+      col <- as.vector(haven::zap_labels(col))
+    }
+    # SDTM dates are ISO 8601 text, and the date rules parse that text. A
+    # date-time column (a data frame built in R, or a SAS DATETIME variable)
+    # printed as "2024-01-05 09:00:00", which is not ISO 8601, so every date
+    # rule treated it as unreadable and found nothing.
+    if (inherits(col, "POSIXt")) {
+      text <- format(col, "%Y-%m-%dT%H:%M:%S")
+      text[is.na(col)] <- ""
+      col <- text
+    } else if (inherits(col, "Date")) {
+      text <- format(col, "%Y-%m-%d")
+      text[is.na(col)] <- ""
+      col <- text
+    }
+    if (!identical(col, dt[[v]])) {
+      data.table::set(dt, j = v, value = col)
+    }
+  }
 
   # A factor is text as far as every rule is concerned, but it is an integer
   # vector underneath, so nzchar()/startsWith() on one is an error rather than
@@ -361,7 +483,7 @@ read_study_test_case <- function(path) {
   # five more rules skipped as "no dataset matches the rule's scope" with the
   # scoped dataset sitting right there. The reference reads the same column
   # (csv_metadata_reader.py:85-89, with upper-cased Filename only as the
-  # fallback) and read_study_dataset_json() already honours the declared name.
+  # fallback) and read_study_folder() already honours the declared name.
   # Files are still opened by `Filename`, since the CSV on disk and
   # `_variables.csv`'s `dataset` column both use the truncated form.
   declared_name <- datasets_csv$Filename

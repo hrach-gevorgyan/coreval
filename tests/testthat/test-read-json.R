@@ -215,6 +215,80 @@ test_that("read_study prefers XPT when a folder holds both formats", {
   haven::write_xpt(sample_dm()[1:2, ], file.path(dir, "dm.xpt"))
   write_dataset_json(sample_dm(), file.path(dir, "dm.json"))
 
-  study <- read_study(dir)
+  # The other file is named rather than dropped in silence.
+  expect_warning(study <- read_study(dir), "only dm.xpt was checked")
   expect_equal(nrow(study$datasets$DM$data), 2)
+})
+
+test_that("a study folder reads every dataset format, not only the transport files", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile("coreval_mixed_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  # One .xpt beside them used to make the folder XPT-only, and DM was then
+  # reported as missing.
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-001"),
+                   file.path(dir, "ae.xpt"))
+  suppressWarnings(haven::write_sas(sample_dm(), file.path(dir, "dm.sas7bdat")))
+  lb <- data.frame(STUDYID = "S1", DOMAIN = "LB", USUBJID = "S1-001")
+  write_dataset_json(lb, file.path(dir, "lb.json"), name = "LB")
+  data.table::fwrite(lb, file.path(dir, "vs.csv"))
+
+  expect_warning(study <- read_study(dir), "not read: vs.csv")
+  expect_setequal(names(study$datasets), c("AE", "DM", "LB"))
+  expect_equal(nrow(study$datasets$DM$data), 6)
+})
+
+test_that("two files of one format for the same dataset are refused", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile("coreval_dupname_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  # Both declare AE. The second was never checked and the first was checked
+  # twice.
+  write_dataset_json(sample_dm(), file.path(dir, "ae1.json"), name = "AE")
+  write_dataset_json(sample_dm(), file.path(dir, "ae2.json"), name = "AE")
+  expect_error(read_study(dir), "more than one file holds the dataset AE")
+})
+
+test_that("Dataset-JSON with two columns of one name, or a nameless column, is refused", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile("coreval_dupcol_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  df <- data.frame(STUDYID = "S1", AEENDTC = "2024-01-11", X = "2024-01-01")
+  path <- file.path(dir, "ae.json")
+  write_dataset_json(df, path, name = "AE")
+  json <- readLines(path, warn = FALSE)
+  writeLines(gsub('"name":"X"', '"name":"AEENDTC"', json, fixed = TRUE), path)
+  expect_error(read_study(dir), "more than one column named 'AEENDTC'")
+})
+
+test_that("the text 'study' in a Dataset-JSON cell does not make the folder a USDM study", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile("coreval_studyword_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  write_dataset_json(sample_dm(), file.path(dir, "dm.json"), name = "DM")
+  co <- data.frame(STUDYID = "S1", DOMAIN = "CO", USUBJID = "S1-001", COVAL = "study")
+  write_dataset_json(co, file.path(dir, "co.json"), name = "CO")
+  study <- read_study(dir)
+  expect_setequal(names(study$datasets), c("DM", "CO"))
+  expect_true(is.na(study$standard$product))
+})
+
+test_that("text in a Dataset-JSON column declared numeric is kept, not turned into NA", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile("coreval_numtext_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  df <- data.frame(STUDYID = "S1", AGE = c(34, 51), SEQ = c(100000, 2))
+  path <- file.path(dir, "dm.json")
+  write_dataset_json(df, path, name = "DM")
+  json <- readLines(path, warn = FALSE)
+  writeLines(sub("51", '"N/A"', json, fixed = TRUE), path)
+  dm <- read_study(dir)$datasets$DM
+  expect_equal(dm$data$AGE, c("34", "N/A"))
+  expect_equal(dm$meta$type[dm$meta$variable == "AGE"], "Char")
+  expect_equal(dm$data$SEQ, c(100000, 2))
 })

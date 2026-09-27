@@ -835,9 +835,9 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
 
 #' Say why a study folder gave no datasets, and what to do instead
 #'
-#' The old message told people to check the folder held .sas7bdat or .csv
-#' files, which a study folder is not read from, so a folder of CSVs was
-#' refused with advice to supply CSVs.
+#' The old message told people to check the folder held .csv files, which a
+#' study folder is not read from, so a folder of CSVs was refused with advice
+#' to supply CSVs.
 #'
 #' @param folder The folder that was read, or `NULL` for a study object.
 #' @return One message string.
@@ -847,16 +847,16 @@ no_datasets_message <- function(folder) {
   if (is.null(folder)) {
     return(msg)
   }
-  readable <- "[.](xpt|json|ndjson)$"
+  readable <- "[.](xpt|sas7bdat|json|ndjson)$"
   msg <- paste0(
     "no datasets found in ", folder, ", so nothing could be checked. ",
-    "A study folder is read from .xpt files, Dataset-JSON (.json, .ndjson) ",
-    "or a USDM .json document."
+    "A study folder is read from .xpt and .sas7bdat files, Dataset-JSON ",
+    "(.json, .ndjson) or a USDM .json document."
   )
-  singles <- list.files(folder, pattern = "[.](csv|sas7bdat)$", ignore.case = TRUE)
+  singles <- list.files(folder, pattern = "[.]csv$", ignore.case = TRUE)
   if (length(singles) > 0) {
     msg <- paste0(
-      msg, " It holds ", length(singles), " .csv/.sas7bdat file",
+      msg, " It holds ", length(singles), " .csv file",
       if (length(singles) > 1) "s", ", which are checked one at a time: ",
       "check_dataset(\"", file.path(folder, singles[[1]]), "\")."
     )

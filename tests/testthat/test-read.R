@@ -481,3 +481,28 @@ test_that("numbers carry no conversion noise from a transport file", {
   study <- read_study(dir)
   expect_identical(study$datasets$LB$data$VISITNUM, study$datasets$SV$data$VISITNUM)
 })
+
+test_that("date-time columns reach the date rules as ISO 8601 text", {
+  # They printed as "2024-01-05 09:00:00", which no date rule can read, so an
+  # event ending before it started went unreported.
+  ae <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = 1,
+                   AETERM = "X", AEDECOD = "X",
+                   AESTDTC = as.POSIXct("2024-01-10 10:00", tz = "UTC"),
+                   AEENDTC = as.POSIXct("2024-01-05 09:00", tz = "UTC"),
+                   AEDTC = as.Date(c("2024-01-04")))
+  built <- build_dataset_from_data_frame(ae)
+  expect_equal(built$data$AESTDTC, "2024-01-10T10:00:00")
+  expect_equal(built$data$AEDTC, "2024-01-04")
+  expect_true("CORE-000718" %in% check_dataset(ae)$findings$rule_id)
+})
+
+test_that("value labels are neither taken as the variable label nor fatal", {
+  df <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1")
+  df$AESER <- haven::labelled(c("Y"), c(Yes = "Y", No = "N"))
+  df$AESEV <- haven::labelled(c("M"), c("Mild" = "M"), label = "Severity")
+  built <- build_dataset_from_data_frame(df)
+  expect_true(is.na(built$meta$label[built$meta$variable == "AESER"]))
+  expect_equal(built$meta$label[built$meta$variable == "AESEV"], "Severity")
+  expect_equal(built$data$AESER, "Y")
+  expect_false(inherits(built$data$AESER, "haven_labelled"))
+})

@@ -71,6 +71,18 @@ build_dataset_from_dataset_json <- function(meta_obj, rows, source) {
     }
   }
   names_ <- field("name")
+  # The data-frame path refuses both of these. Here a second column of one
+  # name was dropped without a word, and a nameless one became `V1`.
+  if (anyNA(names_) || any(!nzchar(trimws(names_)))) {
+    stop("Dataset-JSON file is malformed: ", basename(source),
+         " has a column with no name.", call. = FALSE)
+  }
+  dup <- unique(names_[duplicated(names_)])
+  if (length(dup) > 0) {
+    stop("Dataset-JSON file is malformed: ", basename(source), " declares more ",
+         "than one column named ", paste0("'", dup, "'", collapse = ", "),
+         ", so there is no telling which one a rule checked.", call. = FALSE)
+  }
   labels <- field("label")
   types <- vapply(field("dataType"), dataset_json_column_type, character(1),
                   USE.NAMES = FALSE)
@@ -108,9 +120,18 @@ build_dataset_from_dataset_json <- function(meta_obj, rows, source) {
   cols <- lapply(seq_len(n_col), function(j) {
     values <- if (n_row == 0L) character(0) else rows[, j]
     if (identical(types[[j]], "Num")) {
-      suppressWarnings(as.numeric(values))
+      number <- suppressWarnings(as.numeric(values))
+      # Text in a column declared numeric is itself something to report, so it
+      # is kept as text, as the CSV reader does. Turned into NA, "N/A" in AGE
+      # vanished and the rules saw a missing value instead.
+      text <- !is.na(values) & nzchar(trimws(as.character(values))) & is.na(number)
+      if (any(text)) {
+        types[[j]] <<- "Char"
+        return(json_text(values))
+      }
+      number
     } else {
-      as.character(values)
+      json_text(values)
     }
   })
   names(cols) <- names_
@@ -197,37 +218,6 @@ read_dataset_ndjson <- function(path) {
   build_dataset_from_dataset_json(header, rows, path)
 }
 
-#' Read a directory of Dataset-JSON / Dataset-NDJSON files
-#'
-#' The dataset's name comes from the file's own `name` field where it has one,
-#' not from the file name. Define-XML names a dataset in `ItemGroupDef`, and a
-#' Dataset-JSON repeats it; a file renamed on the way out of a transfer should
-#' not silently rename the domain with it.
-#'
-#' @param path Directory containing `.json` or `.ndjson` files.
-#' @return A study list, see [read_study()].
-#' @noRd
-read_study_dataset_json <- function(path) {
-  files <- list.files(path, pattern = "[.](json|ndjson)$", ignore.case = TRUE,
-                      full.names = TRUE)
-  datasets <- lapply(files, function(f) {
-    if (grepl("[.]ndjson$", f, ignore.case = TRUE)) {
-      read_dataset_ndjson(f)
-    } else {
-      read_dataset_json(f)
-    }
-  })
-  declared <- vapply(datasets, function(d) {
-    nm <- attr(d, "dataset_name")
-    if (is.null(nm)) NA_character_ else nm
-  }, character(1))
-  fallback <- toupper(tools::file_path_sans_ext(basename(files)))
-  names(datasets) <- ifelse(is.na(declared), fallback, declared)
-  list(datasets = datasets,
-       define = read_define_xml(find_define_xml(path)), ct = NULL,
-       standard = list(product = NA_character_, version = NA_character_))
-}
-
 #' Is this file a USDM study document?
 #'
 #' A USDM document and a Dataset-JSON file are both `.json` and land in the
@@ -248,8 +238,16 @@ is_usdm_document <- function(path) {
     paste(readLines(path, n = 40L, warn = FALSE, encoding = "UTF-8"), collapse = ""),
     error = function(e) ""
   )
+  # `usdmVersion` usually sits below the study object, past the lines read, so
+  # the `study` object itself is the usual sign. It is matched as a KEY opening
+  # an object: matched as the bare word, one cell holding the text "study" in a
+  # Dataset-JSON file turned the whole folder into a USDM study that checked
+  # clean.
+  if (grepl("\"datasetJSONVersion\"", head_text, fixed = TRUE)) {
+    return(FALSE)
+  }
   grepl("\"usdmVersion\"", head_text, fixed = TRUE) ||
-    grepl("\"study\"", head_text, fixed = TRUE)
+    grepl("\"study\"[[:space:]]*:[[:space:]]*[{]", head_text)
 }
 
 #' Read a folder holding a USDM study document
