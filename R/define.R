@@ -111,6 +111,49 @@ xml_translated_text <- function(nodes) {
   }, character(1))
 }
 
+#' The label of a dataset or variable, from any Define-XML version
+#'
+#' Define-XML 2.0 and 2.1 put it in a `Description/TranslatedText` child;
+#' Define-XML 1.0 puts it in a `def:Label` attribute. Read as 2.0 only, a 1.0
+#' define (CDISC's own pilot submission uses one) parsed without complaint and
+#' gave every label as blank, so the rule comparing each variable's label with
+#' the define reported every labelled variable in the study.
+#'
+#' @param nodes An `xml_nodeset` of ItemGroupDef or ItemDef elements.
+#' @return A character vector, `""` where no label is given.
+#' @noRd
+define_label <- function(nodes) {
+  label <- xml_translated_text(nodes)
+  attr_label <- xml_attr_any(nodes, "Label")
+  ifelse(!nzchar(label) & !is.na(attr_label), attr_label, label)
+}
+
+#' Where a variable's values came from, from any Define-XML version
+#'
+#' 2.0 and 2.1 give it as the `Type` of a `def:Origin` child. 1.0 gives it as
+#' free text in an `Origin` attribute ("CRF Page 7", "Derived"), so the type is
+#' taken from how that text starts, and a value that names none of the types is
+#' left unknown rather than guessed.
+#'
+#' @param items An `xml_nodeset` of ItemDef elements.
+#' @return A character vector, `NA` where no origin is given.
+#' @noRd
+define_origin_type <- function(items) {
+  # Matched by local-name(): `def:Origin` keeps its namespace for XPath
+  # purposes even after xml_ns_strip(), so a plain "./Origin" finds nothing.
+  child <- xml2::xml_attr(
+    xml2::xml_find_first(items, "./*[local-name()='Origin']"), "Type"
+  )
+  text <- trimws(xml2::xml_attr(items, "Origin"))
+  types <- c("CRF", "Derived", "Assigned", "Protocol", "eDT", "Predecessor")
+  from_text <- vapply(text, function(t) {
+    if (is.na(t)) return(NA_character_)
+    hit <- types[startsWith(tolower(t), tolower(types))]
+    if (length(hit) == 0) NA_character_ else hit[[1]]
+  }, character(1), USE.NAMES = FALSE)
+  ifelse(is.na(child), from_text, child)
+}
+
 #' Convert Define-XML's "Yes"/"No" attribute convention to a logical
 #' @param x Character vector.
 #' @param default Value to use where the attribute is absent.
@@ -178,9 +221,14 @@ read_define_xml <- function(path) {
 
   datasets <- data.table::data.table(
     define_dataset_name = xml_attr_any(groups, c("Name", "SASDatasetName")),
-    define_dataset_label = xml_translated_text(groups),
+    define_dataset_label = define_label(groups),
     define_dataset_domain = xml2::xml_attr(groups, "Domain"),
-    define_dataset_class = xml_attr_any(groups, "Class"),
+    # An attribute up to Define-XML 2.0, a def:Class child element in 2.1.
+    define_dataset_class = ifelse(
+      is.na(xml_attr_any(groups, "Class")),
+      xml2::xml_attr(xml2::xml_find_first(groups, "./*[local-name()='Class']"), "Name"),
+      xml_attr_any(groups, "Class")
+    ),
     define_dataset_structure = xml_attr_any(groups, "Structure"),
     # def:HasNoData is a Define-XML 2.1 addition; its absence means the
     # dataset is expected to carry data, so the default is FALSE.
@@ -196,7 +244,7 @@ read_define_xml <- function(path) {
   item_defs <- data.table::data.table(
     oid = xml2::xml_attr(items, "OID"),
     define_variable_name = xml_attr_any(items, c("Name", "SASFieldName")),
-    define_variable_label = xml_translated_text(items),
+    define_variable_label = define_label(items),
     define_variable_data_type = xml2::xml_attr(items, "DataType"),
     define_variable_length = suppressWarnings(as.integer(xml2::xml_attr(items, "Length"))),
     # def:Origin says where a variable's values came from. "Was it collected
@@ -208,12 +256,7 @@ read_define_xml <- function(path) {
     # types (Derived, Assigned, Protocol, Predecessor, eDT) are shared, so
     # the union is unambiguous. NA where a variable declares no Origin at
     # all, which is not the same as declaring a non-collected one.
-    # Matched by local-name(): `def:Origin` keeps its namespace for XPath
-    # purposes even after xml_ns_strip(), so a plain "./Origin" finds
-    # nothing. The unprefixed ODM elements (./ItemRef above) are unaffected.
-    define_variable_origin_type = xml2::xml_attr(
-      xml2::xml_find_first(items, "./*[local-name()='Origin']"), "Type"
-    ),
+    define_variable_origin_type = define_origin_type(items),
     stringsAsFactors = FALSE
   )
 

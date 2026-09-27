@@ -397,3 +397,38 @@ test_that("a define.xml that is present but unreadable says so, and is not read 
   expect_warning(out <- read_define_xml(not_define), "no ItemGroupDef")
   expect_null(out)
 })
+
+test_that("a Define-XML 1.0 is read with its labels and origins, not as blanks", {
+  skip_if_not_installed("xml2")
+  # 1.0 puts labels and origin in attributes. Read as 2.0, every label came
+  # back blank and CORE-000507 reported every labelled variable.
+  path <- tempfile(fileext = ".xml")
+  on.exit(unlink(path))
+  writeLines(c(
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.2" xmlns:def="http://www.cdisc.org/ns/def/v1.0">',
+    '<Study><MetaDataVersion def:DefineVersion="1.0.0">',
+    '<ItemGroupDef OID="DM" Name="DM" def:Label="Demographics" def:Class="Special Purpose">',
+    '<ItemRef ItemOID="DM.AGE" Mandatory="No"/></ItemGroupDef>',
+    '<ItemDef OID="DM.AGE" Name="AGE" DataType="integer" Origin="CRF Page 2" def:Label="Age"/>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+  def <- read_define_xml(path)
+  expect_equal(def$datasets$define_dataset_label, "Demographics")
+  expect_equal(def$datasets$define_dataset_class, "Special Purpose")
+  age <- def$variables[def$variables$define_variable_name == "AGE", ]
+  expect_equal(age$define_variable_label, "Age")
+  expect_equal(age$define_variable_origin_type, "CRF")
+})
+
+test_that("a Define-XML 2.1 def:Class child element gives the dataset class", {
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  on.exit(unlink(path))
+  writeLines(c(
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study><MetaDataVersion>',
+    '<ItemGroupDef OID="IG.TA" Name="TA"><def:Class Name="TRIAL DESIGN"/></ItemGroupDef>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+  expect_equal(read_define_xml(path)$datasets$define_dataset_class, "TRIAL DESIGN")
+})
