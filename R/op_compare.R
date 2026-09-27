@@ -146,9 +146,24 @@ compare_op <- function(fn, set_fn = NULL) {
   }
 }
 
-#' Build an ordinal (`<`/`<=`/`>`/`>=`) comparison operator, coercing a
-#' numeric-looking string to a real number when compared against a numeric
-#' column
+#' Build an ordinal (`<`/`<=`/`>`/`>=`) comparison operator
+#'
+#' Both sides are compared as NUMBERS, always, as the reference compares them
+#' (`pd.to_numeric(errors = "coerce")`, dataframe_operators.py): a value that
+#' is not a number is not less than anything, so that row is FALSE.
+#'
+#' This used to fall back to comparing as text whenever one value in the column
+#' was not a number, and both directions of that were wrong. One "BLQ" in
+#' PCORRES turned every comparison in the column into a text comparison, where
+#' "9" < "10" is FALSE, so CORE-000722 lost every real finding. And text rows
+#' were compared as text, so "150" < "LOW" came out TRUE and CORE-000698
+#' reported a target below a minimum that was not a number.
+#'
+#' A single text literal that is not a number is refused, not compared: it is
+#' the name of a column the dataset does not have (CORE-000722 on a PC without
+#' PCLLOQ compared each result with the word "PCLLOQ"), and the reference fails
+#' on it the same way.
+#'
 #' @param fn Function of `(target, value)` returning a logical vector.
 #' @return An operator function of `ctx`.
 #' @noRd
@@ -168,47 +183,18 @@ ordinal_compare_op <- function(fn) {
       stop("comparison of set-valued operands is not implemented for ",
            ctx$condition$operator, call. = FALSE)
     }
-    # If one side is numeric and the other is a numeric-looking string
-    # (e.g. a quoted literal `value: "65"` against a Num column, or a
-    # comparator resolved as text), base R's `<`/`>` would otherwise coerce
-    # the NUMBER to a STRING (since one side is character) and compare
-    # lexicographically - "9" > "65" is TRUE character-wise, even though
-    # 9 > 65 is FALSE numerically. Only coerce when the string side parses
-    # cleanly as numeric everywhere it isn't already NA/blank, so a genuine
-    # text ordinal comparison is untouched.
-    #
-    # The same trap catches two CHARACTER columns compared against each other,
-    # which is the common case in SDTM - every variable read from an XPT is
-    # text. CORE-000698 compares PDVALTRG against PDVALMIN; with the values
-    # "1000" and "999" a lexicographic `<` says TRUE, so coreval reported a
-    # target below its own minimum where there was none. Both sides parsing
-    # cleanly as numbers is the signal that a numeric comparison was meant.
-    parses_as_numeric <- function(x) {
-      x_num <- suppressWarnings(as.numeric(x))
-      !any(is.na(x_num) & !is.na(x) & x != "")
+    as_number <- function(x) {
+      if (is.numeric(x)) as.double(x) else suppressWarnings(as.numeric(trimws(as.character(x))))
     }
-    if (is.numeric(target) && is.character(value) && parses_as_numeric(value)) {
-      value <- suppressWarnings(as.numeric(value))
-    } else if (is.numeric(value) && is.character(target) && parses_as_numeric(target)) {
-      target <- suppressWarnings(as.numeric(target))
-    } else if (is.character(target) && is.character(value)) {
-      # Two character columns. A whole-column gate is no use here: the columns
-      # these rules compare are usually mixed, holding numbers on the rows the
-      # rule cares about and text elsewhere (CORE-000698's PDVALTRG carries
-      # "1000" and "YES" in the same column). So decide per row, and only where
-      # BOTH sides parse - every other row keeps the plain string comparison it
-      # had before, which leaves genuine text ordinals untouched.
-      n <- max(length(target), length(value))
-      target_num <- suppressWarnings(as.numeric(target))
-      value_num <- suppressWarnings(as.numeric(value))
-      both <- rep_len(!is.na(target_num), n) & rep_len(!is.na(value_num), n)
-      if (any(both)) {
-        result <- rep_len(fn(target, value), n)
-        result[both] <- rep_len(fn(target_num, value_num), n)[both]
-        return(result)
-      }
+    target_num <- as_number(target)
+    value_num <- as_number(value)
+    if (length(value) == 1L && is.character(value) && !is_blank(value) && is.na(value_num)) {
+      stop(ctx$condition$operator, " compares with '", value, "', which is neither a ",
+           "number nor a column of this dataset", call. = FALSE)
     }
-    fn(target, value)
+    result <- rep_len(fn(target_num, value_num), ctx$n)
+    result[is.na(result)] <- FALSE
+    result
   }
 }
 

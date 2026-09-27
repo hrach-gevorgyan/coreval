@@ -123,14 +123,15 @@ test_that("a bare year/month date does not borrow precision or value from a '/'-
   expect_true(compare_dates_one("2024-01/2024-06", "2024-02", "lt"))
 })
 
-test_that("invalid_duration rejects a comma used as a component separator", {
-  # Bug: the duration regex allowed an optional comma BETWEEN components
-  # (e.g. "P1Y,2M"), but ISO 8601 only allows a comma as a decimal
-  # separator WITHIN one component (e.g. "P1,5Y").
+test_that("invalid_duration accepts a comma between components, as the reference does", {
+  # ISO 8601 allows a comma only as a decimal separator, and this operator used
+  # to refuse "P1Y,2M" for that reason. The reference's validator
+  # (is_valid_duration, helpers.py) allows it, and a CORE rule means what the
+  # reference computes, so this follows the reference.
   data <- data.table::data.table(X = c("P1Y2M3D", "P1Y,2M", "P1,5Y"))
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "X", operator = "invalid_duration")
-  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, TRUE, FALSE))
+  expect_equal(evaluate_check(check, dataset, "TS"), c(FALSE, FALSE, FALSE))
 })
 
 test_that("is_complete_date's result carries no names (vapply() over a character vector defaults to USE.NAMES = TRUE)", {
@@ -246,4 +247,50 @@ test_that("subsetting date components keeps the matched attribute", {
     attr(subset_date_components(comp, lg), "matched"),
     attr(comp, "matched")[lg]
   )
+})
+
+test_that("invalid_date refuses what the reference's isoparse refuses", {
+  # A lone "-" typed for "unknown", a negative or zero year, and a time with a
+  # placeholder hour all passed the shape pattern.
+  bad <- c("-", "-2024", "0000-01-01", "2024-03-15T-")
+  good <- c("2024", "2024-03", "2024-03-15", "2024---15", "2024-03-15T10:30")
+  expect_false(any(is_valid_date_str(bad)))
+  expect_true(all(is_valid_date_str(good)))
+})
+
+test_that("a date is converted to UTC before it is cut to the precision compared", {
+  # 02:00 at +05:00 on the 16th is 21:00 on the 15th in UTC, so it is not
+  # after the 15th at day precision.
+  ctx <- function(target, value, op) {
+    list(exists = TRUE, target = target, value = value, n = length(target),
+         condition = list(operator = op))
+  }
+  expect_false(get_operator("date_greater_than")(
+    ctx("2024-03-16T02:00+05:00", "2024-03-15", "date_greater_than")))
+  # ".5" is half a second.
+  expect_true(get_operator("date_greater_than")(
+    ctx("2024-03-15T10:00:00.5", "2024-03-15T10:00:00.49", "date_greater_than")))
+})
+
+test_that("invalid_duration follows the reference's validator", {
+  ctx <- function(x) {
+    list(exists = TRUE, target = x, n = length(x), condition = list(operator = "invalid_duration"))
+  }
+  op <- get_operator("invalid_duration")
+  # A decimal is allowed only in the smallest unit given.
+  expect_true(op(ctx("P1.5Y2M")))
+  expect_true(op(ctx("PT1.5H30M")))
+  expect_false(op(ctx("P1Y2.5M")))
+  # The reference's pattern allows a comma between components.
+  expect_false(op(ctx("P1Y,2M")))
+  expect_false(op(ctx("P2W")))
+  expect_true(op(ctx("P")))
+})
+
+test_that("an interval is not a complete date", {
+  ctx <- function(x) {
+    list(exists = TRUE, target = x, n = length(x), condition = list(operator = "is_complete_date"))
+  }
+  expect_equal(get_operator("is_complete_date")(ctx(c("2024-03-15", "2024-03-15/2024-03-20"))),
+               c(TRUE, FALSE))
 })

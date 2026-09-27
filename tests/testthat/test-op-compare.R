@@ -19,11 +19,13 @@ test_that("ordinal comparisons coerce a numeric-looking literal against a numeri
   expect_equal(evaluate_check(check4, dataset, "DM"), c(TRUE, TRUE, FALSE))
 })
 
-test_that("ordinal comparisons still work between two genuinely text columns", {
+test_that("an ordinal comparison with a text literal is refused, not made as text", {
+  # The reference compares as numbers only; a text literal that is not a number
+  # is what a missing comparator column turns into, so it is refused.
   data <- data.table::data.table(X = c("apple", "banana", "cherry"))
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "X", operator = "less_than", value = "banana", value_is_literal = TRUE)
-  expect_equal(evaluate_check(check, dataset, "TS"), c(TRUE, FALSE, FALSE))
+  expect_error(evaluate_check(check, dataset, "TS"), "neither a number nor a column")
 })
 
 test_that("equal_to/not_equal_to are unaffected by numeric/character type mismatch", {
@@ -139,17 +141,33 @@ test_that("ordinal comparisons between two character columns compare numbers as 
   expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, TRUE, TRUE, FALSE))
 })
 
-test_that("a column mixing numbers and text keeps text comparisons as text", {
-  # The columns these rules compare are mixed - numbers on the rows the rule
-  # cares about, text elsewhere - so the numeric decision is made per row.
-  # Rows where either side is not a number must behave exactly as before.
+test_that("a row that is not a number on either side is never less than anything", {
+  # As in the reference, which coerces both sides to numbers: "150" < "LOW"
+  # was TRUE compared as text, and CORE-000698 reported it.
   data <- data.table::data.table(
-    A = c("1000", "apple", "9"),
-    B = c("999", "banana", "65")
+    A = c("1000", "apple", "9", "150"),
+    B = c("999", "banana", "65", "LOW")
   )
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "A", operator = "less_than", value = "B")
-  expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, TRUE, TRUE))
+  expect_equal(evaluate_check(check, dataset, "PD"), c(FALSE, FALSE, TRUE, FALSE))
+})
+
+test_that("one word in a numeric column does not switch off every numeric comparison", {
+  # One "BLQ" in PCORRES made the whole column compare as text, where "9" <
+  # "10" is FALSE, so every real finding of CORE-000722 disappeared.
+  pc <- function(orres) {
+    data.frame(STUDYID = "S", DOMAIN = "PC", USUBJID = "S-1", PCSEQ = seq_along(orres),
+               PCTESTCD = "DRUG", PCTEST = "Drug", PCORRES = orres, PCLLOQ = 10,
+               PCSTRESC = orres, PCSTRESN = suppressWarnings(as.numeric(orres)),
+               PCSTRESU = "ng/mL")
+  }
+  flagged <- function(orres) {
+    f <- check_dataset(pc(orres))$findings
+    sort(unique(f$Record[f$rule_id == "CORE-000722"]))
+  }
+  expect_equal(flagged(c("9", "10", "11", "5")), c(1L, 4L))
+  expect_equal(flagged(c("9", "10", "11", "5", "BLQ")), c(1L, 4L))
 })
 
 test_that("not_equal_to compares two set-valued operands rather than raising", {

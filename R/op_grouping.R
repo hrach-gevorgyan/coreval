@@ -191,6 +191,16 @@ register_operator("is_not_unique_relationship", function(ctx) {
   }
   t_col <- ctx$target
   c_col <- ctx$value
+  # The comparator must be a column. One that is not became its own name as
+  # text, one value long, and indexing it by row padded the pairs with blanks,
+  # so whether a row was reported depended on the order of the rows
+  # (CORE-000141 on an EG without EGTPTNUM). The reference fails on the
+  # missing column and skips the rule.
+  comparator <- resolve_var_name(as.character(ctx$condition$value)[[1]], ctx$wildcard)
+  if (!comparator %in% names(ctx$dataset$data)) {
+    stop("is_not_unique_relationship compares with ", comparator,
+         ", which is not a column of this dataset", call. = FALSE)
+  }
 
   keep <- !(is_blank(t_col) & is_blank(c_col))
   pairs <- unique(data.frame(t = t_col[keep], c = c_col[keep], stringsAsFactors = FALSE))
@@ -230,21 +240,25 @@ register_operator("is_unique_relationship", function(ctx) {
   !get_operator("is_not_unique_relationship")(ctx)
 })
 
-# Dataset-level (like exists/contains_all): does the target column have
-# exactly one distinct non-blank value across the WHOLE dataset? Confirmed
-# against CORE-000365's real fixtures: MHCAT is literally "GENERAL" for
-# every one of 3 records (1 distinct value) -> all 3 flagged; a 12-record
-# fixture with 2 distinct MHCAT values -> none flagged. Recycled to every
-# row like other dataset-level facts (see evaluate.R's "dataset-level exists
-# condition" test), so a sibling non_empty condition still filters out any
-# genuinely blank rows in the same "all:" block.
-# Operator: has_same_values - dataset-level: target has exactly one distinct non-blank value
+# Dataset-level (like exists/contains_all): does the target column hold one
+# value across the WHOLE dataset? Confirmed against CORE-000365's real
+# fixtures: MHCAT is literally "GENERAL" for every one of 3 records -> all 3
+# flagged; a 12-record fixture with 2 distinct MHCAT values -> none flagged.
+# Recycled to every row like other dataset-level facts (see evaluate.R's
+# "dataset-level exists condition" test), so a sibling non_empty condition
+# still filters out any genuinely blank rows in the same "all:" block.
+#
+# A blank counts as a value, as in the reference, where this is the negation
+# of `len(unique()) > 1` (dataframe_operators.py). Leaving blanks out made
+# "GENERAL", "GENERAL", "" one value, and both GENERAL rows were reported.
+# Operator: has_same_values - dataset-level: target holds a single value
 register_operator("has_same_values", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  distinct <- unique(ctx$target[!is_blank(ctx$target)])
-  rep(length(distinct) == 1, ctx$n)
+  target <- ctx$target
+  if (is.character(target)) target[is.na(target)] <- ""
+  rep(length(unique(target)) <= 1, ctx$n)
 })
 
 # Flags a row whose target VALUE appears on more than one row sharing the

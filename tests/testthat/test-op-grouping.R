@@ -135,6 +135,20 @@ test_that("has_same_values is dataset-level: FALSE for every row once >1 distinc
   data2 <- data.table::data.table(CAT = c("A", "A", "A"))
   dataset2 <- list(data = data2, meta = NULL)
   expect_equal(evaluate_check(check, dataset2, "MH"), c(TRUE, TRUE, TRUE))
+
+  # A blank is a second value, as in the reference.
+  data3 <- data.table::data.table(CAT = c("A", "A", ""))
+  dataset3 <- list(data = data3, meta = NULL)
+  expect_equal(evaluate_check(check, dataset3, "MH"), c(FALSE, FALSE, FALSE))
+})
+
+test_that("is_not_unique_relationship refuses a comparator column the dataset lacks", {
+  # EGTPTNUM is absent. It was compared as the text "EGTPTNUM", and whether a
+  # row was reported depended on the order of the rows.
+  data <- data.table::data.table(EGTPT = c("PRE-DOSE", "PRE-DOSE", "1H POST"))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "EGTPT", operator = "is_not_unique_relationship", value = "EGTPTNUM")
+  expect_error(evaluate_check(check, dataset, "EG"), "not a column of this dataset")
 })
 
 test_that("present_on_multiple_rows_within matches CDISC's reference results.csv (CORE-000363)", {

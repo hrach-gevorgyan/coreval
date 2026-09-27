@@ -369,3 +369,11 @@ test_that("the four operators no bundled rule currently uses still discriminate 
     c(TRUE, FALSE, FALSE)
   )
 })
+
+test_that("a pattern is matched against a large whole number written out in full", {
+  # 100000 was matched as "1e+05" and failed the study-day pattern.
+  data <- data.table::data.table(LBDY = c(100000, 15, -200000, 1e15))
+  dataset <- list(data = data, meta = NULL)
+  check <- list(name = "LBDY", operator = "not_matches_regex", value = "^-?[1-9]{1}\\d*$")
+  expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, FALSE, FALSE, FALSE))
+})

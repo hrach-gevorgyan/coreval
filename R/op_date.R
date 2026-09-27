@@ -50,6 +50,8 @@ has_date_uncertainty <- function(x) {
 #' @param year,month Integer vectors.
 #' @return An integer vector.
 #' @noRd
+`%|NA|%` <- function(x, y) ifelse(is.na(x), y, x)
+
 days_in_month <- function(year, month) {
   leap <- (year %% 4 == 0 & year %% 100 != 0) | (year %% 400 == 0)
   base <- c(31L, 28L, 31L, 30L, 31L, 30L, 31L, 31L, 30L, 31L, 30L, 31L)[month]
@@ -110,6 +112,13 @@ is_valid_date_str <- function(x, comp = NULL) {
     ok[!is.na(d) & is.na(m)] <- FALSE
     full <- !is.na(y) & !is.na(m) & !is.na(d)
     ok[full] <- d[full] <= days_in_month(y[full], m[full])
+    # Without an uncertainty marker the reference asks isoparse, which wants a
+    # four-digit year from 0001 on and digits in every time component it is
+    # given. The shape pattern alone took "-", "-2024", "0000-01-01" and
+    # "2024-03-15T-" as valid dates, so a lone "-" typed for "unknown" was
+    # never reported.
+    ok[is.na(y) | y < 1L | startsWith(comp[idx, "year"] %|NA|% "", "-")] <- FALSE
+    ok[grepl("T-|:-", xx[idx])] <- FALSE
     valid[idx] <- ok
   }
   valid
@@ -349,14 +358,24 @@ parse_date <- function(x, precision = NA_integer_, comp = NULL) {
   }
   date_fields <- date_group_names[date_group_names != "timezone"]
 
+  # Every component the string gives, first. The time zone is applied to the
+  # full date-time and only then is anything truncated, as in the reference
+  # (get_date converts to UTC before the precision is cut): truncated first,
+  # "2024-03-16T02:00+05:00" compared at day precision as the 16th when it is
+  # the 15th in UTC.
   values <- matrix(0, nrow = n, ncol = length(date_fields), dimnames = list(NULL, date_fields))
   for (i in seq_along(date_fields)) {
     nm <- date_fields[i]
-    v <- suppressWarnings(as.numeric(comp[, nm]))
-    keep <- (is.na(precision) | (i - 1L) <= precision) & !is.na(v)
-    values[, i] <- ifelse(keep, v, date_precision_defaults[[nm]])
+    raw <- comp[, nm]
+    v <- if (nm == "microsecond") {
+      # The digits after the point are a fraction of a second: ".5" is half a
+      # second, 500000 microseconds, not 5 of them.
+      ifelse(is.na(raw), NA_real_, suppressWarnings(as.numeric(paste0("0.", raw))) * 1e6)
+    } else {
+      suppressWarnings(as.numeric(raw))
+    }
+    values[, i] <- ifelse(!is.na(v), v, date_precision_defaults[[nm]])
   }
-
   dt <- tryCatch(
     ISOdatetime(
       values[, "year"], values[, "month"], values[, "day"],
@@ -370,17 +389,28 @@ parse_date <- function(x, precision = NA_integer_, comp = NULL) {
   # A timezone offset (e.g. "+02:00") describes the wall-clock time just
   # parsed as LOCAL to that offset, not UTC - without this adjustment, two
   # otherwise-identical instants recorded in different zones would compare
-  # as unequal (or in the wrong order) purely because of the offset text.
-  # Only applied when hour-or-finer precision is actually being compared -
-  # a bare offset with no time component to anchor it is meaningless.
+  # as unequal (or in the wrong order) purely because of the offset text. A
+  # bare offset with no time component to anchor it is meaningless.
   tz <- comp[, "timezone"]
-  adjust <- !is.na(dt) & !is.na(tz) & (is.na(precision) | precision >= 3L)
+  adjust <- !is.na(dt) & !is.na(tz) & !is.na(suppressWarnings(as.numeric(comp[, "hour"])))
   if (any(adjust)) {
-    # Timezone-qualified values are rare, so the scalar parser is kept and
-    # applied only to the rows that carry one - identical semantics, and no
-    # measurable cost at this frequency.
     offsets <- vapply(tz[adjust], tz_offset_minutes, numeric(1), USE.NAMES = FALSE)
     dt[adjust] <- dt[adjust] - offsets * 60
+  }
+
+  # Then truncate to the precision being compared, resetting every finer
+  # component to its default.
+  cut <- !is.na(precision) & !is.na(dt) & precision < 6L
+  if (any(cut)) {
+    lt <- as.POSIXlt(dt[cut], tz = "UTC")
+    p <- precision[cut]
+    keep_or <- function(value, level, default) ifelse(p >= level, value, default)
+    dt[cut] <- ISOdatetime(
+      lt$year + 1900, keep_or(lt$mon + 1, 1L, 1), keep_or(lt$mday, 2L, 1),
+      keep_or(lt$hour, 3L, 0), keep_or(lt$min, 4L, 0),
+      keep_or(floor(lt$sec), 5L, 0) + keep_or(lt$sec - floor(lt$sec), 6L, 0),
+      tz = "UTC"
+    )
   }
   dt
 }
@@ -502,7 +532,9 @@ register_operator("is_complete_date", function(ctx) {
   x <- as.character(ctx$target)
   precision <- detect_precision(x)
   present <- !is.na(x) & nzchar(x)
-  unname(present & !is.na(precision) & precision >= 2L)
+  # An interval is not one complete date: the reference reads it with
+  # datetime.fromisoformat, which refuses the "/".
+  unname(present & !is.na(precision) & precision >= 2L & !grepl("/", x, fixed = TRUE))
 })
 
 # Operator: is_incomplete_date - negation of is_complete_date, EXCEPT for a
@@ -528,17 +560,39 @@ register_operator("invalid_date", function(ctx) {
 })
 
 # ISO 8601 duration: P[n]Y[n]M[n]D[T[n]H[n]M[n]S] or P[n]W, optionally
-# negative when the condition allows it (`negative: true`/absent means only
-# a bare "-" prefix variant is accepted too). A comma is only legal INSIDE a
-# single component as a decimal separator (e.g. "P1,5Y") - it never separates
-# components ("P1Y,2M" is not valid ISO 8601), so there is no `[,]?` between
-# the component groups themselves.
+# negative. The reference's own validator (is_valid_duration, helpers.py),
+# ported as it is: its pattern allows a comma between components ("P1Y,2M"),
+# and after matching it also requires that only the smallest unit given
+# carries a decimal ("P1.5Y2M" is invalid). This used to refuse the comma and
+# skip the decimal test, which the reference defines otherwise in both cases.
 duration_regex_positive <- paste0(
-  "^P(?!$)(?:(?:(\\d+(?:[.,]\\d*)?Y)?(\\d+(?:[.,]\\d*)?M)?",
-  "(\\d+(?:[.,]\\d*)?D)?(T(?=\\d)(?:(\\d+(?:[.,]\\d*)?H)?",
-  "(\\d+(?:[.,]\\d*)?M)?(\\d+(?:[.,]\\d*)?S)?)?)?)|(\\d+(?:[.,]\\d*)?W))$"
+  "^P(?!$)(?:(?:(\\d+(?:[.,]\\d*)?Y)?[,]?(\\d+(?:[.,]\\d*)?M)?[,]?",
+  "(\\d+(?:[.,]\\d*)?D)?[,]?(T(?=\\d)(?:(\\d+(?:[.,]\\d*)?H)?[,]?",
+  "(\\d+(?:[.,]\\d*)?M)?[,]?(\\d+(?:[.,]\\d*)?S)?)?)?)|(\\d+(?:[.,]\\d*)?W))$"
 )
 duration_regex_negative <- paste0("^[-]?", substring(duration_regex_positive, 2))
+
+#' Is each string a valid ISO 8601 duration, by the reference's test?
+#' @param x Character vector.
+#' @param pattern One of the duration patterns above.
+#' @return A logical vector.
+#' @noRd
+is_valid_duration <- function(x, pattern) {
+  x <- ifelse(is.na(x), "", x)
+  hits <- regmatches(x, regexec(pattern, x, perl = TRUE))
+  vapply(hits, function(h) {
+    if (length(h) == 0) {
+      return(FALSE)
+    }
+    # groups: years, months, days, time designator, hours, minutes, seconds, weeks
+    g <- h[-1]
+    g[g == ""] <- NA_character_
+    parts <- g[c(1, 2, 8, 3, 5, 6, 7)]
+    parts <- parts[!is.na(parts)]
+    decimal <- grepl("[.,]", parts)
+    !any(decimal) || (sum(decimal) == 1 && decimal[length(decimal)])
+  }, logical(1))
+}
 
 # Operator: invalid_duration - target is not a valid ISO 8601 duration.
 # `negative` here is a parameter to THIS operator (may the duration carry a
@@ -552,5 +606,5 @@ register_operator("invalid_duration", function(ctx) {
   allow_negative <- !identical(ctx$condition$negative, FALSE)
   pattern <- if (allow_negative) duration_regex_negative else duration_regex_positive
   x <- as.character(ctx$target)
-  !grepl(pattern, x, perl = TRUE) | is.na(x) | x == ""
+  !is_valid_duration(x, pattern) | is.na(x) | x == ""
 })

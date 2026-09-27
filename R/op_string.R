@@ -16,7 +16,27 @@
 #' @return A logical vector.
 #' @noRd
 matches_regex_check <- function(ctx) {
-  grepl(paste0("^(?:", ctx$value, ")"), ctx$target, perl = TRUE)
+  grepl(paste0("^(?:", ctx$value, ")"), target_text(ctx$target), perl = TRUE)
+}
+
+#' A target column as the text a pattern is matched against
+#'
+#' Text is used as it is. A number is written the way the reference writes it
+#' before matching (dataframe_operators.py): a whole number with no decimals,
+#' anything else in full. Left to R, 100000 became "1e+05", and a study day of
+#' 100000 failed the pattern every study day must match.
+#'
+#' @param x A target column.
+#' @return A character vector.
+#' @noRd
+target_text <- function(x) {
+  if (!is.numeric(x)) {
+    return(x)
+  }
+  whole <- !is.na(x) & is.finite(x) & x == round(x)
+  out <- number_text(x)
+  out[whole] <- sprintf("%.0f", x[whole])
+  out
 }
 
 # A blank target is exempt from format validation entirely: the reference
@@ -152,7 +172,7 @@ register_operator("is_not_contained_by_case_insensitive", function(ctx) {
 # Operator: prefix_matches_regex - regex matches within the first N characters of target
 register_operator("prefix_matches_regex", guarded_op(function(ctx) {
   n <- ctx$condition$prefix
-  grepl(ctx$value, substr(ctx$target, 1, n), perl = TRUE)
+  grepl(ctx$value, substr(target_text(ctx$target), 1, n), perl = TRUE)
 }))
 
 # Operator: not_prefix_matches_regex - negation of prefix_matches_regex
@@ -163,8 +183,9 @@ register_operator("not_prefix_matches_regex", function(ctx) {
 # Operator: suffix_matches_regex - regex matches within the last N characters of target
 register_operator("suffix_matches_regex", guarded_op(function(ctx) {
   n <- ctx$condition$suffix
-  len <- nchar(ctx$target)
-  grepl(ctx$value, substr(ctx$target, pmax(len - n + 1, 1), len), perl = TRUE)
+  target <- target_text(ctx$target)
+  len <- nchar(target)
+  grepl(ctx$value, substr(target, pmax(len - n + 1, 1), len), perl = TRUE)
 }))
 
 # Operator: not_suffix_matches_regex - negation of suffix_matches_regex
@@ -174,7 +195,7 @@ register_operator("not_suffix_matches_regex", function(ctx) {
 
 # Operator: prefix_equal_to - target's first N characters (condition's `prefix`) literally equal value
 register_operator("prefix_equal_to", guarded_op(function(ctx) {
-  substr(ctx$target, 1, ctx$condition$prefix) == ctx$value
+  substr(target_text(ctx$target), 1, ctx$condition$prefix) == ctx$value
 }))
 
 # Operator: prefix_not_equal_to - negation of prefix_equal_to
@@ -184,7 +205,7 @@ register_operator("prefix_not_equal_to", function(ctx) {
 
 # Operator: prefix_is_contained_by - target's first N characters (condition's `prefix`) are a member of value
 register_operator("prefix_is_contained_by", guarded_op(function(ctx) {
-  substr(ctx$target, 1, ctx$condition$prefix) %in% ctx$value
+  substr(target_text(ctx$target), 1, ctx$condition$prefix) %in% ctx$value
 }))
 
 # Operator: prefix_is_not_contained_by - negation of prefix_is_contained_by
@@ -195,8 +216,9 @@ register_operator("prefix_is_not_contained_by", function(ctx) {
 # Operator: suffix_is_contained_by - target's last N characters (condition's `suffix`) are a member of value
 register_operator("suffix_is_contained_by", guarded_op(function(ctx) {
   n <- ctx$condition$suffix
-  len <- nchar(ctx$target)
-  substr(ctx$target, pmax(len - n + 1, 1), len) %in% ctx$value
+  target <- target_text(ctx$target)
+  len <- nchar(target)
+  substr(target, pmax(len - n + 1, 1), len) %in% ctx$value
 }))
 
 # Operator: suffix_is_not_contained_by - negation of suffix_is_contained_by
