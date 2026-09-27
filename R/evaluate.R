@@ -470,7 +470,14 @@ run_rule_on_domain <- function(rule, study, domain) {
   assert_referenced_metadata_available(rule, dataset)
   bindings <- operation_bindings_for_rule(rule, study, domain, dataset)
 
+  .coreval_env$unresolved <- character(0)
+  on.exit(.coreval_env$unresolved <- NULL, add = TRUE)
   violations <- evaluate_check(rule$check, dataset, domain, bindings, study)
+  # A comparison with a missing column left some row undecided: refuse the
+  # rule rather than read the unknown as a pass. See unresolved_comparator().
+  if (length(.coreval_env$unresolved) > 0 && anyNA(violations)) {
+    stop(.coreval_env$unresolved[[1]], call. = FALSE)
+  }
   violations[is.na(violations)] <- FALSE
   list(dataset = dataset, violations = violations, bindings = bindings)
 }

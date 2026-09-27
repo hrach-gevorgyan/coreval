@@ -473,8 +473,15 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   #
   # Absent, the rule is refused rather than evaluated unjoined: the joined
   # columns would not exist and the rule would compare against their names.
+  #
+  # A `Join Type: left` spec keeps every row whether or not it has a partner,
+  # and its rules say what an absent partner means (CORE-000816 asks for
+  # `epochId not_exists`), so an absent dataset is an input it answers.
   match_dataset <- domain_dataset(study, match_name)
   if (is.null(match_dataset)) {
+    if (is_left_join(spec)) {
+      return(dataset)
+    }
     stop("Match Datasets: needs ", toupper(match_name), ", which is not in this study",
          call. = FALSE)
   }
@@ -828,4 +835,12 @@ apply_match_datasets <- function(dataset, rule, study, current_domain) {
     dataset <- apply_match_dataset(dataset, spec, study, current_domain, rule)
   }
   dataset
+}
+
+#' Does a Match Datasets spec declare a left join?
+#' @param spec One Match Datasets spec.
+#' @return A single logical.
+#' @noRd
+is_left_join <- function(spec) {
+  identical(tolower(as.character(spec[["Join Type"]] %||% "")), "left")
 }

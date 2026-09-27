@@ -146,6 +146,27 @@ compare_op <- function(fn, set_fn = NULL) {
   }
 }
 
+#' Answer "unknown" for a comparison with a column the dataset lacks
+#'
+#' Unknown, not refused on the spot: CORE-000708 compares --STDY with --ENDY
+#' after checking --ENDY is filled in, so on a DS with no DSENDY every row is
+#' already out and the rule has a clean answer. Refusing there skipped a rule
+#' the reference runs. Where the unknown does decide a row, the rule is
+#' refused once it is evaluated (run_rule_on_domain()), and skipped with this
+#' reason, rather than letting NA read as "no violation".
+#'
+#' @param ctx Operator context.
+#' @param message Why the comparison cannot be made.
+#' @return `rep(NA, ctx$n)`.
+#' @noRd
+unresolved_comparator <- function(ctx, message) {
+  if (is.null(.coreval_env$unresolved)) {
+    stop(message, call. = FALSE)
+  }
+  .coreval_env$unresolved <- c(.coreval_env$unresolved, message)
+  rep(NA, ctx$n)
+}
+
 #' Build an ordinal (`<`/`<=`/`>`/`>=`) comparison operator
 #'
 #' Both sides are compared as NUMBERS, always, as the reference compares them
@@ -189,8 +210,10 @@ ordinal_compare_op <- function(fn) {
     target_num <- as_number(target)
     value_num <- as_number(value)
     if (length(value) == 1L && is.character(value) && !is_blank(value) && is.na(value_num)) {
-      stop(ctx$condition$operator, " compares with '", value, "', which is neither a ",
-           "number nor a column of this dataset", call. = FALSE)
+      return(unresolved_comparator(ctx, paste0(
+        ctx$condition$operator, " compares with '", value, "', which is neither a ",
+        "number nor a column of this dataset"
+      )))
     }
     result <- rep_len(fn(target_num, value_num), ctx$n)
     result[is.na(result)] <- FALSE

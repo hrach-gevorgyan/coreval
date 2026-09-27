@@ -50,8 +50,28 @@ def main():
         rec = r["Record"]
         coreval[r["rule_id"]].add((r["Dataset"].upper(), "" if rec in ("", "NA") else rec))
     skipped = collections.defaultdict(set)
+    skipped_where = collections.defaultdict(set)
     for r in read("coreval_skipped.csv"):
         skipped[r["rule_id"]].add(r["reason"][:100])
+        skipped_where[r["rule_id"]].add(r["domain"].upper())
+
+    # Where the engine itself skipped a rule, dataset by dataset. A rule both
+    # skip on the same datasets (a column neither can find there) is not one
+    # coreval "could not run".
+    engine_skipped_where = collections.defaultdict(set)
+
+    def walk(node):
+        if isinstance(node, dict):
+            if "id" in node and isinstance(node.get("results"), list):
+                for res in node["results"]:
+                    if isinstance(res, dict) and res.get("executionStatus") == "skipped":
+                        engine_skipped_where[node["id"]].add((res.get("dataset") or "").upper())
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+    walk(eng)
     retired = {r["id"] for r in read("coreval_rules.csv") if r["source"] == "deprecated_dir"}
 
     cats = collections.defaultdict(list)
@@ -63,7 +83,7 @@ def main():
             key = "engine: not applicable" + ("; coreval found problems" if c else "")
         elif rid in retired and not c:
             key = "retired rule: engine runs it, coreval does not by default"
-        elif rid in skipped and not c:
+        elif rid in skipped and not c and not skipped_where[rid] <= engine_skipped_where[rid]:
             key = "coreval could not run it; engine ran"
         elif e == c:
             key = "agree" + (" (both found problems)" if e else " (both clean)")

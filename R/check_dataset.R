@@ -52,7 +52,9 @@ rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
       })
       next
     }
-    if (is.na(name)) {
+    # A left join's partner is optional: its rules say what an absent one
+    # means.
+    if (is.na(name) || is_left_join(spec)) {
       next
     }
     named <- c(named, sub("--$", dataset_wildcard(dataset, domain), name))
