@@ -72,28 +72,82 @@ domain_class <- function(domain) {
   NA_character_
 }
 
-#' Test a rule's Scope > Classes block against a domain
+#' The observation class of a dataset
+#'
+#' Looked up by the domain the dataset belongs to, not by its file name. A
+#' domain split into LB1 and LB2 was looked up as "LB1", had no class, and
+#' every rule scoped to Findings silently passed it by.
+#'
+#' A sponsor-defined domain is in no table, so its class comes from its topic
+#' variable, as the reference decides it (handle_custom_domains,
+#' base_data_service.py): --TERM is Events, --TRT Interventions, QNAM
+#' Relationship, --TESTCD Findings, or Findings About when --OBJ is present too.
+#' Without this every class-scoped rule skipped a custom domain without a word,
+#' and CORE-000376, which exists only for custom domains, could never run.
+#'
+#' @param dataset A dataset entry, or `NULL` when only the name is known.
+#' @param key The dataset's key (file name).
+#' @return A single class name, or `NA_character_` if it cannot be told.
+#' @noRd
+dataset_class <- function(dataset, key) {
+  code <- if (is.null(dataset)) toupper(key) else dataset_unsplit_name(dataset, key)
+  cls <- domain_class(code)
+  if (!is.na(cls) || is.null(dataset) || is.null(dataset$data)) {
+    return(cls)
+  }
+  cols <- toupper(names(dataset$data))
+  if ("DOMAIN" %in% cols) {
+    has <- function(suffix) paste0(code, suffix) %in% cols
+    if (has("TERM")) return("EVENTS")
+    if (has("TRT")) return("INTERVENTIONS")
+    if (has("QNAM")) return("RELATIONSHIP")
+    if (has("TESTCD")) return(if (has("OBJ")) "FINDINGS ABOUT" else "FINDINGS")
+  } else if ("RDOMAIN" %in% cols && "QNAM" %in% cols) {
+    return("RELATIONSHIP")
+  }
+  NA_character_
+}
+
+#' Test a rule's Scope > Classes block against a dataset
+#'
+#' Findings About is a kind of Findings: a rule written for Findings also
+#' covers FA and SR, as it does in the reference (rule_applies_to_class,
+#' rule_processor.py), for inclusion and exclusion alike.
+#'
 #' @param classes_spec The rule's `scope$Classes` Include/Exclude block.
-#' @param domain Domain code to test.
+#' @param domain The dataset's key.
+#' @param dataset The dataset, or `NULL`.
 #' @return A single logical.
 #' @noRd
-class_matches <- function(classes_spec, domain) {
-  cls <- domain_class(domain)
+class_matches <- function(classes_spec, domain, dataset = NULL) {
+  cls <- toupper(dataset_class(dataset, domain))
   include_exclude_matches(classes_spec, function(pattern) {
-    if (toupper(pattern) == "ALL") {
+    pattern <- toupper(pattern)
+    if (pattern == "ALL") {
       return(TRUE)
     }
-    !is.na(cls) && identical(toupper(cls), toupper(pattern))
+    !is.na(cls) && (identical(cls, pattern) ||
+                      (identical(cls, "FINDINGS ABOUT") && identical(pattern, "FINDINGS")))
   })
 }
 
-#' Test a rule's Scope > Domains block against a domain
+#' Test a rule's Scope > Domains block against a dataset
+#'
+#' A pattern matches the dataset's file name or the domain it belongs to, so a
+#' rule for LB runs on LB1 and LB2 as the reference runs it (it tests the
+#' DOMAIN value and the name, _is_domain_name_included).
+#'
 #' @param domains_spec The rule's `scope$Domains` Include/Exclude block.
-#' @param domain Domain code to test.
+#' @param domain The dataset's key.
+#' @param dataset The dataset, or `NULL`.
 #' @return A single logical.
 #' @noRd
-domains_match <- function(domains_spec, domain) {
-  include_exclude_matches(domains_spec, function(pattern) pattern_matches_domain(pattern, domain))
+domains_match <- function(domains_spec, domain, dataset = NULL) {
+  names_ <- unique(c(toupper(domain),
+                     if (!is.null(dataset)) dataset_unsplit_name(dataset, domain)))
+  include_exclude_matches(domains_spec, function(pattern) {
+    any(vapply(names_, pattern_matches_domain, logical(1), pattern = pattern))
+  })
 }
 
 #' Is this dataset a USDM entity table?
@@ -155,10 +209,10 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   # breaks 11 other rules, a net loss of 8. Whatever the reference does for
   # those three, it is not this. Over a hundred rules pair the two, so do not
   # retry this without measuring the whole sweep.
-  if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain)) {
+  if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain, dataset)) {
     return(FALSE)
   }
-  if (!is.null(scope$Domains) && !domains_match(scope$Domains, domain)) {
+  if (!is.null(scope$Domains) && !domains_scope_applies(scope$Domains, domain, dataset)) {
     return(FALSE)
   }
   # USDM rules scope by ENTITY, not by domain or class: a study-design document
@@ -175,31 +229,119 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   if (!is.null(scope$Entities) && !entities_match(scope$Entities, domain, dataset)) {
     return(FALSE)
   }
-  # `include_split_datasets` narrows or widens scope by whether the dataset
-  # is one FILE of a domain split across several, which is a property of
-  # the data (its DOMAIN column), not of the name - so it can only be
-  # evaluated when the dataset itself is available. Per the reference's
-  # _is_domain_name_included / _handle_split_domains: TRUE with no Include
-  # list means "only split datasets"; TRUE with one ADDS split datasets to
-  # whatever the list already matched; FALSE excludes split datasets
-  # outright; absent does nothing.
-  include_split <- scope$Domains[["include_split_datasets"]]
-  if (!is.null(include_split) && !is.null(dataset)) {
-    split <- dataset_is_split(dataset, domain)
-    if (isTRUE(include_split) && !split && length(scope$Domains$Include) == 0) {
-      return(FALSE)
-    }
-    if (identical(include_split, FALSE) && split) {
-      return(FALSE)
-    }
-  }
   if (!is.null(use_case) && !is.null(scope[["Use Case"]])) {
-    allowed <- trimws(strsplit(scope[["Use Case"]], ",")[[1]])
+    allowed <- toupper(trimws(strsplit(scope[["Use Case"]], ",")[[1]]))
     if (!(toupper(use_case) %in% allowed)) {
       return(FALSE)
     }
   }
   TRUE
+}
+
+#' Resolve a rule's Scope > Domains block, split-dataset flag included
+#'
+#' `include_split_datasets` narrows or widens scope by whether the dataset is
+#' one FILE of a domain split across several, a property of the data (its
+#' DOMAIN column), so it is only evaluated when the dataset is available. Per
+#' the reference's _is_domain_name_included / _handle_split_domains: TRUE with
+#' no Include list means "only split datasets"; TRUE with one ADDS split
+#' datasets to what the list matched (this used to be read after the list had
+#' already said no, so it never widened anything); FALSE excludes split
+#' datasets; absent does nothing.
+#'
+#' @param domains_spec The rule's `scope$Domains` block.
+#' @param domain The dataset's key.
+#' @param dataset The dataset, or `NULL`.
+#' @return A single logical.
+#' @noRd
+domains_scope_applies <- function(domains_spec, domain, dataset = NULL) {
+  include_split <- domains_spec[["include_split_datasets"]]
+  split <- !is.null(dataset) && dataset_is_split(dataset, domain)
+  included <- is.null(domains_spec$Include) ||
+    domains_match(list(Include = domains_spec$Include), domain, dataset)
+  excluded <- !is.null(domains_spec$Exclude) &&
+    !domains_match(list(Exclude = domains_spec$Exclude), domain, dataset)
+  if (!is.null(dataset)) {
+    if (isTRUE(include_split) && is.null(domains_spec$Include) && !split) {
+      included <- FALSE
+    }
+    if (isTRUE(include_split) && split && !excluded) {
+      included <- TRUE
+    }
+    if (identical(include_split, FALSE) && split) {
+      excluded <- TRUE
+    }
+  }
+  included && !excluded
+}
+
+#' The datasets each TIG use case covers, from the reference
+#'
+#' The reference applies a TIG rule to a dataset only when the dataset's domain
+#' belongs to one of the rule's use cases (rule_applies_to_use_case,
+#' rule_processor.py, with USE_CASE_DOMAINS from constants/use_cases.py), and
+#' does so whether or not a use case was asked for. Without it, "the tobacco
+#' product dataset TO is missing" was reported for every SDTM study checked
+#' with no standard declared.
+#' @noRd
+use_case_domains <- list(
+  INDH = c("AE", "CO", "CM", "DM", "DI", "DU", "DO", "DS", "EG", "EX", "EC", "FA",
+           "IE", "LB", "MH", "PC", "PP", "DA", "DV", "QS", "RELREC", "RE", "SC",
+           "SE", "SV", "SU", "EM", "TA", "TE", "TI", "TS", "TV", "VS"),
+  PROD = c("TO", "PD", "PT", "IT", "IN", "IQ", "ES"),
+  NONCLIN = c("BW", "CV", "CL", "CO", "DD", "DM", "DI", "DU", "DS", "EG", "EX", "FW",
+              "GT", "LB", "MA", "MI", "OM", "PM", "PK", "PP", "POOLDEF", "RELREC",
+              "RELREF", "RE", "SC", "SE", "TA", "TE", "TF", "TX", "TS", "VS"),
+  ANALYSIS = character(0)
+)
+
+#' Does a TIG rule's Use Case cover this dataset?
+#'
+#' Only a rule checked as a TIG rule is limited this way: the reference applies
+#' the use case only when the standard being checked is TIG. So it applies to
+#' every rule when TIG is declared, and, with no standard declared, to a rule
+#' that belongs to TIG alone; a rule SENDIG also publishes still runs on SEND
+#' data as a SENDIG rule.
+#'
+#' A supplemental dataset counts as the domain it qualifies. A sponsor-defined
+#' domain is in no use case's list; the reference refuses to run without being
+#' told its use case, and here it is left in scope rather than dropped in
+#' silence.
+#'
+#' @param rule A rule record.
+#' @param domain The dataset's key.
+#' @param dataset The dataset, or `NULL`.
+#' @param standard The declared standard, or `NULL`.
+#' @return A single logical.
+#' @noRd
+tig_use_case_applies <- function(rule, domain, dataset = NULL, standard = NULL) {
+  if (is.null(rule$scope[["Use Case"]])) {
+    return(TRUE)
+  }
+  standards <- toupper(rule$standards)
+  as_tig <- if (is.null(standard)) all(standards == "TIG") else identical(toupper(standard), "TIG")
+  if (!as_tig) {
+    return(TRUE)
+  }
+  allowed <- toupper(trimws(strsplit(rule$scope[["Use Case"]], ",")[[1]]))
+  use_case_covers_dataset(allowed, domain, dataset)
+}
+
+#' Is this dataset's domain among those a set of use cases covers?
+#' @param allowed Use cases, upper case.
+#' @param domain The dataset's key.
+#' @param dataset The dataset, or `NULL`.
+#' @return A single logical.
+#' @noRd
+use_case_covers_dataset <- function(allowed, domain, dataset = NULL) {
+  code <- if (is.null(dataset)) toupper(domain) else dataset_unsplit_name(dataset, domain)
+  code <- sub("^(SUPP|SQ)", "", code)
+  covered <- unique(unlist(use_case_domains[intersect(allowed, names(use_case_domains))]))
+  if (code %in% covered) {
+    return(TRUE)
+  }
+  !(code %in% .coreval_env$domain_classes$domain) &&
+    !(code %in% unlist(use_case_domains))
 }
 
 #' Domain to observation-class reference table
@@ -311,6 +453,21 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
     rules, rule_applies_to_domain, logical(1),
     domain = domain, use_case = use_case, dataset = dataset
   )
+
+  declared <- if (!is.null(standard) && length(standard) == 1 && !is.na(standard) &&
+                   nzchar(standard)) standard else NULL
+  keep <- keep & vapply(rules, tig_use_case_applies, logical(1),
+                        domain = domain, dataset = dataset, standard = declared)
+
+  # The one ADaMIG rule asks whether ADSL exists. With no standard declared,
+  # every standard's rules run, and it told every SDTM study that ADSL was
+  # missing. An ADaM rule is about ADaM datasets, whose names begin with AD.
+  adam_declared <- identical(toupper(standard %||% ""), "ADAMIG")
+  if (!adam_declared && !startsWith(toupper(domain), "AD")) {
+    keep <- keep & vapply(
+      rules, function(r) !all(toupper(r$standards) == "ADAMIG"), logical(1)
+    )
+  }
 
   # A SENDIG rule has nothing to say about an SDTM study. Of the 270 rules in
   # scope for DM, 73 are SENDIG-only - they inflated the findings, inflated

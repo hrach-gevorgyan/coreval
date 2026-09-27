@@ -311,8 +311,15 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     # being checked. Only takes over when the ordinary column lookup found
     # nothing, so a dataset that (implausibly) has a real column literally
     # named e.g. "DM" still wins.
+    #
+    # A domain split into PC1 and PC2 is present, so each dataset counts by
+    # its file name and by the domain it belongs to.
     if (!exists && !is.null(study) && condition$operator %in% c("exists", "not_exists")) {
-      exists <- toupper(name) %in% toupper(names(study$datasets))
+      present <- c(toupper(names(study$datasets)),
+                   vapply(names(study$datasets), function(k) {
+                     dataset_unsplit_name(study$datasets[[k]], k)
+                   }, character(1), USE.NAMES = FALSE))
+      exists <- toupper(name) %in% present
     }
   }
 

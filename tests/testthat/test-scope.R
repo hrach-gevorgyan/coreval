@@ -209,3 +209,76 @@ test_that("a rule scoped to a named entity needs no such guard", {
   expect_false(rule_applies_to_domain(rule, "AE", dataset = sdtm))
   expect_true(rule_applies_to_domain(rule, "ORGANIZATION", dataset = sdtm))
 })
+
+test_that("a split dataset is checked by the rules of the domain it belongs to", {
+  # Keyed by file name, LB1 had no class and no Library entry, so every
+  # Findings rule and every expected-variable rule passed it by in silence.
+  lb <- data.frame(STUDYID = "S", DOMAIN = "LB", USUBJID = c("S-1", "S-2"), LBSEQ = 1,
+                   LBTESTCD = "GLUC", LBTEST = "Glucose", LBORRES = c("5", "6"),
+                   LBSTRESC = c("5", "6"), LBSTAT = c("", "NOT DONE"), LBREASND = "",
+                   LBDTC = "2024-01-02")
+  whole <- rules_for_domain("LB", dataset = build_dataset_from_data_frame(lb))$id
+  part <- rules_for_domain("LB2", dataset = build_dataset_from_data_frame(lb[2, ]))$id
+  expect_true(all(c("CORE-000675", "CORE-000774") %in% part))
+  expect_length(setdiff(whole, part), 0)
+})
+
+test_that("a Findings About domain gets the rules written for Findings", {
+  fa <- data.frame(STUDYID = "S", DOMAIN = "FA", USUBJID = "S-1", FASEQ = 1,
+                   FATESTCD = "SEV", FAOBJ = "HEADACHE", FAORRES = "5", FASTRESC = "")
+  expect_equal(dataset_class(build_dataset_from_data_frame(fa), "FA"), "FINDINGS ABOUT")
+  ids <- rules_for_domain("FA", dataset = build_dataset_from_data_frame(fa))$id
+  # CORE-000099 is scoped to FINDINGS only.
+  expect_true("CORE-000099" %in% ids)
+})
+
+test_that("a sponsor-defined domain takes its class from its topic variable", {
+  xb <- data.frame(STUDYID = "S", DOMAIN = "XB", USUBJID = "S-1", XBSEQ = 1,
+                   XBTESTCD = "A", XBORRES = "5")
+  xe <- data.frame(STUDYID = "S", DOMAIN = "XE", USUBJID = "S-1", XESEQ = 1, XETERM = "A")
+  expect_equal(dataset_class(build_dataset_from_data_frame(xb), "XB"), "FINDINGS")
+  expect_equal(dataset_class(build_dataset_from_data_frame(xe), "XE"), "EVENTS")
+  # CORE-000376 exists for custom domains and could never run on one.
+  expect_true("CORE-000376" %in% rules_for_domain("XE", dataset = build_dataset_from_data_frame(xe))$id)
+})
+
+test_that("a domain present only as split files counts as present", {
+  pc <- data.frame(STUDYID = "S", DOMAIN = "PC", USUBJID = "S-1", PCSEQ = 1, PCTESTCD = "A")
+  dir <- tempfile("coreval_split_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "S-1"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "PP", USUBJID = "S-1", PPSEQ = 1),
+                   file.path(dir, "pp.xpt"))
+  haven::write_xpt(pc, file.path(dir, "pc1.xpt"))
+  haven::write_xpt(pc, file.path(dir, "pc2.xpt"))
+  f <- check_study(dir)$findings
+  expect_false("CORE-000183" %in% f$rule_id)
+})
+
+test_that("an SDTM study with no standard declared is not told it lacks ADSL or TO", {
+  dir <- tempfile("coreval_nostd_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "S-1"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = 1, AETERM = "X"),
+                   file.path(dir, "ae.xpt"))
+  f <- check_study(dir)$findings
+  expect_false(any(c("CORE-000560", "CORE-000590") %in% f$rule_id))
+})
+
+test_that("an operation over a domain the study lacks is skipped, not answered clean", {
+  # CORE-000039 compares VISITNUM with TV's visits. Without TV every row
+  # passed and the rule was counted as run.
+  dir <- tempfile("coreval_notv_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "S-1"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "SV", USUBJID = "S-1", VISITNUM = c(1, 99),
+                              VISIT = c("V1", "V99"), SVPRESP = "Y"),
+                   file.path(dir, "sv.xpt"))
+  result <- check_study(dir)
+  expect_false("CORE-000039" %in% result$findings$rule_id)
+  expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-000039"],
+               "needs TV, which is not in this study")
+})

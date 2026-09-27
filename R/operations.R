@@ -599,6 +599,8 @@ newest_library_version <- function(versions) {
 #' @return A data.frame of matching rows (possibly zero-row).
 #' @noRd
 library_variables_for <- function(study, domain) {
+  # Looked up by the domain a dataset belongs to, so LB1 finds LB's variables.
+  domain <- domain_code_of(study, domain)
   tbl <- .coreval_env$library_variables
   product <- study$standard$product %||% NA_character_
   standard <- if (is.na(product)) "sdtmig" else tolower(product)
@@ -649,6 +651,7 @@ library_variables_for <- function(study, domain) {
 #' @return A single label string, or `NA_character_`.
 #' @noRd
 standard_domain_label <- function(study, domain, dataset = NULL) {
+  domain <- domain_code_of(study, domain)
   fallback <- if (is.null(dataset)) NA_character_ else (dataset$label %||% NA_character_)
   tbl <- .coreval_env$dataset_labels
   if (is.null(tbl)) {
@@ -716,7 +719,7 @@ filter_metadata_rows <- function(rows, op) {
 #' @noRd
 model_variables_for <- function(domain, dataset = NULL) {
   tbl <- .coreval_env$model_variables
-  cls <- domain_class(domain)
+  cls <- dataset_class(dataset, domain)
   # Every class inherits the General Observations variables.
   rows <- tbl[normalize_class(tbl$class) %in% normalize_class(c("General Observations", cls)), ]
   if (nrow(rows) == 0) {
@@ -750,7 +753,7 @@ model_variables_for <- function(domain, dataset = NULL) {
 #' @return A character vector of variable names in the standard's order.
 #' @noRd
 standard_variable_order <- function(study, domain, dataset) {
-  cls <- domain_class(domain)
+  cls <- dataset_class(dataset, domain)
   model <- .coreval_env$model_variables
   wildcard <- dataset_wildcard(dataset, domain)
 
@@ -1045,8 +1048,23 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # its domain that way already ("DM"), so the lookup below is a no-op for
   # them. USDM rules name entities in mixed case ("StudyIdentifier"), which
   # found nothing and left the binding unresolved.
-  ds <- study$datasets[[toupper(domain)]]
+  #
+  # A domain split across files (LB1, LB2) is read whole, and a domain the
+  # study does not have is refused: answered with nothing, the rule reported
+  # every row as passing (CORE-000039 with no TV), where the reference skips
+  # it as "operation domain not found".
+  ds <- domain_dataset(study, domain)
+  if (is.null(ds) && !is.null(op$domain) && !is.null(study$datasets) &&
+      !identical(toupper(domain), toupper(current_domain))) {
+    stop("operation needs ", toupper(domain), ", which is not in this study", call. = FALSE)
+  }
   dt <- if (!is.null(ds)) ds$data else NULL
+  # The dataset being checked as it is in the study, before any rule reshaped
+  # it. A Variable Metadata rule checks a table of variables with no DOMAIN
+  # column, so "--" templates resolved against that table came out as
+  # "LB1DTC" for a split LB1 instead of "LBDTC".
+  own <- study$datasets[[current_domain]]
+  if (is.null(own)) own <- current_dataset
   # Only when the raw dataset cannot answer. Handing every operation the joined
   # dataset instead was tried and is wrong: it turned five passing rules
   # (CORE-000219, -000272, -000573, -000575, -000852) into failures and skips,
@@ -1320,11 +1338,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     get_dataset_filtered_variables = {
       standard_rows <- rbind(
         library_variables_for(study, current_domain)[, c("variable", "role", "type"), drop = FALSE],
-        model_variables_for(current_domain, current_dataset)[, c("variable", "role", "type"), drop = FALSE]
+        model_variables_for(current_domain, own)[, c("variable", "role", "type"), drop = FALSE]
       )
       standard_rows <- filter_metadata_rows(standard_rows, op)
       wanted <- resolve_var_name(
-        unique(standard_rows$variable), dataset_wildcard(current_dataset, current_domain)
+        unique(standard_rows$variable), dataset_wildcard(own, current_domain)
       )
       present <- intersect(wanted, names(current_dataset$data))
       if (length(present) == 0) NULL else scalar_binding(present)
@@ -1347,7 +1365,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       }
     },
     get_model_filtered_variables = {
-      rows <- filter_metadata_rows(model_variables_for(current_domain, current_dataset), op)
+      rows <- filter_metadata_rows(model_variables_for(current_domain, own), op)
       if (nrow(rows) == 0) NULL else scalar_binding(rows$variable)
     },
     variable_exists = if (is.null(dt)) scalar_binding(FALSE) else scalar_binding(resolve_var_name(op$name, dataset_wildcard(ds, domain)) %in% names(dt)),
@@ -1394,7 +1412,9 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # prefix_is_not_contained_by comparing an uppercase dataset_name
     # against a lowercase list never matches).
     dataset_names = scalar_binding(sort(toupper(names(study$datasets)))),
-    domain_is_custom = scalar_binding(!(toupper(current_domain) %in% .coreval_env$domain_classes$domain)),
+    domain_is_custom = scalar_binding(
+      !(domain_code_of(study, current_domain) %in% .coreval_env$domain_classes$domain)
+    ),
     domain_label = scalar_binding(standard_domain_label(study, current_domain, ds)),
     required_variables = {
       vars <- sdtmig_variables_for(study, domain, "Req")
@@ -1405,7 +1425,8 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       if (is.null(vars)) NULL else scalar_binding(vars)
     },
     get_model_column_order = {
-      cls <- domain_class(current_domain)
+      cls <- dataset_class(own, current_domain)
+      current_code <- domain_code_of(study, current_domain)
       if (is.na(cls)) {
         NULL
       } else {
@@ -1424,7 +1445,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         # went unreported.
         if (length(allowed) == 0) {
           dsv <- .coreval_env$model_dataset_variables
-          allowed <- dsv$variable[dsv$domain == current_domain]
+          allowed <- dsv$variable[dsv$domain == current_code]
         }
         # An Associated Persons dataset carries its observation class's
         # variables PLUS the ones that make it an AP dataset in the first
@@ -1432,8 +1453,8 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         # their own. Without them APEG's own defining variables look
         # disallowed - coreval flagged all three and missed the one variable
         # (XEGBEATNO) that really is not in the Model.
-        if (startsWith(current_domain, "AP") && nchar(current_domain) > 2 &&
-          !startsWith(current_domain, "APID")) {
+        if (startsWith(current_code, "AP") && nchar(current_code) > 2 &&
+          !startsWith(current_code, "APID")) {
           allowed <- c(allowed, .coreval_env$model_variables$variable[
             model_class == normalize_class("Associated Persons")
           ])
@@ -1445,7 +1466,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         if (length(allowed) == 0) {
           NULL
         } else {
-          scalar_binding(resolve_var_name(allowed, dataset_wildcard(current_dataset, current_domain)))
+          scalar_binding(resolve_var_name(allowed, dataset_wildcard(own, current_domain)))
         }
       }
     },
@@ -1638,4 +1659,21 @@ ct_package_attribute <- function(package, attribute) {
     stop("unsupported ct_attribute: ", attribute, call. = FALSE)
   )
   unique(values[nzchar(values)])
+}
+
+#' The domain code of a dataset in the study, from its key
+#'
+#' A split file (LB1) belongs to LB, and every question about what the
+#' standard says of it (its variables, label, class, whether it is a custom
+#' domain) is a question about LB. Asked about "LB1", each came back empty and
+#' the rule depending on it found nothing: CORE-000334 reported no missing
+#' expected variables for any split dataset.
+#'
+#' @param study The study object.
+#' @param key A dataset key, or a domain code with no dataset of its own.
+#' @return The upper-case domain code.
+#' @noRd
+domain_code_of <- function(study, key) {
+  ds <- if (is.null(study)) NULL else study$datasets[[key]]
+  if (is.null(ds)) toupper(key) else dataset_unsplit_name(ds, key)
 }
