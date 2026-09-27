@@ -171,6 +171,37 @@ sheet_is_silent <- function(results_csv) {
 # Runs one rule against one test case (a positive/NN or negative/NN dir).
 # Returns list(status, reason).
 run_case <- function(rule, case_dir) {
+  out <- run_case_graded(rule, case_dir)
+  results_csv <- file.path(case_dir, "results", "results.csv")
+  out$expects <- file.exists(results_csv) && !sheet_is_silent(results_csv) &&
+    !reference_crashed(results_csv)
+  out
+}
+
+# The part of the file a split dataset's rows occupy in the domain the reference
+# grades. The reference merges a domain's split files and numbers the merged
+# records, so records 13 to 24 of "MH" are rows 1 to 12 of the second file.
+split_expected <- function(results_csv, study, domain) {
+  dataset <- study$datasets[[domain]]
+  unsplit <- coreval:::dataset_unsplit_name(dataset, domain)
+  if (identical(unsplit, toupper(domain))) {
+    return(NULL)
+  }
+  parts <- names(study$datasets)[vapply(names(study$datasets), function(k) {
+    identical(coreval:::dataset_unsplit_name(study$datasets[[k]], k), unsplit)
+  }, logical(1))]
+  offset <- 0L
+  for (k in parts) {
+    if (identical(k, domain)) break
+    offset <- offset + nrow(study$datasets[[k]]$data)
+  }
+  merged <- expected_records(results_csv, unsplit)
+  n <- nrow(dataset$data)
+  inside <- merged[!is.na(merged) & merged > offset & merged <= offset + n]
+  sort(inside - offset)
+}
+
+run_case_graded <- function(rule, case_dir) {
   case_label <- paste(basename(dirname(case_dir)), basename(case_dir), sep = "/")
   data_dir <- file.path(case_dir, "data")
   results_csv <- file.path(case_dir, "results", "results.csv")
@@ -259,6 +290,13 @@ run_case <- function(rule, case_dir) {
     evaluable <- evaluable + 1L
 
     expected <- expected_records(results_csv, domain)
+    # A split file is graded against its own share of the merged domain the
+    # sheet names. Without this a split fixture could only ever be skipped or
+    # failed, whatever coreval answered.
+    if (length(expected) == 0) {
+      from_split <- split_expected(results_csv, study, domain)
+      if (!is.null(from_split)) expected <- from_split
+    }
 
     # Where CDISC's own file records a crash rather than an expectation, grade
     # against what CDISC's engine actually answers when it can run. Gated on
@@ -274,8 +312,13 @@ run_case <- function(rule, case_dir) {
       }
     }
 
+    # Study-level answers too: the sheet files a whole-study fact under STUDY,
+    # and a Study-sensitivity rule graded record by record against the domain
+    # compared nothing with nothing and passed. Ten define-based presence rules
+    # were green that way while unable to fire.
     if (identical(rule$sensitivity, "Dataset") ||
-      identical(rule$rule_type, "Domain Presence Check") ||
+      isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
+      length(expected_records(results_csv, "STUDY")) > 0 ||
       reference_is_dataset_level(results_csv, domain)) {
       actual_any <- any(violations)
       # A whole-study-level rule (e.g. Domain Presence Check's "is DM
@@ -427,6 +470,16 @@ run_rule <- function(rule) {
   skips <- Filter(function(r) r$status == "SKIPPED", results)
   if (length(skips) == length(results)) {
     return(list(status = "SKIPPED", reason = skips[[1]]$reason))
+  }
+  # A case whose sheet expects findings, and that could not be graded, is the
+  # one that tests the rule. Passing on the clean cases alone is passing a rule
+  # that was never shown to find anything, which is how rules scoped out of
+  # their own fixtures (split and custom domains) stayed green.
+  untested <- Filter(function(r) r$status == "SKIPPED" && isTRUE(r$expects), results)
+  if (length(untested) > 0) {
+    return(list(status = "SKIPPED", reason = paste(
+      "only cases expecting no findings could be graded:", untested[[1]]$reason
+    )))
   }
   list(status = "PASS", reason = NA_character_)
 }

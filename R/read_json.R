@@ -258,14 +258,19 @@ is_usdm_document <- function(path) {
 #' per-entity tables, so the document is also flattened into those tables, the
 #' way the reference flattens it (see read_usdm.R).
 #'
-#' Flattening needs `jsonlite`, which is a Suggests. Without it the document is
-#' still carried, so the JSONata rules run and the tabular ones find nothing in
-#' scope and are skipped.
+#' Reading one needs `jsonlite`, which is a Suggests, and without it this
+#' refuses. It used to carry on with no tables, and the study was then refused
+#' for holding "no datasets", naming the USDM document as something it could
+#' read.
 #'
 #' @param path Folder holding the document.
 #' @return A study object carrying `document` and `datasets`.
 #' @noRd
 read_study_usdm <- function(path) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("reading a USDM study document needs the 'jsonlite' package: ",
+         "install.packages(\"jsonlite\")", call. = FALSE)
+  }
   files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
                       full.names = TRUE)
   files <- Filter(is_usdm_document, files)
@@ -282,17 +287,13 @@ read_study_usdm <- function(path) {
   } else {
     NA_character_
   }
-  datasets <- if (requireNamespace("jsonlite", quietly = TRUE)) {
-    usdm_datasets(tryCatch(
-      jsonlite::fromJSON(document, simplifyVector = FALSE),
-      error = function(e) {
-        stop("not valid JSON: ", basename(files[[1]]), " (", conditionMessage(e), ")",
-             call. = FALSE)
-      }
-    ))
-  } else {
-    list()
-  }
+  datasets <- usdm_datasets(tryCatch(
+    jsonlite::fromJSON(document, simplifyVector = FALSE),
+    error = function(e) {
+      stop("not valid JSON: ", basename(files[[1]]), " (", conditionMessage(e), ")",
+           call. = FALSE)
+    }
+  ))
   list(datasets = datasets, define = NULL, ct = NULL,
        standard = list(product = "USDM", version = version),
        document = document)

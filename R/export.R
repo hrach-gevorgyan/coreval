@@ -127,7 +127,7 @@ write_findings <- function(result, path, tracking = TRUE) {
   )
 
   if (grepl("\\.xlsx$", path, ignore.case = TRUE)) {
-    if (!requireNamespace("writexl", quietly = TRUE)) {
+    if (!writexl_available()) {
       stop(
         "Writing Excel files needs the 'writexl' package.\n",
         "  install.packages(\"writexl\")\n",
@@ -194,4 +194,15 @@ csv_safe <- function(x) {
     }
   }
   x
+}
+
+#' Is writexl installed?
+#'
+#' Its own function so the test for the message a user without it gets can
+#' run everywhere, not only on a machine that lacks the package.
+#'
+#' @return A single logical.
+#' @noRd
+writexl_available <- function() {
+  requireNamespace("writexl", quietly = TRUE)
 }

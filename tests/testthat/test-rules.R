@@ -342,3 +342,12 @@ test_that("list_rules() refuses a bare version instead of silently ignoring it",
   expect_error(list_rules(standard = "NOPE"), "no bundled rule targets")
   expect_equal(nrow(list_rules(standard = "SDTMIG", version = "3.4")), 456L)
 })
+
+test_that("list_ct_packages lists the bundled terminology packages", {
+  pk <- list_ct_packages()
+  expect_type(pk, "character")
+  expect_true(all(c("sdtmct-2026-03-27", "sendct-2026-03-27") %in% pk))
+  expect_false(anyNA(pk))
+  # Every name listed is one check_study(ct_package =) accepts.
+  expect_equal(validate_ct_package(pk[[1]]), pk[[1]])
+})

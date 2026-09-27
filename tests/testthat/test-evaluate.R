@@ -1,12 +1,16 @@
 # Expected violation vector from a reference results.csv: one row per
 # (Record, Variable) pair: distinct Record values are the violating rows.
 expected_violations <- function(results_csv_path, n) {
+  # A missing answer sheet is a broken fixture, not "no violations expected":
+  # read as all FALSE, every test using it passed against a rule that found
+  # nothing.
+  if (!file.exists(results_csv_path)) {
+    stop("no answer sheet at ", results_csv_path, call. = FALSE)
+  }
   out <- rep(FALSE, n)
-  if (file.exists(results_csv_path)) {
-    results <- data.table::fread(results_csv_path, colClasses = "character")
-    if (nrow(results) > 0) {
-      out[as.integer(unique(results$Record))] <- TRUE
-    }
+  results <- data.table::fread(results_csv_path, colClasses = "character")
+  if (nrow(results) > 0) {
+    out[as.integer(unique(results$Record))] <- TRUE
   }
   out
 }
@@ -306,17 +310,23 @@ test_that("check_study() and evaluate_rule() take the same evaluation path", {
   study <- read_study(dir)
   result <- check_study(dir)
 
-  # For every rule that produced a finding, evaluate_rule() must flag exactly
-  # the same records.
+  # For every rule check_study() RAN, evaluate_rule() must flag exactly the
+  # same records - including the rules check_study() found nothing for. The
+  # silent kind of drift is a rule that quietly finds nothing on one path, and
+  # comparing only the rules that reported something could never see it.
   reported <- unique(result$findings$rule_id)
   expect_gt(length(reported), 0)
-  for (id in reported) {
+  ran <- setdiff(rules_for_domain("DM", dataset = study$datasets$DM)$id,
+                 result$skipped$rule_id)
+  for (id in ran) {
     rule <- .coreval_env$data$rules[[id]]
-    if (is.null(rule) || identical(rule$rule_type, "Domain Presence Check")) next
-    direct <- which(evaluate_rule(rule, study, "DM"))
+    if (is.null(rule) || isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
+        rule$rule_type %in% c("JSONata", "JSON Schema Check")) next
+    direct <- tryCatch(which(evaluate_rule(rule, study, "DM")), error = function(e) NULL)
+    if (is.null(direct)) next
     via_check <- sort(unique(result$findings$Record[result$findings$rule_id == id]))
     via_check <- via_check[!is.na(via_check)]
-    if (length(via_check) == 0) next
+    if (length(via_check) == 0 && id %in% reported) next  # dataset-level finding
     expect_equal(sort(direct), as.integer(via_check), info = id)
   }
 })

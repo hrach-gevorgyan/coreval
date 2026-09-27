@@ -40,6 +40,15 @@ before the extension, so \code{issues.csv} gives \code{issues_skipped.csv} and
 \code{issues_about.csv}.
 }
 
+An existing file at \code{path}, or at a sibling path, is replaced.
+
+In CSV files, a text value that begins with \code{=}, \code{+}, \code{-} or \code{@} and is not
+a plain number is written with a leading \verb{'}. Findings quote the submission
+data, and a spreadsheet program opening the CSV would otherwise run such a
+value as a formula. Excel files store every value as text and need no such
+change. CSV files are written as UTF-8 with a byte order mark, which Excel
+needs to show non-English text correctly.
+
 Excel output needs the \code{writexl} package. It is a \code{Suggests}, so if it
 isn't installed you get a clear message telling you to install it or use
 \code{.csv} instead, rather than a failure part-way through writing.

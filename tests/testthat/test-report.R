@@ -126,7 +126,9 @@ test_that("a set-valued binding reports the whole set, not its first element", {
   # missing were never named anywhere.
   result <- check_dataset(demo_dm())
   req <- result$findings[result$findings$Variable == "$required_variables", ]
-  skip_if(nrow(req) == 0)
+  # Asserted, not skipped: a regression that loses this finding must fail
+  # here, not quietly skip the test that guards it.
+  expect_gt(nrow(req), 0)
   expect_match(req$Value[1], "^\\[")           # a set, rendered as ['A', 'B']
   parsed <- parse_set_value(req$Value[1])
   expect_gt(length(parsed), 1)
