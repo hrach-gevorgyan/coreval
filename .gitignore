@@ -35,3 +35,5 @@ vignettes/*_files/
 video/
 # The package website, built by pkgdown and published from its own branch.
 site/
+# Weekly upkeep reports, written by data-raw/weekly.R. Local only.
+data-raw/weekly/

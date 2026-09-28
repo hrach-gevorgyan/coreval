@@ -5,6 +5,11 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  # Weekly, so a new release of R or of a dependency that breaks the package
+  # shows up here before it shows up on CRAN's check page.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 jobs:
   R-CMD-check:
