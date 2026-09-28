@@ -25,7 +25,7 @@ read_tiny <- function() {
   dir.create(dir)
   writeLines(tiny_usdm(), file.path(dir, "study.json"))
   on.exit(unlink(dir, recursive = TRUE), add = TRUE, after = FALSE)
-  read_study(dir)
+  read_study(dir, usdm = TRUE)
 }
 
 test_that("a USDM document becomes one table per entity", {
@@ -85,7 +85,7 @@ test_that("an id that resolves to nothing stays a plain value", {
     '     "scopeId": ""}]}]}}'
   ), file.path(dir, "study.json"))
 
-  study <- read_study(dir)
+  study <- read_study(dir, usdm = TRUE)
   expect_false("ORGANIZATION" %in% names(study$datasets))
   identifiers <- study$datasets$STUDYIDENTIFIER$data
   expect_equal(nrow(identifiers), 2)
@@ -121,4 +121,24 @@ test_that("a document with no jsonlite still reads, without tables", {
   study <- read_tiny()
   expect_type(study$document, "character")
   expect_match(study$document, "usdmVersion", fixed = TRUE)
+})
+
+test_that("a USDM document is checked only when asked for", {
+  # USDM is optional: most studies are tabular, and some USDM rules take
+  # minutes on one file. Not asked for, the folder is refused with the way to
+  # ask, and never read as empty, which check_study() would report as having
+  # no datasets.
+  dir <- tempfile("coreval_usdm_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines(tiny_usdm(), file.path(dir, "study.json"))
+
+  expect_error(read_study(dir), "usdm = TRUE", fixed = TRUE)
+  expect_error(check_study(dir), "study.json is a USDM study design document")
+  expect_error(read_study(dir, usdm = "yes"), "`usdm` must be TRUE or FALSE")
+  expect_error(check_study(dir, usdm = NA), "`usdm` must be TRUE or FALSE")
+
+  study <- read_study(dir, usdm = TRUE)
+  expect_false(is.null(study$document))
+  expect_gt(length(study$datasets), 0)
 })

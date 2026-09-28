@@ -71,7 +71,7 @@ cases <- sort(cases)
 # Each result as check_study() returns it. An error is kept as the error, so a
 # study that stops failing, or starts, shows up as a difference too.
 run_one <- function(dir, ...) {
-  tryCatch(check_study(dir, max_records = 1e7, include_deprecated = TRUE, ...),
+  tryCatch(check_study(dir, max_records = 1e7, include_deprecated = TRUE, usdm = TRUE, ...),
            error = function(e) simpleError(conditionMessage(e)))
 }
 

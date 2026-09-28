@@ -34,7 +34,7 @@ test_that("a USDM study is actually checked, and its problems are found", {
   dir <- write_usdm_study()
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  result <- check_study(dir)
+  result <- check_study(dir, usdm = TRUE)
   expect_gt(attr(result, "checks_run"), 0)
   expect_true("CORE-000407" %in% result$findings$rule_id)
   # Reported against the entity and row the finding is about, the same numbers
@@ -49,7 +49,7 @@ test_that("a rule written as an expression runs once per study, not once per tab
   dir <- write_usdm_study()
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  result <- check_study(dir)
+  result <- check_study(dir, usdm = TRUE)
   # The unsupported schema rules are listed once each, not once per entity.
   schema <- result$skipped[grepl("JSON Schema Check", result$skipped$reason), ]
   expect_equal(nrow(schema), length(unique(schema$rule_id)))

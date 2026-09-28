@@ -14,6 +14,10 @@
 #' identifiers (e.g. `"007"`) are never silently coerced.
 #'
 #' @param path Directory path.
+#' @param usdm Read a USDM study design document. `FALSE` by default: USDM is
+#'   not what most studies are checked for, and some of its rules take minutes
+#'   on one file, so it has to be asked for. Without it, a folder holding only
+#'   a USDM document is refused with a message saying so, never read as empty.
 #' @return A study object: `list(datasets = <named list of domain ->
 #'   list(data, meta, label)>, define, ct = NULL, standard =
 #'   list(product, version))`. `define` is the parsed Define-XML if one was
@@ -34,7 +38,7 @@
 #' study$datasets$DM$data
 #' unlink(dir, recursive = TRUE)
 #' @export
-read_study <- function(path) {
+read_study <- function(path, usdm = FALSE) {
   # A missing folder used to read as an empty study, and an empty study checks
   # clean - so a typo in the path reported the data as fine. check_study()
   # already refuses a path it cannot find; read_study() must not be laxer than
@@ -45,6 +49,9 @@ read_study <- function(path) {
   if (!dir.exists(path)) {
     stop("no such folder: ", path, call. = FALSE)
   }
+  if (!isTRUE(usdm) && !isFALSE(usdm)) {
+    stop("`usdm` must be TRUE or FALSE.", call. = FALSE)
+  }
   if (file.exists(file.path(path, "_variables.csv"))) {
     return(read_study_test_case(path))
   }
@@ -53,17 +60,25 @@ read_study <- function(path) {
   # it actually is. A folder holding datasets as well is read as datasets.
   json_files <- list.files(path, pattern = "[.]json$", ignore.case = TRUE,
                            full.names = TRUE)
-  usdm <- Filter(is_usdm_document, json_files)
+  usdm_docs <- Filter(is_usdm_document, json_files)
   tabular <- list.files(path, pattern = "[.](xpt|sas7bdat|ndjson)$",
                         ignore.case = TRUE)
-  if (length(usdm) > 0 && length(tabular) == 0 &&
-      length(json_files) == length(usdm)) {
+  if (length(usdm_docs) > 0 && length(tabular) == 0 &&
+      length(json_files) == length(usdm_docs)) {
+    # Refused, not skipped: skipped, the folder would read as holding no
+    # datasets, and the error for that says nothing about USDM.
+    if (!usdm) {
+      stop(basename(usdm_docs[[1]]), " is a USDM study design document. ",
+           "Checking USDM is optional, because some of its rules take minutes ",
+           "on one file: use check_study(\"", path, "\", usdm = TRUE).",
+           call. = FALSE)
+    }
     return(read_study_usdm(path))
   }
   # With no datasets in any readable format this returns an empty study, which
   # is the honest answer, and check_study() refuses to call an empty study
   # clean.
-  read_study_folder(path, skip = usdm)
+  read_study_folder(path, skip = usdm_docs)
 }
 
 #' Read every dataset file in a study folder
@@ -139,8 +154,8 @@ read_study_folder <- function(path, skip = character(0)) {
   }
   if (length(datasets) > 0 && length(skip) > 0) {
     warning("not read: ", paste(basename(skip), collapse = ", "), ", a USDM ",
-            "document in a folder of datasets. Check it from a folder of its own.",
-            call. = FALSE)
+            "document in a folder of datasets. Check it from a folder of its ",
+            "own, with usdm = TRUE.", call. = FALSE)
   }
   list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
        ct = NULL, standard = list(product = NA_character_, version = NA_character_))

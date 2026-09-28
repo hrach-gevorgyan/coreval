@@ -4,10 +4,15 @@
 \alias{read_study}
 \title{Read a study into coreval's internal representation}
 \usage{
-read_study(path)
+read_study(path, usdm = FALSE)
 }
 \arguments{
 \item{path}{Directory path.}
+
+\item{usdm}{Read a USDM study design document. \code{FALSE} by default: USDM is
+not what most studies are checked for, and some of its rules take minutes
+on one file, so it has to be asked for. Without it, a folder holding only
+a USDM document is refused with a message saying so, never read as empty.}
 }
 \value{
 A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was

@@ -25,7 +25,7 @@ if (length(args) < 2) {
 document <- args[[1]]
 ref_dir <- args[[2]]
 
-study <- read_study(dirname(document))
+study <- read_study(dirname(document), usdm = TRUE)
 mine <- study$datasets
 
 ref_files <- Sys.glob(file.path(ref_dir, "*.csv"))

@@ -216,7 +216,7 @@ run_case_graded <- function(rule, case_dir) {
     ))
   }
 
-  study <- tryCatch(read_study(data_dir), error = function(e) e)
+  study <- tryCatch(read_study(data_dir, usdm = TRUE), error = function(e) e)
   if (inherits(study, "error")) {
     return(list(status = "SKIPPED", reason = paste("read_study failed:", conditionMessage(study))))
   }
@@ -396,7 +396,7 @@ jsonata_case <- function(rule, case_dir) {
   if (!dir.exists(data_dir) || !file.exists(results_csv)) {
     return(list(status = "SKIPPED", reason = "missing data/ or results.csv"))
   }
-  study <- tryCatch(read_study(data_dir), error = function(e) e)
+  study <- tryCatch(read_study(data_dir, usdm = TRUE), error = function(e) e)
   if (inherits(study, "error")) {
     return(list(status = "SKIPPED", reason = paste("read_study failed:", conditionMessage(study))))
   }

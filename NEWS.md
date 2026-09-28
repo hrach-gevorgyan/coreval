@@ -49,6 +49,11 @@
     checked with the rules that compare the define with what the study
     contains, such as a define saying MI has data when there is no MI.
 
+* **USDM is checked when you ask for it.** `check_study()` and `read_study()`
+  take `usdm = TRUE`. Without it, a folder holding a USDM study design
+  document stops with a message saying how to check it. Most studies are
+  tabular, and a few USDM rules take minutes on one file.
+
 * **CDISC's latest rules.** The rules are updated to the current CDISC Open
   Rules release, which rewords messages and descriptions without changing what
   any rule checks. A date "not equal" comparison now follows CDISC's engine

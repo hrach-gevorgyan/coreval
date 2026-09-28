@@ -11,7 +11,8 @@ check_study(
   use_case = NULL,
   max_records = 1000,
   include_deprecated = FALSE,
-  ct_package = NULL
+  ct_package = NULL,
+  usdm = FALSE
 )
 }
 \arguments{
@@ -48,6 +49,9 @@ will not pick a version for you, because terminology changes between
 releases and judging a study against one it never declared would both
 invent violations and hide real ones. Every published package is bundled;
 \code{list_ct_packages()} shows them.}
+
+\item{usdm}{Check a USDM study design document. \code{FALSE} by default, and
+only used when \code{study} is a folder path; see \code{\link[=read_study]{read_study()}}.}
 }
 \value{
 An object of class \code{coreval_result}, holding three tables. Because

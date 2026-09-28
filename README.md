@@ -157,8 +157,8 @@ and more than nine in ten come back with exactly the answer CDISC gives.
 [docs/COVERAGE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COVERAGE.md)
 goes through the rest, one by one.
 
-It reads XPT, SAS, CSV and Dataset-JSON datasets, Define-XML, and USDM study
-files. Nothing is downloaded and no account or API key is needed. The rules
+It reads XPT, SAS, CSV and Dataset-JSON datasets and Define-XML, and USDM study
+files when you ask for them with `usdm = TRUE`. Nothing is downloaded and no account or API key is needed. The rules
 are bundled with the package.
 
 **What it doesn't do yet:**

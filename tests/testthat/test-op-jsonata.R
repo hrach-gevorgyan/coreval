@@ -89,7 +89,7 @@ test_that("a folder holding a USDM document is read as one, not as Dataset-JSON"
     file.path(dir, "study.json")
   )
 
-  study <- read_study(dir)
+  study <- read_study(dir, usdm = TRUE)
   expect_equal(study$standard$product, "USDM")
   expect_equal(study$standard$version, "4.0")
   expect_match(study$document, "usdmVersion", fixed = TRUE)

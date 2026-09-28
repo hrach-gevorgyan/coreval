@@ -360,6 +360,8 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   identical findings, more than Excel can hold. The true count is kept in
 #'   `truncated` and the report shows it, so nothing is under-reported. Use
 #'   `Inf` for every record.
+#' @param usdm Check a USDM study design document. `FALSE` by default, and
+#'   only used when `study` is a folder path; see [read_study()].
 #' @param ct_package Which CDISC Controlled Terminology package the study
 #'   follows, e.g. `"sdtmct-2026-03-27"`. Rules that ask whether a value is a
 #'   legal term need this, and are skipped with a reason without it - coreval
@@ -398,12 +400,16 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' @export
 check_study <- function(study, standard = NULL, version = NULL,
                         use_case = NULL, max_records = 1000,
-                        include_deprecated = FALSE, ct_package = NULL) {
+                        include_deprecated = FALSE, ct_package = NULL,
+                        usdm = FALSE) {
   validate_check_args(standard = standard, version = version,
                       max_records = max_records, use_case = use_case,
                       include_deprecated = include_deprecated)
   # Take the folder directly. Requiring read_study() first made people call
   # two functions to do one thing, for no benefit in the common case.
+  if (!isTRUE(usdm) && !isFALSE(usdm)) {
+    stop("`usdm` must be TRUE or FALSE.", call. = FALSE)
+  }
   folder <- NULL
   if (is.character(study)) {
     if (length(study) != 1) {
@@ -417,7 +423,7 @@ check_study <- function(study, standard = NULL, version = NULL,
       )
     }
     folder <- study
-    study <- read_study(study)
+    study <- read_study(study, usdm = usdm)
   }
   # Anything that is not a study object went straight through to run_checks(),
   # where `names(study$datasets)` is NULL, nothing runs, and the result prints

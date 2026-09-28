@@ -317,12 +317,17 @@ aside. Leave `standard` unset if you'd rather see everything.
 ## USDM study designs
 
 A USDM study file is a single JSON document describing a study design rather
-than a folder of datasets. Put it in a folder and check the folder, the same
-way as any other study. It needs the `jsonlite` and `QuickJSR` packages.
+than a folder of datasets. Checking one is optional, because a few of its
+rules can take minutes on a single file, so you ask for it. Put the file in a
+folder of its own and pass `usdm = TRUE`. It needs the `jsonlite` and
+`QuickJSR` packages.
 
 ```{r usdm, eval = FALSE}
-result <- check_study("path/to/usdm")
+result <- check_study("path/to/usdm", usdm = TRUE)
 ```
+
+Without `usdm = TRUE`, a folder holding a USDM file stops with a message that
+says so, rather than being checked as if it were empty.
 
 Problems are reported against the part of the design they're about, such as
 `STUDYDESIGN` or `ENCOUNTER`, and the row within it.
