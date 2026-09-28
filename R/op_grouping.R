@@ -2,7 +2,13 @@
 #' @param x A vector.
 #' @return A logical vector.
 #' @noRd
-is_blank <- function(x) is.na(x) | (is.character(x) & x == "")
+is_blank <- function(x) {
+  # Only text can be an empty string. Written as one expression, a numeric
+  # column was converted to text value by value just to be compared with ""
+  # and the answer thrown away; on CDISC's pilot that was most of this
+  # function's time.
+  if (is.character(x)) is.na(x) | x == "" else is.na(x)
+}
 
 #' Expand an Operations reference sitting in a grouping-column list
 #'

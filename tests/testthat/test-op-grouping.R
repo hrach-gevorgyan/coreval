@@ -325,3 +325,27 @@ test_that("uniqueness is not asserted about a column that is absent", {
     expect_equal(get_operator(op)(ctx), rep(FALSE, 3), info = op)
   }
 })
+
+test_that("a date-time column can be tested for blanks", {
+  # Comparing a date-time with "" makes R parse "" as a date-time, which
+  # fails. Every rule reaching is_blank() on such a column stopped with
+  # "character string is not in a standard unambiguous format" and was
+  # reported as skipped: on CDISC's ADaM examples, whose ADT reads as a
+  # date-time, a dozen rules per dataset, CORE-000690 among them.
+  when <- as.POSIXct(c("2007-01-10", NA), tz = "UTC")
+  expect_equal(is_blank(when), c(FALSE, TRUE))
+  expect_equal(is_blank(as.Date(c("2007-01-10", NA))), c(FALSE, TRUE))
+  expect_equal(is_blank(c("", NA, "x")), c(TRUE, TRUE, FALSE))
+  expect_equal(is_blank(c(1, NA)), c(FALSE, TRUE))
+
+  # And the rule it stopped finds what it should: two variables sharing a label.
+  data <- data.table::data.table(ADT = when, ANL01FL = c("Y", ""), ANL01FN = c(1, NA))
+  meta <- data.frame(
+    variable = c("ADT", "ANL01FL", "ANL01FN"),
+    label = c("Analysis Date", "Analysis Flag 01", "Analysis Flag 01"),
+    type = c("Num", "Char", "Num"), length = c(8, 1, 8)
+  )
+  study <- list(datasets = list(ADVS = list(data = data, meta = meta)))
+  hit <- evaluate_rule(.coreval_env$data$rules[["CORE-000690"]], study, "ADVS")
+  expect_equal(which(hit), 2:3)
+})

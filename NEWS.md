@@ -40,6 +40,11 @@
   - Ten define-based presence rules for SEND could never fire.
   - A Dataset-JSON cell holding the word "study" made the whole folder read as
     an empty USDM study.
+  - About a dozen rules stopped on any date-time column, each reported as
+    skipped with "character string is not in a standard unambiguous format".
+    A CSV folder described by a `_variables.csv` keeps such a column as a
+    date-time; CDISC's ADaM examples lost CORE-000690, which finds two
+    variables sharing one label, and ten others that way.
   - A folder holding a define.xml and no datasets was refused. It is now
     checked with the rules that compare the define with what the study
     contains, such as a define saying MI has data when there is no MI.
