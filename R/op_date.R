@@ -442,10 +442,15 @@ compare_dates <- function(target, comparator, op) {
   target <- rep_len(as.character(target), n)
   comparator <- rep_len(as.character(comparator), n)
 
-  # Anything not comparable stays FALSE, matching each early return of the
-  # per-row original.
-  out <- rep(FALSE, n)
-  ok <- !is.na(target) & !is.na(comparator) & nzchar(target) & nzchar(comparator)
+  # A pair that cannot be compared (a side blank, or not a valid date) is not
+  # equal, not before and not after, except that it IS "not equal" unless both
+  # sides are blank, as in the reference since its fix for CORE-000038
+  # (compare_dates, helpers.py): a date against a blank, or against a value
+  # that is not a date, differs from it.
+  blank_t <- is.na(target) | !nzchar(target)
+  blank_c <- is.na(comparator) | !nzchar(comparator)
+  out <- rep(identical(op, "ne"), n) & !(blank_t & blank_c)
+  ok <- !blank_t & !blank_c
   if (!any(ok)) {
     return(out)
   }

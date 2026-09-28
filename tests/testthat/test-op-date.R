@@ -294,3 +294,13 @@ test_that("an interval is not a complete date", {
   expect_equal(get_operator("is_complete_date")(ctx(c("2024-03-15", "2024-03-15/2024-03-20"))),
                c(TRUE, FALSE))
 })
+
+test_that("a date that cannot be compared is 'not equal' unless both sides are blank", {
+  # The reference changed this with its fix for CORE-000038: a date against a
+  # blank, or against a value that is not a date, differs from it.
+  target <- c("2024-01-01", "2024-01-01", "", "not a date", "")
+  value <- c("2024-01-01", "", "2024-01-01", "2024-01-01", "")
+  expect_equal(compare_dates(target, value, "ne"), c(FALSE, TRUE, TRUE, TRUE, FALSE))
+  expect_equal(compare_dates(target, value, "eq"), c(TRUE, FALSE, FALSE, FALSE, FALSE))
+  expect_equal(compare_dates(target, value, "lt"), rep(FALSE, 5))
+})
