@@ -63,9 +63,10 @@
   - `filter_findings(variable =)` finds a variable reported as missing, and
     refuses a typo instead of matching nothing.
 
-* **Faster.** CDISC's pilot submission is checked in about 21 seconds against
-  26 before, with the same findings, and USDM study documents are read in half
-  the time.
+* **Faster, and lighter.** CDISC's pilot submission is checked in about 19
+  seconds against 26 before, with the same findings. A study ten times its
+  size, about three million records, takes 156 seconds against 184 and a
+  little less memory. USDM study documents are read in half the time.
 
 * **Stricter testing.** The conformance harness no longer counts a rule as
   passing when the only cases it could grade were the ones expecting nothing,

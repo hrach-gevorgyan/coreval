@@ -556,13 +556,21 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   if (length(declared_version) != 1 || is.na(declared_version) || !nzchar(declared_version)) {
     declared_version <- NULL
   }
+  # Whether each rule's scope reaches each dataset depends on the dataset and
+  # the use case only, so it is worked out once here and shared by the plan
+  # and by the count of rules the standard excluded, below.
+  applies <- lapply(domains, function(d) {
+    vapply(.coreval_env$data$rules, rule_applies_to_domain, logical(1),
+           domain = d, use_case = use_case, dataset = study$datasets[[d]])
+  })
+  names(applies) <- domains
   plans <- lapply(domains, function(d) {
-    rules_for_domain(
+    rule_ids_for_domain(
       d,
       use_case = use_case, dataset = study$datasets[[d]],
       standard = declared, version = declared_version,
-      include_deprecated = include_deprecated
-    )$id
+      include_deprecated = include_deprecated, applies = applies[[d]]
+    )
   })
   names(plans) <- domains
 
@@ -596,11 +604,12 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   excluded <- 0L
   if (!is.null(declared)) {
     wider <- lapply(domains, function(d) {
-      rules_for_domain(
+      rule_ids_for_domain(
         d,
         use_case = use_case, dataset = study$datasets[[d]],
-        standard = NULL, include_deprecated = include_deprecated
-      )$id
+        standard = NULL, include_deprecated = include_deprecated,
+        applies = applies[[d]]
+      )
     })
     # Distinct rules, not rule-and-dataset pairs: counted per pair, a USDM
     # study reported 11,379 excluded rules out of 1,054.

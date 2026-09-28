@@ -448,11 +448,40 @@ targets_standard_version <- function(pairs, standard, version) {
 rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
                              standard = NULL, version = NULL,
                              include_deprecated = FALSE) {
+  ids <- rule_ids_for_domain(domain, use_case = use_case, dataset = dataset,
+                             standard = standard, version = version,
+                             include_deprecated = include_deprecated)
+  # build_rules_table(), not list_rules(): list_rules(domain =) delegates HERE
+  # for scoping, so calling it back would recurse forever.
+  rules_table <- build_rules_table()
+  rules_table[rules_table$id %in% ids, ]
+}
+
+#' The ids of the rules in scope for one dataset, in bundled order
+#'
+#' What [rules_for_domain()] returns, without building the rule table around
+#' it: `run_checks()` needs only the ids, for every dataset, twice when a
+#' standard is declared.
+#'
+#' @inheritParams rules_for_domain
+#' @param applies The result of [rule_applies_to_domain()] for every bundled
+#'   rule against this dataset, when the caller already has it. It depends only
+#'   on the dataset and the use case, so `run_checks()` works it out once and
+#'   passes it to both of its calls.
+#' @return A character vector of rule ids.
+#' @noRd
+rule_ids_for_domain <- function(domain, use_case = NULL, dataset = NULL,
+                                standard = NULL, version = NULL,
+                                include_deprecated = FALSE, applies = NULL) {
   rules <- .coreval_env$data$rules
-  keep <- vapply(
-    rules, rule_applies_to_domain, logical(1),
-    domain = domain, use_case = use_case, dataset = dataset
-  )
+  keep <- if (is.null(applies)) {
+    vapply(
+      rules, rule_applies_to_domain, logical(1),
+      domain = domain, use_case = use_case, dataset = dataset
+    )
+  } else {
+    applies
+  }
 
   declared <- if (!is.null(standard) && length(standard) == 1 && !is.na(standard) &&
                    nzchar(standard)) standard else NULL
@@ -494,11 +523,7 @@ rules_for_domain <- function(domain, use_case = NULL, dataset = NULL,
     )
   }
 
-  ids <- vapply(rules[keep], function(r) r$id, character(1))
-  # build_rules_table(), not list_rules(): list_rules(domain =) delegates HERE
-  # for scoping, so calling it back would recurse forever.
-  rules_table <- build_rules_table()
-  rules_table[rules_table$id %in% ids, ]
+  vapply(rules[keep], function(r) r$id, character(1), USE.NAMES = FALSE)
 }
 
 #' Which rules target a standard, and a version of it
