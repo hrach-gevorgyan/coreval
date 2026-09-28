@@ -454,3 +454,30 @@ test_that("a dataset the define declares with data, but that is not there, is re
   expect_equal(unique(hit$Dataset), "STUDY")
   expect_true(all(is.na(hit$Record)))
 })
+
+test_that("a folder with a define.xml and no datasets is checked against the define", {
+  skip_if_not_installed("xml2")
+  # It used to be refused for holding no datasets, so "the define says MI has
+  # data and there is no MI" (FB6507) could never be asked before the data
+  # existed.
+  dir <- tempfile("coreval_defonly_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  writeLines(c(
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3" xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study><MetaDataVersion>',
+    '<ItemGroupDef OID="IG.MI" Name="MI" Domain="MI"/>',
+    '<ItemGroupDef OID="IG.MA" Name="MA" Domain="MA" def:HasNoData="Yes"/>',
+    '</MetaDataVersion></Study></ODM>'
+  ), file.path(dir, "define.xml"))
+  result <- check_study(dir, standard = "SENDIG")
+  expect_true("FDA.SENDIG.FB6507" %in% result$findings$rule_id)
+  expect_false(any(grepl("FB6506", result$findings$rule_id)))  # MA declares no data
+  expect_true(isTRUE(attr(result, "define_only")))
+  expect_match(paste(capture.output(print(result)), collapse = "\n"), "define.xml and no datasets")
+  # With neither datasets nor a define there is still nothing to check.
+  empty <- tempfile("coreval_empty_")
+  dir.create(empty)
+  on.exit(unlink(empty, recursive = TRUE), add = TRUE)
+  expect_error(check_study(empty), "no datasets found")
+})

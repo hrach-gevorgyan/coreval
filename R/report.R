@@ -508,10 +508,18 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   } else if (nrow(f) == 0) {
     cat("\nNothing to fix in the ", ran, " checks that ran.\n", sep = "")
   } else {
+    # Findings about the study or a dataset as a whole name no record, so a
+    # result made only of those says where it is, not "across 0 records".
+    where <- if (n_records == 0) {
+      if (all(f$Dataset == "STUDY")) " about the study as a whole" else ""
+    } else {
+      paste0(" across ", n_records, if (n_records == 1) " record" else " records")
+    }
+    n_sets <- length(unique(f$Dataset))
     cat(
-      "\n", n_problems, if (n_problems == 1) " problem" else " problems",
-      " across ", n_records, if (n_records == 1) " record" else " records",
-      if (one_dataset) "" else paste0(" in ", length(unique(f$Dataset)), " datasets"),
+      "\n", n_problems, if (n_problems == 1) " problem" else " problems", where,
+      if (one_dataset || all(f$Dataset == "STUDY")) "" else
+        paste0(" in ", n_sets, if (n_sets == 1) " dataset" else " datasets"),
       "  (", ran, " checks ran)\n",
       sep = ""
     )
@@ -544,9 +552,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     counts <- vapply(by_dataset, function(d) {
       length(unique(f$rule_id[f$Dataset == d]))
     }, integer(1))
-    recs <- vapply(by_dataset, function(d) {
-      nrow(unique(f[f$Dataset == d, c("Dataset", "Record")]))
-    }, integer(1))
+    recs <- vapply(by_dataset, function(d) count_records(f[f$Dataset == d, ]), integer(1))
     ord <- order(-counts)
     by_dataset <- by_dataset[ord]
     counts <- counts[ord]
@@ -555,10 +561,11 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     cat("\n")
     for (i in seq_along(by_dataset)) {
       cat(sprintf(
-        "  %-10s %3d %-9s %3d %s\n",
+        "  %-10s %3d %-9s %s\n",
         by_dataset[i], counts[i],
         if (counts[i] == 1) "problem" else "problems",
-        recs[i], if (recs[i] == 1) "record" else "records"
+        if (recs[i] == 0) "" else
+          sprintf("%3d %s", recs[i], if (recs[i] == 1) "record" else "records")
       ))
     }
 
@@ -566,6 +573,12 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
       report_banner(d, width, g)
       describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated, guidance)
     }
+  }
+
+  if (isTRUE(attr(x, "define_only"))) {
+    cat("\nThis folder holds a define.xml and no datasets, so only the rules that\n",
+        "compare the define with what the study contains could run. Add the\n",
+        "datasets and check again for everything else.\n", sep = "")
   }
 
   if (nrow(skipped) > 0) {

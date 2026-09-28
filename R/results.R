@@ -451,7 +451,10 @@ check_study <- function(study, standard = NULL, version = NULL,
     # CDISC version, the define is still a declaration and beats guessing.
     study$ct_package <- ct_package_from_ts(study) %||% ct_package_from_define(study)
   }
-  if (length(study$datasets) == 0) {
+  # A folder with a define.xml and no datasets yet is checkable in part: the
+  # rules comparing the define with what the study contains can run. With
+  # neither there is nothing to check.
+  if (length(study$datasets) == 0 && is.null(study$define)) {
     stop(no_datasets_message(folder), call. = FALSE)
   }
   # An explicitly supplied standard overrides whatever the study declares
@@ -749,6 +752,37 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     }
   }
 
+  # A study with a define.xml and no datasets: the define-based presence rules
+  # answer one question about the whole study ("the define says MI has data;
+  # is there an MI?"), so they run once, here, since there is no dataset for
+  # the loop above to run them under. Everything else needs data and does not
+  # run; the report says so.
+  if (length(domains) == 0 && !is.null(study$define)) {
+    define_plan <- define_only_rules(declared, declared_version, include_deprecated)
+    for (rule_id in define_plan) {
+      rule <- .coreval_env$data$rules[[rule_id]]
+      outcome <- tryCatch(run_rule_on_domain(rule, study, "STUDY"), error = function(e) e)
+      if (inherits(outcome, "error")) {
+        all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
+          rule_id = rule_id, domain = "STUDY",
+          reason = paste("evaluation failed:", conditionMessage(outcome))
+        )
+        next
+      }
+      n_ran <- n_ran + 1
+      findings <- assemble_findings(rule, outcome$dataset, "STUDY", outcome$violations,
+                                    outcome$bindings, max_records = max_records)
+      if (nrow(findings) > 0) {
+        findings$Dataset <- "STUDY"
+        findings$Record <- NA_integer_
+        findings$rule_id <- rule_id
+        findings$issue <- rule_message(rule)
+        findings$triage <- finding_triage(findings, rule)
+        all_findings[[length(all_findings) + 1]] <- findings
+      }
+    }
+  }
+
   for (rule_id in schema_plan) {
     all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
       rule_id = rule_id, domain = "STUDY",
@@ -844,8 +878,28 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     checks_run = n_ran,
     domains = domains,
     standard = declared,
-    excluded_by_standard = excluded
+    excluded_by_standard = excluded,
+    define_only = length(domains) == 0 && !is.null(study$define)
   )
+}
+
+#' The define-based presence rules, for a study that has only a define.xml
+#' @param standard,version The declared standard and version, or `NULL`.
+#' @param include_deprecated Whether retired rules run.
+#' @return Rule ids.
+#' @noRd
+define_only_rules <- function(standard, version, include_deprecated) {
+  rules <- .coreval_env$data$rules
+  keep <- vapply(rules, function(r) {
+    identical(r$rule_type, "Domain Presence Check against Define XML")
+  }, logical(1))
+  if (!is.null(standard)) {
+    keep <- keep & rules_for_standard(rules, standard, version)
+  }
+  if (!isTRUE(include_deprecated)) {
+    keep <- keep & vapply(rules, function(r) !identical(r$source, "deprecated_dir"), logical(1))
+  }
+  names(rules)[keep]
 }
 
 #' Say why a study folder gave no datasets, and what to do instead

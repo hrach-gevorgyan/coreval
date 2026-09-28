@@ -40,6 +40,15 @@
   - Ten define-based presence rules for SEND could never fire.
   - A Dataset-JSON cell holding the word "study" made the whole folder read as
     an empty USDM study.
+  - A folder holding a define.xml and no datasets was refused. It is now
+    checked with the rules that compare the define with what the study
+    contains, such as a define saying MI has data when there is no MI.
+
+* **CDISC's latest rules.** The rules are updated to the current CDISC Open
+  Rules release, which rewords messages and descriptions without changing what
+  any rule checks. A date "not equal" comparison now follows CDISC's engine
+  when both dates are blank: they count as equal, not different
+  (CORE-000370, CORE-001044).
 
 * **Reports and exports.**
   - CSV exports no longer let a data value run as a spreadsheet formula, and

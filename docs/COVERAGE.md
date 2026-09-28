@@ -7,7 +7,7 @@ publishes with it. This file explains the ones that do not come back clean.
 takes about three minutes on eight cores. Counts in prose go stale; that run
 does not.
 
-At the last full sweep: **955 pass, 56 disagree, 43 cannot be measured.**
+At the last full sweep: **956 pass, 56 disagree, 42 cannot be measured.**
 
 A rule counts as passing only if a case that expects findings was graded. A rule
 whose clean cases pass while the case built to catch something could not be run
@@ -35,11 +35,10 @@ CDISC's own service over a document to produce them and
 `tests/conformance/compare_usdm_reader.R` diffs coreval's against those, cell
 by cell.
 
-## The 43 that cannot be measured
+## The 42 that cannot be measured
 
-38 are fixtures with nothing to check against, 4 need a rule type coreval does
-not implement, and one is a real gap in coreval, marked as such rather than
-folded in with the rest.
+38 are fixtures with nothing to check against and 4 need a rule type coreval
+does not implement.
 
 | why | rules | |
 |---|---|---|
@@ -50,7 +49,6 @@ folded in with the rest.
 | The rule's `Check` block is empty upstream | 1 | unmeasurable |
 | The fixture lacks a dataset the rule computes over (FDA.SENDIG.FB6403, PR) | 1 | unmeasurable; CDISC's engine skips it the same way |
 | The case expecting findings cannot be read (CDISC.SDTMIG.CG0096 names a file `WHODD.csv.csv`) | 1 | unmeasurable |
-| The fixture ships only a `define.xml` and no datasets at all | 1 | **coreval gap** |
 
 Each of these was re-derived from the upstream tree rather than read back off
 the reason string. The five scope skips were the ones worth doubting, because
@@ -62,13 +60,11 @@ DESIGN, while CORE-000794, CORE-000847 and CORE-000848 all require EVENTS.
 `RELSUB` is RELATIONSHIP where CORE-000229 requires SPECIAL PURPOSE. The engine
 filters those datasets out too, so those sheets are stale.
 
-That audit is also what turned up the gap. `FDA.SENDIG.FB6507` was being
-skipped as a scope mismatch when its fixture ships no datasets at all, only a
-`define.xml`, and its rule type is Domain Presence Check against Define XML.
-The outcome was right and no wrong answer was ever produced, but the reason
-made a real limitation read as routine filtering. Running it would mean
-evaluating a study with no datasets in it at all, which is a plausible thing to
-want (checking a define.xml before the data exists) and is not built.
+That audit also turned up `FDA.SENDIG.FB6507`, skipped as a scope mismatch
+when its fixture ships no datasets at all, only a `define.xml`. The skip hid a
+real limitation: coreval refused a folder with no datasets. A folder holding
+only a define.xml is now checked with the rules that compare the define with
+what the study contains, and FB6507 passes.
 
 A rule with no published expected output cannot pass or fail. Counting these as
 failures understates the package; hiding them overstates it. They are reported

@@ -244,6 +244,24 @@ run_case_graded <- function(rule, case_dir) {
   }
 
   domains <- names(study$datasets)
+  # A fixture with a define.xml and no datasets: the define-based presence
+  # rules run once for the study, as check_study() runs them, and are graded
+  # on whether the sheet's STUDY rows expect a finding.
+  if (length(domains) == 0 && !is.null(study$define) &&
+      identical(rule$rule_type, "Domain Presence Check against Define XML")) {
+    outcome <- tryCatch(run_rule_on_domain(rule, study, "STUDY"), error = function(e) e)
+    if (inherits(outcome, "error")) {
+      return(list(status = "SKIPPED", reason = paste("evaluate_rule failed:", conditionMessage(outcome))))
+    }
+    expected_any <- length(expected_records(results_csv, "STUDY")) > 0
+    actual_any <- any(outcome$violations)
+    if (!identical(actual_any, expected_any)) {
+      return(list(status = "FAIL", reason = sprintf(
+        "[STUDY] define-only study: expected violation=%s, got %s", expected_any, actual_any
+      )))
+    }
+    return(list(status = "PASS", reason = NA_character_))
+  }
   applicable <- Filter(function(d) rule_applies_to_domain(rule, d, dataset = study$datasets[[d]]), domains)
   if (length(applicable) == 0) {
     # Distinguish "the fixture has datasets, none in scope" from "the fixture
