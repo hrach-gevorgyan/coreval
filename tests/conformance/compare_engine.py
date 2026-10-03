@@ -98,6 +98,18 @@ def case_dirs(rule_dir):
     return out
 
 
+def engine_commit():
+    """The engine commit this run used.
+
+    Recorded on every entry, because the artifact is merged across runs: a
+    verdict produced by a newer engine sitting next to older ones, with
+    nothing saying so, is the provenance gap the pins exist to close.
+    """
+    out = subprocess.run(["git", "-C", ENGINE, "rev-parse", "HEAD"],
+                         capture_output=True, text=True)
+    return out.stdout.strip() if out.returncode == 0 else "unknown"
+
+
 def env_file(data_dir):
     direct = os.path.join(data_dir, ".env")
     if os.path.isfile(direct):
@@ -126,6 +138,7 @@ def main():
     # its id: FDA.SENDIG.FB6507's data lives in FB6507, beside a same-named
     # directory holding only a rule.yml. Find the folder that has the cases.
     wanted = sys.argv[1:] or [k for k, v in board.items() if v["status"] == "FAIL"]
+    commit = engine_commit()
     report, scratch = {}, os.path.join("tests", "conformance", ".engine-out")
     os.makedirs(scratch, exist_ok=True)
 
@@ -169,7 +182,8 @@ def main():
         ran = [c for c in cases if c["engine"] is not None]
         differ = [c for c in ran if c["engine"] != c["sheet"]]
         report[rule_id] = {"source": source, "folder": folder, "cases": cases,
-                           "cases_engine_ran": len(ran), "cases_engine_differs": len(differ)}
+                           "cases_engine_ran": len(ran), "cases_engine_differs": len(differ),
+                           "engine_commit": commit}
         # Never collapse "ran and agreed" with "never ran" into one word.
         verdict = ("engine could not run any case" if not ran else
                    "engine differs from sheet on %d of %d" % (len(differ), len(ran)) if differ else

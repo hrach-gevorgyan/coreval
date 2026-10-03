@@ -185,16 +185,31 @@ Three mechanical signatures, each detectable without judgement:
 Applied mechanically to the sheets, these three signatures prove 28 of those 55
 stale without any judgement.
 
-## Two rules where coreval is right and cannot prove it
+## CORE-001080, settled by CDISC's own engine
 
-**CORE-001080.** coreval reports TS records 3 and 16; the sheet has only 3.
-Both rows prefix-match `CDISC` in `TSVCDREF` and both carry a `TSVALCD` that is
-not a term code in the package they cite (`C00001` and `C00002`, neither
-present). By the rule's own text both are violations. The engine cannot
-arbitrate: on that fixture it raises
-`ValueError: The operator can't be used with non-string values` from
-`prefix_equal_to`, because `TSVCDREF` is empty on 23 of the 51 rows. coreval
-handles those rows. The rule is deprecated and does not run by default.
+The case that disagrees is `positive/02`, whose `results.csv` lists nothing.
+coreval reports TS records 3 and 16. Both rows match `CDISC` in `TSVCDREF` and
+carry a `TSVALCD` that is not a term code in the package they cite: `C00001` and
+`C49563`, neither among the 26,240 term codes of `sdtmct-2025-09-26`. By the
+rule's own text both are violations.
+
+This could not be settled before. Run at the engine commit pinned in
+`UPSTREAM_SHA_ENGINE`, the engine named no rows at all on any of the three
+cases: it reported TS with a blank record, which cannot say which rows are
+violations. `TSVCDREF` is empty on 23 of the 51 rows, and the operator reading
+the start of a text value refused a column holding blanks. Engine commit
+`0be94c38` (2026-09-28) lets blanks through.
+
+Run at `fd434a8a`, the engine reports nothing for `positive/01`, and TS records
+3 and 16 for both `positive/02` and `negative/01`. That is what coreval reports,
+case for case. The sheet for `positive/02` is stale.
+`engine_comparison.json` holds that run, stamped with the engine commit that
+produced it.
+
+The rule is deprecated and does not run by default, so the scoreboard keeps it
+as a FAIL against the sheet.
+
+## Where coreval differs on purpose
 
 **Split datasets.** A finding in a split dataset names the file the problem is
 in, with that file's own row numbers, where CDISC reports against the merged

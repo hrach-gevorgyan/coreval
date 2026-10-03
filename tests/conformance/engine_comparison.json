@@ -13395,11 +13395,7 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": {
-     "TS": [
-      ""
-     ]
-    },
+    "engine": {},
     "note": null,
     "sheet": {}
    },
@@ -13407,7 +13403,8 @@
     "case": "positive/02",
     "engine": {
      "TS": [
-      ""
+      "3",
+      "16"
      ]
     },
     "note": null,
@@ -13417,7 +13414,8 @@
     "case": "negative/01",
     "engine": {
      "TS": [
-      ""
+      "3",
+      "16"
      ]
     },
     "note": null,
@@ -13429,8 +13427,9 @@
     }
    }
   ],
-  "cases_engine_differs": 3,
+  "cases_engine_differs": 1,
   "cases_engine_ran": 3,
+  "engine_commit": "fd434a8aeb7fc17020f4fd25117fb7b6a7e71feb",
   "folder": "CORE-001080",
   "source": "deprecated_dir"
  },
