@@ -25,12 +25,13 @@ dm <- data.frame(
   AGEU    = c("YEARS", "YEARS", "")
 )
 
-check_dataset(dm)
+result <- check_dataset(dm)
+print(result, n = 2)   # the two most important problems; the default shows ten
 ```
 
-    ── coreval — DM ────────────────────────────────────────────────────────────
+    ── coreval — DM ────────────────────────────────────────────────────────────────
 
-    6 problems across 4 records  (164 checks ran)
+    6 problems across 3 records  (163 checks ran)
 
       wrong value         3   the data breaks the rule - start here
       missing required    1   the standard requires it
@@ -49,6 +50,20 @@ check_dataset(dm)
         CORE-000547  · also SEND66, SEND67, SEND68, ...
 
       ... and 4 more here. See result$findings for all of them.
+
+    ────────────────────────────────────────────────────────────────────────────────
+    58 checks could not run.
+      33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+         → run check_study() on the whole folder to cover these
+      14 ask what the whole study contains
+      7 need a define.xml
+      4 for other reasons, see result$skipped
+
+    No standard declared, so rules from every standard ran.
+      Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
+
+    Fix what you can, then run this again.
+    To track the rest:  write_findings(result, "issues.xlsx")
 
 Each problem says what’s wrong, which row, and the value that caused it.
 The rule number is there if you want to look it up, along with the older
@@ -141,9 +156,10 @@ CDISC gives.
 [docs/COVERAGE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COVERAGE.md)
 goes through the rest, one by one.
 
-It reads XPT, SAS, CSV and Dataset-JSON datasets, Define-XML, and USDM
-study files. Nothing is downloaded and no account or API key is needed.
-The rules are bundled with the package.
+It reads XPT, SAS, CSV and Dataset-JSON datasets and Define-XML, and
+USDM study files when you ask for them with `usdm = TRUE`. Nothing is
+downloaded and no account or API key is needed. The rules are bundled
+with the package.
 
 **What it doesn’t do yet:**
 

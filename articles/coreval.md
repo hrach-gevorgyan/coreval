@@ -43,7 +43,7 @@ result
 #> 
 #> ── coreval — AE ────────────────────────────────────────────────────────────────
 #> 
-#> 5 problems across 3 records  (160 checks ran)
+#> 5 problems across 2 records  (159 checks ran)
 #> 
 #>   wrong value         3   the data breaks the rule - start here
 #>   missing required    1   the standard requires it
@@ -57,36 +57,36 @@ result
 #>     CORE-000547  · also SEND66, SEND67, SEND68, ...
 #> 
 #> [wrong value]
-#> The Study Day of Start of Observation (--STDY) is not present in the dataset
-#>   when Start Date/Time of Observation (--STDTC) is present.
-#>   1 record · AESTDTC
+#> Study Day of Start of Observation (--STDY) variable is missing when Start
+#>   Date/Time of Observation (--STDTC) is present.
+#>   the dataset · AESTDTC
 #>     AESTDTC = "2024-01-10"
 #>     CORE-000328  · also FB3202
 #> 
 #> [wrong value]
 #> Study Day of End of Observation (--ENDY) variable is missing when End
 #>   Date/Time of Observation (--ENDTC) is present.
-#>   1 record · AEENDTC
+#>   the dataset · AEENDTC
 #>     AEENDTC = "2024-01-12"
 #>     CORE-000776  · also FB3203
 #> 
 #> [missing required]
-#> At least one required variable is missing from dataset
-#>   1 record
+#> Required variable is missing from the dataset.
+#>   the dataset
 #>     missing required variables: AEDECOD
 #>     CORE-000355  · also CG0014, SEND12, TIG0299, ...
 #> 
 #> [missing optional]
-#> At least one expected variable is missing from dataset
-#>   1 record
+#> Expected variable is missing from the dataset.
+#>   the dataset
 #>     missing expected variables: AELLT, AELLTCD, AEPTCD, AEHLT, AEHLTCD, AEHLGT, AEHLGTCD, AEBODSYS, ...
 #>     CORE-000334  · also CG0016, TIG0301, SEND13, ...
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
-#> 51 checks could not run.
-#>   25 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
+#> 48 checks could not run.
+#>   24 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
 #>      → run check_study() on the whole folder to cover these
-#>   16 ask what the whole study contains
+#>   14 ask what the whole study contains
 #>   6 need a define.xml
 #>   4 for other reasons, see result$skipped
 #> 
@@ -163,7 +163,7 @@ coreval won’t guess. It skips them and tells you what it wanted:
 
 cross <- result$skipped[grepl("was not supplied", result$skipped$reason), ]
 nrow(cross)
-#> [1] 25
+#> [1] 24
 head(unique(cross$reason), 3)
 #> [1] "needs DM, which was not supplied - check the whole study folder to run this rule"
 #> [2] "needs TV, which was not supplied - check the whole study folder to run this rule"
@@ -192,8 +192,7 @@ that - coreval will not pick a version for you, because judging your
 data against terminology it never declared would invent violations and
 hide real ones.
 
-Most rules do still run. Across AE, DM, LB and VS, 76–84% of the
-applicable ones work on a single dataset. But the ones that can’t are
+Most rules do still run on a single dataset. But the ones that can’t are
 the cross-dataset checks, and those are often the ones you care about.
 
 **So a short findings list here doesn’t mean your data is clean.** It’s
@@ -253,38 +252,38 @@ You get two tables back, and you want to look at both.
 ``` r
 
 head(study_result$findings)
-#>    Dataset Record            Variable
-#>     <char>  <int>              <char>
-#> 1:      AE     NA              AESTDY
-#> 2:      AE     NA             AESTDTC
-#> 3:      AE     NA  $dataset_variables
-#> 4:      AE     NA $expected_variables
-#> 5:      AE     NA  $dataset_variables
-#> 6:      AE     NA $required_variables
-#>                                                                                                                                                                    Value
-#>                                                                                                                                                                   <char>
-#> 1:                                                                                                                                                        Not in dataset
-#> 2:                                                                                                                                                            2024-01-10
-#> 3:                                                                                             ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AESTDTC', 'AEENDTC']
-#> 4: ['AELLT', 'AELLTCD', 'AEPTCD', 'AEHLT', 'AEHLTCD', 'AEHLGT', 'AEHLGTCD', 'AEBODSYS', 'AEBDSYCD', 'AESOC', 'AESOCCD', 'AESER', 'AEACN', 'AEREL', 'AESTDTC', 'AEENDTC']
-#> 5:                                                                                             ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AESTDTC', 'AEENDTC']
-#> 6:                                                                                                        ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AEDECOD']
-#>                                                                                                                                     issue
-#>                                                                                                                                    <char>
-#> 1: The Study Day of Start of Observation (--STDY) is not present in the dataset when Start Date/Time of Observation (--STDTC) is present.
-#> 2: The Study Day of Start of Observation (--STDY) is not present in the dataset when Start Date/Time of Observation (--STDTC) is present.
-#> 3:                                                                                 At least one expected variable is missing from dataset
-#> 4:                                                                                 At least one expected variable is missing from dataset
-#> 5:                                                                                 At least one required variable is missing from dataset
-#> 6:                                                                                 At least one required variable is missing from dataset
+#>    Dataset Record                    Variable
+#>     <char>  <int>                      <char>
+#> 1:      AE     NA                      AESTDY
+#> 2:      AE     NA                     AESTDTC
+#> 3:      AE     NA $missing_expected_variables
+#> 4:      AE     NA $missing_required_variables
+#> 5:      AE      2                     RFSTDTC
+#> 6:      AE      2                     RFENDTC
+#>                                                                                                                                              Value
+#>                                                                                                                                             <char>
+#> 1:                                                                                                                                  Not in dataset
+#> 2:                                                                                                                                      2024-01-10
+#> 3: ['AELLT', 'AELLTCD', 'AEPTCD', 'AEHLT', 'AEHLTCD', 'AEHLGT', 'AEHLGTCD', 'AEBODSYS', 'AEBDSYCD', 'AESOC', 'AESOCCD', 'AESER', 'AEACN', 'AEREL']
+#> 4:                                                                                                                                         AEDECOD
+#> 5:                                                                                                                                  Not in dataset
+#> 6:                                                                                                                                  Not in dataset
+#>                                                                                                                       issue
+#>                                                                                                                      <char>
+#> 1: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.
+#> 2: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.
+#> 3:                                                                           Expected variable is missing from the dataset.
+#> 4:                                                                           Required variable is missing from the dataset.
+#> 5:                                                        Variable value is not in correct ISO 8601 date or datetime format
+#> 6:                                                        Variable value is not in correct ISO 8601 date or datetime format
 #>              triage     rule_id
 #>              <char>      <char>
 #> 1:      wrong value CORE-000328
 #> 2:      wrong value CORE-000328
 #> 3: missing optional CORE-000334
-#> 4: missing optional CORE-000334
-#> 5: missing required CORE-000355
-#> 6: missing required CORE-000355
+#> 4: missing required CORE-000355
+#> 5:      wrong value CORE-000547
+#> 6:      wrong value CORE-000547
 ```
 
 One row per affected record, pointing straight at it:
@@ -308,42 +307,34 @@ It’s a plain data frame, so slice it however you like:
 
 f <- study_result$findings
 head(f[f$Dataset == "DM", ])
-#>    Dataset Record           Variable
-#>     <char>  <int>             <char>
-#> 1:      DM      1             SUBJID
-#> 2:      DM      2             SUBJID
-#> 3:      DM      3             SUBJID
-#> 4:      DM      3                AGE
-#> 5:      DM      3               AGEU
-#> 6:      DM     NA $dataset_variables
-#>                                                                Value
-#>                                                               <char>
-#> 1:                                                    Not in dataset
-#> 2:                                                    Not in dataset
-#> 3:                                                    Not in dataset
-#> 4:                                                                47
-#> 5:                                                                  
-#> 6: ['STUDYID', 'DOMAIN', 'USUBJID', 'RFSTDTC', 'AGE', 'AGEU', 'SEX']
-#>                                                     issue           triage
-#>                                                    <char>           <char>
-#> 1:                      SUBJID is not unique within study missing optional
-#> 2:                      SUBJID is not unique within study missing optional
-#> 3:                      SUBJID is not unique within study missing optional
-#> 4:                  AGEU is missing when AGE is provided.      wrong value
-#> 5:                  AGEU is missing when AGE is provided.      wrong value
-#> 6: At least one expected variable is missing from dataset missing optional
-#>        rule_id
-#>         <char>
-#> 1: CORE-000186
-#> 2: CORE-000186
-#> 3: CORE-000186
-#> 4: CORE-000189
-#> 5: CORE-000189
-#> 6: CORE-000334
+#>    Dataset Record                    Variable
+#>     <char>  <int>                      <char>
+#> 1:      DM      1                      SUBJID
+#> 2:      DM      2                      SUBJID
+#> 3:      DM      3                      SUBJID
+#> 4:      DM      3                         AGE
+#> 5:      DM      3                        AGEU
+#> 6:      DM     NA $missing_expected_variables
+#>                                                                                                                                                Value
+#>                                                                                                                                               <char>
+#> 1:                                                                                                                                    Not in dataset
+#> 2:                                                                                                                                    Not in dataset
+#> 3:                                                                                                                                    Not in dataset
+#> 4:                                                                                                                                                47
+#> 5:                                                                                                                                                  
+#> 6: ['RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']
+#>                                             issue           triage     rule_id
+#>                                            <char>           <char>      <char>
+#> 1:             SUBJID is not unique within study. missing optional CORE-000186
+#> 2:             SUBJID is not unique within study. missing optional CORE-000186
+#> 3:             SUBJID is not unique within study. missing optional CORE-000186
+#> 4:  AGEU must be populated when AGE is populated.      wrong value CORE-000189
+#> 5:  AGEU must be populated when AGE is populated.      wrong value CORE-000189
+#> 6: Expected variable is missing from the dataset. missing optional CORE-000334
 sort(table(f$rule_id), decreasing = TRUE)[1:3]
 #> 
-#> CORE-000547 CORE-000334 CORE-000355 
-#>          21           4           4
+#> CORE-000547 CORE-000883 CORE-000186 
+#>          21           4           3
 ```
 
 Slicing the data frame gives you rows.
@@ -357,11 +348,11 @@ and [`summary()`](https://rdrr.io/r/base/summary.html) take:
 
 worst <- filter_findings(study_result, triage = "wrong value")
 nrow(worst$findings)
-#> [1] 25
+#> [1] 24
 summary(worst)
-#> 6 problems across 4 records  (386 checks ran, 45 could not)
+#> 5 problems across 3 records  (339 checks ran, 74 could not)
 #>   (filtered - a subset of the full result)
-#>   wrong value       6
+#>   wrong value       5
 ```
 
 The two numbers there are counting different things, and the difference
@@ -385,19 +376,19 @@ head(study_result$skipped)
 #>        rule_id domain
 #>         <char> <char>
 #> 1: CORE-000019     AE
-#> 2: CORE-000398     AE
-#> 3: CORE-000494     AE
-#> 4: CORE-000507     AE
-#> 5: CORE-000594     AE
-#> 6: CORE-000929     AE
-#>                                                                                                                                                                                                                                               reason
-#>                                                                                                                                                                                                                                               <char>
-#> 1:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)
-#> 2:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)
-#> 3:                                                                                                            evaluation failed: rule type 'Define Item Metadata Check against Library Metadata' needs define.xml: no define.xml found in this study
-#> 4:                                                                                                                     evaluation failed: rule type 'Variable Metadata Check against Define XML' needs define.xml: no define.xml found in this study
-#> 5:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)
-#> 6: evaluation failed: needs controlled terminology, and this study does not say which version it follows: TS has no TSVCDVER naming a CDISC package that is bundled. Pass ct_package (e.g. ct_package = "sdtmct-2026-03-27"; see list_ct_packages())
+#> 2: CORE-000140     AE
+#> 3: CORE-000168     AE
+#> 4: CORE-000249     AE
+#> 5: CORE-000269     AE
+#> 6: CORE-000270     AE
+#>                                                                                                                                        reason
+#>                                                                                                                                        <char>
+#> 1: evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)
+#> 2:                                                                                                       needs TV, which is not in this study
+#> 3:                                                                                                       needs SV, which is not in this study
+#> 4:                                                                                                       needs TV, which is not in this study
+#> 5:                                                                                                   needs SV, TV, which is not in this study
+#> 6:                                                                                                   needs SV, TV, which is not in this study
 ```
 
 **This is the table people skip, and it’s the one that bites.** An empty
@@ -441,7 +432,7 @@ table(rules$source)
 #>                       11                       30
 
 attr(rules, "rules_version")
-#> [1] "1fb7b81e40bdb6632375761c561fabd29676a477"
+#> [1] "bc4c2f3020ce3e99949ecaeffd277abb8e0622e0"
 ```
 
 That last one is the exact CDISC commit the bundled rules came from.
@@ -466,7 +457,7 @@ actually checks:
 ``` r
 
 nrow(list_rules(domain = "AE"))
-#> [1] 243
+#> [1] 239
 
 rule <- list_rules(id = "CORE-000547")
 rule$issue
@@ -510,14 +501,18 @@ everything.
 ## USDM study designs
 
 A USDM study file is a single JSON document describing a study design
-rather than a folder of datasets. Put it in a folder and check the
-folder, the same way as any other study. It needs the `jsonlite` and
-`QuickJSR` packages.
+rather than a folder of datasets. Checking one is optional, because a
+few of its rules can take minutes on a single file, so you ask for it.
+Put the file in a folder of its own and pass `usdm = TRUE`. It needs the
+`jsonlite` and `QuickJSR` packages.
 
 ``` r
 
-result <- check_study("path/to/usdm")
+result <- check_study("path/to/usdm", usdm = TRUE)
 ```
+
+Without `usdm = TRUE`, a folder holding a USDM file stops with a message
+that says so, rather than being checked as if it were empty.
 
 Problems are reported against the part of the design they’re about, such
 as `STUDYDESIGN` or `ENCOUNTER`, and the row within it.

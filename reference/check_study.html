@@ -13,7 +13,7 @@ code that builds it, see check_dataset()."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">coreval</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,8 @@ code that builds it, see <code><a href="check_dataset.html">check_dataset()</a><
 <span>  use_case <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_records <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  include_deprecated <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  ct_package <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  ct_package <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  usdm <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -117,6 +118,11 @@ releases and judging a study against one it never declared would both
 invent violations and hide real ones. Every published package is bundled;
 <code><a href="list_ct_packages.html">list_ct_packages()</a></code> shows them.</p></dd>
 
+
+<dt id="arg-usdm">usdm<a class="anchor" aria-label="anchor" href="#arg-usdm"></a></dt>
+<dd><p>Check a USDM study design document. <code>FALSE</code> by default, and
+only used when <code>study</code> is a folder path; see <code><a href="read_study.html">read_study()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -130,9 +136,9 @@ not have, which is usually the finding itself.</p></li>
 <li><p><code>skipped</code> - what could not be checked, with a <code>reason</code> for each. Read
 this one: an empty <code>findings</code> table can mean clean data <em>or</em> rules that
 never ran, and they look identical otherwise. Reasons include a dataset
-you did not supply, a missing Define-XML, and - for 9 rules - CDISC's
-controlled terminology when no <code>ct_package</code> was given, which is
-not bundled. Nothing skipped is ever counted as a pass.</p></li>
+the study does not have, a missing Define-XML, and a controlled
+terminology version that neither the study nor <code>ct_package</code> names.
+Nothing skipped is ever counted as a pass.</p></li>
 <li><p><code>truncated</code> - rules that flagged more records than <code>max_records</code> kept,
 with how many they really found.</p></li>
 </ul></div>
@@ -175,42 +181,21 @@ a log. Turn it on or off with <code>options(coreval.progress = TRUE)</code> or
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">check_study</span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">findings</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Dataset Record            Variable</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;  &lt;int&gt;              &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      DM     NA  $dataset_variables</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      DM     NA $expected_variables</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      DM     NA  $dataset_variables</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:      DM     NA $required_variables</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:   STUDY     NA                ADSL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:   STUDY     NA                  TO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7:      DM     NA        dataset_name</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                          Value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                         &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:                                                                                                                                                          ['USUBJID', 'AGE']</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: ['RFSTDTC', 'RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'AGE', 'AGEU', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                                                                                                                                                          ['USUBJID', 'AGE']</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:                                                                                                      ['STUDYID', 'DOMAIN', 'USUBJID', 'SUBJID', 'SITEID', 'SEX', 'COUNTRY']</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                                                                                                                                                              Not in dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6:                                                                                                                                                              Not in dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7:                                                                                                                                                                          DM</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                  issue</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                 &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1:              At least one expected variable is missing from dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2:              At least one expected variable is missing from dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3:              At least one required variable is missing from dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4:              At least one required variable is missing from dataset</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5:                                         Dataset ADSL does not exist</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: Required TO dataset for study of tobacco product(s) is not present.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7:                       Dataset name does not begin with DOMAIN value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              triage     rule_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              &lt;char&gt;      &lt;char&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: missing optional CORE-000334</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: missing optional CORE-000334</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: missing required CORE-000355</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: missing required CORE-000355</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: missing optional CORE-000560</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: missing required CORE-000590</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7:      wrong value CORE-000598</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Dataset Record                    Variable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;  &lt;int&gt;                      &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      DM     NA $missing_expected_variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:      DM     NA $missing_required_variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:      DM     NA                dataset_name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                   Value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                  &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: ['RFSTDTC', 'RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'AGEU', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:                                                                                                          ['STUDYID', 'DOMAIN', 'SUBJID', 'SITEID', 'SEX', 'COUNTRY']</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:                                                                                                                                                                   DM</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                             issue           triage     rule_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            &lt;char&gt;           &lt;char&gt;      &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: Expected variable is missing from the dataset. missing optional CORE-000334</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: Required variable is missing from the dataset. missing required CORE-000355</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3:  Dataset name does not begin with DOMAIN value      wrong value CORE-000598</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

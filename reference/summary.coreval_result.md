@@ -40,7 +40,7 @@ ae <- data.frame(
   AESTDTC = c("2024-01-10", "2024-02-30")
 )
 summary(check_dataset(ae))
-#> 4 problems across 2 records  (160 checks ran, 51 could not)
+#> 4 problems across 1 record  (159 checks ran, 48 could not)
 #>   wrong value       2
 #>   missing required  1
 #>   missing optional  1

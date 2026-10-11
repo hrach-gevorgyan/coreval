@@ -107,5 +107,5 @@ nrow(list_rules(domain = "AE", standard = "SDTMIG", version = "3.4"))
 
 # Which snapshot of CDISC's rules is this?
 attr(list_rules(), "rules_version")
-#> [1] "1fb7b81e40bdb6632375761c561fabd29676a477"
+#> [1] "bc4c2f3020ce3e99949ecaeffd277abb8e0622e0"
 ```

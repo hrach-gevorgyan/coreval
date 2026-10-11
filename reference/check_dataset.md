@@ -30,9 +30,9 @@ check_dataset(
 - domain:
 
   Two-letter domain code, e.g. `"AE"`. Left as `NULL`, coreval takes it
-  from your `DOMAIN` column, or the file name if there isn't one - so
-  `ae1.xpt` from a split dataset is still checked as `AE`. Set it
-  yourself if that guess is wrong.
+  from your `DOMAIN` column, or the file name if there isn't one. For
+  one file of a split dataset with no `DOMAIN` column, such as
+  `ae1.xpt`, set it yourself.
 
 - standard:
 
@@ -115,8 +115,7 @@ the dataset each one wanted. Running them anyway would compare your data
 against columns that are not there and report problems that do not
 exist.
 
-Most rules still run - across AE, DM, LB and VS, 76-84% of the
-applicable ones work on a single dataset. But the ones that cannot are
+Most rules still run on a single dataset. But the ones that cannot are
 the cross-dataset checks, which are often the ones that matter.
 
 **So a short `$findings` table here does not mean the data is clean.**
@@ -151,5 +150,5 @@ result$findings[result$findings$Value == "2024-02-30", ]
 
 # Always look at what could not run:
 nrow(result$skipped)
-#> [1] 51
+#> [1] 48
 ```

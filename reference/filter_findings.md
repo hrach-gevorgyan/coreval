@@ -53,7 +53,8 @@ filter_findings(
 
 - variable:
 
-  Keep only findings naming these variables.
+  Keep only findings naming these variables, including a finding that
+  lists the variable as missing (a Required variable the dataset lacks).
 
 ## Value
 
@@ -78,14 +79,14 @@ filter_findings(result, triage = "wrong value")
 #> 
 #> (filtered - this is a subset of the full result)
 #> 
-#> 2 problems across 2 records  (160 checks ran)
+#> 2 problems across 1 record  (159 checks ran)
 #> 
 #>   wrong value         2   the data breaks the rule - start here
 #> 
 #> [wrong value]
-#> The Study Day of Start of Observation (--STDY) is not present in the dataset
-#>   when Start Date/Time of Observation (--STDTC) is present.
-#>   1 record · AESTDTC
+#> Study Day of Start of Observation (--STDY) variable is missing when Start
+#>   Date/Time of Observation (--STDTC) is present.
+#>   the dataset · AESTDTC
 #>     AESTDTC = "2024-01-10"
 #>     CORE-000328  · also FB3202
 #> 
@@ -96,10 +97,10 @@ filter_findings(result, triage = "wrong value")
 #>     CORE-000547  · also SEND66, SEND67, SEND68, ...
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
-#> 51 checks could not run.
-#>   25 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
+#> 48 checks could not run.
+#>   24 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
 #>      → run check_study() on the whole folder to cover these
-#>   16 ask what the whole study contains
+#>   14 ask what the whole study contains
 #>   6 need a define.xml
 #>   4 for other reasons, see result$skipped
 #> 

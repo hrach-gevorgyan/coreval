@@ -28,9 +28,7 @@ Two ways in, depending on what you have:
   one dataset, either a data frame you already have open or a single
   file. Use this while writing code.
 
-- [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
-  then
-  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md) -
+- [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md) -
   a whole study folder. Use this once the datasets exist, since the
   cross-dataset rules need everything present.
 

@@ -27,7 +27,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">coreval</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,7 +111,7 @@ frame; check it.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── coreval — AE ────────────────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 5 problems across 3 records  (160 checks ran)</span></span>
+<span><span class="co">#&gt; 5 problems across 2 records  (159 checks ran)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   wrong value         3   the data breaks the rule - start here</span></span>
 <span><span class="co">#&gt;   missing required    1   the standard requires it</span></span>
@@ -125,36 +125,36 @@ frame; check it.</p>
 <span><span class="co">#&gt;     CORE-000547  · also SEND66, SEND67, SEND68, ...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [wrong value]</span></span>
-<span><span class="co">#&gt; The Study Day of Start of Observation (--STDY) is not present in the dataset</span></span>
-<span><span class="co">#&gt;   when Start Date/Time of Observation (--STDTC) is present.</span></span>
-<span><span class="co">#&gt;   1 record · AESTDTC</span></span>
+<span><span class="co">#&gt; Study Day of Start of Observation (--STDY) variable is missing when Start</span></span>
+<span><span class="co">#&gt;   Date/Time of Observation (--STDTC) is present.</span></span>
+<span><span class="co">#&gt;   the dataset · AESTDTC</span></span>
 <span><span class="co">#&gt;     AESTDTC = "2024-01-10"</span></span>
 <span><span class="co">#&gt;     CORE-000328  · also FB3202</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [wrong value]</span></span>
 <span><span class="co">#&gt; Study Day of End of Observation (--ENDY) variable is missing when End</span></span>
 <span><span class="co">#&gt;   Date/Time of Observation (--ENDTC) is present.</span></span>
-<span><span class="co">#&gt;   1 record · AEENDTC</span></span>
+<span><span class="co">#&gt;   the dataset · AEENDTC</span></span>
 <span><span class="co">#&gt;     AEENDTC = "2024-01-12"</span></span>
 <span><span class="co">#&gt;     CORE-000776  · also FB3203</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [missing required]</span></span>
-<span><span class="co">#&gt; At least one required variable is missing from dataset</span></span>
-<span><span class="co">#&gt;   1 record</span></span>
+<span><span class="co">#&gt; Required variable is missing from the dataset.</span></span>
+<span><span class="co">#&gt;   the dataset</span></span>
 <span><span class="co">#&gt;     missing required variables: AEDECOD</span></span>
 <span><span class="co">#&gt;     CORE-000355  · also CG0014, SEND12, TIG0299, ...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [missing optional]</span></span>
-<span><span class="co">#&gt; At least one expected variable is missing from dataset</span></span>
-<span><span class="co">#&gt;   1 record</span></span>
+<span><span class="co">#&gt; Expected variable is missing from the dataset.</span></span>
+<span><span class="co">#&gt;   the dataset</span></span>
 <span><span class="co">#&gt;     missing expected variables: AELLT, AELLTCD, AEPTCD, AEHLT, AEHLTCD, AEHLGT, AEHLGTCD, AEBODSYS, ...</span></span>
 <span><span class="co">#&gt;     CORE-000334  · also CG0016, TIG0301, SEND13, ...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; 51 checks could not run.</span></span>
-<span><span class="co">#&gt;   25 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)</span></span>
+<span><span class="co">#&gt; 48 checks could not run.</span></span>
+<span><span class="co">#&gt;   24 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)</span></span>
 <span><span class="co">#&gt;      → run check_study() on the whole folder to cover these</span></span>
-<span><span class="co">#&gt;   16 ask what the whole study contains</span></span>
+<span><span class="co">#&gt;   14 ask what the whole study contains</span></span>
 <span><span class="co">#&gt;   6 need a define.xml</span></span>
 <span><span class="co">#&gt;   4 for other reasons, see result$skipped</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -226,7 +226,7 @@ a single dataset and those questions simply can’t be answered.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cross</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">skipped</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"was not supplied"</span>, <span class="va">result</span><span class="op">$</span><span class="va">skipped</span><span class="op">$</span><span class="va">reason</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">cross</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 25</span></span>
+<span><span class="co">#&gt; [1] 24</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">cross</span><span class="op">$</span><span class="va">reason</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "needs DM, which was not supplied - check the whole study folder to run this rule"</span></span>
 <span><span class="co">#&gt; [2] "needs TV, which was not supplied - check the whole study folder to run this rule"</span></span>
@@ -248,9 +248,8 @@ lost <code>UNDIFFERENTIATED</code>. So tell it:</p>
 exactly that - coreval will not pick a version for you, because judging
 your data against terminology it never declared would invent violations
 and hide real ones.</p>
-<p>Most rules do still run. Across AE, DM, LB and VS, 76–84% of the
-applicable ones work on a single dataset. But the ones that can’t are
-the cross-dataset checks, and those are often the ones you care
+<p>Most rules do still run on a single dataset. But the ones that can’t
+are the cross-dataset checks, and those are often the ones you care
 about.</p>
 <p><strong>So a short findings list here doesn’t mean your data is
 clean.</strong> It’s a quick first pass, not a verdict.</p>
@@ -299,38 +298,38 @@ object instead:</p>
 </h3>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">study_result</span><span class="op">$</span><span class="va">findings</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Dataset Record            Variable</span></span>
-<span><span class="co">#&gt;     &lt;char&gt;  &lt;int&gt;              &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      AE     NA              AESTDY</span></span>
-<span><span class="co">#&gt; 2:      AE     NA             AESTDTC</span></span>
-<span><span class="co">#&gt; 3:      AE     NA  $dataset_variables</span></span>
-<span><span class="co">#&gt; 4:      AE     NA $expected_variables</span></span>
-<span><span class="co">#&gt; 5:      AE     NA  $dataset_variables</span></span>
-<span><span class="co">#&gt; 6:      AE     NA $required_variables</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                    Value</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                   &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                                                                                                                        Not in dataset</span></span>
-<span><span class="co">#&gt; 2:                                                                                                                                                            2024-01-10</span></span>
-<span><span class="co">#&gt; 3:                                                                                             ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AESTDTC', 'AEENDTC']</span></span>
-<span><span class="co">#&gt; 4: ['AELLT', 'AELLTCD', 'AEPTCD', 'AEHLT', 'AEHLTCD', 'AEHLGT', 'AEHLGTCD', 'AEBODSYS', 'AEBDSYCD', 'AESOC', 'AESOCCD', 'AESER', 'AEACN', 'AEREL', 'AESTDTC', 'AEENDTC']</span></span>
-<span><span class="co">#&gt; 5:                                                                                             ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AESTDTC', 'AEENDTC']</span></span>
-<span><span class="co">#&gt; 6:                                                                                                        ['STUDYID', 'DOMAIN', 'USUBJID', 'AESEQ', 'AETERM', 'AEDECOD']</span></span>
-<span><span class="co">#&gt;                                                                                                                                     issue</span></span>
-<span><span class="co">#&gt;                                                                                                                                    &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: The Study Day of Start of Observation (--STDY) is not present in the dataset when Start Date/Time of Observation (--STDTC) is present.</span></span>
-<span><span class="co">#&gt; 2: The Study Day of Start of Observation (--STDY) is not present in the dataset when Start Date/Time of Observation (--STDTC) is present.</span></span>
-<span><span class="co">#&gt; 3:                                                                                 At least one expected variable is missing from dataset</span></span>
-<span><span class="co">#&gt; 4:                                                                                 At least one expected variable is missing from dataset</span></span>
-<span><span class="co">#&gt; 5:                                                                                 At least one required variable is missing from dataset</span></span>
-<span><span class="co">#&gt; 6:                                                                                 At least one required variable is missing from dataset</span></span>
+<span><span class="co">#&gt;    Dataset Record                    Variable</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;  &lt;int&gt;                      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      AE     NA                      AESTDY</span></span>
+<span><span class="co">#&gt; 2:      AE     NA                     AESTDTC</span></span>
+<span><span class="co">#&gt; 3:      AE     NA $missing_expected_variables</span></span>
+<span><span class="co">#&gt; 4:      AE     NA $missing_required_variables</span></span>
+<span><span class="co">#&gt; 5:      AE      2                     RFSTDTC</span></span>
+<span><span class="co">#&gt; 6:      AE      2                     RFENDTC</span></span>
+<span><span class="co">#&gt;                                                                                                                                              Value</span></span>
+<span><span class="co">#&gt;                                                                                                                                             &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:                                                                                                                                  Not in dataset</span></span>
+<span><span class="co">#&gt; 2:                                                                                                                                      2024-01-10</span></span>
+<span><span class="co">#&gt; 3: ['AELLT', 'AELLTCD', 'AEPTCD', 'AEHLT', 'AEHLTCD', 'AEHLGT', 'AEHLGTCD', 'AEBODSYS', 'AEBDSYCD', 'AESOC', 'AESOCCD', 'AESER', 'AEACN', 'AEREL']</span></span>
+<span><span class="co">#&gt; 4:                                                                                                                                         AEDECOD</span></span>
+<span><span class="co">#&gt; 5:                                                                                                                                  Not in dataset</span></span>
+<span><span class="co">#&gt; 6:                                                                                                                                  Not in dataset</span></span>
+<span><span class="co">#&gt;                                                                                                                       issue</span></span>
+<span><span class="co">#&gt;                                                                                                                      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.</span></span>
+<span><span class="co">#&gt; 2: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.</span></span>
+<span><span class="co">#&gt; 3:                                                                           Expected variable is missing from the dataset.</span></span>
+<span><span class="co">#&gt; 4:                                                                           Required variable is missing from the dataset.</span></span>
+<span><span class="co">#&gt; 5:                                                        Variable value is not in correct ISO 8601 date or datetime format</span></span>
+<span><span class="co">#&gt; 6:                                                        Variable value is not in correct ISO 8601 date or datetime format</span></span>
 <span><span class="co">#&gt;              triage     rule_id</span></span>
 <span><span class="co">#&gt;              &lt;char&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1:      wrong value CORE-000328</span></span>
 <span><span class="co">#&gt; 2:      wrong value CORE-000328</span></span>
 <span><span class="co">#&gt; 3: missing optional CORE-000334</span></span>
-<span><span class="co">#&gt; 4: missing optional CORE-000334</span></span>
-<span><span class="co">#&gt; 5: missing required CORE-000355</span></span>
-<span><span class="co">#&gt; 6: missing required CORE-000355</span></span></code></pre></div>
+<span><span class="co">#&gt; 4: missing required CORE-000355</span></span>
+<span><span class="co">#&gt; 5:      wrong value CORE-000547</span></span>
+<span><span class="co">#&gt; 6:      wrong value CORE-000547</span></span></code></pre></div>
 <p>One row per affected record, pointing straight at it:</p>
 <table class="table">
 <thead><tr class="header">
@@ -378,42 +377,34 @@ which is usually the finding.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="va">study_result</span><span class="op">$</span><span class="va">findings</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">f</span><span class="op">[</span><span class="va">f</span><span class="op">$</span><span class="va">Dataset</span> <span class="op">==</span> <span class="st">"DM"</span>, <span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Dataset Record           Variable</span></span>
-<span><span class="co">#&gt;     &lt;char&gt;  &lt;int&gt;             &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:      DM      1             SUBJID</span></span>
-<span><span class="co">#&gt; 2:      DM      2             SUBJID</span></span>
-<span><span class="co">#&gt; 3:      DM      3             SUBJID</span></span>
-<span><span class="co">#&gt; 4:      DM      3                AGE</span></span>
-<span><span class="co">#&gt; 5:      DM      3               AGEU</span></span>
-<span><span class="co">#&gt; 6:      DM     NA $dataset_variables</span></span>
-<span><span class="co">#&gt;                                                                Value</span></span>
-<span><span class="co">#&gt;                                                               &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                    Not in dataset</span></span>
-<span><span class="co">#&gt; 2:                                                    Not in dataset</span></span>
-<span><span class="co">#&gt; 3:                                                    Not in dataset</span></span>
-<span><span class="co">#&gt; 4:                                                                47</span></span>
-<span><span class="co">#&gt; 5:                                                                  </span></span>
-<span><span class="co">#&gt; 6: ['STUDYID', 'DOMAIN', 'USUBJID', 'RFSTDTC', 'AGE', 'AGEU', 'SEX']</span></span>
-<span><span class="co">#&gt;                                                     issue           triage</span></span>
-<span><span class="co">#&gt;                                                    &lt;char&gt;           &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                      SUBJID is not unique within study missing optional</span></span>
-<span><span class="co">#&gt; 2:                      SUBJID is not unique within study missing optional</span></span>
-<span><span class="co">#&gt; 3:                      SUBJID is not unique within study missing optional</span></span>
-<span><span class="co">#&gt; 4:                  AGEU is missing when AGE is provided.      wrong value</span></span>
-<span><span class="co">#&gt; 5:                  AGEU is missing when AGE is provided.      wrong value</span></span>
-<span><span class="co">#&gt; 6: At least one expected variable is missing from dataset missing optional</span></span>
-<span><span class="co">#&gt;        rule_id</span></span>
-<span><span class="co">#&gt;         &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: CORE-000186</span></span>
-<span><span class="co">#&gt; 2: CORE-000186</span></span>
-<span><span class="co">#&gt; 3: CORE-000186</span></span>
-<span><span class="co">#&gt; 4: CORE-000189</span></span>
-<span><span class="co">#&gt; 5: CORE-000189</span></span>
-<span><span class="co">#&gt; 6: CORE-000334</span></span>
+<span><span class="co">#&gt;    Dataset Record                    Variable</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;  &lt;int&gt;                      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      DM      1                      SUBJID</span></span>
+<span><span class="co">#&gt; 2:      DM      2                      SUBJID</span></span>
+<span><span class="co">#&gt; 3:      DM      3                      SUBJID</span></span>
+<span><span class="co">#&gt; 4:      DM      3                         AGE</span></span>
+<span><span class="co">#&gt; 5:      DM      3                        AGEU</span></span>
+<span><span class="co">#&gt; 6:      DM     NA $missing_expected_variables</span></span>
+<span><span class="co">#&gt;                                                                                                                                                Value</span></span>
+<span><span class="co">#&gt;                                                                                                                                               &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:                                                                                                                                    Not in dataset</span></span>
+<span><span class="co">#&gt; 2:                                                                                                                                    Not in dataset</span></span>
+<span><span class="co">#&gt; 3:                                                                                                                                    Not in dataset</span></span>
+<span><span class="co">#&gt; 4:                                                                                                                                                47</span></span>
+<span><span class="co">#&gt; 5:                                                                                                                                                  </span></span>
+<span><span class="co">#&gt; 6: ['RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']</span></span>
+<span><span class="co">#&gt;                                             issue           triage     rule_id</span></span>
+<span><span class="co">#&gt;                                            &lt;char&gt;           &lt;char&gt;      &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:             SUBJID is not unique within study. missing optional CORE-000186</span></span>
+<span><span class="co">#&gt; 2:             SUBJID is not unique within study. missing optional CORE-000186</span></span>
+<span><span class="co">#&gt; 3:             SUBJID is not unique within study. missing optional CORE-000186</span></span>
+<span><span class="co">#&gt; 4:  AGEU must be populated when AGE is populated.      wrong value CORE-000189</span></span>
+<span><span class="co">#&gt; 5:  AGEU must be populated when AGE is populated.      wrong value CORE-000189</span></span>
+<span><span class="co">#&gt; 6: Expected variable is missing from the dataset. missing optional CORE-000334</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">rule_id</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; CORE-000547 CORE-000334 CORE-000355 </span></span>
-<span><span class="co">#&gt;          21           4           4</span></span></code></pre></div>
+<span><span class="co">#&gt; CORE-000547 CORE-000883 CORE-000186 </span></span>
+<span><span class="co">#&gt;          21           4           3</span></span></code></pre></div>
 <p>Slicing the data frame gives you rows. <code><a href="../reference/filter_findings.html">filter_findings()</a></code>
 gives you back a <em>result</em>, the same object narrowed. That is the
 difference that matters: because a result is what
@@ -421,11 +412,11 @@ difference that matters: because a result is what
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">worst</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_findings.html">filter_findings</a></span><span class="op">(</span><span class="va">study_result</span>, triage <span class="op">=</span> <span class="st">"wrong value"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">worst</span><span class="op">$</span><span class="va">findings</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 25</span></span>
+<span><span class="co">#&gt; [1] 24</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">worst</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 6 problems across 4 records  (386 checks ran, 45 could not)</span></span>
+<span><span class="co">#&gt; 5 problems across 3 records  (339 checks ran, 74 could not)</span></span>
 <span><span class="co">#&gt;   (filtered - a subset of the full result)</span></span>
-<span><span class="co">#&gt;   wrong value       6</span></span></code></pre></div>
+<span><span class="co">#&gt;   wrong value       5</span></span></code></pre></div>
 <p>The two numbers there are counting different things, and the
 difference is worth knowing: <code>findings</code> has a row per
 affected <em>record</em>, while <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> counts distinct
@@ -447,19 +438,19 @@ also narrow by <code>dataset</code>, <code>rule</code> or
 <span><span class="co">#&gt;        rule_id domain</span></span>
 <span><span class="co">#&gt;         &lt;char&gt; &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1: CORE-000019     AE</span></span>
-<span><span class="co">#&gt; 2: CORE-000398     AE</span></span>
-<span><span class="co">#&gt; 3: CORE-000494     AE</span></span>
-<span><span class="co">#&gt; 4: CORE-000507     AE</span></span>
-<span><span class="co">#&gt; 5: CORE-000594     AE</span></span>
-<span><span class="co">#&gt; 6: CORE-000929     AE</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                                                                                               reason</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                                                                                               &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)</span></span>
-<span><span class="co">#&gt; 2:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)</span></span>
-<span><span class="co">#&gt; 3:                                                                                                            evaluation failed: rule type 'Define Item Metadata Check against Library Metadata' needs define.xml: no define.xml found in this study</span></span>
-<span><span class="co">#&gt; 4:                                                                                                                     evaluation failed: rule type 'Variable Metadata Check against Define XML' needs define.xml: no define.xml found in this study</span></span>
-<span><span class="co">#&gt; 5:                                                                                                        evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)</span></span>
-<span><span class="co">#&gt; 6: evaluation failed: needs controlled terminology, and this study does not say which version it follows: TS has no TSVCDVER naming a CDISC package that is bundled. Pass ct_package (e.g. ct_package = "sdtmct-2026-03-27"; see list_ct_packages())</span></span></code></pre></div>
+<span><span class="co">#&gt; 2: CORE-000140     AE</span></span>
+<span><span class="co">#&gt; 3: CORE-000168     AE</span></span>
+<span><span class="co">#&gt; 4: CORE-000249     AE</span></span>
+<span><span class="co">#&gt; 5: CORE-000269     AE</span></span>
+<span><span class="co">#&gt; 6: CORE-000270     AE</span></span>
+<span><span class="co">#&gt;                                                                                                                                        reason</span></span>
+<span><span class="co">#&gt;                                                                                                                                        &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)</span></span>
+<span><span class="co">#&gt; 2:                                                                                                       needs TV, which is not in this study</span></span>
+<span><span class="co">#&gt; 3:                                                                                                       needs SV, which is not in this study</span></span>
+<span><span class="co">#&gt; 4:                                                                                                       needs TV, which is not in this study</span></span>
+<span><span class="co">#&gt; 5:                                                                                                   needs SV, TV, which is not in this study</span></span>
+<span><span class="co">#&gt; 6:                                                                                                   needs SV, TV, which is not in this study</span></span></code></pre></div>
 <p><strong>This is the table people skip, and it’s the one that
 bites.</strong> An empty findings table means one of two things: your
 data is clean, or a lot of rules never ran. Those look identical if you
@@ -499,7 +490,7 @@ rather not have them.</p>
 <span><span class="co">#&gt;                       11                       30</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">rules</span>, <span class="st">"rules_version"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "1fb7b81e40bdb6632375761c561fabd29676a477"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "bc4c2f3020ce3e99949ecaeffd277abb8e0622e0"</span></span></code></pre></div>
 <p>That last one is the exact CDISC commit the bundled rules came from.
 Worth writing down next to your results, though
 <code><a href="../reference/write_findings.html">write_findings()</a></code> already records it in every file it
@@ -515,7 +506,7 @@ replacement reports the same problem twice. Listing is not running.</p>
 actually checks:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/list_rules.html">list_rules</a></span><span class="op">(</span>domain <span class="op">=</span> <span class="st">"AE"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 243</span></span>
+<span><span class="co">#&gt; [1] 239</span></span>
 <span></span>
 <span><span class="va">rule</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/list_rules.html">list_rules</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"CORE-000547"</span><span class="op">)</span></span>
 <span><span class="va">rule</span><span class="op">$</span><span class="va">issue</span></span>
@@ -553,11 +544,16 @@ rather see everything.</p>
 <h2 id="usdm-study-designs">USDM study designs<a class="anchor" aria-label="anchor" href="#usdm-study-designs"></a>
 </h2>
 <p>A USDM study file is a single JSON document describing a study design
-rather than a folder of datasets. Put it in a folder and check the
-folder, the same way as any other study. It needs the
-<code>jsonlite</code> and <code>QuickJSR</code> packages.</p>
+rather than a folder of datasets. Checking one is optional, because a
+few of its rules can take minutes on a single file, so you ask for it.
+Put the file in a folder of its own and pass <code>usdm = TRUE</code>.
+It needs the <code>jsonlite</code> and <code>QuickJSR</code>
+packages.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_study.html">check_study</a></span><span class="op">(</span><span class="st">"path/to/usdm"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_study.html">check_study</a></span><span class="op">(</span><span class="st">"path/to/usdm"</span>, usdm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Without <code>usdm = TRUE</code>, a folder holding a USDM file stops
+with a message that says so, rather than being checked as if it were
+empty.</p>
 <p>Problems are reported against the part of the design they’re about,
 such as <code>STUDYDESIGN</code> or <code>ENCOUNTER</code>, and the row
 within it.</p>

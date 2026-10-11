@@ -53,6 +53,15 @@ dropped:
   suffix before the extension, so `issues.csv` gives
   `issues_skipped.csv` and `issues_about.csv`.
 
+An existing file at `path`, or at a sibling path, is replaced.
+
+In CSV files, a text value that begins with `=`, `+`, `-` or `@` and is
+not a plain number is written with a leading `'`. Findings quote the
+submission data, and a spreadsheet program opening the CSV would
+otherwise run such a value as a formula. Excel files store every value
+as text and need no such change. CSV files are written as UTF-8 with a
+byte order mark, which Excel needs to show non-English text correctly.
+
 Excel output needs the `writexl` package. It is a `Suggests`, so if it
 isn't installed you get a clear message telling you to install it or use
 `.csv` instead, rather than a failure part-way through writing.

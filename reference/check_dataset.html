@@ -11,7 +11,7 @@ open, or the path to a single file."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">coreval</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,9 +75,9 @@ open, or the path to a single file.</p>
 
 <dt id="arg-domain">domain<a class="anchor" aria-label="anchor" href="#arg-domain"></a></dt>
 <dd><p>Two-letter domain code, e.g. <code>"AE"</code>. Left as <code>NULL</code>, coreval
-takes it from your <code>DOMAIN</code> column, or the file name if there isn't one -
-so <code>ae1.xpt</code> from a split dataset is still checked as <code>AE</code>. Set it
-yourself if that guess is wrong.</p></dd>
+takes it from your <code>DOMAIN</code> column, or the file name if there isn't one.
+For one file of a split dataset with no <code>DOMAIN</code> column, such as
+<code>ae1.xpt</code>, set it yourself.</p></dd>
 
 
 <dt id="arg-standard">standard<a class="anchor" aria-label="anchor" href="#arg-standard"></a></dt>
@@ -149,9 +149,8 @@ design. Hand over a single dataset and those questions cannot be answered.</p>
 <p>coreval does not guess. Those rules are skipped, and <code>$skipped</code> names the
 dataset each one wanted. Running them anyway would compare your data against
 columns that are not there and report problems that do not exist.</p>
-<p>Most rules still run - across AE, DM, LB and VS, 76-84% of the applicable
-ones work on a single dataset. But the ones that cannot are the cross-dataset
-checks, which are often the ones that matter.</p>
+<p>Most rules still run on a single dataset. But the ones that cannot are the
+cross-dataset checks, which are often the ones that matter.</p>
 <p><strong>So a short <code>$findings</code> table here does not mean the data is clean.</strong> It is
 a quick first pass, not a verdict. Run <code><a href="check_study.html">check_study()</a></code> on the whole folder
 before drawing conclusions.</p>
@@ -182,7 +181,7 @@ before drawing conclusions.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Always look at what could not run:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">skipped</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 51</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 48</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

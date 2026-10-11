@@ -11,7 +11,7 @@ to a data-review document."><meta property="og:image" content="https://hrach-gev
 
     <a class="navbar-brand me-2" href="../index.html">coreval</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,14 @@ than were kept.</p></li>
 Findings go to <code>path</code>; the others go to sibling files with a suffix
 before the extension, so <code>issues.csv</code> gives <code>issues_skipped.csv</code> and
 <code>issues_about.csv</code>.</p></li>
-</ul><p>Excel output needs the <code>writexl</code> package. It is a <code>Suggests</code>, so if it
+</ul><p>An existing file at <code>path</code>, or at a sibling path, is replaced.</p>
+<p>In CSV files, a text value that begins with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> and is not
+a plain number is written with a leading <code>'</code>. Findings quote the submission
+data, and a spreadsheet program opening the CSV would otherwise run such a
+value as a formula. Excel files store every value as text and need no such
+change. CSV files are written as UTF-8 with a byte order mark, which Excel
+needs to show non-English text correctly.</p>
+<p>Excel output needs the <code>writexl</code> package. It is a <code>Suggests</code>, so if it
 isn't installed you get a clear message telling you to install it or use
 <code>.csv</code> instead, rather than a failure part-way through writing.</p>
     </div>

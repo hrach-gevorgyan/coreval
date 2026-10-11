@@ -1,5 +1,114 @@
 # Changelog
 
+## coreval (development version)
+
+- **Findings that were not real.**
+
+  - A RELREC relationship linked records of different subjects whenever
+    the subjects reused a RELID, so a findings-about record was compared
+    with another subject’s adverse event (CORE-000744, CORE-000757).
+  - With a domain RELREC does not mention, or no RELREC at all, every
+    record of that domain was reported.
+  - A Define-XML 1.0 was read with every label blank, so the rule
+    comparing labels with the define reported every labelled variable.
+    CDISC’s pilot submission uses Define-XML 1.0.
+  - Less-than and greater-than compared text as text where the reference
+    compares numbers, so “150” was less than “LOW”.
+  - A rule joining a dataset the study lacks compared against the
+    missing columns’ names: with no DM, every death in DS was reported
+    by CORE-000034. Such a rule is now skipped, saying which dataset it
+    needs.
+  - An SDTM study checked with no standard declared was told that ADSL
+    and the tobacco dataset TO were missing.
+  - A few smaller cases: `has_same_values` ignored blanks, and
+    `is_not_unique_relationship` against a missing column depended on
+    row order.
+
+- **Problems that were never looked for.**
+
+  - A dataset split across files (LB1, LB2) was scoped, classed and
+    looked up under its file name, and about a hundred rules per domain
+    passed it by. Split files now get the rules of their domain.
+  - Sponsor-defined domains got no class, so every class-scoped rule
+    skipped them; Findings About domains (FA, SR) got none of the rules
+    written for Findings.
+  - SUPP qualifiers written the way SAS writes them (” 1”), or as “1.0”,
+    or for sequence numbers of 100,000 and more, joined nothing.
+  - One word such as BLQ in a results column switched off every numeric
+    comparison in it.
+  - A folder holding any .xpt file ignored its .sas7bdat and
+    Dataset-JSON files, and then reported their datasets as missing.
+    Every dataset file is now read.
+  - Date-time columns, from R or from a SAS DATETIME variable, were not
+    read as ISO 8601, so the date rules found nothing in them.
+  - An operation over a dataset the study lacks answered “no violation”
+    for every row. It is now skipped with the reason.
+  - Ten define-based presence rules for SEND could never fire.
+  - A Dataset-JSON cell holding the word “study” made the whole folder
+    read as an empty USDM study.
+  - About a dozen rules stopped on any date-time column, each reported
+    as skipped with “character string is not in a standard unambiguous
+    format”. A CSV folder described by a `_variables.csv` keeps such a
+    column as a date-time; CDISC’s ADaM examples lost CORE-000690, which
+    finds two variables sharing one label, and ten others that way.
+  - A folder holding a define.xml and no datasets was refused. It is now
+    checked with the rules that compare the define with what the study
+    contains, such as a define saying MI has data when there is no MI.
+
+- **USDM is checked when you ask for it.**
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  and
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  take `usdm = TRUE`. Without it, a folder holding a USDM study design
+  document stops with a message saying how to check it. Most studies are
+  tabular, and a few USDM rules take minutes on one file.
+
+- **CDISC’s October 2026 rules.** The bundled rules are updated to
+  CDISC’s current release, and this one changes answers rather than
+  wording: 103 rules check something different, 138 report different
+  columns with each finding, and a few change which datasets they apply
+  to. Findings on real data will move. Two rules CDISC gave test data
+  for are now graded and pass, and a date “not equal” comparison follows
+  CDISC’s engine when both dates are blank: they count as equal, not
+  different (CORE-000370, CORE-001044).
+
+  - A finding now names what is missing. CDISC added a set-difference
+    operation, so “a required variable is missing” reports which ones
+    (CORE-000334, CORE-000355) instead of listing everything the rule
+    compared.
+  - A terminology lookup can answer from the version the study declares,
+    and be narrowed to one codelist, which is how CORE-000929 now asks
+    its question. A filter the bundled terminology cannot answer is
+    refused rather than answered from the whole package.
+
+- **A stray space in a CSV header is no longer part of the variable’s
+  name.** CDISC’s own example data writes `DOMAIN` and `MHDY`.
+  Untrimmed, the declared variable was invisible: a rule asking whether
+  it exists reported a violation that CDISC’s engine does not, and where
+  `DOMAIN` itself went missing every dataset in the folder was classed
+  wrongly, which silently changed which rules ran against it. Values
+  keep their own whitespace.
+
+- **Reports and exports.**
+
+  - CSV exports no longer let a data value run as a spreadsheet formula,
+    and are written so Excel shows non-English text correctly.
+  - A value the rule requires, left blank, is “missing required”, not
+    “often legitimate”.
+  - `filter_findings(variable =)` finds a variable reported as missing,
+    and refuses a typo instead of matching nothing.
+
+- **Faster, and lighter.** CDISC’s pilot submission is checked in about
+  19 seconds against 26 before, with the same findings. A study ten
+  times its size, about three million records, takes 156 seconds against
+  184 and a little less memory. USDM study documents are read in half
+  the time.
+
+- **Stricter testing.** The conformance harness no longer counts a rule
+  as passing when the only cases it could grade were the ones expecting
+  nothing, and split fixtures are graded. See docs/COVERAGE.md for the
+  current counts and every rule that moved.
+
 ## coreval 0.3.0
 
 CRAN release: 2026-09-15
@@ -256,11 +365,6 @@ CRAN release: 2026-09-15
   row cites, what is the matching term’s submission value. Only the
   first was implemented, so the second bound nothing and every rule
   comparing against it answered from an empty set.
-
-  `returntype: pref_term` is refused rather than answered. Preferred
-  terms are not bundled: they are most of the bulk of CDISC’s caches and
-  no bundled rule needs them. A rule asking for one is skipped with that
-  reason.
 
 - A variable a fixture declares `Boolean` is read as a logical. Left as
   text, `"True"` was compared against R’s coercion of `TRUE` to `"TRUE"`

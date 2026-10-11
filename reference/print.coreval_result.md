@@ -56,16 +56,16 @@ check_dataset(ae)
 #> 
 #> ── coreval — AE ────────────────────────────────────────────────────────────────
 #> 
-#> 4 problems across 2 records  (160 checks ran)
+#> 4 problems across 1 record  (159 checks ran)
 #> 
 #>   wrong value         2   the data breaks the rule - start here
 #>   missing required    1   the standard requires it
 #>   missing optional    1   often legitimate: not collected, screen failure, ...
 #> 
 #> [wrong value]
-#> The Study Day of Start of Observation (--STDY) is not present in the dataset
-#>   when Start Date/Time of Observation (--STDTC) is present.
-#>   1 record · AESTDTC
+#> Study Day of Start of Observation (--STDY) variable is missing when Start
+#>   Date/Time of Observation (--STDTC) is present.
+#>   the dataset · AESTDTC
 #>     AESTDTC = "2024-01-10"
 #>     CORE-000328  · also FB3202
 #> 
@@ -76,22 +76,22 @@ check_dataset(ae)
 #>     CORE-000547  · also SEND66, SEND67, SEND68, ...
 #> 
 #> [missing required]
-#> At least one required variable is missing from dataset
-#>   1 record
+#> Required variable is missing from the dataset.
+#>   the dataset
 #>     missing required variables: AEDECOD
 #>     CORE-000355  · also CG0014, SEND12, TIG0299, ...
 #> 
 #> [missing optional]
-#> At least one expected variable is missing from dataset
-#>   1 record
+#> Expected variable is missing from the dataset.
+#>   the dataset
 #>     missing expected variables: AELLT, AELLTCD, AEPTCD, AEHLT, AEHLTCD, AEHLGT, AEHLGTCD, AEBODSYS, ...
 #>     CORE-000334  · also CG0016, TIG0301, SEND13, ...
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
-#> 51 checks could not run.
-#>   25 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
+#> 48 checks could not run.
+#>   24 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
 #>      → run check_study() on the whole folder to cover these
-#>   16 ask what the whole study contains
+#>   14 ask what the whole study contains
 #>   6 need a define.xml
 #>   4 for other reasons, see result$skipped
 #> 

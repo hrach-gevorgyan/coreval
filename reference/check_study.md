@@ -16,7 +16,8 @@ check_study(
   use_case = NULL,
   max_records = 1000,
   include_deprecated = FALSE,
-  ct_package = NULL
+  ct_package = NULL,
+  usdm = FALSE
 )
 ```
 
@@ -73,6 +74,12 @@ check_study(
   [`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md)
   shows them.
 
+- usdm:
+
+  Check a USDM study design document. `FALSE` by default, and only used
+  when `study` is a folder path; see
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md).
+
 ## Value
 
 An object of class `coreval_result`, holding three tables. Because it
@@ -88,9 +95,9 @@ than dumping the list, and provenance rides along as attributes:
 - `skipped` - what could not be checked, with a `reason` for each. Read
   this one: an empty `findings` table can mean clean data *or* rules
   that never ran, and they look identical otherwise. Reasons include a
-  dataset you did not supply, a missing Define-XML, and - for 9 rules -
-  CDISC's controlled terminology when no `ct_package` was given, which
-  is not bundled. Nothing skipped is ever counted as a pass.
+  dataset the study does not have, a missing Define-XML, and a
+  controlled terminology version that neither the study nor `ct_package`
+  names. Nothing skipped is ever counted as a pass.
 
 - `truncated` - rules that flagged more records than `max_records` kept,
   with how many they really found.
@@ -137,41 +144,20 @@ haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(d
 
 result <- check_study(dir)
 result$findings
-#>    Dataset Record            Variable
-#>     <char>  <int>              <char>
-#> 1:      DM     NA  $dataset_variables
-#> 2:      DM     NA $expected_variables
-#> 3:      DM     NA  $dataset_variables
-#> 4:      DM     NA $required_variables
-#> 5:   STUDY     NA                ADSL
-#> 6:   STUDY     NA                  TO
-#> 7:      DM     NA        dataset_name
-#>                                                                                                                                                                          Value
-#>                                                                                                                                                                         <char>
-#> 1:                                                                                                                                                          ['USUBJID', 'AGE']
-#> 2: ['RFSTDTC', 'RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'AGE', 'AGEU', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']
-#> 3:                                                                                                                                                          ['USUBJID', 'AGE']
-#> 4:                                                                                                      ['STUDYID', 'DOMAIN', 'USUBJID', 'SUBJID', 'SITEID', 'SEX', 'COUNTRY']
-#> 5:                                                                                                                                                              Not in dataset
-#> 6:                                                                                                                                                              Not in dataset
-#> 7:                                                                                                                                                                          DM
-#>                                                                  issue
-#>                                                                 <char>
-#> 1:              At least one expected variable is missing from dataset
-#> 2:              At least one expected variable is missing from dataset
-#> 3:              At least one required variable is missing from dataset
-#> 4:              At least one required variable is missing from dataset
-#> 5:                                         Dataset ADSL does not exist
-#> 6: Required TO dataset for study of tobacco product(s) is not present.
-#> 7:                       Dataset name does not begin with DOMAIN value
-#>              triage     rule_id
-#>              <char>      <char>
-#> 1: missing optional CORE-000334
-#> 2: missing optional CORE-000334
-#> 3: missing required CORE-000355
-#> 4: missing required CORE-000355
-#> 5: missing optional CORE-000560
-#> 6: missing required CORE-000590
-#> 7:      wrong value CORE-000598
+#>    Dataset Record                    Variable
+#>     <char>  <int>                      <char>
+#> 1:      DM     NA $missing_expected_variables
+#> 2:      DM     NA $missing_required_variables
+#> 3:      DM     NA                dataset_name
+#>                                                                                                                                                                   Value
+#>                                                                                                                                                                  <char>
+#> 1: ['RFSTDTC', 'RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'AGEU', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']
+#> 2:                                                                                                          ['STUDYID', 'DOMAIN', 'SUBJID', 'SITEID', 'SEX', 'COUNTRY']
+#> 3:                                                                                                                                                                   DM
+#>                                             issue           triage     rule_id
+#>                                            <char>           <char>      <char>
+#> 1: Expected variable is missing from the dataset. missing optional CORE-000334
+#> 2: Required variable is missing from the dataset. missing required CORE-000355
+#> 3:  Dataset name does not begin with DOMAIN value      wrong value CORE-000598
 unlink(dir, recursive = TRUE)
 ```

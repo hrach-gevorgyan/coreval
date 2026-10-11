@@ -9,7 +9,7 @@ Finds conformance problems in clinical trial data without leaving R, using the o
 
     <a class="navbar-brand me-2" href="../index.html">coreval</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,8 +55,8 @@ leaving R. Run it early and often, while you are still writing the code that
 produces the data, so problems turn up while they are cheap to fix.</p>
 <p>Two ways in, depending on what you have:</p><ul><li><p><code><a href="check_dataset.html">check_dataset()</a></code> - one dataset, either a data frame you already have open
 or a single file. Use this while writing code.</p></li>
-<li><p><code><a href="read_study.html">read_study()</a></code> then <code><a href="check_study.html">check_study()</a></code> - a whole study folder. Use this once
-the datasets exist, since the cross-dataset rules need everything present.</p></li>
+<li><p><code><a href="check_study.html">check_study()</a></code> - a whole study folder. Use this once the datasets exist,
+since the cross-dataset rules need everything present.</p></li>
 </ul><p>Both entry points give you two tables, and <strong>both matter</strong>. <code>$findings</code> is what
 is wrong. <code>$skipped</code> is what could not be checked, with a reason for each. An
 empty <code>$findings</code> can mean clean data <em>or</em> rules that never ran, and those
