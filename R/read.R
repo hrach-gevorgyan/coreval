@@ -699,6 +699,17 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   )
   repair_doubled_quotes(dt, dataset_csv_path(path, fname))
 
+  # A stray space in the header is not part of the variable's name. Left in,
+  # the declared variable is invisible: CORE-000793's own fixture writes
+  # " MHDY" while its _variables.csv declares MHDY, so the rule asking whether
+  # MHDY exists answered no and reported a violation CDISC's engine does not.
+  # Values keep their whitespace (fread is called with strip.white = FALSE on
+  # purpose); this is only about the names.
+  trimmed <- trimws(names(dt))
+  if (!identical(trimmed, names(dt)) && !anyDuplicated(trimmed)) {
+    data.table::setnames(dt, trimmed)
+  }
+
   # A column declared Num whose data contains SAS's own numeric-missing token
   # (a lone ".") comes back as character: fread reads "." as a string, and
   # colClasses cannot down-cast an inherently-string column to double - it

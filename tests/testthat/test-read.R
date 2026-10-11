@@ -506,3 +506,31 @@ test_that("value labels are neither taken as the variable label nor fatal", {
   expect_equal(built$data$AESER, "Y")
   expect_false(inherits(built$data$AESER, "haven_labelled"))
 })
+
+test_that("a stray space in a CSV header is not part of the variable's name", {
+  # CDISC's own CORE-000793 fixture writes " MHDY" in mh.csv while its
+  # _variables.csv declares MHDY. Untrimmed, the declared variable is
+  # invisible, and the rule asking whether MHDY exists reported a violation
+  # CDISC's engine does not. Worse, CORE-000946's fixture writes "DOMAIN " in
+  # every file, so the DOMAIN column itself went missing and every dataset was
+  # classed wrongly, which silently changed which rules ran against it.
+  dir <- tempfile("coreval_hdr_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  writeLines(c(
+    "dataset,variable,label,type,length",
+    "dm,STUDYID,Study Identifier,Char,12",
+    "dm,DOMAIN,Domain Abbreviation,Char,2",
+    "dm,AGE,Age,Num,8"
+  ), file.path(dir, "_variables.csv"))
+  writeLines(c("STUDYID ,DOMAIN ,AGE", "S1 ,DM ,34"), file.path(dir, "dm.csv"))
+
+  dm <- read_study(dir)$datasets$DM
+  expect_equal(names(dm$data), c("STUDYID", "DOMAIN", "AGE"))
+  # The declared type still applies to the name once it is trimmed.
+  expect_true(is.numeric(dm$data$AGE))
+  # Values keep their own whitespace: fread runs with strip.white = FALSE on
+  # purpose, and a trailing space in a value is a finding in its own right.
+  expect_equal(dm$data$STUDYID, "S1 ")
+  expect_equal(dataset_class(dm, "DM"), "SPECIAL PURPOSE")
+})
