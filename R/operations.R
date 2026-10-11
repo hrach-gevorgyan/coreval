@@ -987,6 +987,7 @@ implemented_operation_types <- c(
   "max_date",
   "min",
   "min_date",
+  "minus",
   "record_count",
   "required_variables",
   "study_domains",
@@ -994,6 +995,51 @@ implemented_operation_types <- c(
   "variable_count",
   "variable_exists"
 )
+
+# The reference offers two modes (minus.py) and the bundled rules take the
+# default, order-sensitive one. Order-insensitive is a plain set difference
+# keeping the left side's order. Order-sensitive walks the right side in order
+# and subtracts each element against the left side's REMAINING part, so a left
+# element that reappears out of order survives. The two agree whenever the
+# right side is a subset of the left in the same order, which is the ordinary
+# case; they part company on duplicates and on scrambled order, so the mode is
+# ported rather than approximated.
+#' Set difference, in either of the reference's two modes
+#' @param left,right Character vectors.
+#' @param order_insensitive Use the plain set difference.
+#' @return A character vector.
+#' @noRd
+set_difference <- function(left, right, order_insensitive = FALSE) {
+  if (order_insensitive) {
+    return(left[!left %in% right])
+  }
+  out <- character(0)
+  start <- 1L
+  for (item in right) {
+    remaining <- left[seq.int(start, length(left))[seq_len(max(0L, length(left) - start + 1L))]]
+    if (!(item %in% remaining)) {
+      next
+    }
+    matched <- FALSE
+    i <- start
+    while (i <= length(left)) {
+      if (!identical(left[[i]], item)) {
+        if (matched) {
+          break
+        }
+        out <- c(out, left[[i]])
+      } else {
+        start <- i + 1L
+        matched <- TRUE
+      }
+      i <- i + 1L
+    }
+  }
+  if (start <= length(left)) {
+    out <- c(out, left[seq.int(start, length(left))])
+  }
+  out
+}
 
 #' Compute one Operations spec entry into a binding
 #' @param op One Operations spec entry.
@@ -1166,6 +1212,25 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
     max = extreme_binding(dt, op, want_max = TRUE),
     min = extreme_binding(dt, op, want_max = FALSE),
+    minus = {
+      # Set difference: the rule's `name` binding less its `subtract` binding.
+      # CDISC added it so a finding can name WHICH variables are missing
+      # rather than only that some are: CORE-000334 and CORE-000355 report
+      # `$missing_expected_variables` and `$missing_required_variables`.
+      #
+      # Ported from the reference's minus.py. An unresolvable `name` gives the
+      # empty set, and an unresolvable `subtract` leaves `name` untouched,
+      # which is what the reference does when either column is absent.
+      left <- resolve_operation_reference(op$name, bindings, dt)
+      if (is.null(left)) {
+        return(scalar_binding(character(0)))
+      }
+      right <- resolve_operation_reference(op$subtract, bindings, dt)
+      if (is.null(right)) {
+        return(scalar_binding(left))
+      }
+      scalar_binding(set_difference(left, right, isTRUE(op$order_insensitive)))
+    },
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
     # The standard's expected variable order - see standard_variable_order(),
     # which merges the IG's per-domain list into the Model's skeleton
@@ -1218,27 +1283,48 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # `is_not_contained_by` true for every row, and picking one of several
     # versions would judge the rest against terminology they did not name.
     get_codelist_attributes = {
-      pkgs <- ct_packages_per_row(
-        current_dataset$data, op$name %||% "", op$version %||% "",
-        study$standard$product
-      )
-      bundled <- unique(pkgs[nzchar(pkgs) & pkgs %in% ct_package_names()])
-      if (length(bundled) == 0) {
-        stop(
-          "no row names a bundled controlled terminology package in ",
-          op$name %||% "?", "/", op$version %||% "?",
-          call. = FALSE
+      # Two modes, as the reference has (get_codelist_attributes.py). Row
+      # specific when `version` names a column, so each row answers from the
+      # package it cites. Static otherwise, answering from the version the
+      # study declares, which is how CORE-000929 now asks for the DOMAIN
+      # codelist's term codes.
+      row_specific <- !is.null(op$version) &&
+        isTRUE(as.character(op$version)[[1]] %in% names(current_dataset$data))
+      if (row_specific) {
+        pkgs <- ct_packages_per_row(
+          current_dataset$data, op$name %||% "", as.character(op$version)[[1]],
+          study$standard$product
         )
+        bundled <- unique(pkgs[nzchar(pkgs) & pkgs %in% ct_package_names()])
+        if (length(bundled) == 0) {
+          stop(
+            "no row names a bundled controlled terminology package in ",
+            op$name %||% "?", "/", op$version %||% "?",
+            call. = FALSE
+          )
+        }
+        if (length(bundled) > 1) {
+          stop(
+            "rows cite more than one controlled terminology version (",
+            paste(bundled, collapse = ", "), "), so there is no single set to ",
+            "check against",
+            call. = FALSE
+          )
+        }
+      } else {
+        bundled <- study$ct_package
+        if (is.null(bundled) || !length(bundled) || !nzchar(bundled[[1]])) {
+          stop("needs controlled terminology, and this study does not say ",
+               "which version it follows", call. = FALSE)
+        }
+        if (!bundled %in% ct_package_names()) {
+          stop("no bundled controlled terminology package named '", bundled, "'",
+               call. = FALSE)
+        }
       }
-      if (length(bundled) > 1) {
-        stop(
-          "rows cite more than one controlled terminology version (",
-          paste(bundled, collapse = ", "), "), so there is no single set to ",
-          "check against",
-          call. = FALSE
-        )
-      }
-      scalar_binding(ct_package_attribute(bundled, op$ct_attribute %||% "Term CCODE"))
+      scalar_binding(ct_package_attribute(
+        bundled, op$ct_attribute %||% "Term CCODE", op$ct_conditions
+      ))
     },
     # A lookup table written into the rule itself. Each entry is a record of
     # key columns plus `output`; the row's output is the one whose keys match.
@@ -1637,8 +1723,56 @@ ct_packages_per_row <- function(dt, target, version, product) {
 #' @param package A bundled CT package name.
 #' @param attribute One of the `ct_attribute` values the reference accepts.
 #' @return A character vector of values.
+# The reference filters the codelists and terms a get_codelist_attributes
+# operation draws from (`ct_conditions`, get_codelist_attributes.py). Each
+# entry is one field and the value it must equal, and entries are alternatives.
+# Only the codelist-level fields the bundled terminology carries are answered;
+# anything else RAISES rather than being ignored, because quietly dropping a
+# filter answers from the whole package, and `is_not_contained_by` against a
+# wider set than the rule asked for reports nothing at all.
+#' Keep the controlled terminology rows a rule's `ct_conditions` select
+#' @param rows Rows of the bundled terminology for one package.
+#' @param conditions The rule's `ct_conditions`, or `NULL`.
+#' @param package The package name, for the error message.
+#' @return The matching rows.
 #' @noRd
-ct_package_attribute <- function(package, attribute) {
+apply_ct_conditions <- function(rows, conditions, package) {
+  if (is.null(conditions) || !length(conditions)) {
+    return(rows)
+  }
+  column_for <- c(
+    "codelist code" = "codelist_code", "codelist ccode" = "codelist_code",
+    "codelist_code" = "codelist_code", "codelist_ccode" = "codelist_code",
+    "codelist value" = "codelist", "codelist_value" = "codelist",
+    "extensible" = "extensible"
+  )
+  keep <- rep(FALSE, nrow(rows))
+  for (condition in conditions) {
+    this <- rep(TRUE, nrow(rows))
+    for (field in names(condition)) {
+      # Single brackets: `[[` on a name the vector does not carry raises
+      # "subscript out of bounds", which would reach the user as the skip
+      # reason in place of the sentence below.
+      column <- column_for[tolower(field)]
+      if (is.na(column)) {
+        stop("a controlled terminology filter on '", field,
+             "' is not supported by the bundled terminology", call. = FALSE)
+      }
+      want <- as.character(condition[[field]])
+      have <- as.character(rows[[column]])
+      this <- this & !is.na(have) & tolower(have) %in% tolower(want)
+    }
+    keep <- keep | this
+  }
+  if (!any(keep)) {
+    stop("no codelist in controlled terminology package '", package,
+         "' matches the filter the rule asks for", call. = FALSE)
+  }
+  rows[keep, ]
+}
+
+#' @noRd
+ct_package_attribute <- function(package, attribute, conditions = NULL) {
   tbl <- ct_codelists()
   if (is.null(tbl)) {
     stop("the bundled controlled terminology is not installed", call. = FALSE)
@@ -1647,6 +1781,7 @@ ct_package_attribute <- function(package, attribute) {
   if (nrow(rows) == 0) {
     return(character(0))
   }
+  rows <- apply_ct_conditions(rows, conditions, package)
   # Preferred terms are not bundled, so a rule asking for them is refused
   # rather than answered from data that is not here.
   values <- switch(

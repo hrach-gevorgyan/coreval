@@ -822,3 +822,64 @@ test_that("a grouped distinct stays a set even when every group holds one value"
   expect_false(is.list(scalar$.value))
   expect_equal(scalar$.value, c("x", "y"))
 })
+
+test_that("minus subtracts one binding from another, both ways the reference does", {
+  # CDISC added this operation in its October 2026 release so a finding can
+  # name WHICH variables are missing: CORE-000334 and CORE-000355 report
+  # $missing_expected_variables and $missing_required_variables through it.
+  # The cases below were run against the reference's own minus.py and these
+  # are the answers it gives, including where its two modes disagree.
+  expect_equal(set_difference(c("A", "B", "C", "D"), c("B", "D")), c("A", "C"))
+  expect_equal(set_difference(c("A", "B", "C"), character(0)), c("A", "B", "C"))
+  expect_equal(set_difference(character(0), "A"), character(0))
+  expect_equal(set_difference("A", "A"), character(0))
+
+  # Order sensitive is the default, and it is not a plain set difference: a
+  # left element that reappears after the match survives.
+  expect_equal(set_difference(c("A", "B", "A", "C"), c("A", "C")), c("B", "A"))
+  expect_equal(set_difference(c("A", "B", "A", "C"), c("A", "C"), TRUE), "B")
+  expect_equal(set_difference(c("A", "B", "C"), c("C", "A")), c("A", "B"))
+  expect_equal(set_difference(c("A", "B", "C"), c("C", "A"), TRUE), "B")
+
+  # An unresolvable left side is the empty set; an unresolvable right side
+  # leaves the left side alone, which is what the reference does when either
+  # column is absent.
+  study <- list(datasets = list(DM = list(
+    data = data.table::data.table(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"),
+    meta = data.frame(variable = c("STUDYID", "DOMAIN", "USUBJID"),
+                      label = "x", type = "Char", length = 8)
+  )), standard = list(product = "SDTMIG", version = "3.4"))
+  rule <- .coreval_env$data$rules[["CORE-000355"]]
+  b <- operation_bindings_for_rule(rule, study, "DM", study$datasets$DM)
+  missing <- b[["$missing_required_variables"]]$value
+  expect_true("SUBJID" %in% missing)       # required and absent
+  expect_false("STUDYID" %in% missing)     # required and present
+})
+
+test_that("a codelist operation can answer from the study's own terminology version", {
+  # CDISC's October 2026 release switched CORE-000929 to the static form of
+  # get_codelist_attributes: no `version` column, a filter naming the codelist,
+  # and the version comes from what the study declares. Before this the
+  # operation only knew the row-specific form and the rule could not run.
+  codes <- ct_package_attribute("sdtmct-2026-03-27", "Term CCODE",
+                                list(list("Codelist Code" = "C66734")))
+  everything <- ct_package_attribute("sdtmct-2026-03-27", "Term CCODE")
+  expect_gt(length(codes), 0)
+  expect_lt(length(codes), length(everything))
+  expect_true(all(codes %in% everything))
+
+  # A filter the bundled terminology cannot answer must raise, so the rule is
+  # skipped with a reason. Answered from the unfiltered package instead, an
+  # is_not_contained_by check would quietly compare against a wider set than
+  # the rule asked for and report nothing at all.
+  expect_error(
+    ct_package_attribute("sdtmct-2026-03-27", "Term CCODE",
+                         list(list("Term Preferred Term" = "anything"))),
+    "not supported by the bundled terminology"
+  )
+  expect_error(
+    ct_package_attribute("sdtmct-2026-03-27", "Term CCODE",
+                         list(list("Codelist Code" = "C99999"))),
+    "matches the filter the rule asks for"
+  )
+})

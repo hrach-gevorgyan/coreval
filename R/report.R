@@ -71,6 +71,23 @@ binding_label <- function(x) {
 #' @return A list with `label` and `missing`, or `NULL`.
 #' @noRd
 binding_gap <- function(sets) {
+  # A rule that has already done the subtraction. CDISC's October 2026 release
+  # gave several rules a `minus` operation, so CORE-000355 now reports
+  # `$missing_required_variables` where it used to report the required set and
+  # the dataset's set for coreval to subtract. One set whose own name says
+  # "missing" IS the answer, and the label drops that word so the line still
+  # reads "missing required variables: ".
+  named_missing <- grep("missing", names(sets), value = TRUE)
+  if (length(sets) == 1 && length(named_missing) == 1) {
+    values <- sets[[named_missing]]
+    if (!is.character(values) || length(values) == 0) {
+      return(NULL)
+    }
+    return(list(
+      label = binding_label(sub("^[$]?missing_", "", named_missing)),
+      missing = values
+    ))
+  }
   if (length(sets) < 2) {
     return(NULL)
   }
