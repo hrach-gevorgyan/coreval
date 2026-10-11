@@ -1,16 +1,29 @@
 test_that("get_output_variables falls back to Check condition names, in order, when Outcome has none", {
-  # CORE-000001 has no explicit Output Variables. Its reference results.csv
-  # lists exactly IECAT then IEORRES (Check order) for every violating
-  # record - confirmed back in Phase 4.
-  rule <- .coreval_env$data$rules[["CORE-000001"]]
+  # Built here, not borrowed from the bundled set: this used to read
+  # CORE-000001, and CDISC's October 2026 release gave that rule explicit
+  # Output Variables, so the test stopped exercising the fallback at all while
+  # still passing on the first assertion.
+  rule <- list(
+    rule_type = "Record Data",
+    check = list(all = list(
+      list(name = "IECAT", operator = "equal_to", value = "INCLUSION"),
+      list(name = "IEORRES", operator = "not_equal_to", value = "N")
+    )),
+    outcome = list(Message = "no Output Variables declared")
+  )
   expect_null(rule$outcome[["Output Variables"]])
   expect_equal(get_output_variables(rule, "IE"), c("IECAT", "IEORRES"))
+
+  # And a "--" template in a condition name resolves against the domain.
+  wildcard <- list(check = list(all = list(list(name = "--CAT", operator = "non_empty"))),
+                   outcome = list(Message = "x"))
+  expect_equal(get_output_variables(wildcard, "AE"), "AECAT")
 })
 
 test_that("get_output_variables uses the declared Output Variables when present, resolving -- templates", {
   rule <- .coreval_env$data$rules[["CORE-000004"]]
-  expect_equal(rule$outcome[["Output Variables"]], c("ECDOSE", "ECOCCUR"))
-  expect_equal(get_output_variables(rule, "EC"), c("ECDOSE", "ECOCCUR"))
+  expect_equal(rule$outcome[["Output Variables"]], c("ECTRT", "ECDOSE", "ECOCCUR"))
+  expect_equal(get_output_variables(rule, "EC"), c("ECTRT", "ECDOSE", "ECOCCUR"))
 })
 
 test_that("assemble_findings matches CDISC's reference results.csv for a Record-sensitivity rule", {
@@ -143,10 +156,14 @@ test_that("assemble_findings treats a Domain Presence Check as Dataset-sensitivi
   expect_true(is.na(findings$Record))
 })
 
-test_that("Domain Presence Check matches CDISC's reference results.csv despite declaring Sensitivity: Record (CORE-000183)", {
+test_that("Domain Presence Check matches CDISC's reference results.csv (CORE-000183)", {
+  # This rule used to declare Sensitivity: Record while its own expected
+  # output was dataset level, and coreval followed the output. CDISC corrected
+  # the declaration to Dataset in its October 2026 release, so the two now
+  # agree; the answer coreval gives did not change either way.
   rule <- .coreval_env$data$rules[["CORE-000183"]]
   expect_equal(rule$rule_type, "Domain Presence Check")
-  expect_equal(rule$sensitivity, "Record")
+  expect_equal(rule$sensitivity, "Dataset")
   for (case in c("negative/01", "positive/01", "positive/02")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000183", case)
     study <- read_study(file.path(dir, "data"))
@@ -168,7 +185,7 @@ test_that("check_study runs end-to-end on a real test case and reports the expec
 
   expect_true(all(c("findings", "skipped") %in% names(result)))
   ie_findings <- result$findings[result$findings$rule_id == "CORE-000001", ]
-  expect_equal(nrow(ie_findings), 6) # 3 records x 2 output variables
+  expect_equal(nrow(ie_findings), 9) # 3 records x 3 output variables
   expect_setequal(unique(ie_findings$Record), 1:3)
 })
 

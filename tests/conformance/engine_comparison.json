@@ -3177,6 +3177,77 @@
   "folder": "CORE-000787",
   "source": "deprecated_dir"
  },
+ "CORE-000793": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {},
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "CE": [
+      ""
+     ],
+     "CM": [
+      ""
+     ],
+     "DM": [
+      ""
+     ],
+     "FA": [
+      ""
+     ],
+     "LB": [
+      ""
+     ],
+     "SE": [
+      ""
+     ],
+     "SM": [
+      ""
+     ],
+     "SV": [
+      ""
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "CE": [
+      ""
+     ],
+     "CM": [
+      ""
+     ],
+     "DM": [
+      ""
+     ],
+     "FA": [
+      ""
+     ],
+     "LB": [
+      ""
+     ],
+     "SE": [
+      ""
+     ],
+     "SM": [
+      ""
+     ],
+     "SV": [
+      ""
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 0,
+  "cases_engine_ran": 2,
+  "engine_commit": "9ffb1c611081b655c11fc0ac77ed6cc809828126",
+  "folder": "CORE-000793",
+  "source": "published"
+ },
  "CORE-000796": {
   "cases": [
    {

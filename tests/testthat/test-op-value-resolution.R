@@ -6,8 +6,18 @@ test_that("value falls back to a literal when no column matches it, even with va
   # resolve_condition_value() used to return NULL whenever `value` wasn't a
   # literal AND wasn't a real column, silently making the condition always
   # false (NA -> FALSE) instead of falling back to the literal text "Y".
+  # CDISC's October 2026 release added `value_is_literal: true` to this rule,
+  # which is what the fallback had been inferring all along. The fallback
+  # itself is still what runs for a rule that omits the key, so it is checked
+  # on a condition built here, where upstream cannot take it away.
   rule <- .coreval_env$data$rules[["CORE-000006"]]
-  expect_null(rule$check$all[[1]]$value_is_literal)
+  bare <- list(name = "DTHFL", operator = "not_equal_to", value = "Y")
+  expect_null(bare$value_is_literal)
+  dm <- list(data = data.table::data.table(DTHFL = c("Y", "N")), meta = NULL)
+  expect_equal(
+    evaluate_rule(list(check = list(all = list(bare))), dm, domain = "DM"),
+    c(FALSE, TRUE)
+  )
 
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000006", case, "01")
@@ -27,10 +37,20 @@ test_that("a multi-element literal value (e.g. is_not_contained_by: [Y, N]) reso
   # own - no length-based special-casing needed (an earlier, overly clever
   # version of resolve_condition_value() special-cased vectors for the
   # grouping operators and broke this case as a side effect).
+  # As above, CDISC now states `value_is_literal` on this rule. A
+  # multi-element value can never be a single column reference, so the
+  # fallback has to reach the literal array on its own: checked on a condition
+  # built here, then the rule itself is still graded against its fixtures.
   rule <- .coreval_env$data$rules[["CORE-000123"]]
   cond <- rule$check$all[[2]]
-  expect_null(cond$value_is_literal)
   expect_equal(cond$value, c("Y", "N"))
+  bare <- list(name = "AESCAN", operator = "is_not_contained_by", value = c("Y", "N"))
+  expect_null(bare$value_is_literal)
+  ae <- list(data = data.table::data.table(AESCAN = c("Y", "N", "U")), meta = NULL)
+  expect_equal(
+    evaluate_rule(list(check = list(all = list(bare))), ae, domain = "AE"),
+    c(FALSE, FALSE, TRUE)
+  )
 
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000123", case, "01")

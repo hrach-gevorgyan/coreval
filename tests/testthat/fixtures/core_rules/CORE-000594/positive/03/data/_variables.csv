@@ -23,7 +23,7 @@ ae,AEACN,Action Taken with Study Treatment,Char,1
 ae,AEREL,Causality,Char,1
 ae,AEOUT,Outcome of Adverse Event,Char,26
 ae,AESHOSP,Requires or Prolongs Hospitalization,Char,1
-ae,AEREASND,Reason and/or Note Done,Char,200
+ae,AEREASND,Reason And/or Note Done,Char,200
 ae,AESTDTC,Start Date/Time is Adverse Event,Char,10
 ae,AEENDTC,End Date/Time of Adverse Event,Char,1
 ae,AESTDY,Study Day as Start of Adverse Event,Num,8

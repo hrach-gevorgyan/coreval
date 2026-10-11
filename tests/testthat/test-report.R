@@ -125,7 +125,10 @@ test_that("a set-valued binding reports the whole set, not its first element", {
   # reported as if RFSTDTC were the finding - while the variables actually
   # missing were never named anywhere.
   result <- check_dataset(demo_dm())
-  req <- result$findings[result$findings$Variable == "$required_variables", ]
+  # CDISC's October 2026 release subtracts the two sets itself, with a `minus`
+  # operation, so the finding carries the missing names under
+  # $missing_required_variables rather than the two sets it used to compare.
+  req <- result$findings[result$findings$Variable == "$missing_required_variables", ]
   # Asserted, not skipped: a regression that loses this finding must fail
   # here, not quietly skip the test that guards it.
   expect_gt(nrow(req), 0)
@@ -133,6 +136,8 @@ test_that("a set-valued binding reports the whole set, not its first element", {
   parsed <- parse_set_value(req$Value[1])
   expect_gt(length(parsed), 1)
   expect_true("SUBJID" %in% parsed)
+  # What is missing, not the whole required list: DM has both of these.
+  expect_false(any(c("STUDYID", "USUBJID") %in% parsed))
 })
 
 test_that("parse_set_value understands the reference engine's set format", {

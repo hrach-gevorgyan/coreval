@@ -54,11 +54,28 @@
   document stops with a message saying how to check it. Most studies are
   tabular, and a few USDM rules take minutes on one file.
 
-* **CDISC's latest rules.** The rules are updated to the current CDISC Open
-  Rules release, which rewords messages and descriptions without changing what
-  any rule checks. A date "not equal" comparison now follows CDISC's engine
-  when both dates are blank: they count as equal, not different
-  (CORE-000370, CORE-001044).
+* **CDISC's October 2026 rules.** The bundled rules are updated to CDISC's
+  current release, and this one changes answers rather than wording: 103 rules
+  check something different, 138 report different columns with each finding,
+  and a few change which datasets they apply to. Findings on real data will
+  move. Two rules CDISC gave test data for are now graded and pass, and a
+  date "not equal" comparison follows CDISC's engine when both dates are
+  blank: they count as equal, not different (CORE-000370, CORE-001044).
+  - A finding now names what is missing. CDISC added a set-difference
+    operation, so "a required variable is missing" reports which ones
+    (CORE-000334, CORE-000355) instead of listing everything the rule
+    compared.
+  - A terminology lookup can answer from the version the study declares, and
+    be narrowed to one codelist, which is how CORE-000929 now asks its
+    question. A filter the bundled terminology cannot answer is refused
+    rather than answered from the whole package.
+
+* **A stray space in a CSV header is no longer part of the variable's name.**
+  CDISC's own example data writes `DOMAIN ` and ` MHDY`. Untrimmed, the
+  declared variable was invisible: a rule asking whether it exists reported a
+  violation that CDISC's engine does not, and where `DOMAIN` itself went
+  missing every dataset in the folder was classed wrongly, which silently
+  changed which rules ran against it. Values keep their own whitespace.
 
 * **Reports and exports.**
   - CSV exports no longer let a data value run as a spreadsheet formula, and

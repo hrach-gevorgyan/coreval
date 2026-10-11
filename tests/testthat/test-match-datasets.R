@@ -699,7 +699,11 @@ test_that("a SUPP row with no parent record keeps its own subject in the finding
   f <- check_study(dir)$findings
   orphan <- f[f$rule_id == "CORE-000206", ]
   expect_equal(unique(orphan$Record), 2L)
-  expect_equal(unique(orphan$Value[orphan$Variable == "USUBJID"]), "S-2")
+  # The row's own values, not the parent's. CDISC's October 2026 release
+  # dropped USUBJID from this rule's reported columns, so the same guard runs
+  # through IDVARVAL: the orphan cites 99, and a finding built from the joined
+  # parent row instead would show the parent's 1.
+  expect_equal(unique(orphan$Value[orphan$Variable == "IDVARVAL"]), "99")
 })
 
 test_that("SUPP rows find their parent in a domain split across files", {

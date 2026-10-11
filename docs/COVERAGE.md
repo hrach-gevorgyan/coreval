@@ -7,7 +7,7 @@ publishes with it. This file explains the ones that do not come back clean.
 takes about three minutes on eight cores. Counts in prose go stale; that run
 does not.
 
-At the last full sweep: **956 pass, 56 disagree, 42 cannot be measured.**
+At the last full sweep: **958 pass, 56 disagree, 40 cannot be measured.**
 
 A rule counts as passing only if a case that expects findings was graded. A rule
 whose clean cases pass while the case built to catch something could not be run
@@ -35,9 +35,9 @@ CDISC's own service over a document to produce them and
 `tests/conformance/compare_usdm_reader.R` diffs coreval's against those, cell
 by cell.
 
-## The 42 that cannot be measured
+## The 40 that cannot be measured
 
-38 are fixtures with nothing to check against and 4 need a rule type coreval
+36 are fixtures with nothing to check against and 4 need a rule type coreval
 does not implement.
 
 | why | rules | |
@@ -45,7 +45,7 @@ does not implement.
 | The fixture ships data but no answer sheet | 26 | unmeasurable |
 | The test data contains no dataset the rule is scoped to | 5 | unmeasurable |
 | The rule type is not implemented (JSON Schema Check) | 4 | a gap in coreval |
-| The rule ships no test cases at all, only `rule.yml` | 4 | unmeasurable |
+| The rule ships no test cases at all, only `rule.yml` | 2 | unmeasurable |
 | The rule's `Check` block is empty upstream | 1 | unmeasurable |
 | The fixture lacks a dataset the rule computes over (FDA.SENDIG.FB6403, PR) | 1 | unmeasurable; CDISC's engine skips it the same way |
 | The case expecting findings cannot be read (CDISC.SDTMIG.CG0096 names a file `WHODD.csv.csv`) | 1 | unmeasurable |
