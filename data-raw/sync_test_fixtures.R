@@ -15,8 +15,9 @@
 # deliberate choice, so this never adds or removes a case; it mirrors the ones
 # that are here, including files CDISC has added to them or removed from them.
 #
-# Maintainer tooling. Needs the clone described in CLAUDE.md. Not part of the
-# package: data-raw/ is Rbuildignored.
+# Maintainer tooling. Needs the cdisc-open-rules clone under data-raw/upstream/,
+# which docs/REAL-STUDY.md says how to make. Not part of the package: data-raw/
+# is Rbuildignored.
 
 args <- commandArgs(trailingOnly = TRUE)
 write <- "--write" %in% args
