@@ -191,7 +191,7 @@ test_that("read_study reads a directory of XPT files with the same semantics", {
   expect_equal(nrow(dm$data), 3)
   # XPT has no character NA - both "" and NA round-trip to "".
   expect_equal(dm$data$SEX, c("M", "", "F"))
-  expect_equal(dm$data$AGE, c(45, NA, 7))
+  expect_equal(as.numeric(dm$data$AGE), c(45, NA, 7))
   expect_equal(dm$meta[variable == "AGE", type], "Num")
   expect_equal(dm$meta[variable == "SEX", type], "Char")
 })
