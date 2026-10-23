@@ -191,7 +191,10 @@ test_that("read_study reads a directory of XPT files with the same semantics", {
   expect_equal(nrow(dm$data), 3)
   # XPT has no character NA - both "" and NA round-trip to "".
   expect_equal(dm$data$SEX, c("M", "", "F"))
-  expect_equal(as.numeric(dm$data$AGE), c(45, NA, 7))
+  # as.vector(), not as.numeric(): haven attaches a haven_meta attribute to
+  # the columns it reads and both drop it, but as.numeric() would also pass
+  # if AGE ever came back as text, which is a fault this test should catch.
+  expect_equal(as.vector(dm$data$AGE), c(45, NA, 7))
   expect_equal(dm$meta[variable == "AGE", type], "Num")
   expect_equal(dm$meta[variable == "SEX", type], "Char")
 })
