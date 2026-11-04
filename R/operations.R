@@ -1028,6 +1028,7 @@ implemented_operation_types <- c(
   "max_variable_value_length",
   "get_define_external_dictionary_version",
   "get_external_dictionary_version",
+  "define_extended_terms_in_ct",
   "define_variable_metadata",
   "intersect",
   "label_referenced_variable_metadata",
@@ -1341,6 +1342,14 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     max_variable_value_length = length_aggregate(study, "variable_max_value_length", max),
     global_max_variable_length = length_aggregate(study, "variable_length", max),
     global_min_variable_length = length_aggregate(study, "variable_length", min),
+    # CORE 1.0's define_extended_terms_in_ct.py asks whether a term the define
+    # adds to an extensible codelist is already one of the codelist's terms,
+    # a SYNONYM of one, or part of one. The bundled terminology leaves the
+    # synonyms out, so the check would quietly miss that case. Refused.
+    define_extended_terms_in_ct = stop(
+      "needs the controlled terminology's synonyms, which coreval does not bundle",
+      call. = FALSE
+    ),
     # CORE 1.0's define_exdict_version_operation.py: the version of an
     # external dictionary the define cites (the first codelist naming it).
     # None cited stops the rule, as it does there.
