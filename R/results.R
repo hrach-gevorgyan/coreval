@@ -259,7 +259,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   # (evidently by authoring inconsistency, not intent) say Sensitivity:
   # Record despite reporting the exact same blank-Record, single-fact shape
   # under the "STUDY" sentinel dataset.
-  if (identical(rule$sensitivity, "Dataset") || identical(rule$rule_type, "Domain Presence Check")) {
+  if (isTRUE(rule$sensitivity %in% c("Dataset", "Study")) || identical(rule$rule_type, "Domain Presence Check")) {
     first_row <- which(violations)[1]
     data.table::data.table(
       Dataset = domain, Record = NA_integer_,
@@ -272,7 +272,13 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       which(violations)
     }
     records <- record_of(exploded_rows)
-    keep <- !duplicated(records) # one finding per original record
+    # One finding per original record, or for a grouped rule one per group:
+    # those are already one row each, and several groups can share a record.
+    # CORE-002062 groups a one-row-per-value table by variable, and every
+    # variable's first row is record 1, so deduplicating by record merged a
+    # SUPPAE's seven findings into one.
+    grouped <- identical(rule$sensitivity, "Group") && !is.null(rule$grouping_variables)
+    keep <- if (grouped) rep(TRUE, length(records)) else !duplicated(records)
     exploded_rows <- exploded_rows[keep]
     records <- records[keep]
     if (length(exploded_rows) == 0) {
@@ -734,6 +740,16 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         }
         study_level_done <- c(study_level_done, rule_id)
       }
+      # A Study-sensitivity rule (CORE 1.0's "is there a define.xml",
+      # "are the Trial Design datasets all here") answers once for the study
+      # too. It is asked of each dataset until one answers it, since a dataset
+      # can lack what the question needs, and its one finding is filed under
+      # STUDY. Reported per record, CORE-002084 named every record of every
+      # dataset for a study with no define.
+      study_sensitivity <- identical(rule$sensitivity, "Study") && !is_study_level
+      if (study_sensitivity && rule_id %in% study_level_done) {
+        next
+      }
       # The SAME evaluation path evaluate_rule() takes - guards, dataset
       # construction, Operations bindings and all. This used to be an inline
       # copy, and it had already drifted: it never resolved an undeclared
@@ -764,7 +780,10 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         )
       }
       if (nrow(findings) > 0) {
-        if (is_study_level) {
+        if (study_sensitivity) {
+          study_level_done <- c(study_level_done, rule_id)
+        }
+        if (is_study_level || study_sensitivity) {
           findings$Dataset <- "STUDY"
           findings$Record <- NA_integer_
         }

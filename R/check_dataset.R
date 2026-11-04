@@ -35,6 +35,19 @@
 #' @noRd
 rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
   named <- character(0)
+  core1 <- identical(rule$source, "core_contributor")
+  # "SUPP--" read against a SUPP dataset names that dataset itself, as
+  # compute_operation() reads it: CORE-000712 on SUPPAE asked for
+  # "SUPPSUPPAE" and was refused for lacking it.
+  resolve_template <- function(x) {
+    if (!grepl("--", x, fixed = TRUE)) {
+      return(x)
+    }
+    if (grepl(paste0("^", sub("--", ".*", toupper(x), fixed = TRUE), "$"), toupper(domain))) {
+      return(domain)
+    }
+    sub("--$", dataset_wildcard(dataset, domain), x)
+  }
 
   for (spec in rule$match_datasets %||% list()) {
     name <- if (is.null(spec$Name)) NA_character_ else as.character(spec$Name)
@@ -53,17 +66,28 @@ rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
       next
     }
     # A left join's partner is optional: its rules say what an absent one
-    # means.
-    if (is.na(name) || is_left_join(spec)) {
+    # means. So, for a CORE 1.0 rule, is a SUPP-- join: 1.0 checks the parent
+    # as it is without one (see apply_match_dataset()).
+    if (is.na(name) || is_left_join(spec) || (core1 && grepl("^(SUPP|SQ)", toupper(name)))) {
       next
     }
-    named <- c(named, sub("--$", dataset_wildcard(dataset, domain), name))
+    named <- c(named, resolve_template(name))
   }
 
   for (op in rule$operations %||% list()) {
-    if (!is.null(op$domain)) {
-      named <- c(named, sub("--$", dataset_wildcard(dataset, domain), as.character(op$domain)))
+    # Exact: `op$domain` also matched `domain_class` (CORE-002056).
+    op_domain <- op[["domain", exact = TRUE]]
+    if (is.null(op_domain)) {
+      next
     }
+    # One of 1.0's own reference tables, bundled or refused at evaluation
+    # with its own reason; and a 1.0 `distinct` over a missing domain is an
+    # empty set, not a missing input (see compute_operation()).
+    if (tolower(op_domain) %in% c(names(.coreval_env$core1_reference), core1_static_tables) ||
+        (core1 && identical(op$operator, "distinct"))) {
+      next
+    }
+    named <- c(named, resolve_template(as.character(op_domain)))
   }
 
   named <- named[!is.na(named) & nzchar(named)]

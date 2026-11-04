@@ -366,6 +366,14 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     bindings = bindings
   )
 
+  # CORE 1.0 answers a condition naming a column the dataset lacks with FALSE
+  # (postgresql_operators.py, `evaluate` and _missing_columns_for_operator):
+  # never as the name's own text, and without refusing the rule. CORE-000264
+  # compared MHBODSYS with the text "MHSOC" on an MH that has no MHSOC and
+  # reported every record; 1.0 reports none.
+  if (engine_is_core1() && core1_names_missing_column(condition, ctx)) {
+    return(rep(FALSE, ctx$n))
+  }
   op_fn <- get_operator(condition$operator)
   result <- op_fn(ctx)
   # Every leaf condition must return one value per row of `dataset` -
@@ -505,6 +513,67 @@ run_rule_on_domain <- function(rule, study, domain) {
   }
   violations[is.na(violations)] <- FALSE
   list(dataset = dataset, violations = violations, bindings = bindings)
+}
+
+#' Does a condition name a column the dataset does not have, as CORE 1.0 reads it?
+#'
+#' A port of `_missing_columns_for_operator()` (postgresql_operators.py). The
+#' target, and `within` and `ordering`, are always column names; the value is
+#' one too unless the condition says `value_is_literal` (and always with
+#' `value_is_reference`), except for the pattern operators, whose value is a
+#' pattern. A `$` binding, `dataset_name` and `define.xml` are never missing.
+#' The presence and relationship operators that look for missing columns
+#' themselves are left alone.
+#'
+#' @param condition One Check condition.
+#' @param ctx Its operator context.
+#' @return A single logical.
+#' @noRd
+core1_names_missing_column <- function(condition, ctx) {
+  exempt <- c("exists", "not_exists", "is_unique_relationship", "is_not_unique_relationship",
+              "is_ordered_subset_of", "is_not_ordered_subset_of")
+  if (condition$operator %in% exempt) {
+    return(FALSE)
+  }
+  have <- names(ctx$dataset$data)
+  missing <- function(x) {
+    if (!is.character(x)) return(FALSE)
+    x <- x[!is.na(x) & nzchar(x)]
+    x <- x[!startsWith(x, "$") & !x %in% c("dataset_name", "define.xml")]
+    if (!length(x)) return(FALSE)
+    resolved <- vapply(x, function(v) {
+      if (is_relrec_wildcard(v)) return(v)
+      resolve_var_name(v, ctx$wildcard)
+    }, character(1))
+    relrec <- is_relrec_wildcard(x)
+    any(!relrec & !resolved %in% have)
+  }
+  if (!isTRUE(ctx$target_is_binding) && is.character(condition$name) && !isTRUE(ctx$exists) &&
+      !condition$name %in% c("dataset_name", "define.xml")) {
+    return(TRUE)
+  }
+  if (missing(unlist(condition$within)) || missing(unlist(condition$ordering))) {
+    return(TRUE)
+  }
+  # Grouping keys the operator drops when absent (--CAT, --TPTNUM).
+  if (condition$operator %in% c("is_unique_set", "is_not_unique_set", "is_inconsistent_across_dataset")) {
+    return(FALSE)
+  }
+  # The sort columns are the `name` of each sort specification.
+  if (condition$operator %in% c("target_is_sorted_by", "target_is_not_sorted_by")) {
+    specs <- if (is.list(condition$value)) condition$value else list()
+    return(missing(vapply(specs, function(sp) if (is.list(sp)) as.character(sp$name %||% "") else
+      as.character(sp), character(1))))
+  }
+  if (grepl("regex", condition$operator, fixed = TRUE)) {
+    return(FALSE)
+  }
+  if (isTRUE(condition$value_is_reference) || !isTRUE(condition$value_is_literal)) {
+    if (missing(unlist(condition$value)) || missing(unlist(condition$version))) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 #' The engine a rule was written for
@@ -1237,8 +1306,11 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
   # wrong type. The reference draws the same distinction explicitly
   # (`is_custom_domain`). Confirmed against CORE-001082, whose XY fixture
   # expects no findings at all.
-  is_custom <- !is.null(domain) &&
-    !(toupper(domain) %in% .coreval_env$domain_classes$domain)
+  # A SUPP-- or AP-- dataset is not custom: the Library describes it (SUPPQUAL,
+  # or its parent's domain), and domain_class() knows it. Looked up in the
+  # domain table alone, SUPPAE was taken for a sponsor's domain and given no
+  # Library fields, and CORE 1.0's CORE-001082 was refused on every SUPP.
+  is_custom <- !is.null(domain) && is.na(domain_class(domain))
 
   if (!is.null(study) && !is_custom) {
     # Always present the library_* columns, even when nothing resolves, so

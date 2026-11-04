@@ -319,7 +319,8 @@ test_that("check_study() and evaluate_rule() take the same evaluation path", {
   ran <- setdiff(rules_for_domain("DM", dataset = study$datasets$DM)$id,
                  result$skipped$rule_id)
   for (id in ran) {
-    rule <- fixture_rule(id)
+    # The rule check_study() runs for this study, not CDISC's original of it.
+    rule <- .coreval_env$data$rules[[id]]
     if (is.null(rule) || isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
         rule$rule_type %in% c("JSONata", "JSON Schema Check")) next
     direct <- tryCatch(which(evaluate_rule(rule, study, "DM")), error = function(e) NULL)

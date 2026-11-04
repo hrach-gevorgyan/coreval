@@ -324,6 +324,16 @@ core1_invalid_date <- function(x) {
 #'   variable_max_value_length.
 #' @noRd
 global_length_summary <- function(study) {
+  # The same for every rule and dataset of a run, and it reads every value of
+  # the study, so it is built once per run (cached_build()).
+  cached_build("core1-global-lengths", function() {
+    list(data = build_global_length_summary(study), meta = NULL)
+  })$data
+}
+
+#' @rdname global_length_summary
+#' @noRd
+build_global_length_summary <- function(study) {
   pieces <- list()
   for (key in names(study$datasets)) {
     ds <- study$datasets[[key]]

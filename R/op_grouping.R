@@ -211,6 +211,10 @@ register_operator("is_not_unique_relationship", function(ctx) {
                    character(1), USE.NAMES = FALSE)
   present <- wanted[wanted %in% names(ctx$dataset$data)]
   if (length(present) == 0) {
+    # CORE 1.0 answers FALSE here (is_not_unique_relationship_operator.py).
+    if (engine_is_core1()) {
+      return(rep(FALSE, ctx$n))
+    }
     stop("is_not_unique_relationship compares with ", paste(wanted, collapse = ", "),
          ", which ", if (length(wanted) > 1) "are not columns" else "is not a column",
          " of this dataset", call. = FALSE)

@@ -544,7 +544,7 @@ CORE-002048,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002049,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002050,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002051,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-002052,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the WHODrug dictionary, which is not supplied: coreval does not read external dictionaries yet"
+CORE-002052,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"only cases expecting no findings could be graded: evaluate_rule failed: needs the WHODrug dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002053,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002054,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002055,core_contributor,Record Data,Fully Executable,Record,PASS,

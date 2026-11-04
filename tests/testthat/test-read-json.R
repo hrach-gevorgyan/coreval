@@ -28,9 +28,12 @@ write_dataset_json <- function(df, path, name = "DM", whole = TRUE,
   types <- vapply(df, function(col) {
     if (is.character(col)) "string" else "decimal"
   }, character(1))
+  # Declared lengths as haven writes them into an XPT: the longest value for
+  # text, 8 for a number, so both formats carry the same metadata.
   columns <- lapply(names(df), function(v) {
+    len <- if (is.character(df[[v]])) max(1L, nchar(df[[v]]), na.rm = TRUE) else 8L
     list(itemOID = paste0("IT.", name, ".", v), name = v, label = v,
-         dataType = types[[v]])
+         dataType = types[[v]], length = len)
   })
   rows <- lapply(seq_len(nrow(df)), function(i) {
     lapply(names(df), function(v) {

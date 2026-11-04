@@ -71,6 +71,40 @@ length_aggregate <- function(study, column, fn) {
   grouped_binding("variable_name", agg, ".value")
 }
 
+# CORE 1.0's own reference tables that coreval does not bundle
+# (enums/static_tables.py), and what each is, for the reason a rule naming one
+# is refused with.
+core1_static_table_names <- c(
+  ig_codelists = "its controlled terminology table", ig_datasets = "its Implementation Guide tables",
+  ig_variables = "its Implementation Guide tables", ex_whodrug = "the WHODrug dictionary",
+  ex_meddra = "the MedDRA dictionary", ex_unii = "the UNII dictionary", ex_medrt = "the MED-RT dictionary",
+  ex_loinc = "the LOINC dictionary", ex_snomed = "the SNOMED CT dictionary"
+)
+core1_static_tables <- names(core1_static_table_names)
+
+#' The bundled Library version a study's declared version names
+#'
+#' The Library data is keyed "3-2"; a study, or `check_study(version =)`,
+#' writes "3.2", and either can say "3.2.0". Compared literally, "3.2" matched
+#' nothing and the newest version was used instead, so an SDTMIG 3.2 study was
+#' judged against 3.4's variables, labels and Core designations (CORE-000334
+#' on CDISC's pilot reported Expected variables 3.2 does not have). Compared
+#' as versions here; with none declared, or none bundled, the newest.
+#'
+#' @param version The declared version, or `NA`.
+#' @param available The versions bundled for the standard.
+#' @return One of `available`.
+#' @noRd
+pick_library_version <- function(version, available) {
+  if (!is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)) {
+    hit <- available[normalise_version(available) == normalise_version(version)]
+    if (length(hit)) {
+      return(hit[[1]])
+    }
+  }
+  newest_library_version(available)
+}
+
 #' Construct a scalar Operations binding (one value used for every row)
 #' @param value The value, used identically for every row.
 #' @return A binding list with `kind = "scalar"`.
@@ -659,11 +693,7 @@ library_variables_for <- function(study, domain) {
   # ("3-4"), so they compare directly. An undeclared or unknown version
   # falls back to the newest available for that standard.
   version <- study$standard$version %||% NA_character_
-  use_version <- if (!is.na(version) && version %in% rows$version) {
-    version
-  } else {
-    newest_library_version(rows$version)
-  }
+  use_version <- pick_library_version(version, rows$version)
   rows <- rows[rows$version == use_version, ]
 
   # Every SUPPxx dataset (SUPPAE, SUPPDM, ...) follows the SUPPQUAL template
@@ -708,11 +738,7 @@ standard_domain_label <- function(study, domain, dataset = NULL) {
     return(fallback)
   }
   version <- study$standard$version %||% NA_character_
-  use_version <- if (!is.na(version) && version %in% rows$version) {
-    version
-  } else {
-    newest_library_version(rows$version)
-  }
+  use_version <- pick_library_version(version, rows$version)
   rows <- rows[rows$version == use_version, ]
   hit <- rows$label[toupper(rows$domain) == toupper(domain)]
   if (length(hit) == 0) fallback else hit[1]
@@ -1175,15 +1201,9 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # external dictionaries and its own Library tables, are not, and
     # answering one with an empty set would report every row against it.
     # Refused instead.
-    core1_tables <- c(
-      ig_codelists = "its controlled terminology table", ig_datasets = "its Implementation Guide tables",
-      ig_variables = "its Implementation Guide tables", ex_whodrug = "the WHODrug dictionary",
-      ex_meddra = "the MedDRA dictionary", ex_unii = "the UNII dictionary", ex_medrt = "the MED-RT dictionary",
-      ex_loinc = "the LOINC dictionary", ex_snomed = "the SNOMED CT dictionary"
-    )
-    if (tolower(domain) %in% names(core1_tables)) {
-      stop("needs ", core1_tables[[tolower(domain)]], ", a reference table CORE 1.0's engine ships ",
-           "and coreval does not bundle", call. = FALSE)
+    if (tolower(domain) %in% names(core1_static_table_names)) {
+      stop("needs ", core1_static_table_names[[tolower(domain)]], ", a reference table CORE 1.0's engine ",
+           "ships and coreval does not bundle", call. = FALSE)
     }
     if (engine_is_core1() && identical(op$operator, "distinct")) {
       return(scalar_binding(distinct_values(character(0))))
@@ -1382,7 +1402,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
       }
       version <- study$standard$version %||% NA_character_
-      use <- if (!is.na(version) && version %in% rows$version) version else newest_library_version(rows$version)
+      use <- pick_library_version(version, rows$version)
       rows <- rows[rows$version == use, ]
       attribute <- op$attribute_name %||% "role"
       field <- switch(attribute, name = "variable", attribute)
@@ -1432,7 +1452,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
       }
       version <- study$standard$version %||% NA_character_
-      use <- if (!is.na(version) && version %in% rows$version) version else newest_library_version(rows$version)
+      use <- pick_library_version(version, rows$version)
       doms <- unique(rows$domain[rows$version == use])
       if (!is.null(op$domain_class)) {
         cls <- vapply(doms, domain_class, character(1))
@@ -2072,6 +2092,12 @@ apply_ct_conditions <- function(rows, conditions, package) {
       this <- this & !is.na(have) & tolower(have) %in% tolower(want)
     }
     keep <- if (core1) keep & this else keep | this
+  }
+  # CORE 1.0 answers a filter nothing matches with an empty list: a 2014
+  # package has no TS codelists from 2020, and CORE-002050 then has no terms
+  # to compare with. CDISC's engine stops, and so does coreval for its rules.
+  if (core1 && !any(keep)) {
+    return(rows[0, ])
   }
   if (!any(keep)) {
     stop("no codelist in controlled terminology package '", package,

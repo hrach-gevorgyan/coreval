@@ -365,3 +365,65 @@ test_that("a 1.0 rule takes a dataset's domain from its name when classing it (C
   rule$source <- "published"
   expect_false(rule_applies_to_domain(rule, "TI", dataset = ti))
 })
+
+test_that("a transport file's declared lengths are read from its header", {
+  f <- tempfile(fileext = ".xpt")
+  x <- data.frame(A = c("ab", "abcd"), N = 1:2, B = "x")
+  attr(x$A, "width") <- 10
+  haven::write_xpt(x, f)
+  expect_equal(xpt_declared_lengths(f), c(10L, 8L, 1L))
+  haven::write_xpt(x, f, version = 8)
+  expect_equal(xpt_declared_lengths(f), c(10L, 8L, 1L))
+  dir <- tempfile("xptlen_")
+  dir.create(dir)
+  haven::write_xpt(x, file.path(dir, "dm.xpt"))
+  expect_equal(read_study(dir)$datasets$DM$meta$length, c(10, 8, 1))
+  unlink(dir, recursive = TRUE)
+})
+
+test_that("a declared version is matched however it is written", {
+  expect_equal(pick_library_version("3.2", c("3-2", "3-3", "3-4")), "3-2")
+  expect_equal(pick_library_version("3-2", c("3-2", "3-4")), "3-2")
+  expect_equal(pick_library_version("3.2.0", c("3-2", "3-4")), "3-2")
+  expect_equal(pick_library_version(NA_character_, c("3-2", "3-4")), "3-4")
+})
+
+test_that("a 1.0 condition naming a missing column is FALSE, never the name as text (CORE-000264)", {
+  d <- list(MHBODSYS = c("A", "B"))
+  check <- list(name = "MHBODSYS", operator = "not_equal_to", value = "--SOC")
+  ds <- list(data = data.table::as.data.table(c(d, DOMAIN = "MH")), meta = NULL)
+  expect_equal(in_core1(evaluate_check(check, ds, "MH")), c(FALSE, FALSE))
+  # A literal stays a literal, and a pattern is never a column.
+  check$value <- "A"
+  check$value_is_literal <- TRUE
+  expect_equal(in_core1(evaluate_check(check, ds, "MH")), c(FALSE, TRUE))
+  pattern <- list(name = "MHBODSYS", operator = "matches_regex", value = "^A")
+  expect_equal(in_core1(evaluate_check(pattern, ds, "MH")), c(TRUE, FALSE))
+})
+
+test_that("check_study's dataset pre-check agrees with evaluation (CORE-000712, 002050, 002056)", {
+  supp <- list(data = data.table::data.table(RDOMAIN = "AE"), meta = NULL)
+  r712 <- core1_rule(NULL, operations = list(list(domain = "SUPP--", id = "$v", name = "RDOMAIN",
+                                                  operator = "referenced_domain_variable_names")))
+  expect_length(rule_external_domains(r712, "SUPPAE", supp), 0)
+  r50 <- core1_rule(NULL, operations = list(list(domain = "cg_taugs", id = "$f", name = "fda_guides",
+                                                 operator = "distinct")))
+  expect_length(rule_external_domains(r50, "TS", NULL), 0)
+  r56 <- core1_rule(NULL, operations = list(list(operator = "standard_domains", id = "$td",
+                                                 domain_class = "TRIAL DESIGN")))
+  expect_length(rule_external_domains(r56, "TS", NULL), 0)
+})
+
+test_that("a Study rule is reported once, under STUDY (CORE-002084)", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2")), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1, AETERM = "X"),
+                   file.path(dir, "ae.xpt"))
+  found <- check_study(dir)$findings
+  f <- found[found$rule_id == "CORE-002084", ]
+  expect_equal(unique(f$Dataset), "STUDY")
+  expect_true(all(is.na(f$Record)))
+  expect_equal(nrow(unique(f[, c("Dataset", "Record")])), 1L)
+})

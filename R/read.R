@@ -373,7 +373,7 @@ read_sas_file <- function(path) {
          "because checking part of a dataset would miss problems in the rest.",
          call. = FALSE)
   }
-  tryCatch(
+  out <- tryCatch(
     if (xpt) haven::read_xpt(path) else haven::read_sas(path),
     error = function(e) {
       stop("could not read '", name, "': it is damaged, or is not a ",
@@ -382,6 +382,40 @@ read_sas_file <- function(path) {
            call. = FALSE)
     }
   )
+  # haven does not report a variable's declared length, which the length
+  # rules compare with the data (CORE 1.0's CORE-002061 and CORE-002062). A
+  # transport file states it in its header, so it is read from there.
+  if (xpt) {
+    lengths <- xpt_declared_lengths(path)
+    if (length(lengths) == ncol(out)) attr(out, "coreval_lengths") <- lengths
+  }
+  out
+}
+
+#' The declared length of each variable of a SAS transport file
+#'
+#' Read from the file's NAMESTR records (SAS's transport format, versions 5
+#' and 8): one 140-byte record per variable, in column order, after the header
+#' record that counts them, with the length as a big-endian short at bytes 5
+#' and 6. `NULL` when the header cannot be found or read.
+#'
+#' @param path A `.xpt` file.
+#' @return An integer vector, one length per variable, or `NULL`.
+#' @noRd
+xpt_declared_lengths <- function(path) {
+  raw <- readBin(path, "raw", n = min(file.size(path), 2e6))
+  at <- c(grepRaw("NAMESTR HEADER RECORD", raw, fixed = TRUE),
+          grepRaw("NAMSTV8 HEADER RECORD", raw, fixed = TRUE))
+  if (!length(at)) {
+    return(NULL)
+  }
+  record <- min(at) - 20
+  n <- suppressWarnings(as.integer(rawToChar(raw[(record + 54):(record + 57)])))
+  if (is.na(n) || record + 80 + n * 140 > length(raw)) {
+    return(NULL)
+  }
+  first <- record + 80 + (seq_len(n) - 1) * 140 + 4
+  as.integer(raw[first]) * 256L + as.integer(raw[first + 1])
 }
 
 #' Convert a data frame into a `list(data, meta)` dataset entry
@@ -457,6 +491,11 @@ build_dataset_from_data_frame <- function(raw) {
     label = unname(labels[names(dt)]),
     type = vapply(dt, function(col) if (is.character(col)) "Char" else "Num", character(1))
   )
+  # The declared lengths a transport file's header gives (read_sas_file()).
+  lengths <- attr(raw, "coreval_lengths")
+  if (length(lengths) == nrow(meta)) {
+    meta$length <- as.numeric(lengths)
+  }
 
   dataset_label <- attr(raw, "label")
   list(data = dt, meta = meta, label = if (is.null(dataset_label)) NA_character_ else dataset_label)

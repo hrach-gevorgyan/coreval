@@ -143,6 +143,12 @@ build_dataset_from_dataset_json <- function(meta_obj, rows, source) {
     label = ifelse(is.na(labels), NA_character_, labels),
     type = types
   )
+  # Each column's declared length, as a transport file's header gives it, so
+  # the same study gives the same answers in either format.
+  lengths <- suppressWarnings(as.numeric(field("length")))
+  if (length(lengths) == nrow(meta) && !anyNA(lengths)) {
+    meta$length <- lengths
+  }
   label <- meta_obj$label
   out <- list(data = dt, meta = meta,
               label = if (is.null(label) || !nzchar(label)) NA_character_ else as.character(label)[[1]])
