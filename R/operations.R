@@ -545,7 +545,23 @@ apply_group_aliases <- function(binding, op) {
 #' @param want_max `TRUE` for the maximum.
 #' @return A binding, or `NULL` when the column is absent.
 #' @noRd
-extreme_binding <- function(dt, op, want_max) {
+extreme_binding <- function(dt, op, want_max, bindings = list()) {
+  # The largest or smallest of an earlier operation's values: CORE-002112
+  # takes the max of `$count_ietestcd`, a count per IETESTCD. Read as a
+  # column name it matched nothing, and the rule silently found nothing.
+  if (is.character(op$name) && startsWith(op$name, "$") && is.null(op$group)) {
+    b <- bindings[[op$name]]
+    if (is.null(b)) {
+      return(NULL)
+    }
+    v <- unlist(if (identical(b$kind, "grouped")) b$table[[b$value_col]] else b$value)
+    v <- v[!is.na(v)]
+    if (is.character(v)) v <- v[nzchar(v)]
+    if (length(v) == 0) {
+      return(scalar_binding(NA))
+    }
+    return(scalar_binding(if (want_max) max(v) else min(v)))
+  }
   if (is.null(dt) || !(op$name %in% names(dt))) {
     return(NULL)
   }
@@ -1242,13 +1258,21 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         filtered_counts <- filtered[, list(.value = .N), by = group_cols]
         agg <- merge(all_groups, filtered_counts, by = group_cols, all.x = TRUE)
         agg$.value[is.na(agg$.value)] <- 0
-        grouped_binding(group_cols, agg, ".value", regex = op$regex)
+        b <- grouped_binding(group_cols, agg, ".value", regex = op$regex)
+        # A row whose group is not in the counted dataset at all - a DM
+        # subject with no DS record - counts 0 in CORE 1.0
+        # (numeric_operation.py, `COALESCE({value}, 0)`), and CORE-000679
+        # asks for exactly that subject. CDISC's engine leaves it missing.
+        if (engine_is_core1()) {
+          b$fill <- 0
+        }
+        b
       }
     },
     max_date = date_extreme_binding(dt, op, want_max = TRUE),
     min_date = date_extreme_binding(dt, op, want_max = FALSE),
-    max = extreme_binding(dt, op, want_max = TRUE),
-    min = extreme_binding(dt, op, want_max = FALSE),
+    max = extreme_binding(dt, op, want_max = TRUE, bindings = bindings),
+    min = extreme_binding(dt, op, want_max = FALSE, bindings = bindings),
     minus = {
       # Set difference: the rule's `name` binding less its `subtract` binding.
       # CDISC added it so a finding can name WHICH variables are missing
@@ -1726,7 +1750,11 @@ resolve_binding <- function(binding, dataset) {
   table_keys <- key_of(binding$table)
   idx <- match(row_keys, table_keys)
   values <- binding$table[[binding$value_col]]
-  if (is.list(values)) values[idx] else values[idx]
+  out <- values[idx]
+  if (!is.null(binding$fill)) {
+    out[is.na(idx)] <- binding$fill
+  }
+  out
 }
 
 #' The controlled terminology version a study declares in TS

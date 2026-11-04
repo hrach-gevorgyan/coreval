@@ -328,7 +328,13 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     #
     # A domain split into PC1 and PC2 is present, so each dataset counts by
     # its file name and by the domain it belongs to.
-    if (!exists && !is.null(study) && condition$operator %in% c("exists", "not_exists")) {
+    # `define.xml` names the study's define, not a column (exists_operator.py
+    # in CORE 1.0: `define_xml_path`). CORE-002084 reports a submission
+    # without one; read as a column it reported every record of every study.
+    if (identical(name, "define.xml") && !is.null(study) &&
+        condition$operator %in% c("exists", "not_exists")) {
+      exists <- !is.null(study$define)
+    } else if (!exists && !is.null(study) && condition$operator %in% c("exists", "not_exists")) {
       present <- c(toupper(names(study$datasets)),
                    vapply(names(study$datasets), function(k) {
                      dataset_unsplit_name(study$datasets[[k]], k)

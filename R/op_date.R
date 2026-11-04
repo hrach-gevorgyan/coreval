@@ -510,8 +510,52 @@ compare_dates_one <- function(target, comparator, op) {
 #' @noRd
 date_compare_op <- function(op) {
   guarded_op(function(ctx) {
+    if (engine_is_core1()) {
+      return(core1_compare_dates(ctx$target, ctx$value, op, ctx$condition$date_component))
+    }
     compare_dates(ctx$target, ctx$value, op)
   })
+}
+
+#' Compare dates the way CORE 1.0 does
+#'
+#' A port of date_comparison_operator.py. A value that is not ISO 8601 shaped
+#' counts as missing, and a blank or missing value on either side is never
+#' before, after, equal or unequal. Otherwise both are cut to the length of the
+#' shorter and compared as text, so "2014-01-20T10:00" equals "2014-01-20".
+#' With `date_component` only that part is compared, and a value too short to
+#' have it counts as missing. CDISC's engine instead treats a date and a blank
+#' as unequal (see compare_dates()).
+#'
+#' @param target,comparator Vectors of date strings.
+#' @param op One of "eq", "ne", "lt", "le", "gt", "ge".
+#' @param component Optional date component, e.g. "year".
+#' @return A logical vector.
+#' @noRd
+core1_compare_dates <- function(target, comparator, op, component = NULL) {
+  n <- max(length(target), length(comparator))
+  target <- rep_len(as.character(target), n)
+  comparator <- rep_len(as.character(comparator), n)
+  blank <- is.na(target) | !nzchar(target) | is.na(comparator) | !nzchar(comparator)
+  iso <- paste0("^[0-9]{4}(-[0-9]{2}(-[0-9]{2}([T ][0-9]{2}(:[0-9]{2}(:[0-9]{2}([.][0-9]+)?)?)?",
+                "(Z|[+-][0-9]{2}:?[0-9]{2})?)?)?)?$")
+  if (!is.null(component)) {
+    at <- list(year = c(1, 4), month = c(6, 7), day = c(9, 10), hour = c(12, 13),
+               minute = c(15, 16), second = c(18, 19), microsecond = c(21, 26))[[component]]
+    if (is.null(at)) stop("unknown date_component: ", component, call. = FALSE)
+    part <- function(x) ifelse(!is.na(x) & nchar(x) >= at[2], substr(x, at[1], at[2]), NA_character_)
+    a <- part(target)
+    b <- part(comparator)
+  } else {
+    a <- ifelse(grepl(iso, target, perl = TRUE), target, NA_character_)
+    b <- ifelse(grepl(iso, comparator, perl = TRUE), comparator, NA_character_)
+    len <- pmin(nchar(a), nchar(b))
+    a <- substr(a, 1, len)
+    b <- substr(b, 1, len)
+  }
+  cmp <- switch(op, eq = `==`, ne = `!=`, lt = `<`, le = `<=`, gt = `>`, ge = `>=`)
+  out <- cmp(a, b)
+  !blank & out %in% TRUE
 }
 
 # Operators: partial-date-aware comparisons (date_equal_to, date_not_equal_to,

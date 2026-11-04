@@ -47,7 +47,10 @@ register_operator("empty", function(ctx) {
   # row's partner has a blank value"; reading that as blank turns all six into
   # failures. It was tried. The declared-left-join fill in match_datasets.R is
   # what serves the rules that do want those rows treated as blank.
-  if (isTRUE(ctx$target_is_binding)) {
+  # CORE 1.0 makes no such distinction: empty is `IS NULL OR = ''` for every
+  # column (base_sql_operator.py, _is_empty_sql_column). CORE-002034 asks
+  # whether AETRTEM is empty on AE records that SUPPAE says nothing about.
+  if (isTRUE(ctx$target_is_binding) || engine_is_core1()) {
     return(is.na(ctx$target) | (is.character(ctx$target) & ctx$target == ""))
   }
   if (is.character(ctx$target)) ctx$target == "" else is.na(ctx$target)

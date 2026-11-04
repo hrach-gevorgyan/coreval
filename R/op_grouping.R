@@ -224,6 +224,24 @@ register_operator("is_not_unique_relationship", function(ctx) {
     c_col <- do.call(paste, c(lapply(present, function(v) as_key(ctx$dataset$data[[v]])), sep = "|"))
   }
 
+  # CORE 1.0 compares `COALESCE(x::text, '')` on both sides: a blank is one
+  # more value, and a key mapping to both a value and a blank breaks the
+  # relationship like any other pair would. CORE-000141 reports VS record 2,
+  # whose blank VSTPT shares VSTPTNUM with a populated one.
+  if (engine_is_core1()) {
+    as_text <- function(x) {
+      x <- target_text(x)
+      x[is.na(x)] <- ""
+      x
+    }
+    t_key <- as_text(t_col)
+    c_key <- as_text(c_col)
+    pairs <- unique(data.frame(t = t_key, c = c_key, stringsAsFactors = FALSE))
+    bad_t <- names(which(tapply(pairs$c, pairs$t, function(v) length(unique(v)) > 1)))
+    bad_c <- names(which(tapply(pairs$t, pairs$c, function(v) length(unique(v)) > 1)))
+    return(t_key %in% bad_t | c_key %in% bad_c)
+  }
+
   keep <- !(is_blank(t_col) & is_blank(c_col))
   pairs <- unique(data.frame(t = t_col[keep], c = c_col[keep], stringsAsFactors = FALSE))
 
@@ -375,9 +393,54 @@ register_operator("is_inconsistent_across_dataset", function(ctx) {
   if (length(cols) == 0) {
     return(rep(FALSE, ctx$n))
   }
+  if (engine_is_core1()) {
+    return(core1_inconsistent_across_dataset(ctx, cols))
+  }
   dt <- ctx$dataset$data[, cols, with = FALSE]
   normalized <- lapply(dt, function(col) ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col)))
   key <- do.call(paste, c(normalized, sep = "\x1f"))
 
   flag_inconsistent_minority(key, ctx$target)
 })
+
+#' is_inconsistent_across_dataset as CORE 1.0 answers it
+#'
+#' From is_inconsistent_across_dataset_operator.py. Only rows where every
+#' `where_populated_columns` column (and, with `where_populated`, the target
+#' and grouping columns) is populated take part. Within each group, more than
+#' one distinct target value marks EVERY row of the group, not just the
+#' minority, as CDISC's engine does. A missing number and an empty string are
+#' different values, as NULL and '' are there.
+#'
+#' @param ctx Operator context.
+#' @param cols The grouping columns present in the dataset.
+#' @return A logical vector.
+#' @noRd
+core1_inconsistent_across_dataset <- function(ctx, cols) {
+  dt <- ctx$dataset$data
+  populated <- character(0)
+  if (isTRUE(ctx$condition$where_populated)) {
+    populated <- c(ctx$name, cols)
+  }
+  wanted <- ctx$condition$where_populated_columns
+  if (length(wanted)) {
+    named <- vapply(as.character(unlist(wanted)), function(v) resolve_var_name(v, ctx$wildcard),
+                    character(1), USE.NAMES = FALSE)
+    named <- named[named %in% names(dt)]
+    if (!length(named) && !isTRUE(ctx$condition$where_populated)) {
+      stop("none of the where_populated_columns is a column of this dataset", call. = FALSE)
+    }
+    populated <- unique(c(populated, named))
+  }
+  take <- rep(TRUE, ctx$n)
+  for (p in populated) take <- take & !is_blank(dt[[p]])
+  as_key <- function(x) {
+    out <- as.character(x)
+    out[is.na(x)] <- "\x1eNULL"
+    out
+  }
+  key <- do.call(paste, c(lapply(cols, function(cl) as_key(dt[[cl]])), sep = "\x1f"))
+  value <- as_key(ctx$target)
+  bad <- names(which(tapply(value[take], key[take], function(v) length(unique(v)) > 1)))
+  take & key %in% bad
+}

@@ -470,6 +470,12 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
     supp_name <- sub("--$", dataset_wildcard(dataset, current_domain), match_name)
     supp_dataset <- domain_dataset(study, supp_name)
     if (is.null(supp_dataset)) {
+      # CORE 1.0 checks the parent as it is when it has no SUPP dataset
+      # (_do_supp_merge, `return original`), and its rules ask for that:
+      # CORE-002034 reports every AE when SUPPAE, and so AETRTEM, is absent.
+      if (engine_is_core1()) {
+        return(dataset)
+      }
       stop("Match Datasets: needs ", toupper(supp_name), ", which is not in this study",
            call. = FALSE)
     }

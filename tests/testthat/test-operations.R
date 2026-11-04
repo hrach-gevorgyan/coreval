@@ -919,12 +919,6 @@ test_that("a codelist operation can answer from the study's own terminology vers
 # The fixes below make CORE 1.0 rules give 1.0's answers. Each was found by a
 # rule that passed on its CDISC definition and failed on its 1.0 one.
 
-core1_rule <- function(check, ...) {
-  list(source = "core_contributor", check = check, ...)
-}
-one_dataset <- function(data, domain = "XX") {
-  as_study(list(data = data.table::as.data.table(data), meta = NULL), domain)
-}
 
 test_that("a 1.0 rule compares a text column with a numeric one by value (CORE-000542)", {
   study <- one_dataset(list(C = c("1.00", "-1.234", "-1.234"), N = c(1, -1.234, 1)))

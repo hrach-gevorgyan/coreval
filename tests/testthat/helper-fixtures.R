@@ -62,3 +62,19 @@ fixture_cases <- function(id, polarity) {
 fixture_rule <- function(id) {
   .coreval_env$data$cdisc_originals[[id]] %||% .coreval_env$data$rules[[id]]
 }
+
+#' A rule record marked as coming from CORE 1.0, so it runs with 1.0's semantics
+#' @param check The Check tree.
+#' @param ... Further rule fields.
+#' @return A rule record.
+core1_rule <- function(check, ...) {
+  list(source = "core_contributor", check = check, ...)
+}
+
+#' A study holding one dataset
+#' @param data Columns, as a list or data frame.
+#' @param domain The dataset's name.
+#' @return A study object.
+one_dataset <- function(data, domain = "XX") {
+  as_study(list(data = data.table::as.data.table(data), meta = NULL), domain)
+}
