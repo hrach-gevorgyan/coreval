@@ -999,3 +999,78 @@ test_that("a 1.0 rule's distinct over a missing domain is empty, not a refusal (
   # CDISC's engine refuses, and coreval with it.
   expect_error(evaluate_rule(list(check = check, operations = ops), study, "XX"), "POOLDEF")
 })
+
+test_that("intersect keeps the values in both lists, in the first list's order (CORE-000852)", {
+  study <- one_dataset(list(X = c("A", "B")))
+  ops <- list(
+    list(id = "$both", operator = "intersect", name = c("C", "A", "B", "A"), subtract = c("A", "B", "D"))
+  )
+  dataset <- prepare_dataset_for_rule(core1_rule(NULL, operations = ops), study, "XX")
+  .coreval_env$engine <- "core1"
+  on.exit(.coreval_env$engine <- NULL)
+  expect_equal(operation_bindings_for_rule(list(operations = ops), study, "XX", dataset)$`$both`$value,
+               c("A", "B"))
+})
+
+test_that("a written-out list is used whole by minus, and 1.0's minus is a plain difference (CORE-000737)", {
+  study <- one_dataset(list(TSPARMCD = c("B", "A")))
+  ops <- list(
+    list(id = "$have", operator = "distinct", name = "TSPARMCD"),
+    list(id = "$missing", operator = "minus", name = c("A", "B", "C"), subtract = "$have")
+  )
+  check <- list(name = "$missing", operator = "non_empty")
+  dataset <- prepare_dataset_for_rule(list(), study, "XX")
+  .coreval_env$engine <- "core1"
+  on.exit(.coreval_env$engine <- NULL)
+  expect_equal(operation_bindings_for_rule(list(operations = ops), study, "XX", dataset)$`$missing`$value, "C")
+})
+
+test_that("referenced_domain_variable_names gives each row its RDOMAIN's variables (CORE-000712)", {
+  study <- list(datasets = list(
+    SUPPAE = list(data = data.table::data.table(RDOMAIN = c("AE", "LB", "XX"), IDVAR = c("AESEQ", "LBSEQ", "XXSEQ")),
+                  meta = NULL),
+    AE = list(data = data.table::data.table(USUBJID = "S1", AESEQ = 1), meta = NULL)
+  ))
+  rule <- core1_rule(
+    list(name = "IDVAR", operator = "is_not_contained_by", value = "$vars"),
+    operations = list(list(domain = "SUPP--", id = "$vars", name = "RDOMAIN",
+                           operator = "referenced_domain_variable_names"))
+  )
+  expect_equal(evaluate_rule(rule, study, "SUPPAE"), c(FALSE, TRUE, TRUE))
+})
+
+test_that("a 1.0 Child join links a relational child on its own record and keeps its own columns (CORE-000916)", {
+  study <- list(datasets = list(
+    RELREC = list(data = data.table::data.table(
+      STUDYID = "S", RDOMAIN = c("LB", "CO"), USUBJID = c("1", "2"),
+      IDVAR = c("LBSEQ", "COSEK"), IDVARVAL = c("7", "1"), RELID = c("1", "2")
+    ), meta = NULL),
+    LB = list(data = data.table::data.table(STUDYID = "S", DOMAIN = "LB", USUBJID = "1", LBSEQ = c(6, 7),
+                                            LBTESTCD = c("A", "B")), meta = NULL),
+    CO = list(data = data.table::data.table(STUDYID = "S", DOMAIN = "CO", RDOMAIN = "LB", USUBJID = "2",
+                                            IDVAR = "LBSEQ", COSEQ = 1), meta = NULL)
+  ))
+  .coreval_env$engine <- "core1"
+  on.exit(.coreval_env$engine <- NULL)
+  joined <- apply_child_match(study$datasets$RELREC, study, "USUBJID")$data
+  expect_equal(joined$RDOMAIN, c("LB", "CO"))
+  expect_equal(joined$IDVAR, c("LBSEQ", "COSEK"))
+  expect_equal(joined$LBTESTCD, c("B", NA))
+  expect_equal(joined$`CO.RDOMAIN`, c(NA, "LB"))
+})
+
+test_that("target_is_not_sorted_by takes several within columns, a regex and strict ordering (CORE-002016)", {
+  ds <- list(data = data.table::data.table(
+    USUBJID = c("1", "1", "1", "2", "2"),
+    MIDSTYPE = c("T", "T", "U", "T", "T"),
+    MIDS = c("CHEMO2", "CHEMO1", "X1", "CHEMO1", "CHEMO3"),
+    SMSTDTC = c("2020-02", "2020-01", "2020-01", "2020-01", "2020-02")
+  ), meta = NULL)
+  check <- list(
+    name = "MIDS", operator = "target_is_not_sorted_by", regex = ".*?(\\d+$)",
+    strict_incremental_ordering = TRUE, within = c("USUBJID", "MIDSTYPE"),
+    value = list(list(name = "SMSTDTC", null_position = "first", sort_order = "asc"))
+  )
+  # Subject 2 jumps from 1 to 3; subject 1's T rows are 1, 2 in date order.
+  expect_equal(evaluate_check(check, ds, "SM"), c(FALSE, FALSE, FALSE, FALSE, TRUE))
+})

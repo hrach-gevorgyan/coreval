@@ -124,12 +124,29 @@ has_results_csv <- function(rule_dir) {
   length(list.files(rule_dir, pattern = "^results\\.csv$", recursive = TRUE)) > 0
 }
 
-extract_one <- function(path, source) {
-  d <- yaml::yaml.load_file(path, handlers = list(
+# PyYAML, which the reference engines use, accepts a mapping key written twice
+# and keeps the last; R's yaml refuses the whole file. CORE 1.0's CORE-000133
+# repeats a citation line (`Item: --STRESU`) verbatim. Only that case is
+# repaired: a key line identical to the line above it, so both readers see
+# the same value. A repeated key with a different value still stops here.
+read_rule_yaml <- function(path) {
+  handlers <- list(
     int = int_handler,
     `bool#yes` = preserve_bool_text,
     `bool#no` = preserve_bool_text
-  ))
+  )
+  tryCatch(yaml::yaml.load_file(path, handlers = handlers), error = function(e) {
+    if (!grepl("Duplicate map key", conditionMessage(e))) stop(e)
+    lines <- readLines(path, encoding = "UTF-8", warn = FALSE)
+    repeat_of_previous <- c(FALSE, lines[-1] == lines[-length(lines)]) &
+      grepl("^[[:space:]]*[^#[:space:]][^:]*:[[:space:]]*[^[:space:]]", lines)
+    if (!any(repeat_of_previous)) stop(e)
+    yaml::yaml.load(paste(lines[!repeat_of_previous], collapse = "\n"), handlers = handlers)
+  })
+}
+
+extract_one <- function(path, source) {
+  d <- read_rule_yaml(path)
   d <- normalize_flags(d)
 
   standards <- unique(unlist(lapply(d$Authorities, function(a) {

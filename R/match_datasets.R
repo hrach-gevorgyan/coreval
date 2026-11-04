@@ -297,6 +297,14 @@ apply_child_match <- function(dataset, study, keys) {
     return(dataset)
   }
   standard_keys <- setdiff(keys, c("IDVAR", "IDVARVAL"))
+  # CORE 1.0 links a relational child (one with IDVAR and IDVARVAL: SUPP--,
+  # SQ--, CO, RELREC) to its parent on STUDYID and USUBJID plus the record
+  # IDVAR names, whatever keys the rule lists (child.py,
+  # _perform_relational_join). Its CORE-000916 lists USUBJID alone.
+  core1 <- engine_is_core1()
+  if (core1 && all(c("IDVAR", "IDVARVAL") %in% names(child))) {
+    standard_keys <- c("STUDYID", "USUBJID")
+  }
   rdomain <- child[["RDOMAIN"]]
   if (is.null(rdomain)) {
     return(dataset)
@@ -396,8 +404,20 @@ apply_child_match <- function(dataset, study, keys) {
     # as in the reference. Where none was found the child keeps its own: taking
     # the empty parent row there blanked the child's USUBJID on exactly the
     # rows reported as orphans, so the finding named no subject.
-    keep <- setdiff(names(sub), names(p_data))
     p_part <- p_data[pick_idx]
+    if (core1) {
+      # 1.0's join keeps every column of the child as it is and gives the
+      # parent's same-named columns a prefix, CO.RDOMAIN (join.py,
+      # _join_schemas). CDISC's engine lets the parent win, below.
+      shared <- setdiff(intersect(names(sub), names(p_data)), k)
+      p_part <- p_part[, setdiff(names(p_part), k), with = FALSE]
+      if (length(shared) > 0) {
+        data.table::setnames(p_part, shared, paste0(rd[idx[1]], ".", shared))
+      }
+      pieces[[gi]] <- cbind(sub, p_part)
+      next
+    }
+    keep <- setdiff(names(sub), names(p_data))
     unmatched <- is.na(pick_idx)
     if (any(unmatched)) {
       for (col in intersect(names(sub), names(p_data))) {

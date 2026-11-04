@@ -459,6 +459,12 @@ resolve_operation_reference <- function(value, bindings, dt) {
   if (is.null(value)) {
     return(NULL)
   }
+  # A list written out in the rule is that list (set_operation_base.py,
+  # _resolve_param). Read through its first element, CORE-000737's 41
+  # parameter codes were one.
+  if (length(value) > 1) {
+    return(as.character(unlist(value)))
+  }
   key <- as.character(value)[[1]]
   bound <- bindings[[key]]
   if (!is.null(bound)) {
@@ -984,6 +990,7 @@ implemented_operation_types <- c(
   "get_model_filtered_variables",
   "get_parent_model_column_order",
   "get_xhtml_errors",
+  "intersect",
   "codelist_extensible",
   "map",
   "max",
@@ -992,6 +999,7 @@ implemented_operation_types <- c(
   "min_date",
   "minus",
   "record_count",
+  "referenced_domain_variable_names",
   "required_variables",
   "study_domains",
   "valid_codelist_dates",
@@ -1239,7 +1247,58 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       if (is.null(right)) {
         return(scalar_binding(left))
       }
+      if (engine_is_core1()) {
+        # CORE 1.0's minus.py has one mode: the values of `name` not in
+        # `subtract`, once each, in `name`'s order, upper-cased first when
+        # case_sensitive is false. Order-sensitive subtraction against
+        # CORE-000737's 41 codes left codes the dataset has as "missing".
+        if (isFALSE(op$case_sensitive)) {
+          left <- toupper(left)
+          right <- toupper(right)
+        }
+        return(scalar_binding(unique(left[!is.na(left) & !left %in% right[!is.na(right)]])))
+      }
       scalar_binding(set_difference(left, right, isTRUE(op$order_insensitive)))
+    },
+    # CORE 1.0's intersect.py: the values of `name` also present in
+    # `subtract`, once each, in `name`'s order. Upper-cased first when
+    # case_sensitive is false (its default is true). CORE-000852 uses it to
+    # keep only the Library's variables that the dataset has.
+    intersect = {
+      left <- resolve_operation_reference(op$name, bindings, dt)
+      right <- resolve_operation_reference(op$subtract, bindings, dt)
+      if (is.null(left) || is.null(right)) {
+        return(NULL)
+      }
+      left <- as.character(left)
+      right <- as.character(right)
+      if (isFALSE(op$case_sensitive)) {
+        left <- toupper(left)
+        right <- toupper(right)
+      }
+      scalar_binding(unique(left[!is.na(left) & left %in% right[!is.na(right)]]))
+    },
+    # CORE 1.0's referenced_domain_variable_names.py: for each row, the
+    # variable names of the study's dataset whose domain is the value of the
+    # `name` column on that row (RDOMAIN in CORE-000712). The first dataset
+    # of a domain answers for it, and a domain the study lacks gives an empty
+    # set, as do rows when the column itself is absent. Domains are derived
+    # from dataset names, as 1.0 does.
+    referenced_domain_variable_names = {
+      column <- current_dataset$data[[op$name]]
+      n <- nrow(current_dataset$data)
+      domains <- core1_derive_domain(names(study$datasets))
+      by_domain <- list()
+      for (i in seq_along(domains)) {
+        if (nzchar(domains[i]) && is.null(by_domain[[domains[i]]])) {
+          vars <- toupper(names(study$datasets[[i]]$data))
+          by_domain[[domains[i]]] <- unique(vars[!startsWith(vars, ".")])
+        }
+      }
+      per_row_binding(lapply(seq_len(n), function(i) {
+        key <- if (is.null(column)) NA_character_ else as.character(column[[i]])
+        if (is.na(key) || is.null(by_domain[[key]])) character(0) else by_domain[[key]]
+      }))
     },
     get_column_order_from_dataset = if (is.null(dt)) NULL else scalar_binding(names(dt)),
     # The standard's expected variable order - see standard_variable_order(),

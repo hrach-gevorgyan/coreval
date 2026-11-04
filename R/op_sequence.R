@@ -157,7 +157,11 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
+  # `within` can name several columns (CORE-002016: USUBJID and MIDSTYPE).
+  # Taken as one, the second was dropped by `[[` with "subscript out of
+  # bounds" and the rule could not run.
+  within_col <- vapply(as.character(unlist(ctx$condition$within)),
+                       function(v) resolve_var_name(v, ctx$wildcard), character(1), USE.NAMES = FALSE)
   spec <- ctx$condition$value[[1]]
   sort_col <- resolve_var_name(spec$name, ctx$wildcard)
   dt <- ctx$dataset$data
@@ -167,8 +171,54 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   descending <- identical(spec$sort_order, "desc")
   null_first <- identical(spec$null_position, "first")
   raw <- dt[[sort_col]]
-  target_ord <- sequence_sort_key(ctx$target)
-  group <- dt[[within_col]]
+  group <- if (length(within_col) == 1) {
+    dt[[within_col]]
+  } else {
+    do.call(paste, c(lapply(within_col, function(v) {
+      x <- as.character(dt[[v]])
+      ifelse(is.na(x), "\x1eNA", x)
+    }), sep = "\x1f"))
+  }
+  target <- ctx$target
+  # CORE 1.0's `regex`: the target is the integer its first capture group
+  # holds, as `CAST((regexp_match(target, regex))[1] AS INTEGER)`, so MIDS
+  # "CHEMO2" sorts as 2. No match is a missing value.
+  if (!is.null(ctx$condition$regex)) {
+    hit <- regmatches(as.character(target), regexec(ctx$condition$regex, as.character(target), perl = TRUE))
+    target <- vapply(hit, function(m) if (length(m) >= 2) suppressWarnings(as.integer(m[[2]])) else NA_integer_,
+                     integer(1))
+  }
+  # CORE 1.0's `strict_incremental_ordering` (target_is_sorted_by_operator.py,
+  # _strict_incremental_sql): within each group, rows ordered by the sort
+  # columns must carry exactly 1, 2, 3, ... in that order. A missing target
+  # counts as sorted.
+  if (isTRUE(ctx$condition$strict_incremental_ordering)) {
+    keys <- lapply(ctx$condition$value, function(sp) {
+      col <- dt[[resolve_var_name(sp$name, ctx$wildcard)]]
+      x <- as.character(col)
+      x[is_blank(col)] <- NA_character_
+      x
+    })
+    decreasing <- vapply(ctx$condition$value, function(sp) identical(tolower(sp$sort_order %||% "asc"), "desc"),
+                         logical(1))
+    nulls_first <- vapply(ctx$condition$value, function(sp) identical(tolower(sp$null_position %||% "last"), "first"),
+                          logical(1))
+    position <- rep(NA_integer_, ctx$n)
+    for (g in unique(group)) {
+      idx <- which(group == g | (is.na(group) & is.na(g)))
+      parts <- list()
+      for (k in seq_along(keys)) {
+        v <- keys[[k]][idx]
+        parts <- c(parts, list(if (nulls_first[k]) !is.na(v) else is.na(v)),
+                   list(if (decreasing[k]) -xtfrm(v) else xtfrm(v)))
+      }
+      parts <- c(parts, list(seq_along(idx)))
+      position[idx[do.call(order, c(parts, list(method = "radix", na.last = TRUE)))]] <- seq_along(idx)
+    }
+    tv <- suppressWarnings(as.integer(target))
+    return(!(is.na(tv) | tv == position))
+  }
+  target_ord <- sequence_sort_key(target)
 
   result <- rep(FALSE, ctx$n)
   for (g in unique(group)) {
