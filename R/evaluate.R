@@ -940,7 +940,7 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     # populated --DUR value belongs to a variable the define says was not
     # collected.
     if (engine_is_core1() && identical(rule$rule_type, "Value Check against Define XML Variable")) {
-      out <- build_variable_value_check_dataset(dataset)
+      out <- value_table_for(dataset, domain)
       dv <- study$define$variables
       if (!is.null(dv) && nrow(dv) > 0) {
         own <- toupper(dv$define_dataset_name) %in%
@@ -1010,13 +1010,8 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     return(build_dataset_metadata_dataset(dataset, domain))
   }
   if (isTRUE(rule$rule_type %in% c("Value Check with Variable Metadata", "Value Check with Dataset Metadata"))) {
-    # Rebuilt for every rule of these two types on purpose. It is the same
-    # table each time, and caching it through cached_build() was measured:
-    # 28% faster on a 2.9 million record study, but peak memory rose from
-    # 2.9 GB to 4.4 GB, because the cached table and each rule's copy of it
-    # are alive together. A check that runs out of memory is worse than a
-    # slow one.
-    out <- build_variable_value_check_dataset(dataset)
+    # Shared between the rules on this dataset; see value_table_for().
+    out <- value_table_for(dataset, domain)
     # The Dataset Metadata variant carries the dataset's own facts on every
     # row: ValueCheckDatasetMetadataDatasetBuilder in CDISC's engine and
     # values.with_dataset_metadata() in 1.0 both do. Without them
@@ -1430,7 +1425,7 @@ core1_define_items_against_library <- function(study, domain) {
 #' @return A synthetic dataset.
 #' @noRd
 build_value_check_against_library <- function(dataset, study, domain) {
-  out <- build_variable_value_check_dataset(dataset)
+  out <- value_table_for(dataset, domain)
   lib <- library_variables_for(study, domain)
   lib <- lib[!duplicated(lib$variable), ]
   at <- match(out$data$variable_name, lib$variable)
@@ -1665,6 +1660,40 @@ core1_define_and_library_variables <- function(real_dataset, define, domain, stu
 #' @return A synthetic dataset with columns `variable_name`/`variable_data_type`/`variable_value`,
 #'   `.coreval_row_id` set to the original record number.
 #' @noRd
+#' The one-row-per-value table for a dataset, built once per dataset in a run
+#'
+#' Several rules on one dataset read the same table, and rebuilding it for
+#' each was a third of a pilot run. Only the current dataset's table is kept,
+#' so at most one is alive however many datasets a study has; each rule gets
+#' a new table over the same column vectors, which costs no copy. Measured on
+#' the pilot at ten times its size: 599s and 4.4 GB without it, 438s and
+#' 4.1 GB with it. (Keeping every dataset's table, each handed out as a full
+#' copy, had been measured earlier at 28% faster and 1.5 GB more, and turned
+#' down.)
+#'
+#' @param dataset The dataset, as read.
+#' @param domain Its key.
+#' @return `list(data, meta)`, see build_variable_value_check_dataset().
+#' @noRd
+value_table_for <- function(dataset, domain) {
+  cache <- .coreval_env$prep_cache
+  if (is.null(cache)) {
+    return(build_variable_value_check_dataset(dataset))
+  }
+  hit <- cache$value_table
+  if (is.null(hit) || !identical(hit$domain, domain)) {
+    cache$value_table <- NULL
+    hit <- list(domain = domain, built = build_variable_value_check_dataset(dataset))
+    cache$value_table <- hit
+  }
+  data <- hit$built$data
+  # A new table over the same column vectors: a rule adding or replacing a
+  # column changes only its own table. R copies a shared vector before
+  # changing it, and nothing modifies this table's columns in place.
+  shared <- data.table::setDT(stats::setNames(lapply(data, function(col) col), names(data)))
+  list(data = shared, meta = hit$built$meta)
+}
+
 build_variable_value_check_dataset <- function(real_dataset) {
   meta <- real_dataset$meta
   data <- real_dataset$data
@@ -1728,7 +1757,14 @@ build_variable_value_check_dataset <- function(real_dataset) {
           # already is. Left as NA it read as "not blank" to `empty`, which
           # keeps that meaning for a join's unmatched rows, and CORE-000356
           # missed every empty LBSEQ.
-          v <- as.character(data[[variables[i]]])
+          v <- data[[variables[i]]]
+          if (is.numeric(v)) {
+            # Each distinct number is turned into text once.
+            u <- unique(v)
+            v <- as.character(u)[match(v, u)]
+          } else {
+            v <- as.character(v)
+          }
           v[is.na(v)] <- ""
           out[((i - 1L) * n_records + 1L):(i * n_records)] <- v
         }

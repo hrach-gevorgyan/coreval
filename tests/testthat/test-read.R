@@ -537,3 +537,46 @@ test_that("a stray space in a CSV header is not part of the variable's name", {
   expect_equal(dm$data$STUDYID, "S1 ")
   expect_equal(dataset_class(dm, "DM"), "SPECIAL PURPOSE")
 })
+
+test_that("a transport file holding two datasets is refused, not read as rubbish rows", {
+  # haven read past the first dataset's end and returned the second one's
+  # header and records as extra rows, which the rules then reported on.
+  dir <- tempfile("coreval_members_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  ae <- file.path(dir, "ae.xpt")
+  dm <- file.path(dir, "dm.xpt")
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = c("1", "2"), AESEQ = 1:2),
+                   ae, version = 5, name = "AE")
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("1", "2", "3")),
+                   dm, version = 5, name = "DM")
+  one <- readBin(ae, "raw", file.size(ae))
+  other <- readBin(dm, "raw", file.size(dm))
+  # The library header is the first three 80-byte records; the DM member follows.
+  writeBin(c(one, other[-(1:240)]), ae)
+  unlink(dm)
+  expect_error(read_study(dir), "holds more than one dataset")
+})
+
+test_that("a stored SAS date keeps its declared numeric type", {
+  # haven hands it back as a Date, which is shown as ISO text; typing it
+  # Char from that text made a 10-character value out of an 8-byte number.
+  dir <- tempfile("coreval_sasdate_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  ex <- data.frame(STUDYID = "S1", DOMAIN = "EX", USUBJID = "1", EXSEQ = 1)
+  ex$EXSTDT <- 22000
+  attr(ex$EXSTDT, "format.sas") <- "DATE9"
+  haven::write_xpt(ex, file.path(dir, "ex.xpt"))
+  ds <- read_study(dir)$datasets$EX
+  expect_equal(ds$meta$type[ds$meta$variable == "EXSTDT"], "Num")
+  expect_equal(ds$data$EXSTDT, "2020-03-26")
+})
+
+test_that("a column with no values at all is an empty text column, not a number", {
+  # read.csv() and data.frame(x = NA) make it logical, and it was typed Num,
+  # so every empty column was reported by the data type rules.
+  built <- build_dataset_from_data_frame(data.frame(AETERM = "X", AEENDTC = NA))
+  expect_equal(built$meta$type, c("Char", "Char"))
+  expect_equal(built$data$AEENDTC, "")
+})

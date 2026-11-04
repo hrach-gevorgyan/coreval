@@ -136,7 +136,7 @@ domain_in_ig <- function(code, standard, version) {
   if (is.null(standard) || is.null(version) || !identical(toupper(standard), "SDTMIG")) {
     return(TRUE)
   }
-  want <- gsub("[.]", "-", as.character(version))
+  want <- normalise_version(version)
   # Asked for every rule on every dataset, so each version's domain list is
   # worked out once and kept; scanning the Library each time was a sixth of
   # a pilot run.
@@ -144,7 +144,8 @@ domain_in_ig <- function(code, standard, version) {
   in_version <- .coreval_env[[key]]
   if (is.null(in_version)) {
     lv <- .coreval_env$library_variables
-    in_version <- unique(toupper(lv$domain[tolower(lv$standard) == "sdtmig" & lv$version == want]))
+    in_version <- unique(toupper(lv$domain[tolower(lv$standard) == "sdtmig" &
+                                             normalise_version(lv$version) == want]))
     assign(key, in_version, envir = .coreval_env)
   }
   if (length(in_version) == 0) {
@@ -523,9 +524,12 @@ rule_ids_for_domain <- function(domain, use_case = NULL, dataset = NULL,
                                 include_deprecated = FALSE, applies = NULL) {
   rules <- .coreval_env$data$rules
   keep <- if (is.null(applies)) {
+    # The same `ig` run_checks() passes, so list_rules(domain = ) and a
+    # check agree on which rules a dataset gets.
     vapply(
       rules, rule_applies_to_domain, logical(1),
-      domain = domain, use_case = use_case, dataset = dataset
+      domain = domain, use_case = use_case, dataset = dataset,
+      ig = list(standard = standard, version = version)
     )
   } else {
     applies

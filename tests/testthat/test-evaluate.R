@@ -348,3 +348,21 @@ test_that("run_rule_on_domain resolves the standard from the rule on BOTH paths"
   expect_true(is.logical(out$violations))
   expect_named(out, c("dataset", "violations", "bindings"))
 })
+
+test_that("rules sharing a dataset's value table cannot change it for each other", {
+  old <- .coreval_env$prep_cache
+  .coreval_env$prep_cache <- new.env(parent = emptyenv())
+  on.exit(.coreval_env$prep_cache <- old, add = TRUE)
+  dataset <- list(data = data.table::data.table(A = c("x", "y"), B = c(1, 2)), meta = NULL)
+  first <- value_table_for(dataset, "XX")
+  # What the builders do to their table: add a column, replace one.
+  data.table::set(first$data, j = "library_variable_name", value = "A")
+  data.table::set(first$data, j = "variable_value", value = rep("changed", nrow(first$data)))
+  second <- value_table_for(dataset, "XX")
+  expect_false("library_variable_name" %in% names(second$data))
+  expect_equal(second$data$variable_value, c("x", "y", "1", "2"))
+  # Another dataset replaces the kept table rather than adding to it.
+  other <- value_table_for(list(data = data.table::data.table(C = "z"), meta = NULL), "YY")
+  expect_equal(other$data$variable_value, "z")
+  expect_identical(.coreval_env$prep_cache$value_table$domain, "YY")
+})

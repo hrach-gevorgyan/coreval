@@ -395,3 +395,11 @@ test_that("max_records = Inf keeps everything, and the cap changes nothing else"
   expect_setequal(unique(capped$findings$issue), unique(full$findings$issue))
   expect_true(nrow(capped$findings) < nrow(full$findings))
 })
+
+test_that("the report says a record count is a floor when records were capped", {
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = paste0("S1-", 1:5),
+                   SUBJID = as.character(1:5), RFSTDTC = "2024-13-01", AGE = 30, AGEU = "")
+  result <- check_dataset(dm, max_records = 1)
+  expect_gt(nrow(result$truncated), 0)
+  expect_match(paste(utils::capture.output(print(result)), collapse = "\n"), "or more record")
+})

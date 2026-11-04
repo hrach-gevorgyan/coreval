@@ -392,3 +392,32 @@ test_that("check_study takes a folder path, so read_study is optional", {
   expect_error(check_study("no-such-folder"), "no such folder")
   expect_error(check_study(c("a", "b")), "one folder path")
 })
+
+test_that("a single CSV is read with the same protections as a folder of them", {
+  dir <- tempfile("coreval_csv_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  write_lines <- function(name, lines) {
+    path <- file.path(dir, name)
+    writeLines(lines, path)
+    path
+  }
+  # A short last row was dropped as a footer, without an error.
+  expect_error(read_csv_dataset(write_lines("short.csv", c(
+    "STUDYID,DOMAIN,USUBJID,AETERM", "S1,AE,1,Rash", "S1,AE,2,Head", "S1,AE,3"
+  ))), "could not read all of")
+  # Extra values on every row shifted every column one place right.
+  expect_error(read_csv_dataset(write_lines("extra.csv", c(
+    "STUDYID,DOMAIN,USUBJID,AETERM", "S1,AE,1,Rash,x", "S1,AE,2,Head,y"
+  ))), "more values than the header")
+  # A stray space in the header hid the variable.
+  spaced <- read_csv_dataset(write_lines("spaced.csv", c("STUDYID ,AETERM ", "S1 ,Rash ")))
+  expect_equal(names(spaced), c("STUDYID", "AETERM"))
+  expect_equal(spaced$AETERM, "Rash ")
+  # A doubled quote inside a quoted field is one quote.
+  quoted <- read_csv_dataset(write_lines("quoted.csv", c("STUDYID,AETERM", 'S1,"Rash ""severe"""')))
+  expect_equal(quoted$AETERM, 'Rash "severe"')
+  # A semicolon-separated file is still read.
+  semi <- read_csv_dataset(write_lines("semi.csv", c("STUDYID;AETERM", "S1;Rash, mild")))
+  expect_equal(semi$AETERM, "Rash, mild")
+})

@@ -198,7 +198,7 @@ repair_doubled_quotes <- function(dt, path) {
     return(invisible(NULL))
   }
   affected <- char_cols[vapply(char_cols, function(v) {
-    any(grepl('""', dt[[v]], fixed = TRUE), na.rm = TRUE)
+    any(grepl('""', dt[[v]], fixed = TRUE, useBytes = TRUE), na.rm = TRUE)
   }, logical(1))]
   if (length(affected) == 0) {
     return(invisible(NULL))
@@ -373,6 +373,14 @@ read_sas_file <- function(path) {
          "because checking part of a dataset would miss problems in the rest.",
          call. = FALSE)
   }
+  # A transport file is a library and can hold several datasets. haven reads
+  # only the first, and carries on past its end, so the second dataset's
+  # header and records came back as extra rows of rubbish, and findings were
+  # reported against them.
+  if (xpt && xpt_member_count(path) > 1) {
+    stop("'", name, "' holds more than one dataset. Write each dataset to its own ",
+         ".xpt file, as a submission does. Nothing was checked.", call. = FALSE)
+  }
   out <- tryCatch(
     if (xpt) haven::read_xpt(path) else haven::read_sas(path),
     error = function(e) {
@@ -389,7 +397,24 @@ read_sas_file <- function(path) {
     lengths <- xpt_declared_lengths(path)
     if (length(lengths) == ncol(out)) attr(out, "coreval_lengths") <- lengths
   }
+  # Stored SAS dates are numbers, which haven hands back as dates; see
+  # build_dataset_from_data_frame().
+  attr(out, "coreval_sas") <- TRUE
   out
+}
+
+#' How many datasets a SAS transport file holds
+#'
+#' Counts the member header records, which start on an 80-byte record
+#' boundary in versions 5 and 8 alike.
+#'
+#' @param path A `.xpt` file.
+#' @return An integer.
+#' @noRd
+xpt_member_count <- function(path) {
+  raw <- readBin(path, "raw", n = file.size(path))
+  at <- grepRaw("HEADER RECORD*******MEMB", raw, fixed = TRUE, all = TRUE)
+  sum((at - 1) %% 80 == 0)
 }
 
 #' The declared length of each variable of a SAS transport file
@@ -446,6 +471,10 @@ build_dataset_from_data_frame <- function(raw) {
     if (is.null(lbl) || length(lbl) != 1L) NA_character_ else as.character(lbl)
   }, character(1))
 
+  # A SAS date is stored as a number, and the type rules must see the
+  # variable's declared type, not the text it is shown as here.
+  sas_dates <- isTRUE(attr(raw, "coreval_sas")) &
+    vapply(dt, function(col) inherits(col, c("POSIXt", "Date")), logical(1))
   for (v in names(dt)) {
     col <- dt[[v]]
     # Value labels are a display format; the rules read the stored values.
@@ -481,15 +510,28 @@ build_dataset_from_data_frame <- function(raw) {
     }
   }
 
+  # A column with no values at all comes back logical from read.csv(),
+  # fread() or data.frame(x = NA). It is an empty column of unknown type, not
+  # a number, and typing it Num had the type rules report every one of them.
+  # read_study_test_case() treats it the same way.
+  for (v in names(dt)) {
+    col <- dt[[v]]
+    if (is.logical(col) && all(is.na(col))) {
+      data.table::set(dt, j = v, value = rep(NA_character_, length(col)))
+    }
+  }
+
   fill_char_blanks(dt)
   repair_invalid_utf8(dt)
   labels <- fix_invalid_utf8(labels)
   settle_float_noise(dt)
 
+  type <- vapply(dt, function(col) if (is.character(col)) "Char" else "Num", character(1))
+  type[sas_dates[names(dt)]] <- "Num"
   meta <- data.table::data.table(
     variable = names(dt),
     label = unname(labels[names(dt)]),
-    type = vapply(dt, function(col) if (is.character(col)) "Char" else "Num", character(1))
+    type = type
   )
   # The declared lengths a transport file's header gives (read_sas_file()).
   lengths <- attr(raw, "coreval_lengths")
@@ -498,7 +540,10 @@ build_dataset_from_data_frame <- function(raw) {
   }
 
   dataset_label <- attr(raw, "label")
-  list(data = dt, meta = meta, label = if (is.null(dataset_label)) NA_character_ else dataset_label)
+  # Repaired like the variable labels, so a label with a stray Windows byte
+  # can still be compared rather than turning into NA.
+  dataset_label <- if (is.null(dataset_label)) NA_character_ else fix_invalid_utf8(dataset_label)
+  list(data = dt, meta = meta, label = dataset_label)
 }
 
 #' Read a CORE test-case `data/` directory into the internal study representation

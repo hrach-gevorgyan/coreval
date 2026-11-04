@@ -88,7 +88,17 @@ test_that("a CSV gives the same findings as the data frame it was written from",
   from_csv <- check_dataset(path, domain = "DM")
   from_df <- check_dataset(dm)
   key <- function(r) sort(paste(r$findings$rule_id, r$findings$Record, r$findings$Value))
-  expect_identical(key(from_csv), key(from_df))
+  # One difference is unavoidable. A CSV cannot say whether a column with no
+  # values held numbers or text (write.csv() writes a missing number and a
+  # missing string alike, as NA), so coreval reads it as text, and the data
+  # type rule compares DMDY as Char where the data frame says Num.
+  without_dmdy_type <- function(r) {
+    f <- r$findings
+    dmdy <- f$Record[f$rule_id == "CORE-001082" & f$Value == "DMDY"]
+    r$findings <- f[!(f$rule_id == "CORE-001082" & f$Record %in% dmdy), ]
+    r
+  }
+  expect_identical(key(without_dmdy_type(from_csv)), key(without_dmdy_type(from_df)))
 })
 
 test_that("a CSV in the Windows encoding is repaired like any other input", {

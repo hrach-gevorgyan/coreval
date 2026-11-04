@@ -336,7 +336,7 @@ apply_child_match <- function(dataset, study, keys) {
 
   groups <- split(
     seq_len(n),
-    paste(rd, idvar, blank_val, sep = "")
+    paste(rd, idvar, blank_val, sep = "\x1f")
   )
   # Visited in the order their FIRST child row appears, not hash order.
   # rbindlist() takes its column order from the first element it is given, and
@@ -740,13 +740,32 @@ apply_relrec_match <- function(dataset, study, current_domain) {
   # RELREC.x column was missing and each record was compared against the
   # column's name, so every FA record in a study relating only CM and AE was
   # reported.
-  my_side <- rr[toupper(trimws(rr$RDOMAIN)) == toupper(current_domain), ]
+  rr_domain <- toupper(trimws(rr$RDOMAIN))
+  mine <- rr_domain == toupper(current_domain)
+  my_side <- rr[mine, ]
   if (nrow(my_side) == 0) {
     return(list(data = left[0, ], meta = dataset$meta))
   }
   rr_subject <- if ("USUBJID" %in% names(rr)) key_text(rr$USUBJID) else rep("", nrow(rr))
   rr_subject[is.na(rr_subject)] <- ""
-  my_subject <- rr_subject[toupper(trimws(rr$RDOMAIN)) == toupper(current_domain)]
+  my_subject <- rr_subject[mine]
+
+  # Every lookup below is by index, built once per column. Scanning instead
+  # (re-reading a whole key column for each RELREC row) grew with the square
+  # of the study: ten times the pilot spent most of its time here.
+  index_of <- function(keys) {
+    ok <- !is.na(keys)
+    split(which(ok), keys[ok])
+  }
+  rows_for <- function(index, key) {
+    at <- if (length(key) == 1 && !is.na(key)) match(key, names(index)) else NA_integer_
+    if (is.na(at)) integer(0) else index[[at]]
+  }
+  # Partners share a RELID and a subject; a missing RELID pairs with nothing.
+  partner_index <- index_of(ifelse(is.na(rr$RELID), NA_character_,
+                                   paste(rr$RELID, rr_subject, sep = "\x1f")))
+  left_index <- list()
+  right_cache <- list()
 
   matched <- list()
   for (i in seq_len(nrow(my_side))) {
@@ -754,16 +773,18 @@ apply_relrec_match <- function(dataset, study, current_domain) {
     if (!(m$IDVAR %in% names(left))) {
       next
     }
-    left_qualifies <- if (!is_blank(m$IDVARVAL)) {
-      key_text(left[[m$IDVAR]]) ==
-        key_text(m$IDVARVAL, numeric = is.numeric(left[[m$IDVAR]]))
+    qualifying_idx <- if (!is_blank(m$IDVARVAL)) {
+      if (is.null(left_index[[m$IDVAR]])) {
+        left_index[[m$IDVAR]] <- index_of(key_text(left[[m$IDVAR]]))
+      }
+      rows_for(left_index[[m$IDVAR]],
+               key_text(m$IDVARVAL, numeric = is.numeric(left[[m$IDVAR]])))
     } else {
-      rep(TRUE, nrow(left))
+      seq_len(nrow(left))
     }
     if (!is_blank(m$USUBJID) && "USUBJID" %in% names(left)) {
-      left_qualifies <- left_qualifies & (left$USUBJID == m$USUBJID)
+      qualifying_idx <- qualifying_idx[which(left$USUBJID[qualifying_idx] == m$USUBJID)]
     }
-    qualifying_idx <- which(left_qualifies)
     if (length(qualifying_idx) == 0) {
       next
     }
@@ -772,25 +793,32 @@ apply_relrec_match <- function(dataset, study, current_domain) {
     # pairs RELREC rows on STUDYID, USUBJID and RELID (filter_relrec_for_domain,
     # data_processor.py). Paired on RELID alone, subject 001's record was
     # related to subject 002's whenever the two reused a RELID.
-    partners <- rr[rr$RELID == m$RELID &
-                     toupper(trimws(rr$RDOMAIN)) != toupper(current_domain) &
-                     rr_subject == my_subject[[i]], ]
+    together <- if (is.na(m$RELID)) integer(0) else
+      rows_for(partner_index, paste(m$RELID, my_subject[[i]], sep = "\x1f"))
+    partners <- rr[together[!mine[together]], ]
     for (j in seq_len(nrow(partners))) {
       p <- partners[j, ]
-      partner_ds <- domain_dataset(study, trimws(p$RDOMAIN))
+      partner_domain <- trimws(p$RDOMAIN)
+      if (is.null(right_cache[[partner_domain]])) {
+        right_cache[[partner_domain]] <- list(ds = domain_dataset(study, partner_domain), keys = list())
+      }
+      partner_ds <- right_cache[[partner_domain]]$ds
       if (is.null(partner_ds) || !(p$IDVAR %in% names(partner_ds$data))) {
         next
       }
       right <- partner_ds$data
 
-      right_key <- key_text(right[[p$IDVAR]])
+      if (is.null(right_cache[[partner_domain]]$keys[[p$IDVAR]])) {
+        right_cache[[partner_domain]]$keys[[p$IDVAR]] <- index_of(key_text(right[[p$IDVAR]]))
+      }
+      right_index <- right_cache[[partner_domain]]$keys[[p$IDVAR]]
       for (ri in qualifying_idx) {
         key_val <- if (!is_blank(p$IDVARVAL)) {
           key_text(p$IDVARVAL, numeric = is.numeric(right[[p$IDVAR]]))
         } else {
           key_text(left[[m$IDVAR]][ri], numeric = is.numeric(right[[p$IDVAR]]))
         }
-        right_idx <- which(right_key == key_val)
+        right_idx <- rows_for(right_index, key_val)
         # A GROUP-level relationship (both sides' RELREC row leave USUBJID
         # blank, common when IDVAR/IDVARVAL alone are meant to identify the
         # group) still only ever links records of the SAME subject in

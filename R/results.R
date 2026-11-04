@@ -1,20 +1,25 @@
 # Collects the `name` fields referenced in a Check tree, in order of first
-# appearance, excluding `$`-prefixed Operations bindings (those aren't real
-# dataset columns). Used as the fallback Output Variables set when a rule's
+# appearance. Used as the fallback Output Variables set when a rule's
 # Outcome doesn't specify one explicitly - confirmed against a real rule
 # (CORE-000001 has no `Output Variables`, and its reference results.csv
 # lists exactly its two Check condition names, in Check order: IECAT then
 # IEORRES).
+#
+# `$`-prefixed Operations bindings count too, as they do in both engines
+# (_extract_targets_from_conditions, rule_processor.py; get_target_columns,
+# compiler/targets.py: "$operation outputs always count as present"). Left
+# out, a rule whose Check names only a binding had nothing to report:
+# CORE-000579 found an empty dataset and reported nothing, and passed.
 #' Collect the `name` fields referenced in a Check tree, in first-appearance order
 #' @param check A Check node (or `NULL`).
 #' @param names_seen Accumulator of names collected so far.
-#' @return A character vector of column names (excluding `$`-prefixed Operations bindings).
+#' @return A character vector of names, `$`-prefixed Operations bindings included.
 #' @noRd
 collect_check_names <- function(check, names_seen = character(0)) {
   if (is.null(check)) {
     return(names_seen)
   }
-  if (!is.null(check$name) && is.character(check$name) && !startsWith(check$name, "$")) {
+  if (!is.null(check$name) && is.character(check$name)) {
     if (!(check$name %in% names_seen)) {
       names_seen <- c(names_seen, check$name)
     }
@@ -203,6 +208,13 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     n <- length(rows)
     if (startsWith(v, "$")) {
       resolved <- resolve_binding(bindings[[v]], dataset)
+      # A grouped binding this dataset cannot be joined to (it lacks the
+      # group columns) resolves to NULL. Returned as no values at all, the
+      # other variables' values were recycled into its place and each record
+      # was shown with another's.
+      if (is.null(resolved)) {
+        return(rep("", n))
+      }
       # A LIST holds one collection per row, so take that row's. An atomic
       # vector is ONE collection shared by every row (the same distinction
       # as_row_collections() makes), so the whole vector is the value.
@@ -324,6 +336,10 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       Value = as.vector(values)
     )
     attr(out, "records_found") <- records_found
+    # How many of those were kept. Not the number of distinct Records: a
+    # grouped rule can report several groups on one record (CORE-002062 puts
+    # all seven of a SUPPAE's on record 1), which read as six cut off.
+    attr(out, "records_kept") <- length(records)
     out
   }
 }
@@ -783,10 +799,11 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         max_records = max_records
       )
       found <- attr(findings, "records_found")
-      if (!is.null(found) && found > length(unique(findings$Record))) {
+      kept <- attr(findings, "records_kept") %||% length(unique(findings$Record))
+      if (!is.null(found) && found > kept) {
         all_truncated[[length(all_truncated) + 1]] <- data.table::data.table(
           rule_id = rule_id, domain = domain,
-          records_found = found, records_kept = length(unique(findings$Record))
+          records_found = found, records_kept = kept
         )
       }
       if (nrow(findings) > 0) {

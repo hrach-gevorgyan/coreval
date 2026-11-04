@@ -318,3 +318,44 @@ test_that("check_study() takes the standard/version its own report tells you to 
   expect_error(check_study(dir, standard = "NOPE"), "no bundled rule targets")
   expect_error(check_study(dir, version = "3.4"), "needs `standard` too")
 })
+
+test_that("a rule whose Check names only an Operations binding still reports what it finds (CORE-000579)", {
+  # Its only reportable name is `$records_in_dataset`, and bindings were left
+  # out of the fallback Output Variables, so an empty AE was found and then
+  # reported as nothing at all.
+  dir <- tempfile("coreval_empty_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("1", "2")),
+                   file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = character(0), DOMAIN = character(0),
+                              USUBJID = character(0), AESEQ = numeric(0)),
+                   file.path(dir, "ae.xpt"))
+  result <- check_study(dir, standard = "SDTMIG", version = "3.4")
+  f <- result$findings[result$findings$rule_id == "CORE-000579", ]
+  expect_equal(f$Dataset, "AE")
+  expect_equal(f$Variable, "$records_in_dataset")
+  expect_equal(f$Value, "0")
+})
+
+test_that("groups that share a record are all counted as kept, not as cut off (CORE-002062)", {
+  # Both groups are on record 1. Counting distinct records said one of two was
+  # kept, and the report listed the rule as truncated when nothing was cut.
+  data <- data.table::data.table(.coreval_row_id = c(1L, 1L), variable_name = c("A", "B"))
+  rule <- list(
+    sensitivity = "Group", grouping_variables = "variable_name",
+    outcome = list(`Output Variables` = "variable_name")
+  )
+  findings <- assemble_findings(rule, list(data = data, meta = NULL), "SUPPAE", c(TRUE, TRUE))
+  expect_equal(attr(findings, "records_found"), 2L)
+  expect_equal(attr(findings, "records_kept"), 2L)
+})
+
+test_that("a binding this dataset cannot be joined to reports blank, not another record's value", {
+  data <- data.table::data.table(A = c("x", "y", "z"))
+  bindings <- list(`$g` = grouped_binding("USUBJID", data.table::data.table(USUBJID = "1", v = 1), "v"))
+  rule <- list(sensitivity = "Record", outcome = list(`Output Variables` = c("A", "$g")))
+  findings <- assemble_findings(rule, list(data = data, meta = NULL), "TV", c(TRUE, TRUE, FALSE), bindings)
+  expect_equal(findings$Value[findings$Variable == "A"], c("x", "y"))
+  expect_equal(findings$Value[findings$Variable == "$g"], c("", ""))
+})

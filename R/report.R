@@ -517,6 +517,11 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
 
   n_problems <- length(unique(paste(f$Dataset, f$rule_id)))
   n_records <- count_records(f)
+  # Where a rule matched more records than max_records kept, a count of the
+  # kept records is a floor, and is said to be one, as summary() says it.
+  capped_sets <- if (is.null(x$truncated) || nrow(x$truncated) == 0) character(0) else
+    intersect(unique(x$truncated$domain), unique(f$Dataset))
+  floor_text <- function(sets) if (length(intersect(sets, capped_sets)) > 0) " or more" else ""
 
   if (nrow(f) == 0 && isTRUE(attr(x, "filtered"))) {
     # "Nothing to fix" would be a lie here: findings were filtered away, not
@@ -530,7 +535,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     where <- if (n_records == 0) {
       if (all(f$Dataset == "STUDY")) " about the study as a whole" else ""
     } else {
-      paste0(" across ", n_records, if (n_records == 1) " record" else " records")
+      paste0(" across ", n_records, floor_text(f$Dataset), if (n_records == 1) " record" else " records")
     }
     n_sets <- length(unique(f$Dataset))
     cat(
@@ -582,7 +587,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
         by_dataset[i], counts[i],
         if (counts[i] == 1) "problem" else "problems",
         if (recs[i] == 0) "" else
-          sprintf("%3d %s", recs[i], if (recs[i] == 1) "record" else "records")
+          sprintf("%3d%s %s", recs[i], floor_text(by_dataset[i]), if (recs[i] == 1) "record" else "records")
       ))
     }
 
@@ -618,7 +623,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     dropped <- attr(x, "excluded_by_standard")
     if (!is.null(dropped) && dropped > 0) {
       cat("\nScoped to ", attr(x, "standard"), ": ", dropped,
-        " rules belonging to other standards were not run.\n",
+        " rules written for other standards, or other versions of this one, were not run.\n",
         sep = ""
       )
     }

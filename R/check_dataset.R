@@ -181,14 +181,26 @@ read_csv_dataset <- function(path) {
     stop("'", name, "' is empty (0 bytes), so there is no dataset in it to check.",
          call. = FALSE)
   }
+  # Protections build_dataset_from_csv() also has, which explains them:
+  # header = TRUE stops a row with an extra field turning the header into
+  # data, and a comma in the header line fixes the separator, since trailing
+  # spaces inside fields can make fread choose whitespace. A file without one
+  # (semicolons, as some spreadsheets write) is still detected. Unlike a test
+  # case, a row with the wrong number of values is refused rather than padded:
+  # there is no telling which value is missing.
+  header_line <- readLines(path, n = 1L, warn = FALSE)
+  sep <- if (length(header_line) == 1 && grepl(",", header_line, fixed = TRUE, useBytes = TRUE)) "," else "auto"
   read <- function(...) {
     # Noted and raised once fread has returned: stopping inside its warning
     # leaves fread's own state half torn down for the next call.
     stopped <- NULL
     dt <- withCallingHandlers(
-      data.table::fread(path, na.strings = character(0), strip.white = FALSE, ...),
+      data.table::fread(path, na.strings = character(0), strip.white = FALSE,
+                        header = TRUE, sep = sep, ...),
       warning = function(w) {
-        if (grepl("Stopped early", conditionMessage(w), fixed = TRUE)) {
+        # "Discarded single-line footer" is a short LAST row, dropped without
+        # an error: a record lost as quietly as a short row anywhere else.
+        if (grepl("Stopped early|Discarded single-line footer", conditionMessage(w))) {
           stopped <<- sub("[.] Consider.*$", "", conditionMessage(w))
           invokeRestart("muffleWarning")
         }
@@ -202,6 +214,22 @@ read_csv_dataset <- function(path) {
     dt
   }
   dt <- read()
+  # More values on every row than the header names: fread invents a name for
+  # the extra column rather than stopping, but the values belong to no
+  # variable, and which variable each was meant for cannot be known.
+  header_names <- strsplit(header_line, ",", fixed = TRUE, useBytes = TRUE)[[1]]
+  if (sep == "," && ncol(dt) > length(header_names)) {
+    stop("could not read all of '", name, "': some rows have more values than the header ",
+         "names (", length(header_names), "), so there is no telling which variable each ",
+         "belongs to. Nothing was checked.", call. = FALSE)
+  }
+  repair_doubled_quotes(dt, path)
+  # A stray space in the header is not part of the name; see
+  # build_dataset_from_csv().
+  trimmed <- trimws(names(dt))
+  if (!identical(trimmed, names(dt)) && !anyDuplicated(trimmed)) {
+    data.table::setnames(dt, trimmed)
+  }
   dated <- names(dt)[vapply(dt, function(col) {
     inherits(col, c("Date", "POSIXt", "ITime"))
   }, logical(1))]

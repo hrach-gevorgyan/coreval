@@ -36,6 +36,12 @@ target_text <- function(x) {
   if (!is.numeric(x)) {
     return(x)
   }
+  # Formatting a number is slow and a column repeats few of them, so each
+  # distinct value is formatted once.
+  u <- unique(x)
+  if (length(u) < length(x)) {
+    return(target_text(u)[match(x, u)])
+  }
   whole <- !is.na(x) & is.finite(x) & x == round(x)
   out <- number_text(x)
   out[whole] <- sprintf("%.0f", x[whole])
