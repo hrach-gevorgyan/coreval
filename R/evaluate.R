@@ -1748,7 +1748,8 @@ build_variable_value_check_dataset <- function(real_dataset) {
   for (i in seq_along(variables)) {
     x <- data[[variables[i]]]
     len <- if (is.numeric(x)) {
-      nchar(gsub(".", "", sub("^0+", "", target_text(x)), fixed = TRUE))
+      u <- unique(x)
+      nchar(gsub(".", "", sub("^0+", "", target_text(u)), fixed = TRUE))[match(x, u)]
     } else {
       nchar(as.character(x))
     }

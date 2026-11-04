@@ -138,6 +138,19 @@ test_that("assemble_findings reports one finding per group for Sensitivity: Grou
   }
 })
 
+test_that("assemble_findings reports a grouped numeric binding row by row, not as one set (CORE-002062)", {
+  data <- data.table::data.table(variable_name = c("A", "A", "B"))
+  dataset <- list(data = data, meta = NULL)
+  table <- data.table::data.table(variable_name = c("A", "B"), .value = c(5, 12))
+  bindings <- list(`$max` = grouped_binding("variable_name", table, ".value"))
+  rule <- list(
+    sensitivity = "Group", grouping_variables = "variable_name",
+    outcome = list(`Output Variables` = c("variable_name", "$max"))
+  )
+  findings <- assemble_findings(rule, dataset, "SUPPAE", c(TRUE, TRUE, TRUE), bindings)
+  expect_equal(findings$Value[findings$Variable == "$max"], c("5", "12"))
+})
+
 test_that("assemble_findings treats a Domain Presence Check as Dataset-sensitivity regardless of its declared Sensitivity field", {
   # CORE-000183/CORE-000188 declare "Sensitivity: Record" despite being
   # Domain Presence Check rules - a whole-study-level FACT (is this domain

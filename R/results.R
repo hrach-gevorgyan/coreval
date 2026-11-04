@@ -214,6 +214,16 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       if (is.list(resolved)) {
         return(vapply(rows, function(r) format_binding_value(resolved[r]), character(1)))
       }
+      # A grouped or per-row binding is aligned to the rows whatever its type:
+      # a numeric aggregate (CORE-002062's maximum value length) is one number
+      # per row, not one set. Reading it as a set printed all 644 030 of
+      # SUPPLB's numbers into each of its findings.
+      if (!identical(bindings[[v]]$kind, "scalar")) {
+        x <- resolved[rows]
+        out <- as.character(x)
+        out[is.na(x)] <- ""
+        return(out)
+      }
       return(rep(format_binding_value(resolved), n))
     }
     x <- if (is_relrec_wildcard(v)) {

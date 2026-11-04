@@ -632,6 +632,13 @@ duration_regex_negative <- paste0("^[-]?", substring(duration_regex_positive, 2)
 #' @noRd
 is_valid_duration <- function(x, pattern) {
   x <- ifelse(is.na(x), "", x)
+  # Each distinct value is tested once: a column repeats a few values over
+  # many rows, and testing every row made this a third of a pilot run.
+  u <- unique(x)
+  valid_duration_each(u, pattern)[match(x, u)]
+}
+
+valid_duration_each <- function(x, pattern) {
   hits <- regmatches(x, regexec(pattern, x, perl = TRUE))
   vapply(hits, function(h) {
     if (length(h) == 0) {

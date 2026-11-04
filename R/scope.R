@@ -136,13 +136,21 @@ domain_in_ig <- function(code, standard, version) {
   if (is.null(standard) || is.null(version) || !identical(toupper(standard), "SDTMIG")) {
     return(TRUE)
   }
-  lv <- .coreval_env$library_variables
   want <- gsub("[.]", "-", as.character(version))
-  in_version <- lv$domain[tolower(lv$standard) == "sdtmig" & lv$version == want]
+  # Asked for every rule on every dataset, so each version's domain list is
+  # worked out once and kept; scanning the Library each time was a sixth of
+  # a pilot run.
+  key <- paste0("ig-domains-", want)
+  in_version <- .coreval_env[[key]]
+  if (is.null(in_version)) {
+    lv <- .coreval_env$library_variables
+    in_version <- unique(toupper(lv$domain[tolower(lv$standard) == "sdtmig" & lv$version == want]))
+    assign(key, in_version, envir = .coreval_env)
+  }
   if (length(in_version) == 0) {
     return(TRUE)
   }
-  toupper(code) %in% toupper(in_version)
+  toupper(code) %in% in_version
 }
 
 #' Test a rule's Scope > Classes block against a dataset

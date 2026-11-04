@@ -96,18 +96,38 @@ register_operator("suffix_not_equal_to", function(ctx) {
 # side is not a substring of anything.
 register_operator("is_substring_of", guarded_op(function(ctx) {
   target <- as.character(ctx$target)
-  inside <- function(needle, haystack) {
-    haystack <- haystack[!is.na(haystack) & nzchar(haystack)]
-    length(haystack) > 0 && any(vapply(haystack, function(h) grepl(needle, h, fixed = TRUE), logical(1)))
+  clean <- function(h) {
+    h <- as.character(unlist(h))
+    h[!is.na(h) & nzchar(h)]
   }
-  per_row <- is.list(ctx$value) && length(ctx$value) == ctx$n
-  vapply(seq_along(target), function(i) {
-    if (is_blank(target[i])) {
-      return(FALSE)
-    }
-    hay <- if (per_row) ctx$value[[i]] else if (length(ctx$value) == ctx$n) ctx$value[i] else ctx$value
-    inside(target[i], as.character(unlist(hay)))
-  }, logical(1))
+  inside <- function(needle, haystack) {
+    length(haystack) > 0 && any(grepl(needle, haystack, fixed = TRUE))
+  }
+  out <- rep(FALSE, length(target))
+  todo <- !is_blank(target)
+  # Each distinct case is decided once: a value against one shared set, or a
+  # value against its own row's comparator. Deciding row by row made this
+  # operator a third of a pilot run.
+  if (is.list(ctx$value) && length(ctx$value) == ctx$n) {
+    idx <- which(todo)
+    out[idx] <- vapply(idx, function(i) inside(target[i], clean(ctx$value[[i]])), logical(1))
+  } else if (length(ctx$value) == ctx$n) {
+    hay <- as.character(ctx$value)
+    # Keyed by number, not by pasting the two texts: a comparator can be a
+    # whole codelist (CORE-002123), and pasting it onto every row was slower
+    # than the test it saved.
+    ut <- unique(target)
+    key <- match(target, ut) + (match(hay, unique(hay)) - 1) * length(ut)
+    first <- which(todo & !duplicated(key))
+    hit <- vapply(first, function(i) inside(target[i], clean(hay[i])), logical(1))
+    out[todo] <- hit[match(key[todo], key[first])]
+  } else {
+    hay <- clean(ctx$value)
+    distinct <- unique(target[todo])
+    hit <- vapply(distinct, inside, logical(1), haystack = hay)
+    out[todo] <- hit[match(target[todo], distinct)]
+  }
+  out
 }))
 register_operator("is_not_substring_of", function(ctx) {
   !get_operator("is_substring_of")(ctx)
@@ -180,8 +200,9 @@ register_operator("invalid_date_interval", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
-  x <- as.character(ctx$target)
-  x[is.na(x)] <- ""
+  all_x <- as.character(ctx$target)
+  all_x[is.na(all_x)] <- ""
+  x <- unique(all_x)
   shaped <- grepl("^[^/]+/[^/]+$", x)
   start <- sub("/.*$", "", x)
   end <- sub("^[^/]*/", "", x)
@@ -189,7 +210,7 @@ register_operator("invalid_date_interval", function(ctx) {
   dur_ok <- function(p) is_valid_duration(p, duration_regex_positive)
   valid <- shaped & ((date_ok(start) & date_ok(end)) | (date_ok(start) & dur_ok(end)) |
                        (dur_ok(start) & date_ok(end)))
-  !valid
+  !valid[match(all_x, x)]
 })
 
 # The external-dictionary checks: MedDRA, WHODrug, UNII, LOINC, SNOMED CT and
@@ -275,6 +296,12 @@ register_operator("is_not_latest_available_external_dictionary_version", functio
 core1_invalid_date <- function(x) {
   x <- as.character(x)
   x[is.na(x)] <- ""
+  # Each distinct value is tested once, as in is_valid_duration().
+  u <- unique(x)
+  core1_invalid_date_each(u)[match(x, u)]
+}
+
+core1_invalid_date_each <- function(x) {
   has <- function(p) grepl(p, x, perl = TRUE)
   out <- rep(TRUE, length(x))
   decided <- !nzchar(x)
