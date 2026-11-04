@@ -352,7 +352,26 @@ v1_results_csv <- function(results_json, rule, frames = list()) {
   # saw in that cell, so a wrong guess about the layout stops the run.
   long_rows <- isTRUE(rule$rule_type %in% c("Value Check with Variable Metadata",
                                              "Value Check with Dataset Metadata",
-                                             "Value Check against Define XML Variable"))
+                                             "Value Check against Define XML Variable",
+                                             "Value Check against Library Metadata"))
+  # A Global Value Check numbers its rows across the study's variable summary,
+  # every dataset with records in turn (lengths.py), so a row is mapped to its
+  # dataset's variable position, and proved against the variable reported.
+  global_rows <- identical(rule$rule_type, "Global Value Check with Variable Metadata")
+  to_variable <- function(name, e) {
+    offset <- 0L
+    for (k in names(frames)) {
+      if (identical(k, name)) break
+      if (nrow(frames[[k]]) > 0) offset <- offset + ncol(frames[[k]])
+    }
+    pos <- e$row - offset
+    var <- e$value$variable_name
+    if (is.null(frames[[name]]) || pos < 1 || pos > ncol(frames[[name]]) ||
+        (!is.null(var) && !identical(toupper(names(frames[[name]])[pos]), toupper(var)))) {
+      stop("1.0 row ", e$row, " of ", name, " does not map to its variable ", var %||% "", call. = FALSE)
+    }
+    as.character(pos)
+  }
   to_record <- function(name, e) {
     frame <- frames[[name]]
     var <- e$value$variable_name
@@ -403,6 +422,8 @@ v1_results_csv <- function(results_json, rule, frames = list()) {
         ""
       } else if (long_rows) {
         to_record(name, e)
+      } else if (global_rows) {
+        to_variable(name, e)
       } else {
         as.character(e$row)
       }
@@ -489,6 +510,10 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
   # tagging file yet.
   if (file.exists(file.path(data_in, "define.xml"))) {
     file.copy(file.path(data_in, "define.xml"), file.path(data_out, "define.xml"))
+  }
+  # The study tagging file, which coreval reads apart from the define.
+  if (file.exists(file.path(data_in, "stf.xml"))) {
+    file.copy(file.path(data_in, "stf.xml"), file.path(data_out, "stf.xml"))
   }
 
   expected <- v1_results_csv(file.path(case_dir, "results", "results.json"), rule, frames)

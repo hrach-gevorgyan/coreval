@@ -91,6 +91,12 @@ domain_class <- function(domain) {
 #' @noRd
 dataset_class <- function(dataset, key, ig = NULL) {
   code <- if (is.null(dataset)) toupper(key) else dataset_unsplit_name(dataset, key)
+  # For a CORE 1.0 rule (`ig` given) the domain comes from the dataset's name,
+  # as 1.0 derives it (core1_derive_domain()), not from its DOMAIN column:
+  # CORE-000786's ti.xpt holds DOMAIN = PR and is still TI, Trial Design.
+  if (!is.null(ig)) {
+    code <- core1_derive_domain(key)
+  }
   # CORE 1.0 looks the class up in the declared Implementation Guide version
   # only (SdtmStandardsContext.derive_class). A domain that version does not
   # define, such as SM under SDTMIG 3.2 or the SEND domain TX under 3.4, has
@@ -242,7 +248,7 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   # retry this without measuring the whole sweep.
   # A CORE 1.0 rule takes the class from the declared SDTMIG version only.
   # See dataset_class().
-  ig <- if (identical(rule$source, "core_contributor")) ig else NULL
+  ig <- if (identical(rule$source, "core_contributor")) ig %||% list() else NULL
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain, dataset, ig)) {
     return(FALSE)
   }

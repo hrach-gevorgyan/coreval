@@ -17,6 +17,18 @@
     the dataset name in a Value Check with Dataset Metadata rule, and a
     written-out list read as its first item. Rules naming metadata coreval
     does not build yet are skipped with the reason instead.
+  - New rule types for 1.0's rules: dataset contents against the define
+    (class, IsNonStandard, whether the define's key variables identify each
+    record), define items, values against the define's value-level metadata
+    and against the Library's codelists, the study-wide variable length
+    check, and the study tagging file (`stf.xml`, now read beside the
+    define).
+  - The FDA guides list and Data Standards Catalog, and the ISO 3166 and
+    GENC country lists, are bundled from 1.0's engine for the rules that
+    read them. Rules that need MedDRA, WHODrug, UNII, LOINC, SNOMED CT or
+    MED-RT say which dictionary they need.
+  - `contains` against a column now checks each record. Asked whether each
+    COUNTRY was a valid code, it answered once for the whole dataset.
 
 * **Findings that were not real.**
   - A RELREC relationship linked records of different subjects whenever the

@@ -26,7 +26,9 @@ and written into every findings file.
 Where CORE 1.0's engine, verisianHQ/cdisc-rules-engine, reads a rule
 differently from CDISC's, coreval follows it for the 1.0 rules. That engine is
 a fork of cdisc-org/cdisc-rules-engine under the same MIT notice reproduced
-below; no code from it is bundled.
+below. No code from it is bundled; a few small reference tables are (see
+core1_reference.rds), at the commit recorded in
+data-raw/UPSTREAM_SHA_CORE1_ENGINE.
 
 
 inst/extdata/rules.rds
@@ -37,6 +39,15 @@ guidance and conformance-rule identifiers - extracted at build time from a
 pinned commit of each. The SDTMIG rules come from core-contributor, where CORE
 1.0 moved them; everything else, and CDISC's own version of a rule both carry
 for the SEND and TIG studies it names, comes from cdisc-open-rules.
+
+inst/extdata/core1_reference.rds
+--------------------------------
+From verisianHQ/cdisc-rules-engine. Reference tables CORE 1.0's own rules
+read: the FDA-supported Therapeutic Area User Guides and the rows of the FDA
+Data Standards Catalog (resources/helper_data/), and the ISO 3166-1 and GENC
+country names and codes (sql_operations/get_countries.py). They restate
+public FDA, ISO and GENC information as that repository publishes it, under
+its MIT notice reproduced below.
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds

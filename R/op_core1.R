@@ -217,10 +217,49 @@ local({
   }
   register_operator("is_valid_whodrug_level_reference", dictionary_refusal("the WHODrug dictionary"))
   register_operator("is_not_valid_whodrug_level_reference", dictionary_refusal("the WHODrug dictionary"))
-  register_operator("is_latest_available_external_dictionary_version",
-                    dictionary_refusal("the external dictionaries the study names"))
-  register_operator("is_not_latest_available_external_dictionary_version",
-                    dictionary_refusal("the external dictionaries the study names"))
+})
+
+# is_latest_available_exdict_version.py: the dictionary release that was
+# current on the target date (the newest released on or before it) is the
+# version given. 1.0 knows MedDRA's release dates and no other dictionary's,
+# and refuses the rest; a date before the earliest release it knows has no
+# current release, so it is never the latest.
+meddra_release_dates <- c(
+  "29.0" = "2026-03-01", "28.1" = "2025-09-01", "28.0" = "2025-03-01", "27.1" = "2024-09-01",
+  "27.0" = "2024-03-01", "26.1" = "2023-09-01", "26.0" = "2023-03-01", "25.1" = "2022-09-01",
+  "25.0" = "2022-03-01", "24.1" = "2021-09-01", "24.0" = "2021-03-01", "23.1" = "2020-09-01"
+)
+latest_exdict <- function(ctx) {
+  if (!identical(tolower(ctx$condition$external_dictionary_type %||% ""), "meddra")) {
+    stop("no release dates are known for the ", ctx$condition$external_dictionary_type,
+         " dictionary", call. = FALSE)
+  }
+  ref <- ctx$condition$version
+  version <- if (is.character(ref) && startsWith(ref, "$")) {
+    b <- ctx$bindings[[ref]]
+    if (is.null(b)) stop("cannot resolve ", ref, call. = FALSE)
+    as.character(b$value)
+  } else if (is.character(ref) && ref %in% names(ctx$dataset$data)) {
+    as.character(ctx$dataset$data[[ref]])
+  } else {
+    as.character(ref)
+  }
+  when <- suppressWarnings(as.Date(substr(as.character(ctx$target), 1, 10)))
+  dates <- as.Date(meddra_release_dates)
+  current <- vapply(when, function(d) {
+    if (is.na(d)) return(NA_character_)
+    ok <- names(meddra_release_dates)[dates <= d]
+    if (length(ok)) ok[which.max(dates[dates <= d])] else NA_character_
+  }, character(1))
+  current == rep_len(version, length(current))
+}
+register_operator("is_latest_available_external_dictionary_version", function(ctx) {
+  if (!ctx$exists) return(rep(FALSE, ctx$n))
+  latest_exdict(ctx) %in% TRUE
+})
+register_operator("is_not_latest_available_external_dictionary_version", function(ctx) {
+  if (!ctx$exists) return(rep(FALSE, ctx$n))
+  !(latest_exdict(ctx) %in% TRUE)
 })
 
 #' Is each value an invalid date, by CORE 1.0's test?
@@ -268,4 +307,52 @@ core1_invalid_date <- function(x) {
     md %in% c("04-31", "06-31", "09-31", "11-31", "02-30", "02-31") | substr(x, 9, 10) == "00"
   decide(iso, bad_time | bad_basic | calendar)
   out
+}
+
+#' The study-wide variable length summary CORE 1.0's length rules read
+#'
+#' A port of `variable_length_summary()` (compiler/sources/lengths.py): one row
+#' per variable of every dataset that has records, in dataset order, with the
+#' declared length and the length of the variable's longest value as text. A
+#' dataset whose declared lengths are not known (a transport file read through
+#' haven) cannot take part, and the rule is refused rather than answered
+#' without it.
+#'
+#' @param study The study.
+#' @return A data.table: dataset_name, variable_name, variable_label,
+#'   variable_data_type, variable_length, variable_order_number,
+#'   variable_max_value_length.
+#' @noRd
+global_length_summary <- function(study) {
+  pieces <- list()
+  for (key in names(study$datasets)) {
+    ds <- study$datasets[[key]]
+    if (is.null(ds$data) || nrow(ds$data) == 0 || ncol(ds$data) == 0) next
+    meta <- ds$meta
+    if (is.null(meta) || !"length" %in% names(meta) || anyNA(meta$length)) {
+      stop("needs every dataset's declared variable lengths, and ", key, " does not record them",
+           call. = FALSE)
+    }
+    vars <- names(ds$data)[!startsWith(names(ds$data), ".")]
+    at <- match(vars, meta$variable)
+    longest <- vapply(vars, function(v) {
+      x <- ds$data[[v]]
+      len <- nchar(if (is.numeric(x)) target_text(x) else as.character(x))
+      len <- len[!is.na(x)]
+      if (length(len)) max(len) else NA_real_
+    }, numeric(1))
+    pieces[[length(pieces) + 1]] <- data.table::data.table(
+      dataset_name = key, variable_name = toupper(vars),
+      variable_label = ifelse(is.na(at), "", meta$label[at]),
+      variable_data_type = ifelse(is.na(at), "", meta$type[at]),
+      variable_length = ifelse(is.na(at), 0, meta$length[at]),
+      variable_order_number = ifelse(is.na(at), 0, at),
+      variable_max_value_length = unname(longest)
+    )
+  }
+  if (!length(pieces)) {
+    return(data.table::data.table(dataset_name = character(0), variable_name = character(0),
+                                  variable_length = numeric(0), variable_max_value_length = numeric(0)))
+  }
+  data.table::rbindlist(pieces)
 }

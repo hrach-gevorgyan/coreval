@@ -19,10 +19,11 @@
 #'   on one file, so it has to be asked for. Without it, a folder holding only
 #'   a USDM document is refused with a message saying so, never read as empty.
 #' @return A study object: `list(datasets = <named list of domain ->
-#'   list(data, meta, label)>, define, ct = NULL, standard =
+#'   list(data, meta, label)>, define, stf, ct = NULL, standard =
 #'   list(product, version))`. `define` is the parsed Define-XML if one was
 #'   found in `path` and the `xml2` package is installed, and `NULL`
-#'   otherwise; `ct` is always `NULL`. Each `data` is a
+#'   otherwise; `stf` likewise holds the study tagging file (`stf*.xml`),
+#'   one row per document file tag; `ct` is always `NULL`. Each `data` is a
 #'   [data.table::data.table()];
 #'   each `meta` is a data.table with columns `variable`, `label`, `type`;
 #'   `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
@@ -162,6 +163,7 @@ read_study_folder <- function(path, skip = character(0)) {
             "own, with usdm = TRUE.", call. = FALSE)
   }
   list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
+       stf = read_stf_xml(find_stf_xml(path)),
        ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
 
@@ -530,7 +532,8 @@ read_study_test_case <- function(path) {
          paste(dup, collapse = ", "), call. = FALSE)
   }
 
-  list(datasets = datasets, define = read_define_xml(find_define_xml(path)), ct = NULL, standard = read_env_standard(path))
+  list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
+       stf = read_stf_xml(find_stf_xml(path)), ct = NULL, standard = read_env_standard(path))
 }
 
 # A CORE test case's `.env` file declares which standard/version its data

@@ -101,6 +101,13 @@ register_operator("contains", guarded_op(function(ctx) {
   # collection elementwise against the rows instead flagged every record of
   # every case, including the one where SNDIGVER is plainly there.
   if (isTRUE(ctx$target_is_collection)) {
+    # Against a COLUMN, though, the question is asked of each record: is this
+    # record's value in the set? CORE-002075 asks whether each COUNTRY is one
+    # of the GENC codes. Answered once for the dataset, one valid code made
+    # every record pass.
+    if (isTRUE(attr(ctx$value, "coreval_per_row"))) {
+      return(as.character(ctx$value) %in% as.character(ctx$target))
+    }
     return(rep(any(as.character(ctx$value) %in% as.character(ctx$target)), ctx$n))
   }
   if (is.list(ctx$target)) {
@@ -121,6 +128,9 @@ register_operator("does_not_contain", function(ctx) {
 # regardless.
 register_operator("contains_case_insensitive", guarded_op(function(ctx) {
   if (isTRUE(ctx$target_is_collection)) {
+    if (isTRUE(attr(ctx$value, "coreval_per_row"))) {
+      return(toupper(as.character(ctx$value)) %in% toupper(as.character(ctx$target)))
+    }
     return(rep(
       any(toupper(as.character(ctx$value)) %in% toupper(as.character(ctx$target))),
       ctx$n

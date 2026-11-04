@@ -667,8 +667,7 @@ assert_referenced_metadata_available <- function(rule, dataset) {
   # Variables) shows as blank in the finding, which is visible, not silent.
   unbuilt_fields <- c(
     "define_dataset_class", "define_dataset_is_non_standard",
-    "define_key_sequence_is_unique", "define_variable_codelist_coded_values",
-    "define_vlm_ccode", "file_tag_name",
+    "define_key_sequence_is_unique",
     "variable_length"
   )
   checked <- collect_rule_targets(list(check = rule$check))
@@ -913,6 +912,30 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
       paste0("defineitem", domain),
       function() build_define_item_metadata_dataset(study, domain)
     ))
+  }
+  # CORE 1.0's study-wide length check: this dataset's rows of the summary
+  # (global_length_summary()); the operations read the whole of it.
+  if (identical(rule$rule_type, "STF Metadata Check")) {
+    if (is.null(study$stf)) {
+      stop("needs the study tagging file (stf.xml), and this study has none", call. = FALSE)
+    }
+    return(list(data = data.table::copy(study$stf), meta = NULL))
+  }
+  if (identical(rule$rule_type, "Global Value Check with Variable Metadata")) {
+    summary <- global_length_summary(study)
+    return(list(data = summary[summary$dataset_name == domain], meta = NULL))
+  }
+  if (identical(rule$rule_type, "Value Check against Library Metadata")) {
+    return(build_value_check_against_library(dataset, study, domain))
+  }
+  if (identical(rule$rule_type, "Value Check against Define XML VLM")) {
+    return(build_define_vlm_value_dataset(dataset, study, domain))
+  }
+  if (identical(rule$rule_type, "Define Item Metadata Check")) {
+    return(build_define_items_dataset(study, domain))
+  }
+  if (identical(rule$rule_type, "Dataset Contents Check against Define XML")) {
+    return(build_dataset_contents_against_define(dataset, study, domain))
   }
   if (identical(rule$rule_type, "Dataset Metadata Check")) {
     return(build_dataset_metadata_dataset(dataset, domain))
@@ -1317,6 +1340,199 @@ core1_define_items_against_library <- function(study, domain) {
   key <- ifelse(is.na(data$define_variable_name), data$library_variable_name, data$define_variable_name)
   data <- data[order(toupper(key), method = "radix")]
   list(data = data, meta = NULL)
+}
+
+#' Each value with its variable's Library metadata and codelist terms
+#'
+#' For "Value Check against Library Metadata": CORE 1.0's
+#' `values.against_library()`. One row per (record, variable), with the
+#' Library's fields for the variable and, where the Library gives it a
+#' codelist, that codelist's terms in the study's terminology package written
+#' as PostgreSQL writes a text array (`{"NOT HISPANIC OR LATINO",UNKNOWN}`),
+#' sorted, which is what 1.0's rules test with is_not_substring_of. A study
+#' that names no terminology package has no terms to give, and is refused.
+#'
+#' @param dataset The dataset being checked.
+#' @param study The study.
+#' @param domain The dataset's key.
+#' @return A synthetic dataset.
+#' @noRd
+build_value_check_against_library <- function(dataset, study, domain) {
+  out <- build_variable_value_check_dataset(dataset)
+  lib <- library_variables_for(study, domain)
+  lib <- lib[!duplicated(lib$variable), ]
+  at <- match(out$data$variable_name, lib$variable)
+  data.table::set(out$data, j = "library_variable_name", value = lib$variable[at])
+  data.table::set(out$data, j = "library_variable_label", value = lib$label[at])
+  data.table::set(out$data, j = "library_variable_role", value = lib$role[at])
+  data.table::set(out$data, j = "library_variable_data_type", value = lib$type[at])
+  data.table::set(out$data, j = "library_variable_core", value = lib$core[at])
+  ccode <- lib$ccode[at]
+  data.table::set(out$data, j = "library_variable_ccode", value = ccode)
+  if (is.null(study$ct_package)) {
+    stop("needs controlled terminology, and this study does not say which version it follows. ",
+         "Pass ct_package (see list_ct_packages())", call. = FALSE)
+  }
+  tbl <- ct_codelists()
+  rows <- tbl[tbl$package %in% study$ct_package, ]
+  pg_array <- function(terms) {
+    terms <- sort(unique(terms[!is.na(terms)]), method = "radix")
+    needs_quotes <- !nzchar(terms) | grepl('[{},"[:space:]]', terms) | grepl("\\", terms, fixed = TRUE) |
+      toupper(terms) == "NULL"
+    escaped <- gsub('"', '\\"', gsub("\\", "\\\\", terms, fixed = TRUE), fixed = TRUE)
+    quoted <- ifelse(needs_quotes, paste0('"', escaped, '"'), terms)
+    paste0("{", paste(quoted, collapse = ","), "}")
+  }
+  arrays <- vapply(split(rows$term_values, rows$codelist_code), function(tv) {
+    pg_array(unlist(strsplit(tv, "\x1f", fixed = TRUE)))
+  }, character(1))
+  values <- unname(arrays[ccode])
+  data.table::set(out$data, j = "library_variable_ccode_values", value = values)
+  data.table::set(out$data, j = "library_variable_codelist_value", value = rows$codelist[match(ccode, rows$codelist_code)])
+  out
+}
+
+#' Each record's value checked against the define's value-level metadata
+#'
+#' For "Value Check against Define XML VLM": CORE 1.0's `against_define_vlm()`
+#' (compiler/sources/value_level.py). For each value-level item the define
+#' gives a variable of this dataset, the records its where clause selects,
+#' each with `variable_name` (the variable), `variable_value` (its value on
+#' that record), the item's `define_vlm_*` fields, and the record's own
+#' columns. An item whose variable the dataset lacks, or whose where clause
+#' cannot be read, is skipped, as it is there.
+#'
+#' @param dataset The dataset being checked.
+#' @param study The study.
+#' @param domain The dataset's key.
+#' @return A synthetic dataset, `.coreval_row_id` the record.
+#' @noRd
+build_define_vlm_value_dataset <- function(dataset, study, domain) {
+  vlms <- study$define$vlms
+  data <- dataset$data
+  names_here <- toupper(c(domain, dataset_unsplit_name(dataset, domain)))
+  pieces <- list()
+  if (!is.null(vlms) && nrow(vlms) > 0) {
+    vlms <- vlms[toupper(vlms$define_dataset_name) %in% names_here, ]
+    item_cols <- setdiff(names(vlms), c("where", "define_dataset_name"))
+    record_cols <- setdiff(names(data), c("variable_name", "variable_value", item_cols))
+    for (i in seq_len(nrow(vlms))) {
+      var <- vlms$define_variable_name[i]
+      if (!var %in% names(data)) next
+      hit <- vlm_where_matches(vlms$where[[i]], data)
+      if (is.null(hit) || !any(hit)) next
+      idx <- which(hit)
+      piece <- data.table::data.table(
+        .coreval_row_id = idx,
+        variable_name = var,
+        variable_value = as.character(data[[var]][idx])
+      )
+      for (col in item_cols) data.table::set(piece, j = col, value = rep(vlms[[col]][i], length(idx)))
+      for (col in record_cols) data.table::set(piece, j = col, value = data[[col]][idx])
+      pieces[[length(pieces) + 1]] <- piece
+    }
+  }
+  out <- if (length(pieces)) data.table::rbindlist(pieces, use.names = TRUE, fill = TRUE) else
+    data.table::data.table(.coreval_row_id = integer(0), variable_name = character(0),
+                           variable_value = character(0), define_vlm_ccode = character(0))
+  list(data = out, meta = NULL)
+}
+
+#' The define.xml variables of one dataset, one row each
+#'
+#' For the rule type "Define Item Metadata Check": CORE 1.0's
+#' `define_items()` (compiler/sources/variables.py), the define's own
+#' variable metadata and nothing else, in define order. A list-valued field,
+#' such as the codelist's coded values, is written as 1.0 writes it,
+#' comma-joined (store.py, format_metadata_dict), and an empty one is missing.
+#'
+#' @param study The study.
+#' @param domain The dataset's key.
+#' @return A synthetic dataset.
+#' @noRd
+build_define_items_dataset <- function(study, domain) {
+  dv <- study$define$variables
+  if (is.null(dv) || nrow(dv) == 0) {
+    return(list(data = data.table::data.table(), meta = NULL))
+  }
+  names_here <- toupper(c(domain, dataset_unsplit_name(study$datasets[[domain]], domain)))
+  dv <- data.table::as.data.table(dv[toupper(dv$define_dataset_name) %in% names_here, ])
+  dv <- dv[!duplicated(dv$define_variable_name)]
+  dv$define_dataset_name <- NULL
+  for (col in names(dv)) {
+    if (is.list(dv[[col]])) {
+      joined <- vapply(dv[[col]], function(v) if (length(v)) paste(v, collapse = ",") else NA_character_,
+                       character(1))
+      data.table::set(dv, j = col, value = joined)
+    }
+  }
+  list(data = dv, meta = NULL)
+}
+
+#' A dataset's records with its define.xml dataset metadata on each
+#'
+#' A port of `contents_against_define()` (compiler/sources/records.py in CORE
+#' 1.0's engine), for the rule type "Dataset Contents Check against Define
+#' XML": every record, plus the dataset's own name, label and domain and the
+#' define's fields for it (class, structure, IsNonStandard, ...) where the
+#' dataset has no column of that name, plus `define_key_sequence_is_unique`,
+#' whether the define's key variables identify the record. A key that is a
+#' supplemental qualifier lives in SUPP--, so the record's qualifiers are
+#' joined on and all of them count towards the key, as 1.0 counts its pivoted
+#' SUPP values. IsNonStandard is kept as the define writes it, "Yes" or blank.
+#'
+#' @param dataset The dataset being checked.
+#' @param study The study.
+#' @param domain The dataset's key.
+#' @return A synthetic dataset, one row per record.
+#' @noRd
+build_dataset_contents_against_define <- function(dataset, study, domain) {
+  data <- data.table::copy(dataset$data)
+  dd <- study$define$datasets
+  names_here <- toupper(c(domain, dataset_unsplit_name(dataset, domain)))
+  row <- if (is.null(dd)) NULL else dd[toupper(dd$define_dataset_name) %in% names_here, ][1, ]
+  add <- function(col, value) {
+    if (!col %in% names(data)) data.table::set(data, j = col, value = rep_len(value, nrow(data)))
+  }
+  add("dataset_name", toupper(domain))
+  add("dataset_label", dataset$label %||% NA_character_)
+  add("dataset_domain", dataset_unsplit_name(dataset, domain))
+  if (!is.null(row) && nrow(row) == 1 && !is.na(row$define_dataset_name)) {
+    for (col in setdiff(names(row), "define_dataset_is_non_standard")) add(col, row[[col]])
+    add("define_dataset_is_non_standard", if (isTRUE(row$define_dataset_is_non_standard)) "Yes" else NA_character_)
+  }
+  dv <- study$define$variables
+  keys <- character(0)
+  if (!is.null(dv) && "define_variable_key_sequence" %in% names(dv)) {
+    mine <- dv[toupper(dv$define_dataset_name) %in% names_here & !is.na(dv$define_variable_key_sequence), ]
+    keys <- mine$define_variable_name[order(mine$define_variable_key_sequence)]
+  }
+  if (length(keys) > 0) {
+    add("define_dataset_key_sequence", paste(keys, collapse = ","))
+    key_data <- dataset$data
+    # With a SUPP dataset, 1.0 adds each record's qualifiers, all of them, to
+    # the key (records.py, _key_sequence_is_unique), whether or not a key
+    # names one: two records alike in their keys but with different
+    # qualifiers are different records.
+    supp <- domain_dataset(study, paste0("SUPP", dataset_unsplit_name(dataset, domain)))
+    if (!is.null(supp) && all(c("QNAM", "QVAL") %in% names(supp$data))) {
+      key_data <- apply_supp_match(dataset, supp)$data
+      qnams <- setdiff(unique(as.character(supp$data$QNAM)), NA)
+      keys <- unique(c(setdiff(keys, qnams), intersect(qnams, names(key_data))))
+    }
+    if (!all(keys %in% names(key_data))) {
+      stop("the define's key variables include ", paste(setdiff(keys, names(key_data)), collapse = ", "),
+           ", which this dataset does not have", call. = FALSE)
+    }
+    k <- do.call(paste, c(lapply(keys, function(v) {
+      x <- as.character(key_data[[v]])
+      ifelse(is.na(x), "\x1eNA", x)
+    }), sep = "\x1f"))
+    data.table::set(data, j = "define_key_sequence_is_unique", value = !(duplicated(k) | duplicated(k, fromLast = TRUE)))
+  } else {
+    data.table::set(data, j = "define_key_sequence_is_unique", value = rep(TRUE, nrow(data)))
+  }
+  list(data = data, meta = dataset$meta)
 }
 
 #' The variable table CORE 1.0 builds against the define and the Library

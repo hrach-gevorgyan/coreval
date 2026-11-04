@@ -55,6 +55,22 @@ apply_operation_filter <- function(dt, filter) {
   dt[keep, ]
 }
 
+#' One of CORE 1.0's length aggregates, grouped by variable name over the study
+#' @param study The study.
+#' @param column A column of global_length_summary().
+#' @param fn `max` or `min`.
+#' @return A grouped binding keyed on `variable_name`.
+#' @noRd
+length_aggregate <- function(study, column, fn) {
+  summary <- global_length_summary(study)
+  pick <- function(x) {
+    x <- x[!is.na(x)]
+    if (length(x)) fn(x) else NA_real_
+  }
+  agg <- summary[, list(.value = pick(get(column))), by = "variable_name"]
+  grouped_binding("variable_name", agg, ".value")
+}
+
 #' Construct a scalar Operations binding (one value used for every row)
 #' @param value The value, used identically for every row.
 #' @return A binding list with `kind = "scalar"`.
@@ -1006,8 +1022,15 @@ implemented_operation_types <- c(
   "get_model_filtered_variables",
   "get_parent_model_column_order",
   "get_xhtml_errors",
+  "get_countries",
+  "global_max_variable_length",
+  "global_min_variable_length",
+  "max_variable_value_length",
+  "get_define_external_dictionary_version",
+  "get_external_dictionary_version",
   "define_variable_metadata",
   "intersect",
+  "label_referenced_variable_metadata",
   "codelist_extensible",
   "map",
   "max",
@@ -1133,6 +1156,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # every row as passing (CORE-000039 with no TV), where the reference skips
   # it as "operation domain not found".
   ds <- domain_dataset(study, domain)
+  # One of CORE 1.0's own reference tables, bundled from its engine
+  # (data-raw/core1_reference.R): read as the dataset the rule names.
+  if (is.null(ds) && !is.null(op_domain) && tolower(op_domain) %in% names(.coreval_env$core1_reference)) {
+    ds <- list(data = data.table::copy(.coreval_env$core1_reference[[tolower(op_domain)]]), meta = NULL)
+  }
   if (is.null(ds) && !is.null(op_domain) && !is.null(study$datasets) &&
       !identical(toupper(domain), toupper(current_domain))) {
     # CORE 1.0's distinct answers a missing domain with an empty set
@@ -1141,14 +1169,12 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # in a branch it takes when the study has no POOLDEF.
     #
     # That is for a study dataset. CORE 1.0 also ships reference tables of its
-    # own that a rule can name as a domain (enums/static_tables.py): the FDA's
-    # Therapeutic Area User Guides, its Data Standards Catalog, the external
-    # dictionaries. coreval bundles none of them, and answering one with an
-    # empty set reported every TSVAL as missing from the FDA catalog
-    # (CORE-002050, CORE-002057). Refused instead.
+    # own that a rule can name as a domain (enums/static_tables.py). The FDA
+    # guides list and standards catalog are bundled (above); the rest, the
+    # external dictionaries and its own Library tables, are not, and
+    # answering one with an empty set would report every row against it.
+    # Refused instead.
     core1_tables <- c(
-      cg_taugs = "the FDA Therapeutic Area User Guides list",
-      fda_submission_standards = "the FDA Data Standards Catalog",
       ig_codelists = "its controlled terminology table", ig_datasets = "its Implementation Guide tables",
       ig_variables = "its Implementation Guide tables", ex_whodrug = "the WHODrug dictionary",
       ex_meddra = "the MedDRA dictionary", ex_unii = "the UNII dictionary", ex_medrt = "the MED-RT dictionary",
@@ -1308,6 +1334,82 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         return(scalar_binding(unique(left[!is.na(left) & !left %in% right[!is.na(right)]])))
       }
       scalar_binding(set_difference(left, right, isTRUE(op$order_insensitive)))
+    },
+    # CORE 1.0's variable_length_operations.py: per variable name, over every
+    # dataset of the study, the longest value (max_variable_value_length) or
+    # the largest or smallest declared length (global_max/min_variable_length).
+    max_variable_value_length = length_aggregate(study, "variable_max_value_length", max),
+    global_max_variable_length = length_aggregate(study, "variable_length", max),
+    global_min_variable_length = length_aggregate(study, "variable_length", min),
+    # CORE 1.0's define_exdict_version_operation.py: the version of an
+    # external dictionary the define cites (the first codelist naming it).
+    # None cited stops the rule, as it does there.
+    get_define_external_dictionary_version = {
+      ext <- study$define$external_dictionaries
+      want <- tolower(op$external_dictionary_type %||% "")
+      hit <- if (is.null(ext)) character(0) else ext$version[tolower(ext$dictionary) == want & !is.na(ext$version)]
+      if (!length(hit)) {
+        stop("the define cites no version of ", op$external_dictionary_type %||% "the dictionary",
+             call. = FALSE)
+      }
+      scalar_binding(hit[[1]])
+    },
+    # The version of a dictionary the user supplied. None can be supplied yet.
+    get_external_dictionary_version = stop(
+      "needs the ", op$external_dictionary_type %||% "external", " dictionary, which is not supplied: ",
+      "coreval does not read external dictionaries yet", call. = FALSE
+    ),
+    # CORE 1.0's label_referenced_variable_metadata.py: for each row, the
+    # given attribute (role, or name) of every variable in the study's
+    # Implementation Guide whose label is that row's value of `name`.
+    # CORE-002122 reads FATEST as a variable label and asks whether it names a
+    # qualifier that should have been its own variable.
+    label_referenced_variable_metadata = {
+      tbl <- .coreval_env$library_variables
+      product <- tolower(study$standard$product %||% NA_character_)
+      standard <- if (is.na(product)) "sdtmig" else product
+      rows <- tbl[tbl$standard == standard, ]
+      if (nrow(rows) == 0) {
+        stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
+      }
+      version <- study$standard$version %||% NA_character_
+      use <- if (!is.na(version) && version %in% rows$version) version else newest_library_version(rows$version)
+      rows <- rows[rows$version == use, ]
+      attribute <- op$attribute_name %||% "role"
+      field <- switch(attribute, name = "variable", attribute)
+      if (!field %in% names(rows)) {
+        stop("label_referenced_variable_metadata has no attribute ", attribute, call. = FALSE)
+      }
+      column <- current_dataset$data[[op$name]]
+      if (is.null(column)) {
+        stop("label_referenced_variable_metadata reads ", op$name, ", which this dataset does not have",
+             call. = FALSE)
+      }
+      by_label <- split(as.character(rows[[field]]), rows$label)
+      per_row_binding(lapply(as.character(column), function(lbl) {
+        if (is.na(lbl)) character(0) else unique(by_label[[lbl]] %||% character(0))
+      }))
+    },
+    # CORE 1.0's get_countries.py: one attribute (country_name, alpha_2 or
+    # alpha_3) of every country in a list. "GENC" and "ISO 3166" name a list;
+    # anything else, "ISO 3166-1" included, gets ISO 3166 plus the GENC
+    # entries whose names ISO lacks, as it does there. The lists are bundled
+    # from that file (data-raw/core1_reference.R).
+    get_countries = {
+      ref <- .coreval_env$core1_reference
+      attribute <- op$attribute_name %||% "country_name"
+      if (!attribute %in% names(ref$countries_iso3166)) {
+        stop("get_countries has no attribute ", attribute, call. = FALSE)
+      }
+      list_name <- op[["codelist", exact = TRUE]] %||% ""
+      rows <- switch(
+        list_name,
+        "GENC" = ref$countries_genc,
+        "ISO 3166" = ref$countries_iso3166,
+        rbind(ref$countries_iso3166,
+              ref$countries_genc[!ref$countries_genc$country_name %in% ref$countries_iso3166$country_name, ])
+      )
+      scalar_binding(unique(rows[[attribute]]))
     },
     # CORE 1.0's standard_domains.py: the domains the study's Implementation
     # Guide defines, optionally only those of one class (CORE-002056 asks for
@@ -1928,10 +2030,21 @@ apply_ct_conditions <- function(rows, conditions, package) {
     "codelist value" = "codelist", "codelist_value" = "codelist",
     "extensible" = "extensible"
   )
-  keep <- rep(FALSE, nrow(rows))
+  # CORE 1.0 ANDs every entry (get_codelist_attributes.py appends each to one
+  # WHERE clause); CDISC's engine treats them as alternatives. CORE-002123
+  # asks for codelists that are non-extensible AND SDTM's.
+  core1 <- engine_is_core1()
+  # TRUE to start ANDing, FALSE to start ORing.
+  keep <- rep(core1, nrow(rows))
   for (condition in conditions) {
     this <- rep(TRUE, nrow(rows))
     for (field in names(condition)) {
+      # 1.0's "Standard Type" is the package's family ("sdtm" in sdtmct-...).
+      if (core1 && identical(tolower(field), "standard type")) {
+        family <- sub("ct-.*$", "", rows$package)
+        this <- this & tolower(family) %in% tolower(as.character(condition[[field]]))
+        next
+      }
       # Single brackets: `[[` on a name the vector does not carry raises
       # "subscript out of bounds", which would reach the user as the skip
       # reason in place of the sentence below.
@@ -1942,9 +2055,14 @@ apply_ct_conditions <- function(rows, conditions, package) {
       }
       want <- as.character(condition[[field]])
       have <- as.character(rows[[column]])
+      # The bundled terminology writes Extensible as True/False; CORE 1.0's
+      # rules ask for Yes/No (its CodelistReader writes those).
+      if (identical(unname(column), "extensible")) {
+        want <- ifelse(tolower(want) == "yes", "True", ifelse(tolower(want) == "no", "False", want))
+      }
       this <- this & !is.na(have) & tolower(have) %in% tolower(want)
     }
-    keep <- keep | this
+    keep <- if (core1) keep & this else keep | this
   }
   if (!any(keep)) {
     stop("no codelist in controlled terminology package '", package,
@@ -1969,6 +2087,8 @@ ct_package_attribute <- function(package, attribute, conditions = NULL) {
   values <- switch(
     attribute,
     "Codelist CCODE" = rows$codelist_code,
+    # 1.0's name for the same thing.
+    "Codelist Code" = rows$codelist_code,
     "Codelist Value" = rows$codelist,
     "Term CCODE" = unlist(strsplit(rows$term_codes, "\x1f", fixed = TRUE), use.names = FALSE),
     "Term Value" = unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE),

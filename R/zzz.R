@@ -35,6 +35,12 @@ utils::globalVariables(c(".N", ".SD"))
   ct_packages_path <- system.file("extdata", "ct_packages.rds", package = pkgname)
   .coreval_env$ct_packages <- readRDS(ct_packages_path)
 
+  # CORE 1.0's own reference tables (the FDA guides list and standards
+  # catalog), which its rules name as if they were datasets.
+  .coreval_env$core1_reference <- readRDS(
+    system.file("extdata", "core1_reference.rds", package = pkgname)
+  )
+
   dataset_labels_path <- system.file("extdata", "dataset_labels.rds", package = pkgname)
   .coreval_env$dataset_labels <- readRDS(dataset_labels_path)
 }

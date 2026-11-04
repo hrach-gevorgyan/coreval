@@ -144,6 +144,9 @@ define_xml_available <- function() {
 #' @noRd
 find_define_xml <- function(path) {
   files <- list.files(path, pattern = "\\.xml$", ignore.case = TRUE, full.names = TRUE)
+  # A study tagging file is not a define, so a folder holding define.xml and
+  # stf.xml, or stf.xml alone, never reads the STF as one.
+  files <- files[!grepl("^stf", basename(files), ignore.case = TRUE)]
   # A study directory can legitimately contain other XML (a stylesheet, an
   # annotated CRF); match the conventional define*.xml naming first and
   # only fall back to a lone .xml file.
@@ -392,6 +395,23 @@ read_define_xml <- function(path) {
     codes[!is.na(codes)]
   })
   names(codelist_codes) <- xml2::xml_attr(code_lists, "OID")
+  # The coded values themselves, in the same order (_get_codelist_coded_values:
+  # CodedValue of each CodeListItem, then of each EnumeratedItem). CORE 1.0's
+  # CORE-000726 asks whether ETHNIC's codelist offers HISPANIC OR LATINO.
+  codelist_values <- lapply(code_lists, function(cl) {
+    v <- c(
+      xml2::xml_attr(xml2::xml_find_all(cl, "./CodeListItem"), "CodedValue"),
+      xml2::xml_attr(xml2::xml_find_all(cl, "./EnumeratedItem"), "CodedValue")
+    )
+    v[!is.na(v)]
+  })
+  names(codelist_values) <- xml2::xml_attr(code_lists, "OID")
+  item_defs$define_variable_codelist_coded_values <- lapply(
+    item_codelist_oid,
+    function(oid) {
+      if (is.na(oid) || is.null(codelist_values[[oid]])) character(0) else codelist_values[[oid]]
+    }
+  )
   item_defs$define_variable_codelist_coded_codes <- lapply(
     item_codelist_oid,
     function(oid) {
@@ -417,6 +437,8 @@ read_define_xml <- function(path) {
       define_variable_is_mandatory = yesno_to_logical(xml2::xml_attr(node_refs, "Mandatory")),
       define_variable_role = xml2::xml_attr(node_refs, "Role"),
       define_variable_has_no_data = yesno_to_logical(xml_attr_any(node_refs, "HasNoData")),
+      # The dataset's key variables, in key order (ItemRef/@KeySequence).
+      define_variable_key_sequence = suppressWarnings(as.integer(xml2::xml_attr(node_refs, "KeySequence"))),
       stringsAsFactors = FALSE
     )
   })
@@ -454,7 +476,87 @@ read_define_xml <- function(path) {
     )
   }
 
-  list(datasets = datasets, variables = variables, ct_standards = ct_standards)
+  # The external dictionaries the define's codelists name, with the version
+  # each cites (CodeList/ExternalCodeList, e.g. MedDRA 26.0).
+  ext <- xml2::xml_find_all(doc, "//CodeList/ExternalCodeList")
+  external_dictionaries <- data.table::data.table(
+    dictionary = xml2::xml_attr(ext, "Dictionary"),
+    version = xml2::xml_attr(ext, "Version")
+  )
+  list(datasets = datasets, variables = variables, ct_standards = ct_standards,
+       vlms = define_value_level(doc, groups, item_defs),
+       external_dictionaries = external_dictionaries)
+}
+
+#' The define's value-level metadata, one row per value-list item
+#'
+#' Follows CORE 1.0's `extract_value_level_metadata()`
+#' (base_define_xml_reader.py): for each dataset variable whose ItemDef has a
+#' def:ValueListRef, every ItemRef of that def:ValueListDef with the
+#' def:WhereClauseDef it points to. The item's own ItemDef supplies its
+#' metadata, named `define_vlm_*` in place of `define_variable_*`, and
+#' `where` holds the clause's range checks (variable, comparator, values). An
+#' item whose where clause is missing is left out, as there.
+#'
+#' @param doc The define document, namespaces stripped.
+#' @param groups Its ItemGroupDef nodes.
+#' @param item_defs The ItemDef table built by read_define_xml().
+#' @return A data.table, possibly empty.
+#' @noRd
+define_value_level <- function(doc, groups, item_defs) {
+  local_all <- function(node, name) xml2::xml_find_all(node, paste0(".//*[local-name()='", name, "']"))
+  attr_of <- function(nodes, name) {
+    plain <- xml2::xml_attr(nodes, name)
+    ifelse(is.na(plain), xml2::xml_attr(nodes, paste0("def:", name)), plain)
+  }
+  item_nodes <- xml2::xml_find_all(doc, "//ItemDef")
+  item_name <- stats::setNames(xml_attr_any(item_nodes, c("Name", "SASFieldName")), xml2::xml_attr(item_nodes, "OID"))
+  value_list_of <- stats::setNames(
+    attr_of(xml2::xml_find_first(item_nodes, "./*[local-name()='ValueListRef']"), "ValueListOID"),
+    xml2::xml_attr(item_nodes, "OID")
+  )
+  lists <- local_all(doc, "ValueListDef")
+  wheres <- local_all(doc, "WhereClauseDef")
+  where_checks <- lapply(wheres, function(w) {
+    checks <- xml2::xml_find_all(w, "./RangeCheck")
+    lapply(checks, function(ch) list(
+      variable = unname(item_name[attr_of(ch, "ItemOID")]),
+      comparator = xml2::xml_attr(ch, "Comparator"),
+      values = xml2::xml_text(xml2::xml_find_all(ch, "./CheckValue"))
+    ))
+  })
+  names(where_checks) <- xml2::xml_attr(wheres, "OID")
+  list_by_oid <- stats::setNames(lists, xml2::xml_attr(lists, "OID"))
+  rows <- list()
+  for (g in seq_along(groups)) {
+    dataset <- xml2::xml_attr(groups[[g]], "Name")
+    if (is.na(dataset)) dataset <- xml2::xml_attr(groups[[g]], "SASDatasetName")
+    for (oid in xml2::xml_attr(xml2::xml_find_all(groups[[g]], "./ItemRef"), "ItemOID")) {
+      vl <- value_list_of[oid]
+      if (is.na(vl) || is.null(list_by_oid[[vl]])) next
+      refs <- xml2::xml_find_all(list_by_oid[[vl]], "./ItemRef")
+      for (r in seq_along(refs)) {
+        wc <- attr_of(xml2::xml_find_first(refs[[r]], "./*[local-name()='WhereClauseRef']"), "WhereClauseOID")
+        where <- if (is.na(wc)) NULL else where_checks[[wc]]
+        if (is.null(where) || !length(where)) next
+        def <- item_defs[item_defs$oid == xml2::xml_attr(refs[[r]], "ItemOID"), ]
+        if (nrow(def) == 0) next
+        def <- def[1, ]
+        def$oid <- NULL
+        names(def) <- sub("^define_variable_", "define_vlm_", names(def))
+        def$define_vlm_role <- xml2::xml_attr(refs[[r]], "Role")
+        def$define_vlm_mandatory <- yesno_to_logical(xml2::xml_attr(refs[[r]], "Mandatory"))
+        def$define_dataset_name <- dataset
+        def$define_variable_name <- unname(item_name[oid])
+        data.table::set(def, j = "where", value = list(list(where)))
+        rows[[length(rows) + 1]] <- def
+      }
+    }
+  }
+  if (!length(rows)) {
+    return(data.table::data.table())
+  }
+  data.table::rbindlist(rows, use.names = TRUE, fill = TRUE)
 }
 
 #' The bundled CT package a study's define.xml declares, or `NULL`
@@ -485,4 +587,119 @@ ct_package_from_define <- function(study) {
   candidates <- sort(unique(rows$package), decreasing = TRUE)
   hit <- candidates[candidates %in% ct_package_names()]
   if (length(hit) == 0) NULL else hit[[1]]
+}
+
+#' Which records a value-level where clause selects
+#'
+#' CORE 1.0's `where_clause_to_sql()` (metadata/vlm.py): every range check
+#' must hold. EQ and NE use the first check value, IN and NOTIN all of them;
+#' a missing value equals only an empty check value and satisfies NE and
+#' NOTIN; ordering comparators never hold for a missing value. A check naming
+#' a variable the dataset lacks, or an unknown comparator, makes the clause
+#' untranslatable, and the item is skipped (`NULL`), as it is there.
+#'
+#' @param where The item's range checks.
+#' @param data The dataset's records.
+#' @return A logical vector over the records, or `NULL`.
+#' @noRd
+vlm_where_matches <- function(where, data) {
+  keep <- rep(TRUE, nrow(data))
+  for (check in where) {
+    v <- check$variable
+    if (is.null(v) || is.na(v) || !v %in% names(data) || !length(check$values)) {
+      return(NULL)
+    }
+    x <- data[[v]]
+    values <- check$values
+    cmp <- toupper(check$comparator %||% "")
+    if (cmp %in% c("LT", "LE", "GT", "GE")) {
+      op <- switch(cmp, LT = `<`, LE = `<=`, GT = `>`, GE = `>=`)
+      hit <- if (is.numeric(x)) {
+        want <- suppressWarnings(as.numeric(values[[1]]))
+        if (is.na(want)) return(NULL)
+        op(x, want)
+      } else {
+        t <- as.character(x)
+        t[!is.na(t) & !nzchar(t)] <- NA
+        op(t, values[[1]])
+      }
+      hit <- hit %in% TRUE
+    } else if (cmp %in% c("EQ", "NE", "IN", "NOTIN")) {
+      if (cmp %in% c("EQ", "NE")) values <- values[1]
+      hit <- if (is.numeric(x)) {
+        nums <- suppressWarnings(as.numeric(values[nzchar(trimws(values))]))
+        (x %in% nums[!is.na(nums)]) | (is.na(x) & any(!nzchar(trimws(values))))
+      } else {
+        t <- as.character(x)
+        t[is.na(t)] <- ""
+        t %in% values
+      }
+      if (cmp %in% c("NE", "NOTIN")) hit <- !hit
+    } else {
+      return(NULL)
+    }
+    keep <- keep & hit
+  }
+  keep
+}
+
+
+#' The study tagging file (stf*.xml) in a folder, or `NULL`
+#' @param path A folder.
+#' @return A path or `NULL`.
+#' @noRd
+find_stf_xml <- function(path) {
+  files <- list.files(path, pattern = "^stf.*[.]xml$", ignore.case = TRUE, full.names = TRUE)
+  if (length(files)) files[[1]] else NULL
+}
+
+#' Read an eCTD study tagging file into one row per document file tag
+#'
+#' The shape CORE 1.0 checks (metadata/stf.py, `_build_rows`): for each
+#' doc-content of the study-document, in order, one row per file-tag, carrying
+#' the study's id and title, the document's title and href, and the tag's
+#' name and info-type. A document with no file tag is one row with no tag.
+#' CORE-002116 asks whether the tags data-tabulation-dataset-sdtm and
+#' data-tabulation-data-definition are present.
+#'
+#' @param path Path to the STF, or `NULL`.
+#' @return A data.table, or `NULL` (with a warning when the file is unreadable).
+#' @noRd
+read_stf_xml <- function(path) {
+  if (is.null(path) || !requireNamespace("xml2", quietly = TRUE)) {
+    return(NULL)
+  }
+  doc <- tryCatch(xml2::read_xml(path), error = function(e) {
+    warning("could not read the study tagging file ", basename(path), ": ", conditionMessage(e),
+            call. = FALSE)
+    NULL
+  })
+  if (is.null(doc)) {
+    return(NULL)
+  }
+  xml2::xml_ns_strip(doc)
+  first_text <- function(xpath) {
+    n <- xml2::xml_find_first(doc, xpath)
+    if (inherits(n, "xml_missing")) NA_character_ else xml2::xml_text(n)
+  }
+  study_id <- first_text("//study-identifier/study-id")
+  study_title <- first_text("//study-identifier/title")
+  docs <- xml2::xml_find_all(doc, "//study-document//doc-content")
+  rows <- lapply(seq_along(docs), function(i) {
+    d <- docs[[i]]
+    href <- xml2::xml_attr(d, "xlink:href")
+    if (is.na(href)) href <- xml2::xml_attr(d, "href")
+    tags <- xml2::xml_find_all(d, "./file-tag")
+    data.table::data.table(
+      study_id = study_id, study_title = study_title, doc_index = i,
+      document_title = xml2::xml_text(xml2::xml_find_first(d, "./title")),
+      document_href = href,
+      file_tag_name = if (length(tags)) xml2::xml_attr(tags, "name") else NA_character_,
+      file_tag_info_type = if (length(tags)) xml2::xml_attr(tags, "info-type") else NA_character_
+    )
+  })
+  if (!length(rows)) {
+    return(data.table::data.table(study_id = character(0), file_tag_name = character(0)))
+  }
+  data.table::rbindlist(rows)
 }

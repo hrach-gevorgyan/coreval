@@ -15,9 +15,10 @@ on one file, so it has to be asked for. Without it, a folder holding only
 a USDM document is refused with a message saying so, never read as empty.}
 }
 \value{
-A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was
+A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define, stf, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was
 found in \code{path} and the \code{xml2} package is installed, and \code{NULL}
-otherwise; \code{ct} is always \code{NULL}. Each \code{data} is a
+otherwise; \code{stf} likewise holds the study tagging file (\code{stf*.xml}),
+one row per document file tag; \code{ct} is always \code{NULL}. Each \code{data} is a
 \code{\link[data.table:data.table]{data.table::data.table()}};
 each \code{meta} is a data.table with columns \code{variable}, \code{label}, \code{type};
 \code{label} is the dataset's own label (e.g. \code{"Adverse Events"}), or \code{NA} if

@@ -78,6 +78,12 @@ rule_type_is_supported <- function(rule_type) {
     "Value Check with Variable Metadata",
     "Value Check with Dataset Metadata",
     "Define Item Metadata Check against Library Metadata",
+    "Dataset Contents Check against Define XML",
+    "Define Item Metadata Check",
+    "Value Check against Define XML VLM",
+    "Value Check against Library Metadata",
+    "Global Value Check with Variable Metadata",
+    "STF Metadata Check",
     # These two are conjunctions of types already listed, evaluated by the same
     # machinery, and they were missing only because nobody added them. The
     # conformance harness had been running them all along while check_study()

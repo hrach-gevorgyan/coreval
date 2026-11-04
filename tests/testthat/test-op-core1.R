@@ -72,13 +72,13 @@ test_that("a dictionary check is refused with the dictionary it needs", {
                "WHODrug")
 })
 
-test_that("an operation over one of 1.0's own reference tables is refused, not answered empty", {
+test_that("an operation over a 1.0 reference table coreval lacks is refused, not answered empty", {
   study <- list(datasets = list(TS = list(data = data.table::data.table(TSVAL = "x"), meta = NULL)))
   rule <- list(source = "core_contributor",
-               check = list(name = "TSVAL", operator = "is_not_contained_by", value = "$fda"),
-               operations = list(list(id = "$fda", operator = "distinct", domain = "cg_taugs",
-                                      name = "fda_guides")))
-  expect_error(evaluate_rule(rule, study, "TS"), "FDA Therapeutic Area User Guides")
+               check = list(name = "TSVAL", operator = "is_not_contained_by", value = "$med"),
+               operations = list(list(id = "$med", operator = "distinct", domain = "ex_meddra",
+                                      name = "code")))
+  expect_error(evaluate_rule(rule, study, "TS"), "MedDRA dictionary")
 })
 
 test_that("Term Signification is the submission value of the codelist's terms", {
@@ -264,4 +264,104 @@ test_that("the per-value table carries each value's length, and the declared len
     data = data.table::data.table(C = "a"), meta = data.table::data.table(variable = "C", label = "", type = "Char")
   ))
   expect_false("variable_length" %in% names(no_len$data))
+})
+
+
+test_that("the bundled FDA guides list is read as the table a 1.0 rule names (CORE-002050)", {
+  study <- one_dataset(list(TSVAL = c("QT Studies Therapeutic Area User Guide v1", "Not a guide")), domain = "TS")
+  rule <- core1_rule(list(name = "TSVAL", operator = "is_not_contained_by", value = "$fda"),
+                     operations = list(list(id = "$fda", operator = "distinct", domain = "cg_taugs",
+                                            name = "fda_guides")))
+  expect_equal(evaluate_rule(rule, study, "TS"), c(FALSE, TRUE))
+})
+
+test_that("get_countries draws on ISO 3166 and GENC as 1.0 does (CORE-002106)", {
+  study <- one_dataset(list(COUNTRY = c("USA", "XQZ", "ZZZ")), domain = "DM")
+  check <- function(list_name) {
+    rule <- core1_rule(list(name = "$codes", operator = "does_not_contain", value = "COUNTRY"),
+                       operations = list(list(id = "$codes", operator = "get_countries",
+                                              attribute_name = "alpha_3", codelist = list_name)))
+    evaluate_rule(rule, study, "DM")
+  }
+  # XQZ (Akrotiri) is GENC only; "ISO 3166-1" is not a list name there, so
+  # it gets ISO plus GENC's extra entries.
+  expect_equal(check("GENC"), c(FALSE, FALSE, TRUE))
+  expect_equal(check("ISO 3166"), c(FALSE, TRUE, TRUE))
+  expect_equal(check("ISO 3166-1"), c(FALSE, FALSE, TRUE))
+})
+
+test_that("a 1.0 rule's codelist conditions are all required, Yes/No reading as True/False (CORE-002123)", {
+  skip_if(is.null(ct_codelists()), "bundled controlled terminology not installed")
+  pkg <- utils::tail(sort(unique(ct_codelists()$package[startsWith(ct_codelists()$package, "sdtmct")])), 1)
+  conds <- list(list(Extensible = "No"), list(`Standard Type` = "sdtm"))
+  in_core1({
+    codes <- ct_package_attribute(pkg, "Codelist Code", conds)
+  })
+  rows <- ct_codelists()[ct_codelists()$package == pkg, ]
+  expect_setequal(codes, rows$codelist_code[rows$extensible == "False"])
+})
+
+test_that("MedDRA's latest release at study start is compared with the define's (CORE-002041)", {
+  ds <- list(data = data.table::data.table(TSVAL = c("2024-05-01", "2024-10-01", "2019-01-01")), meta = NULL)
+  check <- list(name = "TSVAL", operator = "is_not_latest_available_external_dictionary_version",
+                external_dictionary_type = "meddra", version = "27.0", value_is_literal = FALSE)
+  expect_equal(evaluate_check(check, ds, "TS"), c(FALSE, TRUE, TRUE))
+  check$external_dictionary_type <- "whodrug"
+  expect_error(evaluate_check(check, ds, "TS"), "no release dates")
+})
+
+test_that("a dataset with a define's key variables is checked for unique records, SUPP included (CORE-002007)", {
+  ae <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1:3,
+                                           AEDECOD = "HEADACHE"), meta = NULL, label = "Adverse Events")
+  suppae <- list(data = data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "AESEQ",
+                                               IDVARVAL = "2", QNAM = "AETRTEM", QVAL = "Y"), meta = NULL)
+  study <- list(datasets = list(AE = ae, SUPPAE = suppae), define = list(
+    datasets = data.frame(define_dataset_name = "AE", define_dataset_class = "EVENTS",
+                          define_dataset_is_non_standard = FALSE, stringsAsFactors = FALSE),
+    variables = data.frame(define_dataset_name = "AE", define_variable_name = c("STUDYID", "USUBJID", "AEDECOD"),
+                           define_variable_key_sequence = 1:3, stringsAsFactors = FALSE)
+  ))
+  built <- build_dataset_contents_against_define(ae, study, "AE")$data
+  # Records 1 and 3 match on the keys and both lack a qualifier; record 2 has one.
+  expect_equal(built$define_key_sequence_is_unique, c(FALSE, TRUE, FALSE))
+  expect_equal(built$define_dataset_class, rep("EVENTS", 3))
+})
+
+test_that("a value-level where clause selects records as 1.0 does", {
+  data <- data.table::data.table(TSPARMCD = c("ADAPT", "TITLE", "", NA), N = c(1, 2, NA, 3))
+  expect_equal(vlm_where_matches(list(list(variable = "TSPARMCD", comparator = "IN",
+                                           values = c("ADAPT", "RANDOM"))), data), c(TRUE, FALSE, FALSE, FALSE))
+  expect_equal(vlm_where_matches(list(list(variable = "TSPARMCD", comparator = "NE", values = "ADAPT")), data),
+               c(FALSE, TRUE, TRUE, TRUE))
+  expect_equal(vlm_where_matches(list(list(variable = "N", comparator = "GE", values = "2")), data),
+               c(FALSE, TRUE, FALSE, TRUE))
+  expect_null(vlm_where_matches(list(list(variable = "NOPE", comparator = "EQ", values = "x")), data))
+})
+
+test_that("an STF is read one row per file tag, and is never taken for the define", {
+  skip_if_not_installed("xml2")
+  dir <- tempfile("stf_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  writeLines(c(
+    '<?xml version="1.0"?>',
+    '<ectd:study xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">',
+    '<study-identifier><title>T</title><study-id>S1</study-id></study-identifier>',
+    '<study-document>',
+    '<doc-content xlink:href="a.xml"><title>A</title><file-tag name="data-tabulation-dataset-sdtm" info-type="ich"/></doc-content>',
+    '<doc-content xlink:href="b.xml"><title>B</title></doc-content>',
+    '</study-document></ectd:study>'), file.path(dir, "stf.xml"))
+  expect_null(find_define_xml(dir))
+  stf <- read_stf_xml(find_stf_xml(dir))
+  expect_equal(stf$file_tag_name, c("data-tabulation-dataset-sdtm", NA))
+  expect_equal(stf$study_id, c("S1", "S1"))
+})
+
+test_that("a 1.0 rule takes a dataset's domain from its name when classing it (CORE-000786)", {
+  ti <- list(data = data.table::data.table(DOMAIN = "PR", IESCAT = "X"), meta = NULL)
+  rule <- core1_rule(list(name = "IESCAT", operator = "exists"),
+                     scope = list(Classes = list(Include = "TRIAL DESIGN"), Domains = list(Include = "TI")))
+  expect_true(rule_applies_to_domain(rule, "TI", dataset = ti))
+  rule$source <- "published"
+  expect_false(rule_applies_to_domain(rule, "TI", dataset = ti))
 })
