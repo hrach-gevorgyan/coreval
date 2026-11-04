@@ -561,6 +561,10 @@ register_operator("invalid_date", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
   }
+  # CORE 1.0 has its own, stricter test; see core1_invalid_date().
+  if (engine_is_core1()) {
+    return(core1_invalid_date(ctx$target))
+  }
   !is_valid_date_str(ctx$target)
 })
 

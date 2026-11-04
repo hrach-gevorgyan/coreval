@@ -336,9 +336,36 @@ v1_dataset <- function(sheet, where) {
 # results.csv. Study-level facts go under STUDY with no record, which is how
 # CDISC's sheets file them; 1.0 files them under whichever dataset the engine
 # visited first.
-v1_results_csv <- function(results_json, rule) {
+v1_results_csv <- function(results_json, rule, frames = list()) {
   r <- jsonlite::fromJSON(results_json, simplifyVector = FALSE)
   study_level <- isTRUE(startsWith(rule$rule_type %||% "", "Domain Presence Check"))
+  # In a Value Check rule 1.0 reports a finding's row in its own one-row-per-
+  # value table (values.py, _unpivot_view): column by column, each column's
+  # records in order, so CM's CMSTDTC of record 2 can be "row 47". CDISC's
+  # engine, and coreval, report the record of the dataset itself. The row is
+  # mapped back here, and each mapping is proved against the value 1.0 says it
+  # saw in that cell, so a wrong guess about the layout stops the run.
+  long_rows <- isTRUE(rule$rule_type %in% c("Value Check with Variable Metadata",
+                                             "Value Check with Dataset Metadata"))
+  to_record <- function(name, e) {
+    frame <- frames[[name]]
+    var <- e$value$variable_name
+    if (is.null(frame) || is.null(var) || !var %in% names(frame)) {
+      stop("cannot map 1.0 row ", e$row, " of ", name, " back to a record", call. = FALSE)
+    }
+    n <- nrow(frame)
+    rec <- e$row - (match(var, names(frame)) - 1L) * n
+    seen <- e$value$variable_value
+    cell <- if (rec >= 1 && rec <= n) frame[[var]][[rec]] else NULL
+    same <- !is.null(cell) && (identical(as.character(cell), as.character(seen %||% "")) ||
+      (is.na(cell) && is.null(seen)) ||
+      isTRUE(suppressWarnings(as.numeric(cell) == as.numeric(seen))))
+    if (!same) {
+      stop("1.0 row ", e$row, " of ", name, " (", var, ") does not map to a record holding '",
+           paste(unlist(seen), collapse = ","), "'", call. = FALSE)
+    }
+    as.character(rec)
+  }
   rows <- list()
   add <- function(ds, rec, var, val) {
     rows[[length(rows) + 1]] <<- data.frame(Dataset = ds, Record = rec, Variable = var, Value = val,
@@ -360,7 +387,13 @@ v1_results_csv <- function(results_json, rule) {
       next
     }
     for (e in d$errors) {
-      rec <- if (is.null(e$row) || study_level) "" else as.character(e$row)
+      rec <- if (is.null(e$row) || study_level) {
+        ""
+      } else if (long_rows) {
+        to_record(name, e)
+      } else {
+        as.character(e$row)
+      }
       vals <- e$value %||% list()
       ds <- if (study_level) "STUDY" else name
       if (length(vals) == 0) {
@@ -414,6 +447,7 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
   if (is.na(fcol)) stop("the Datasets sheet has no Filename column in ", books[[1]], call. = FALSE)
   listed <- data.frame(Filename = character(0), Label = character(0), stringsAsFactors = FALSE)
   variables <- list()
+  frames <- list()
   for (r in seq_len(nrow(ds_sheet$value))[-1]) {
     filename <- cell_as_char(ds_sheet$value[r, fcol], ds_sheet$kind[r, fcol])
     # Only datasets listed here AND present as a sheet are loaded.
@@ -427,6 +461,7 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
                                     type = vars$type, length = vars$length, stringsAsFactors = FALSE)
     frame <- if (length(ds$data) == 0) data.table::data.table() else data.table::as.data.table(ds$data)
     if (ncol(frame) > 0) data.table::setnames(frame, vars$variable)
+    frames[[toupper(base)]] <- frame
     data.table::fwrite(frame, file.path(data_out, paste0(base, ".csv")), quote = TRUE, na = "")
   }
   data.table::fwrite(listed, file.path(data_out, "_datasets.csv"))
@@ -441,7 +476,7 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
     file.copy(file.path(data_in, "define.xml"), file.path(data_out, "define.xml"))
   }
 
-  expected <- v1_results_csv(file.path(case_dir, "results", "results.json"), rule)
+  expected <- v1_results_csv(file.path(case_dir, "results", "results.json"), rule, frames)
   data.table::fwrite(expected, file.path(res_out, "results.csv"))
   list(library = library, note = note)
 }

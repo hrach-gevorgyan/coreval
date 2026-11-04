@@ -1117,6 +1117,25 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # (sql_operations/distinct.py, `_empty_result_set_query()`), and its
     # rules are written for that: CORE-000235 asks for POOLDEF's POOLIDs only
     # in a branch it takes when the study has no POOLDEF.
+    #
+    # That is for a study dataset. CORE 1.0 also ships reference tables of its
+    # own that a rule can name as a domain (enums/static_tables.py): the FDA's
+    # Therapeutic Area User Guides, its Data Standards Catalog, the external
+    # dictionaries. coreval bundles none of them, and answering one with an
+    # empty set reported every TSVAL as missing from the FDA catalog
+    # (CORE-002050, CORE-002057). Refused instead.
+    core1_tables <- c(
+      cg_taugs = "the FDA Therapeutic Area User Guides list",
+      fda_submission_standards = "the FDA Data Standards Catalog",
+      ig_codelists = "its controlled terminology table", ig_datasets = "its Implementation Guide tables",
+      ig_variables = "its Implementation Guide tables", ex_whodrug = "the WHODrug dictionary",
+      ex_meddra = "the MedDRA dictionary", ex_unii = "the UNII dictionary", ex_medrt = "the MED-RT dictionary",
+      ex_loinc = "the LOINC dictionary", ex_snomed = "the SNOMED CT dictionary"
+    )
+    if (tolower(domain) %in% names(core1_tables)) {
+      stop("needs ", core1_tables[[tolower(domain)]], ", a reference table CORE 1.0's engine ships ",
+           "and coreval does not bundle", call. = FALSE)
+    }
     if (engine_is_core1() && identical(op$operator, "distinct")) {
       return(scalar_binding(distinct_values(character(0))))
     }
@@ -1866,6 +1885,18 @@ ct_package_attribute <- function(package, attribute, conditions = NULL) {
     "Term CCODE" = unlist(strsplit(rows$term_codes, "\x1f", fixed = TRUE), use.names = FALSE),
     "Term Value" = unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE),
     "Term Submission Value" = unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE),
+    # CORE 1.0's name for the CDISC Submission Value (get_codelist_attributes.py
+    # maps it to the `value` column, which CodelistReader fills from
+    # submissionValue). Its table holds a row for each codelist as well as
+    # each term, so unless the rule narrows to a codelist by its code, the
+    # codelists' own submission values are in the answer too.
+    "Term Signification" = {
+      terms <- unlist(strsplit(rows$term_values, "\x1f", fixed = TRUE), use.names = FALSE)
+      by_code <- any(vapply(conditions %||% list(), function(cnd) {
+        any(tolower(gsub("_", " ", names(cnd))) %in% c("codelist code", "codelist ccode"))
+      }, logical(1)))
+      if (by_code) terms else c(rows$codelist, terms)
+    },
     stop("unsupported ct_attribute: ", attribute, call. = FALSE)
   )
   unique(values[nzchar(values)])

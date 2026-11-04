@@ -1295,8 +1295,13 @@ build_variable_value_check_dataset <- function(real_dataset) {
       variable_value = local({
         out <- character(n_records * length(variables))
         for (i in seq_along(variables)) {
-          out[((i - 1L) * n_records + 1L):(i * n_records)] <-
-            as.character(data[[variables[i]]])
+          # A missing number is a blank value here, as a blank text cell
+          # already is. Left as NA it read as "not blank" to `empty`, which
+          # keeps that meaning for a join's unmatched rows, and CORE-000356
+          # missed every empty LBSEQ.
+          v <- as.character(data[[variables[i]]])
+          v[is.na(v)] <- ""
+          out[((i - 1L) * n_records + 1L):(i * n_records)] <- v
         }
         out
       })

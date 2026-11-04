@@ -18,7 +18,11 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   )
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 
-  bad_date <- result$findings[result$findings$Value == "2024-02-30", ]
+  # CORE 1.0's CORE-002121 checks every date variable's value too, so it reports
+  # the same date as a variable_name/variable_value pair.
+  expect_true("CORE-002121" %in% result$findings$rule_id[result$findings$Value == "2024-02-30"])
+  bad_date <- result$findings[result$findings$Value == "2024-02-30" &
+                                result$findings$rule_id == "CORE-000547", ]
   expect_equal(bad_date$rule_id, "CORE-000547") # the ISO 8601 rule
   # `issue` is the whole point: a row saying only "CORE-000547" cannot be
   # acted on without looking the rule up somewhere else.
