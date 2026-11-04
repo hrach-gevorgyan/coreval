@@ -29,8 +29,24 @@
     MED-RT say which dictionary they need.
   - `contains` against a column now checks each record. Asked whether each
     COUNTRY was a valid code, it answered once for the whole dataset.
+  - Checked against Verisian's engine on CDISC's pilot submission, rule by
+    rule; docs/REAL-STUDY.md has the comparison. Where the two disagreed
+    because coreval had 1.0's behaviour wrong, coreval now follows it:
+    `type_insensitive: true` compares as text, so an IDVARVAL of "01" or
+    "   2" differs from the parent's sequence number (CORE-000206); a
+    comparison with the column each record names finds that column in any
+    case; a complete date is a matter of shape; and a duration may carry one
+    decimal anywhere.
+  - SDTMIG 3.2 was checked against the 3.4 Library, and SUPP datasets had no
+    Library variables at all.
+  - Variable lengths are read from a transport file's header and from
+    Dataset-JSON, for 1.0's length rules. CORE-002062 reported the longest
+    value of every row in each finding: 644,030 numbers for one SUPPLB.
 
 * **Findings that were not real.**
+  - A stored SAS date keeps its declared numeric type, and a column with no
+    values at all reads as empty text rather than a number, so the type
+    rules no longer report either one.
   - A RELREC relationship linked records of different subjects whenever the
     subjects reused a RELID, so a findings-about record was compared with
     another subject's adverse event (CORE-000744, CORE-000757).
@@ -51,6 +67,20 @@
     order.
 
 * **Problems that were never looked for.**
+  - A rule whose check names only a computed value reported nothing when it
+    found something. CORE-000579 found an empty dataset and passed it, and
+    three SEND TX rules found their problems and said nothing.
+  - An operation grouping, filtering or collecting by a column its dataset
+    lacks dropped the column, or the filter, or answered "no violation". It
+    is now skipped with the reason, as both engines skip it. A grouping
+    column written as `--TESTCD` was never matched at all, so CORE-001034
+    counted repeats across every test at once.
+  - A SAS transport file holding more than one dataset was read as one, with
+    the second dataset's header and records as rows of rubbish, and the rules
+    reported on them. It is now refused.
+  - A single CSV given to `check_dataset()` dropped a short last row without
+    a word, and a row with one value too many shifted every column. Both are
+    refused, as a folder of CSVs already refused them.
   - A dataset split across files (LB1, LB2) was scoped, classed and looked up
     under its file name, and about a hundred rules per domain passed it by.
     Split files now get the rules of their domain.
@@ -108,6 +138,10 @@
   changed which rules ran against it. Values keep their own whitespace.
 
 * **Reports and exports.**
+  - The report's headline and per-dataset counts say "or more" when a rule
+    matched more records than `max_records` kept. They read as totals.
+  - A grouped rule reporting several groups on one record was listed as
+    truncated when nothing had been cut.
   - CSV exports no longer let a data value run as a spreadsheet formula, and
     are written so Excel shows non-English text correctly.
   - A value the rule requires, left blank, is "missing required", not "often

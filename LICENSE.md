@@ -22,5 +22,7 @@ SOFTWARE.
 
 ---
 
-Rule content extracted from cdisc-org/cdisc-open-rules is copyright CDISC and
-subject to its own license terms. See data-raw/UPSTREAM_SHA for provenance.
+Rule content extracted from cdisc-org/cdisc-open-rules is copyright CDISC, and
+rule content extracted from verisianHQ/core-contributor is copyright Verisian;
+each is subject to its own license terms, reproduced in inst/COPYRIGHTS. See
+data-raw/UPSTREAM_SHA and data-raw/UPSTREAM_SHA_CORE1 for provenance.

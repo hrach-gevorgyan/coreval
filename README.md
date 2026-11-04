@@ -13,8 +13,9 @@ You've just written the code that builds a dataset. Before you export it and
 send it off to a validation tool, coreval tells you what's wrong with it, in
 plain words, in a few seconds, on your own machine.
 
-It uses CDISC's own published conformance rules. It doesn't replace your
-validated tool; it means that tool finds far less.
+It uses the published CDISC CORE conformance rules: CORE 1.0's for SDTM, and
+CDISC's own for SEND, TIG and USDM. It doesn't replace your validated tool; it
+means that tool finds far less.
 
 ## What it looks like
 
@@ -37,14 +38,14 @@ print(result, n = 2)   # the two most important problems; the default shows ten
 ```
 ── coreval — DM ────────────────────────────────────────────────────────────────
 
-6 problems across 3 records  (163 checks ran)
+9 problems across 2 records  (230 checks ran)
 
-  wrong value         3   the data breaks the rule - start here
+  wrong value         5   the data breaks the rule - start here
   missing required    1   the standard requires it
-  missing optional    2   often legitimate: not collected, screen failure, ...
+  missing optional    3   often legitimate: not collected, screen failure, ...
 
 [wrong value]
-AGEU is missing when AGE is provided.
+AGEU must be populated when AGE is populated.
   1 record · AGE, AGEU
     row 3     AGE = "47", AGEU = (empty)
     CORE-000189  · also CG0665, TIG0699
@@ -55,15 +56,15 @@ Variable value is not in correct ISO 8601 date or datetime format
     row 2     RFSTDTC = "2024-13-01"
     CORE-000547  · also SEND66, SEND67, SEND68, ...
 
-  ... and 4 more here. See result$findings for all of them.
+  ... and 7 more here. See result$findings for all of them.
 
 ────────────────────────────────────────────────────────────────────────────────
-58 checks could not run.
-  33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+91 checks could not run.
+  32 need other datasets (AE, AG, CE, CM, DS, EX, ...)
      → run check_study() on the whole folder to cover these
-  14 ask what the whole study contains
-  7 need a define.xml
-  4 for other reasons, see result$skipped
+  31 ask what the whole study contains
+  19 need a define.xml
+  9 for other reasons, see result$skipped
 
 No standard declared, so rules from every standard ran.
   Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
@@ -136,11 +137,11 @@ had to skip and says why, for example because they need a dataset you didn't
 provide:
 
 ```
-60 checks could not run.
-  33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+91 checks could not run.
+  32 need other datasets (AE, AG, CE, CM, DS, EX, ...)
      → run check_study() on the whole folder to cover these
-  16 ask what the whole study contains
-  7 need a define.xml
+  31 ask what the whole study contains
+  19 need a define.xml
 ```
 
 If nothing could be checked at all, it stops with an error instead of printing
@@ -148,12 +149,18 @@ a clean report.
 
 ## What it covers
 
-coreval ships **1,054 CDISC conformance rules** for SDTM, SEND, the Tobacco
-Implementation Guide, and USDM study designs. Most are published; some are
-CDISC drafts, and retired rules are included but only run if you ask for them.
+coreval ships **1,184 conformance rules** for SDTM, SEND, the Tobacco
+Implementation Guide, and USDM study designs. Since CORE 1.0 (November 2026)
+the SDTM and FDA Business Rules are maintained by Verisian in
+[core-contributor](https://github.com/verisianHQ/core-contributor): those 621
+rules check an SDTM study, the way CORE 1.0's engine runs them. The rest come
+from CDISC's [cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
+and check SEND, TIG and USDM. Most are published; some are drafts, and retired
+rules are included but only run if you ask for them.
 
-Where CDISC publishes a worked example for a rule, coreval was run against it,
-and more than nine in ten come back with exactly the answer CDISC gives.
+Both rule sets come with worked examples, and coreval was run against every
+one. For each set, more than nine in ten rules come back with exactly the
+answer expected.
 [docs/COVERAGE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COVERAGE.md)
 goes through the rest, one by one.
 
@@ -199,10 +206,12 @@ first.
 
 ## License
 
-The package code is MIT. The bundled rules and standards data come from
-CDISC's MIT-licensed [cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules)
-and [cdisc-rules-engine](https://github.com/cdisc-org/cdisc-rules-engine)
-repositories. Two other bundled pieces carry their own permissive licences: the
+The package code is MIT. The bundled rules and standards data come from three
+MIT-licensed repositories: CDISC's
+[cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules) and
+[cdisc-rules-engine](https://github.com/cdisc-org/cdisc-rules-engine), and
+Verisian's [core-contributor](https://github.com/verisianHQ/core-contributor),
+which holds the CORE 1.0 SDTM rules. Two other bundled pieces carry their own permissive licences: the
 W3C's XHTML schemas, used to check narrative text in USDM files, and IBM's
 JSONata, used to run some USDM rules. Every bundled file, where it came from
 and its licence are listed in `inst/COPYRIGHTS`.

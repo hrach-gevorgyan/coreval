@@ -579,8 +579,14 @@ register_operator("is_complete_date", function(ctx) {
   # by strict equality tests) treats a named and an unnamed vector as unequal
   # even when every value matches. Vectorised arithmetic keeps it unnamed.
   x <- as.character(ctx$target)
-  precision <- detect_precision(x)
   present <- !is.na(x) & nzchar(x)
+  # CORE 1.0 asks only for the shape, a full date with an optional time of
+  # at least hours and minutes (is_complete_date_operator.py), and checks no
+  # calendar: "2013-02-30" is complete there and "2012-11-23T10" is not.
+  if (engine_is_core1()) {
+    return(present & grepl(core1_complete_date_regex, x, perl = TRUE))
+  }
+  precision <- detect_precision(x)
   # An interval is not one complete date: the reference reads it with
   # datetime.fromisoformat, which refuses the "/".
   unname(present & !is.na(precision) & precision >= 2L & !grepl("/", x, fixed = TRUE))
@@ -654,6 +660,29 @@ valid_duration_each <- function(x, pattern) {
   }, logical(1))
 }
 
+core1_complete_date_regex <- "^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}(:\\d{2})?(\\.\\d+)?([+-]\\d{2}:?\\d{2}|Z)?)?$"
+
+#' Is each value an invalid duration, by CORE 1.0's test?
+#'
+#' A port of `InvalidDurationOperator.invalid_duration_sql()`
+#' (invalid_duration_operator.py). The same pattern as CDISC's, but its
+#' decimal rule is only that one value may not hold two decimal separators,
+#' so "P1.5Y2M" is valid; a trailing "T" is invalid; and a negative sign is
+#' refused unless the rule allows it. A missing number (NULL there) is not
+#' invalid; blank text is.
+#'
+#' @param x The values.
+#' @param negative May a duration be negative?
+#' @return A logical vector.
+#' @noRd
+core1_invalid_duration <- function(x, negative = FALSE) {
+  x <- as.character(x)
+  pattern <- if (negative) duration_regex_negative else duration_regex_positive
+  u <- unique(x)
+  bad <- !is.na(u) & (!grepl(pattern, u, perl = TRUE) | grepl("T$", u) | grepl("[.,].*[.,]", u))
+  bad[match(x, u)]
+}
+
 # Operator: invalid_duration - target is not a valid ISO 8601 duration.
 # `negative` here is a parameter to THIS operator (may the duration carry a
 # leading "-"?), not a generic result-negation flag - see evaluate_condition().
@@ -662,6 +691,9 @@ valid_duration_each <- function(x, pattern) {
 register_operator("invalid_duration", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
+  }
+  if (engine_is_core1()) {
+    return(core1_invalid_duration(ctx$target, negative = isTRUE(ctx$condition$negative)))
   }
   allow_negative <- !identical(ctx$condition$negative, FALSE)
   pattern <- if (allow_negative) duration_regex_negative else duration_regex_positive

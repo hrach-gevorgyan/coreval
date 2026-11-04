@@ -427,3 +427,71 @@ test_that("a Study rule is reported once, under STUDY (CORE-002084)", {
   expect_true(all(is.na(f$Record)))
   expect_equal(nrow(unique(f[, c("Dataset", "Record")])), 1L)
 })
+
+test_that("an operation naming a column its dataset lacks is refused, not answered", {
+  # Each used to drop the column or give no binding, which the Check read as
+  # no violation. CORE 1.0 skips the rule (ColumnNotFoundError).
+  ts <- data.table::data.table(STUDYID = "S", TSPARMCD = c("STYPE", "TRT"), TSVAL = c("INTERVENTIONAL", ""))
+  study <- list(datasets = list(TS = list(data = ts, meta = NULL)))
+  check <- list(all = list(
+    list(name = "TSPARMCD", operator = "equal_to", value = "TRT", value_is_literal = TRUE),
+    list(name = "$n", operator = "greater_than_or_equal_to", value = 1)
+  ))
+  grouped <- core1_rule(check, operations = list(list(
+    id = "$n", operator = "record_count", group = list("TSGRPID")
+  )))
+  expect_error(evaluate_rule(grouped, study, "TS"), "groups by TSGRPID")
+  filtered <- core1_rule(check, operations = list(list(
+    id = "$n", operator = "record_count", filter = list(TSPARMCD = "STYPE", TSCAT = "X")
+  )))
+  expect_error(evaluate_rule(filtered, study, "TS"), "filters on TSCAT")
+  collected <- core1_rule(list(name = "TSVAL", operator = "is_not_contained_by", value = "$v"),
+                          operations = list(list(id = "$v", operator = "distinct", name = "TSVALNF")))
+  expect_error(evaluate_rule(collected, study, "TS"), "collects the values of TSVALNF")
+})
+
+test_that("a grouping column written as a template is the dataset's own, and a set member it lacks is skipped", {
+  eg <- data.table::data.table(USUBJID = "1", EGTESTCD = c("HR", "QT"), EGREPNUM = 1)
+  study <- list(datasets = list(EG = list(data = eg, meta = NULL)))
+  rule <- core1_rule(
+    list(name = "$n", operator = "greater_than", value = 1),
+    operations = list(
+      list(id = "$cols", operator = "map", value = c("VISITDY", "EPOCH")),
+      list(id = "$n", operator = "record_count", group = list("USUBJID", "--TESTCD", "$cols"))
+    )
+  )
+  binding <- compute_operation(rule$operations[[2]], study, "EG", study$datasets$EG,
+                               list(`$cols` = scalar_binding(c("VISITDY", "EPOCH"))))
+  expect_equal(binding$group_cols, c("USUBJID", "EGTESTCD"))
+})
+
+test_that("type_insensitive: true compares as text for a CORE 1.0 rule (CORE-000206)", {
+  supp <- data.table::data.table(IDVAR = "XXSEQ", XXSEQ = 1, IDVARVAL = c("1", "01", "1.0", " 1"))
+  study <- one_dataset(supp)
+  check <- list(name = "IDVARVAL", operator = "not_equal_to", value = "IDVAR",
+                value_is_reference = TRUE, type_insensitive = TRUE)
+  expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(FALSE, TRUE, TRUE, TRUE))
+  # CDISC's engine compares the numbers.
+  expect_equal(evaluate_rule(list(check = check), study, "XX"), c(FALSE, FALSE, FALSE, FALSE))
+})
+
+test_that("a CORE 1.0 comparison against the column each row names follows 1.0's table", {
+  xx <- data.table::data.table(
+    IDVAR = c("XXSEQ", "NOPE", "xxseq", "XXSEQ"), XXSEQ = c("1", "1", "1", "1"),
+    IDVARVAL = c("1", "2", "2", "")
+  )
+  check <- list(name = "IDVARVAL", operator = "not_equal_to", value = "IDVAR", value_is_reference = TRUE)
+  # Named column found whatever its case; a row naming no column is FALSE;
+  # a blank target differs only from a populated column.
+  expect_equal(evaluate_rule(core1_rule(check), one_dataset(xx), "XX"), c(FALSE, FALSE, TRUE, FALSE))
+})
+
+test_that("CORE 1.0's complete date is a shape, and its duration rule allows one decimal", {
+  x <- c("2012-11-23", "2012-11-23T10", "2013-02-30", "2012-11-23T10:30", "")
+  rule <- core1_rule(list(name = "XXDTC", operator = "is_complete_date"))
+  expect_equal(evaluate_rule(rule, one_dataset(list(XXDTC = x)), "XX"), c(TRUE, FALSE, TRUE, TRUE, FALSE))
+  # A missing number is not an invalid duration there; blank text is.
+  expect_equal(core1_invalid_duration(c("P1.5Y2M", "P1.5Y2.5M", "PT", "P1DT", "-P1D", "", NA)),
+               c(FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE))
+  expect_false(core1_invalid_duration("-P1D", negative = TRUE))
+})

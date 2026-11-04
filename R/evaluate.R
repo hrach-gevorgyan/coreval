@@ -213,11 +213,23 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
     # One pass per distinct column named, not one closure call per row: a
     # SUPPLB names LBSEQ on all of its 600,000 rows.
     out <- rep(NA_character_, length(per_row_names))
-    for (col in intersect(unique(per_row_names), names(dataset$data))) {
-      idx <- which(per_row_names == col)
-      out[idx] <- as.character(dataset$data[[col]][idx])
+    cols <- names(dataset$data)
+    named <- unique(per_row_names)
+    # CORE 1.0 finds the named column whatever its case (LOWER() on the
+    # pivot, equal_to_operator.py); CDISC's engine needs the exact name.
+    core1 <- engine_is_core1()
+    found <- if (core1) cols[match(toupper(named), toupper(cols))] else cols[match(named, cols)]
+    for (i in which(!is.na(found))) {
+      idx <- which(per_row_names == named[i])
+      # Numbers written as a number is written, not as.character()'s
+      # "1e+05": a 1.0 rule may compare the two sides as text.
+      out[idx] <- target_text(dataset$data[[found[i]]][idx])
     }
-    return(as_per_row_value(out))
+    out <- as_per_row_value(out)
+    if (core1) {
+      attr(out, "coreval_no_column") <- is.na(found[match(per_row_names, named)])
+    }
+    return(out)
   }
   if (isTRUE(condition$value_is_literal)) {
     return(condition$value)
@@ -225,7 +237,22 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
   if (length(condition$value) == 1 && is.character(condition$value)) {
     if (startsWith(condition$value, "$")) {
       binding <- bindings[[condition$value]]
-      return(if (is.null(binding)) NULL else resolve_binding(binding, dataset))
+      if (is.null(binding)) {
+        return(NULL)
+      }
+      resolved <- resolve_binding(binding, dataset)
+      # A grouped binding this dataset cannot be joined to: it lacks a group
+      # column. The comparison is then unknown, and where the unknown decides
+      # a row the rule is refused (run_rule_on_domain()) rather than read as
+      # passing, which is how CORE-002101 on an SE with no ARM reported
+      # nothing. CDISC's engine fails on the missing join column too.
+      if (is.null(resolved) && !is.null(.coreval_env$unresolved)) {
+        .coreval_env$unresolved <- c(.coreval_env$unresolved, paste0(
+          condition$value, " is computed per ", paste(binding$group_cols, collapse = ", "),
+          ", which this dataset does not have"
+        ))
+      }
+      return(resolved)
     }
     ref_name <- resolve_var_name(condition$value, domain)
     if (ref_name %in% names(dataset$data)) {

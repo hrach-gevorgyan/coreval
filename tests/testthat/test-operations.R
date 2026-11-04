@@ -743,9 +743,9 @@ test_that("max and min are generic aggregates, and max_date/min_date stay date-a
   expect_equal(grouped$kind, "grouped")
   expect_setequal(grouped$table$.value, c("Code_16", "Zeta"))
 
-  # An absent column yields no binding, which check_study() reports as a skip
-  # with a reason rather than answering.
-  expect_null(extreme_binding(dt, list(name = "NOSUCHCOL"), want_max = TRUE))
+  # An absent column is refused, which check_study() reports as a skip with a
+  # reason. It used to yield no binding, which the Check read as no violation.
+  expect_error(extreme_binding(dt, list(name = "NOSUCHCOL"), want_max = TRUE), "does not have")
 })
 
 test_that("map binds a constant, or looks output up by its key columns", {

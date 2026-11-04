@@ -39,20 +39,46 @@ apply_operation_filter <- function(dt, filter) {
   # CORE 1.0 writes the wildcard as "%" (base_operation.py there); "&" is
   # CDISC's. See rule_engine() for why one cannot stand in for the other.
   wildcard <- if (engine_is_core1()) "%" else "&"
+  # A filter on a column the dataset does not have cannot be applied, and
+  # skipping it counted or collected over rows the rule meant to exclude.
+  # Both engines stop there: CORE 1.0 skips the rule (ColumnNotFoundError,
+  # sql_base_operation.py) and CDISC's fails on the missing column.
+  assert_operation_columns(dt, names(filter), "filters on")
   keep <- rep(TRUE, nrow(dt))
   for (col in names(filter)) {
-    if (col %in% names(dt)) {
-      value <- filter[[col]]
-      matched <- if (is.character(value) && length(value) == 1L && endsWith(value, wildcard)) {
-        startsWith(as.character(dt[[col]]), sub(paste0("[", wildcard, "]+$"), "", value))
-      } else {
-        dt[[col]] == value
-      }
-      matched[is.na(matched)] <- FALSE
-      keep <- keep & matched
+    value <- filter[[col]]
+    matched <- if (is.character(value) && length(value) == 1L && endsWith(value, wildcard)) {
+      startsWith(as.character(dt[[col]]), sub(paste0("[", wildcard, "]+$"), "", value))
+    } else {
+      dt[[col]] == value
     }
+    matched[is.na(matched)] <- FALSE
+    keep <- keep & matched
   }
   dt[keep, ]
+}
+
+#' Refuse an operation that names a column its dataset does not have
+#'
+#' A missing grouping, filter or target column used to be dropped or answered
+#' with no binding, which the Check then read as "no violation". Both engines
+#' stop instead: CORE 1.0 skips the rule with ColumnNotFoundError
+#' (aggregate_operation.py `_resolve_column`, sql_rules_engine.py), and
+#' CDISC's engine fails on the missing column in pandas. Raising here makes
+#' check_study() record the skip and its reason.
+#'
+#' @param dt The operation's dataset.
+#' @param cols Column names the operation needs.
+#' @param what How the operation uses them, for the message.
+#' @return `invisible(NULL)`, or an error.
+#' @noRd
+assert_operation_columns <- function(dt, cols, what) {
+  missing <- setdiff(cols, names(dt))
+  if (length(missing) > 0) {
+    stop("an operation ", what, " ", paste(missing, collapse = ", "),
+         ", which the dataset does not have", call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' One of CORE 1.0's length aggregates, grouped by variable name over the study
@@ -177,10 +203,9 @@ pick_date <- function(x, want_max) {
 #' @return A data.table with `group_cols` plus a `.value` column, or `NULL` if no valid group columns.
 #' @noRd
 compute_group_agg <- function(dt, group_cols, name, fn, set_valued = FALSE) {
-  group_cols <- group_cols[group_cols %in% names(dt)]
-  if (length(group_cols) == 0) {
-    return(NULL)
-  }
+  # Grouping by fewer columns than the rule names answers a different
+  # question (CORE-000214 grouped DS by USUBJID alone when EPOCH was absent).
+  assert_operation_columns(dt, group_cols, "groups by")
   # The column is pulled out BEFORE the data.table call rather than looked up
   # inside it. `dt[, ..., by =]` evaluates its expression with the columns in
   # scope, so `get(name)` found any column actually called `name` in place of
@@ -300,9 +325,10 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
 #' @return A binding (see `scalar_binding()`/`grouped_binding()`), or `NULL` if it can't be computed.
 #' @noRd
 date_extreme_binding <- function(dt, op, want_max) {
-  if (is.null(dt) || !(op$name %in% names(dt))) {
+  if (is.null(dt)) {
     return(NULL)
   }
+  assert_operation_columns(dt, op$name, "takes the latest or earliest date of")
   filtered <- apply_operation_filter(dt, op$filter)
   picker <- function(x) pick_date(x, want_max = want_max)
   if (is.null(op$group)) {
@@ -612,9 +638,10 @@ extreme_binding <- function(dt, op, want_max, bindings = list()) {
     }
     return(scalar_binding(if (want_max) max(v) else min(v)))
   }
-  if (is.null(dt) || !(op$name %in% names(dt))) {
+  if (is.null(dt)) {
     return(NULL)
   }
+  assert_operation_columns(dt, op$name, "takes the largest or smallest value of")
   filtered <- apply_operation_filter(dt, op$filter)
   picker <- function(x) {
     if (is.character(x)) x <- x[!is.na(x) & nzchar(x)] else x <- x[!is.na(x)]
@@ -1134,15 +1161,25 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # Left unexpanded it matches no column, is silently dropped, and the
   # grouping is quietly coarser than the rule asked for - which inflates
   # every count rather than failing visibly.
+  #
+  # Which columns came from such a set is kept: CDISC's engine skips a set
+  # member the dataset does not have (record_count.py,
+  # _build_effective_grouping: "Variables from an expanded list that are not
+  # present in the dataframe are skipped"), while a column the rule names
+  # itself must be there.
+  group_from_set <- logical(0)
   if (!is.null(op$group)) {
-    op$group <- unlist(lapply(op$group, function(g) {
+    parts <- lapply(op$group, function(g) {
       if (is.character(g) && length(g) == 1L && startsWith(g, "$")) {
         b <- bindings[[g]]
-        if (is.null(b)) character(0) else as.character(b$value)
+        cols <- if (is.null(b)) character(0) else as.character(b$value)
+        list(cols = cols, from_set = rep(TRUE, length(cols)))
       } else {
-        g
+        list(cols = as.character(g), from_set = rep(FALSE, length(g)))
       }
-    }), use.names = FALSE)
+    })
+    op$group <- unlist(lapply(parts, `[[`, "cols"), use.names = FALSE)
+    group_from_set <- unlist(lapply(parts, `[[`, "from_set"), use.names = FALSE)
   }
   # An Operations `domain` can be a "--" template like "SUPP--" meaning
   # "this domain's supplemental dataset". Resolving "--" to the DOMAIN
@@ -1232,6 +1269,20 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     }
   }
 
+  # "--" in a grouping or filter column means the checked dataset's own
+  # prefix, as CDISC's engine reads it (_replace_variable_wildcard with the
+  # rule's domain). Left as written, "--TESTCD" matched no column and was
+  # dropped from CORE-001034's grouping without a word.
+  wildcard <- dataset_wildcard(own, current_domain)
+  if (length(op$group) > 0) {
+    op$group <- resolve_var_name(op$group, wildcard)
+    keep <- !group_from_set | op$group %in% names(dt)
+    op$group <- unique(op$group[keep])
+  }
+  if (!is.null(op$filter) && length(names(op$filter)) > 0) {
+    names(op$filter) <- resolve_var_name(names(op$filter), wildcard)
+  }
+
   # Refused, not answered with NULL. An unrecognised type used to leave the
   # binding missing, which resolve_condition_value() then treated as literal
   # text - the silent-failure shape this package keeps finding. Raising lets
@@ -1241,9 +1292,10 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   }
   binding <- switch(op$operator,
     distinct = {
-      if (is.null(dt) || !(op$name %in% names(dt))) {
+      if (is.null(dt)) {
         return(NULL)
       }
+      assert_operation_columns(dt, op$name, "collects the values of")
       filtered <- apply_operation_filter(dt, op$filter)
       # `value_is_reference` makes each value a COLUMN NAME to be looked up
       # in the domain that row points at, rather than a value in its own
@@ -1293,10 +1345,8 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       if (is.null(op$group)) {
         scalar_binding(nrow(filtered))
       } else {
-        group_cols <- op$group[op$group %in% names(dt)]
-        if (length(group_cols) == 0) {
-          return(NULL)
-        }
+        group_cols <- op$group
+        assert_operation_columns(dt, group_cols, "groups by")
         # An Operations `regex` means "group on this much of the value" -
         # see apply_grouping_regex(). It has to be applied to BOTH sides,
         # and to the data the binding is later resolved against, or the

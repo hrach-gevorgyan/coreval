@@ -64,18 +64,19 @@ likewise moved it by zero.
 
 ## Deprecated and draft rules are a lower-value pool
 
-163 of the bundled rules come from `Deprecated/`, and they account for roughly
-half the failures. Their fixtures predate current engine conventions, several
+Rules from `Deprecated/` once accounted for roughly half the failures. Their
+fixtures predate current engine conventions, several
 number records counting the CSV header row (one cites record 5 in a four-row
 file). Treat a deprecated failure as presumed-stale until shown otherwise, and
 prioritise Published rules.
 
-## Verify every sub-agent claim about the reference engine
+## Verify every claim about the reference engine
 
-Sub-agents investigating upstream can read a *different* cached snapshot than the
+A claim about upstream can come from reading a *different* snapshot than the
 pinned commit this project uses. Every claim of the form "the reference does X"
-must be checked against the pinned source before acting on it. This has caught
-real errors, including one agent overstating a bug's severity.
+must be checked against the pinned source before acting on it, whoever makes
+it. This has caught real errors, including a bug whose severity had been
+overstated.
 
 ## Test fixtures come from real upstream data
 

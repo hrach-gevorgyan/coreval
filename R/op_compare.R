@@ -90,8 +90,19 @@ compare_op <- function(fn, set_fn = NULL) {
     # type_insensitive is false: its own CORE-000542 results report "-1.234"
     # against 1 as different, yet leave "1.00" against 1 and "-1.234" against
     # -1.234 unreported. So for a 1.0 rule, a mixed pair compares by value.
-    mixed <- engine_is_core1() && xor(is.numeric(target), is.numeric(value))
-    if (isTRUE(ctx$condition$type_insensitive) || mixed) {
+    #
+    # CORE 1.0 reads the flag differently (equal_to_operator.py): `numeric`
+    # casts both sides to numbers, but `true` casts both to TEXT. So for a 1.0
+    # rule an IDVARVAL of "01" or "   2" differs from the parent's AESEQ of 1
+    # or 2 (CORE-000206), where comparing by value called them equal.
+    core1 <- engine_is_core1()
+    type_insensitive <- ctx$condition$type_insensitive
+    mixed <- core1 && xor(is.numeric(target), is.numeric(value))
+    if (core1 && isTRUE(type_insensitive)) {
+      as_text <- function(x) if (is.numeric(x)) target_text(x) else as.character(x)
+      target <- as_text(target)
+      value <- as_text(value)
+    } else if (isTRUE(type_insensitive) || mixed || (core1 && identical(type_insensitive, "numeric"))) {
       target <- canonicalize_numeric_string(target)
       value <- canonicalize_numeric_string(value)
     }
@@ -146,6 +157,20 @@ compare_op <- function(fn, set_fn = NULL) {
       result[target_blank] <- FALSE
       if (value_is_per_row) {
         result[value_blank] <- FALSE
+      }
+    }
+    # CORE 1.0's comparison against the column each row names
+    # (_check_equality_reference, equal_to_operator.py) has its own table: a
+    # row naming no column is FALSE either way, and for not_equal_to a blank
+    # target differs only from a populated column.
+    if (core1 && isTRUE(ctx$condition$value_is_reference) &&
+        ctx$condition$operator %in% c("equal_to", "not_equal_to")) {
+      if (is_negation) {
+        result[target_blank] <- value_blank[target_blank]
+      }
+      no_column <- attr(ctx$value, "coreval_no_column")
+      if (!is.null(no_column)) {
+        result[no_column] <- FALSE
       }
     }
     result

@@ -124,8 +124,10 @@ an inconvenient result was set aside.
     layout bug.
 
 22. **Do not write a pass rate into this file.** It moves whenever a rule is
-    fixed or the upstream pin changes. `tests/conformance/scoreboard.csv` is
-    the current answer.
+    fixed or the upstream pin changes. The conformance harness gives the
+    current answer: `tests/conformance/scoreboard_core1.csv` (tracked) for the
+    CORE 1.0 rules, and `tests/conformance/scoreboard.csv`, which it writes
+    on each run, for CDISC's.
 
 ## Resolved: things that looked like semantics and were not
 

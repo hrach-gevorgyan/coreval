@@ -207,7 +207,9 @@ register_operator("invalid_date_interval", function(ctx) {
   start <- sub("/.*$", "", x)
   end <- sub("^[^/]*/", "", x)
   date_ok <- function(p) !core1_invalid_date(p)
-  dur_ok <- function(p) is_valid_duration(p, duration_regex_positive)
+  # 1.0's own duration test, negative durations refused: an interval's
+  # direction comes from the order of its parts.
+  dur_ok <- function(p) !core1_invalid_duration(p, negative = FALSE)
   valid <- shaped & ((date_ok(start) & date_ok(end)) | (date_ok(start) & dur_ok(end)) |
                        (dur_ok(start) & date_ok(end)))
   !valid[match(all_x, x)]

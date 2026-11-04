@@ -592,9 +592,17 @@ test_that("a parent key written with padding still finds its record", {
                                         c("STUDYID", "USUBJID", "IDVAR", "IDVARVAL"))
   expect_equal(joined$data$LBTESTCD, c("ALB", "GLUC"))
 
-  rule <- coreval:::.coreval_env$data$rules[["CORE-000206"]]
-  out <- coreval:::run_rule_on_domain(rule, study, "SUPPLB")
+  # CDISC's version of CORE-000206 compares the key as a number, so both
+  # rows are fine.
+  cdisc <- coreval:::.coreval_env$data$cdisc_originals[["CORE-000206"]]
+  out <- coreval:::run_rule_on_domain(cdisc, study, "SUPPLB")
   expect_false(any(out$violations))
+  # CORE 1.0's compares it as text once joined (type_insensitive: true is a
+  # text cast there), and reports the padding: Verisian's engine reports the
+  # pilot's "       1" rows the same way.
+  core1 <- coreval:::.coreval_env$data$rules[["CORE-000206"]]
+  out <- coreval:::run_rule_on_domain(core1, study, "SUPPLB")
+  expect_equal(out$violations, c(TRUE, TRUE))
 })
 
 # A small study written as transport files, checked the way a user checks one.
@@ -680,8 +688,11 @@ test_that("SUPP qualifiers join whatever way the record key is written", {
     )
     result <- check_study(dir)
     expect_equal(rule_records(result, "CORE-000597"), c(1L, 2L), info = case$idvarval)
-    # ...and no SUPP row is reported as pointing at a record that does not exist.
-    expect_length(rule_records(result, "CORE-000206"), 0)
+    # CORE 1.0's CORE-000206 joins by number but then compares the key as
+    # text, so it reports a key written any other way than the parent's
+    # number is, and only that.
+    expected <- if (identical(case$idvarval, "100000")) integer(0) else c(1L, 2L)
+    expect_equal(rule_records(result, "CORE-000206"), expected, info = case$idvarval)
     unlink(dir, recursive = TRUE)
   }
 })
