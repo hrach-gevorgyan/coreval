@@ -143,6 +143,10 @@ read_study_folder <- function(path, skip = character(0)) {
             " both hold the dataset ", key, "; only ", basename(files[winners]),
             " was checked.", call. = FALSE)
   }
+  # The file's size on disk, which CORE-000765 measures against 5 GB.
+  for (i in seq_along(datasets)) {
+    datasets[[i]]$file_size <- unname(file.size(files[[i]]))
+  }
   datasets <- datasets[keep]
   names(datasets) <- keys[keep]
 
@@ -489,7 +493,13 @@ read_study_test_case <- function(path) {
   }
 
   datasets <- lapply(seq_len(nrow(datasets_csv)), function(i) {
-    build_dataset_from_csv(path, datasets_csv$Filename[i], variables_csv, datasets_csv$Label[i])
+    ds <- build_dataset_from_csv(path, datasets_csv$Filename[i], variables_csv, datasets_csv$Label[i])
+    # A test case can state the size of the file it stands for, as CORE 1.0's
+    # do in their Datasets sheet ("File Size"); otherwise it is the CSV's own.
+    stated <- if ("File Size" %in% names(datasets_csv)) suppressWarnings(as.numeric(datasets_csv[["File Size"]][i]))
+    ds$file_size <- if (length(stated) && !is.na(stated)) stated else
+      unname(file.size(dataset_csv_path(path, datasets_csv$Filename[i])))
+    ds
   })
   # A dataset's NAME is what the manifest DECLARES, which need not be its file
   # name. USDM test cases truncate the file stem to 27 characters while

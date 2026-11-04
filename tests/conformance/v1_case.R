@@ -444,8 +444,10 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
   head <- cell_as_char(ds_sheet$value[1, ], ds_sheet$kind[1, ])
   fcol <- match("Filename", head)
   lcol <- match("Label", head)
+  scol <- match("File Size", head)
   if (is.na(fcol)) stop("the Datasets sheet has no Filename column in ", books[[1]], call. = FALSE)
-  listed <- data.frame(Filename = character(0), Label = character(0), stringsAsFactors = FALSE)
+  listed <- data.frame(Filename = character(0), Label = character(0), `File Size` = character(0),
+                       stringsAsFactors = FALSE, check.names = FALSE)
   variables <- list()
   frames <- list()
   for (r in seq_len(nrow(ds_sheet$value))[-1]) {
@@ -455,7 +457,8 @@ v1_convert_case <- function(case_dir, rule, out_dir) {
     label <- if (is.na(lcol)) "" else cell_as_char(ds_sheet$value[r, lcol], ds_sheet$kind[r, lcol])
     base <- tolower(sub("[.][^.]*$", "", filename))
     ds <- v1_dataset(sheets[[filename]], paste0(books[[1]], " / ", filename))
-    listed[nrow(listed) + 1, ] <- c(base, label)
+    size <- if (is.na(scol)) "" else cell_as_char(ds_sheet$value[r, scol], ds_sheet$kind[r, scol])
+    listed[nrow(listed) + 1, ] <- c(base, label, size)
     vars <- ds$variables
     variables[[base]] <- data.frame(dataset = base, variable = vars$variable, label = vars$label,
                                     type = vars$type, length = vars$length, stringsAsFactors = FALSE)

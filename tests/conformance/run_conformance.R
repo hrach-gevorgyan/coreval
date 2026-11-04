@@ -287,7 +287,10 @@ run_case_graded <- function(rule, case_dir) {
     }
     return(list(status = "PASS", reason = NA_character_))
   }
-  applicable <- Filter(function(d) rule_applies_to_domain(rule, d, dataset = study$datasets[[d]]), domains)
+  ig <- list(standard = if (isTRUE(nzchar(study$standard$product))) study$standard$product,
+             version = if (isTRUE(nzchar(study$standard$version))) study$standard$version)
+  applicable <- Filter(function(d) rule_applies_to_domain(rule, d, dataset = study$datasets[[d]], ig = ig),
+                       domains)
   if (length(applicable) == 0) {
     # Distinguish "the fixture has datasets, none in scope" from "the fixture
     # has no datasets at all". The second is a different fact: FB6507 ships

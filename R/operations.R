@@ -1678,7 +1678,22 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # "dataset_name" reports the domain code AS-IS (uppercase, e.g.
     # "SUPPAE"), unlike the plural dataset_names Operations type (used by
     # e.g. CORE-000539/540), which is separately confirmed lowercase.
-    extract_metadata = if (identical(op$name, "dataset_name")) scalar_binding(current_domain) else NULL,
+    extract_metadata = switch(
+      op$name %||% "",
+      dataset_name = scalar_binding(current_domain),
+      # The file's size in bytes (CORE-000765: larger than 5 GB). A dataset
+      # that came from no file, a data frame in memory, has none, and is
+      # refused rather than answered: NULL here read as "not larger".
+      dataset_size = {
+        size <- study$datasets[[current_domain]]$file_size
+        if (is.null(size) || is.na(size)) {
+          stop("needs the size of the dataset's file, and this dataset was not read from one",
+               call. = FALSE)
+        }
+        scalar_binding(size)
+      },
+      NULL
+    ),
     dy = compute_dy(op, study, current_dataset, current_domain),
     NULL
   )

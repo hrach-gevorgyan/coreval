@@ -866,6 +866,13 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     "Variable Metadata Check against Define XML and Library Metadata",
     "Value Check against Define XML Variable"
   ))) {
+    if (engine_is_core1() &&
+        identical(rule$rule_type, "Variable Metadata Check against Define XML and Library Metadata")) {
+      return(cached_build(
+        paste0("varmeta-core1\x1f", domain),
+        function() core1_define_and_library_variables(dataset, study$define, domain, study)
+      ))
+    }
     return(cached_build(
       paste0("varmeta", domain),
       function() build_variable_metadata_dataset(dataset, study$define, domain, study)
@@ -875,6 +882,12 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     return(build_domain_list_with_define_dataset(study))
   }
   if (identical(rule$rule_type, "Define Item Metadata Check against Library Metadata")) {
+    if (engine_is_core1()) {
+      return(cached_build(
+        paste0("defineitem-core1\x1f", domain),
+        function() core1_define_items_against_library(study, domain)
+      ))
+    }
     return(cached_build(
       paste0("defineitem", domain),
       function() build_define_item_metadata_dataset(study, domain)
@@ -1239,6 +1252,98 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
       data$define_dataset_name <- NULL
     }
   }
+  list(data = data, meta = NULL)
+}
+
+#' The define-item table CORE 1.0 builds against the Library
+#'
+#' A port of `define_items_against_library()` (compiler/sources/variables.py):
+#' one row per variable named by the define or by the Library for this
+#' domain, sorted by name, with both sides' fields. CDISC's engine builds one
+#' row per define variable in define order, so the two number their records
+#' differently (CORE-000929 reports CM record 72 where CDISC's reports 2).
+#'
+#' @param study A study.
+#' @param domain The domain.
+#' @return A synthetic dataset.
+#' @noRd
+core1_define_items_against_library <- function(study, domain) {
+  data <- build_define_item_metadata_dataset(study, domain)$data
+  if (nrow(data) == 0 || !"library_variable_name" %in% names(data)) {
+    return(list(data = data, meta = NULL))
+  }
+  # The IG's variables only. 1.0 also lists Model class variables for the
+  # general observation classes, from its own Library cache; that list is not
+  # reproduced here, so a record number can differ from 1.0's while the
+  # variable reported is the same.
+  lib <- library_variables_for(study, domain)
+  only_lib <- setdiff(unique(lib$variable), data$define_variable_name)
+  if (length(only_lib) > 0) {
+    lib <- lib[match(only_lib, lib$variable), ]
+    extra <- data.table::data.table(
+      library_variable_name = lib$variable, library_variable_label = lib$label,
+      library_variable_role = lib$role, library_variable_data_type = lib$type,
+      library_variable_core = lib$core,
+      library_variable_ccode = ifelse(is.na(lib$ccode), "", lib$ccode)
+    )
+    extra$library_variable_has_codelist <- nzchar(extra$library_variable_ccode)
+    data <- data.table::rbindlist(list(data, extra), use.names = TRUE, fill = TRUE)
+  }
+  key <- ifelse(is.na(data$define_variable_name), data$library_variable_name, data$define_variable_name)
+  data <- data[order(toupper(key), method = "radix")]
+  list(data = data, meta = NULL)
+}
+
+#' The variable table CORE 1.0 builds against the define and the Library
+#'
+#' A port of `against_define_and_library()` (compiler/sources/variables.py).
+#' One row per variable the define declares for this dataset, in define
+#' order, then one per variable only the dataset has. A define variable the
+#' dataset lacks has a blank `variable_name` and counts as empty, and a
+#' dataset variable the define does not mention has no define fields. That
+#' is what CORE-002006, 002030, 002077 and 002107 ask about: a variable the
+#' define says was collected but the dataset does not carry. With one row per
+#' dataset variable, as CDISC's engine builds it, there is no row to report.
+#'
+#' @inheritParams build_variable_metadata_dataset
+#' @return A synthetic dataset, one row per variable, in 1.0's order.
+#' @noRd
+core1_define_and_library_variables <- function(real_dataset, define, domain, study) {
+  built <- build_variable_metadata_dataset(real_dataset, define, domain, study)
+  data <- built$data
+  dv <- define$variables
+  if (!is.null(dv) && nrow(dv) > 0) {
+    dv <- dv[toupper(dv$define_dataset_name) == toupper(domain), ]
+    dv <- dv[!duplicated(dv$define_variable_name), ]
+  }
+  declared <- if (is.null(dv)) character(0) else dv$define_variable_name
+  if ("define_variable_name" %in% names(data)) {
+    data$define_variable_name[!data$variable_name %in% declared] <- NA_character_
+  }
+  extra <- setdiff(declared, data$variable_name)
+  if (length(extra) > 0) {
+    # Built by the same builder from a dataset that has these variables in
+    # its metadata and no data, so their Library and define fields are looked
+    # up exactly as a present variable's are, and they count as empty.
+    ghost <- list(
+      data = data.table::data.table(),
+      meta = data.frame(variable = extra, label = "", type = "", stringsAsFactors = FALSE)
+    )
+    missing <- build_variable_metadata_dataset(ghost, define, domain, study)$data
+    missing$variable_label <- ""
+    missing$variable_data_type <- ""
+    missing$variable_name <- ""
+    data <- data.table::rbindlist(list(data, missing), use.names = TRUE, fill = TRUE)
+  }
+  # def:HasNoData can only be "Yes" (Define-XML 2.1), so FALSE here means the
+  # define did not say. 1.0 stores that as nothing, which `empty` reads as
+  # empty, and CORE-002006 asks `define_variable_has_no_data empty`.
+  if ("define_variable_has_no_data" %in% names(data)) {
+    data$define_variable_has_no_data[data$define_variable_has_no_data %in% FALSE] <- NA
+  }
+  key <- ifelse(nzchar(data$variable_name), data$variable_name, data$define_variable_name)
+  order_of <- c(declared, setdiff(data$variable_name, c(declared, "")))
+  data <- data[order(match(key, order_of))]
   list(data = data, meta = NULL)
 }
 

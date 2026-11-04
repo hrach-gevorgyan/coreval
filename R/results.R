@@ -577,7 +577,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   # and by the count of rules the standard excluded, below.
   applies <- lapply(domains, function(d) {
     vapply(.coreval_env$data$rules, rule_applies_to_domain, logical(1),
-           domain = d, use_case = use_case, dataset = study$datasets[[d]])
+           domain = d, use_case = use_case, dataset = study$datasets[[d]],
+           ig = list(standard = declared, version = declared_version))
   })
   names(applies) <- domains
   plans <- lapply(domains, function(d) {

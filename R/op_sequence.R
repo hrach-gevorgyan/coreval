@@ -218,6 +218,9 @@ register_operator("target_is_not_sorted_by", function(ctx) {
     tv <- suppressWarnings(as.integer(target))
     return(!(is.na(tv) | tv == position))
   }
+  if (engine_is_core1()) {
+    return(!core1_sorted_by(target, dt, group, ctx))
+  }
   target_ord <- sequence_sort_key(target)
 
   result <- rep(FALSE, ctx$n)
@@ -238,3 +241,81 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   }
   result
 })
+
+#' target_is_sorted_by as CORE 1.0 answers it, without strict ordering
+#'
+#' From target_is_sorted_by_operator.py. Within each group, every row's
+#' position when ordered by the target (blanks last, ties broken by the sort
+#' columns, then by row) must equal its position when ordered by each sort
+#' column (ties broken by the target, then by row); a row whose sort value is
+#' missing is never in place. And a partial date must not contain the next
+#' row's date: "2020" then "2020-01" is an overlap, not an order. Compared
+#' with CDISC's engine, which checks neighbouring pairs at their common
+#' precision, it reports different rows (CORE-000535).
+#'
+#' @param target The target values, already reduced by any `regex`.
+#' @param dt The dataset's data.
+#' @param group The group key for each row.
+#' @param ctx Operator context, for the sort specification.
+#' @return A logical vector, TRUE where the row is in order.
+#' @noRd
+core1_sorted_by <- function(target, dt, group, ctx) {
+  specs <- ctx$condition$value
+  n <- length(target)
+  cols <- lapply(specs, function(sp) {
+    x <- as.character(dt[[resolve_var_name(sp$name, ctx$wildcard)]])
+    x[!is.na(x) & !nzchar(x)] <- NA_character_
+    x
+  })
+  desc <- vapply(specs, function(sp) identical(tolower(sp$sort_order %||% "asc"), "desc"), logical(1))
+  nfirst <- vapply(specs, function(sp) identical(tolower(sp$null_position %||% "last"), "first"), logical(1))
+  tkey <- if (is.numeric(target)) target else suppressWarnings(as.numeric(target))
+  if (anyNA(tkey[!is.na(target)])) tkey <- xtfrm(as.character(target))
+  tkey[is.na(target) | (is.character(target) & !nzchar(target))] <- NA
+  sort_key <- function(k, idx) {
+    v <- cols[[k]][idx]
+    list(if (nfirst[k]) !is.na(v) else is.na(v), if (desc[k]) -xtfrm(v) else xtfrm(v))
+  }
+  target_key <- function(idx) list(is.na(tkey[idx]), tkey[idx])
+  rank_by <- function(idx, keys) {
+    pos <- integer(length(idx))
+    pos[do.call(order, c(keys, list(seq_along(idx), method = "radix", na.last = TRUE)))] <- seq_along(idx)
+    pos
+  }
+  year <- "^[0-9]{4}$"
+  year_month <- "^[0-9]{4}-[0-9]{2}$"
+  iso_ok <- function(x) grepl(paste0("^[0-9]{4}(-[0-9]{2}(-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?)?)?)?$|",
+                                     "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$|",
+                                     "^[0-9]{4}(-[0-9]{2})?--$|^[0-9]{4}----$"), x)
+  ok <- rep(TRUE, n)
+  # A missing group value is a group of its own, as NULL is in PARTITION BY;
+  # only the overlap test is not applied to it.
+  within_missing <- is.na(group)
+  gkey <- ifelse(within_missing, "\x1eNA", as.character(group))
+  for (g in unique(gkey)) {
+    idx <- which(gkey == g)
+    by_target <- rank_by(idx, c(target_key(idx), unlist(lapply(seq_along(cols), sort_key, idx = idx),
+                                                         recursive = FALSE)))
+    agree <- rep(TRUE, length(idx))
+    for (k in seq_along(cols)) {
+      by_col <- rank_by(idx, c(sort_key(k, idx), target_key(idx)))
+      agree <- agree & !is.na(cols[[k]][idx]) & by_col == by_target
+    }
+    # The next row's first sort value, in sort-column order.
+    ord <- do.call(order, c(unlist(lapply(seq_along(cols), sort_key, idx = idx), recursive = FALSE),
+                            list(seq_along(idx), method = "radix")))
+    first <- cols[[1]][idx]
+    nxt <- rep(NA_character_, length(idx))
+    nxt[ord[-length(ord)]] <- first[ord[-1]]
+    valid <- !is.na(first) & !is.na(nxt) & iso_ok(first) & iso_ok(nxt)
+    starts <- function(a, b) startsWith(b, a)
+    overlap <- valid & (
+      (grepl(year, first) & grepl("^[0-9]{4}-[0-9]{2}", nxt) & starts(first, nxt)) |
+        (grepl(year_month, first) & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}", nxt) & starts(first, nxt)) |
+        (grepl(year, nxt) & grepl("^[0-9]{4}-[0-9]{2}", first) & starts(nxt, first)) |
+        (grepl(year_month, nxt) & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}", first) & starts(nxt, first))
+    )
+    ok[idx] <- agree & !(overlap & !within_missing[idx])
+  }
+  ok
+}

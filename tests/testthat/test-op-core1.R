@@ -176,3 +176,51 @@ test_that("define.xml exists asks whether the study has a define (CORE-002084)",
   study$define <- list(datasets = data.frame())
   expect_equal(evaluate_rule(rule, study, "XX"), FALSE)
 })
+
+test_that("a 1.0 rule takes a domain's class from the declared SDTMIG version (CORE-000864)", {
+  rule <- core1_rule(list(name = "X", operator = "exists"),
+                     scope = list(Classes = list(Include = "SPECIAL PURPOSE"), Domains = list(Include = "ALL")))
+  sm <- list(data = data.table::data.table(DOMAIN = "SM", SMSEQ = 1), meta = NULL)
+  # SM arrived in SDTMIG 3.3, so under 3.2 it has no class and is passed by.
+  expect_false(rule_applies_to_domain(rule, "SM", dataset = sm, ig = list(standard = "SDTMIG", version = "3.2")))
+  expect_true(rule_applies_to_domain(rule, "SM", dataset = sm, ig = list(standard = "SDTMIG", version = "3.4")))
+  rule$source <- "published"
+  expect_true(rule_applies_to_domain(rule, "SM", dataset = sm, ig = list(standard = "SDTMIG", version = "3.2")))
+})
+
+test_that("1.0's variable table lists define variables the dataset lacks (CORE-002107)", {
+  skip_if_not_installed("xml2")
+  real <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "SV", SVSEQ = 1),
+               meta = data.frame(variable = c("STUDYID", "DOMAIN", "SVSEQ"), label = "", type = "Char"))
+  define <- list(variables = data.frame(
+    define_dataset_name = "SV", define_variable_name = c("STUDYID", "SVUPDES", "DOMAIN", "SVSEQ"),
+    define_variable_has_no_data = FALSE, stringsAsFactors = FALSE
+  ))
+  built <- core1_define_and_library_variables(real, define, "SV", NULL)$data
+  expect_equal(built$variable_name, c("STUDYID", "", "DOMAIN", "SVSEQ"))
+  expect_equal(built$define_variable_name, c("STUDYID", "SVUPDES", "DOMAIN", "SVSEQ"))
+  expect_true(built$variable_is_empty[2])
+  expect_true(all(is.na(built$define_variable_has_no_data)))
+})
+
+test_that("dataset_size is the file's size, and refused for a dataset with no file (CORE-000765)", {
+  rule <- list(check = list(name = "$size", operator = "greater_than", value = 5368709120),
+               operations = list(list(id = "$size", operator = "extract_metadata", name = "dataset_size")))
+  study <- one_dataset(list(X = 1), domain = "DM")
+  expect_error(evaluate_rule(rule, study, "DM"), "size of the dataset's file")
+  study$datasets$DM$file_size <- 5368709121
+  expect_true(evaluate_rule(rule, study, "DM"))
+  study$datasets$DM$file_size <- 10
+  expect_false(evaluate_rule(rule, study, "DM"))
+})
+
+test_that("1.0's sort check compares positions and refuses overlapping partial dates (CORE-000535)", {
+  ds <- list(data = data.table::data.table(
+    USUBJID = "1", SMSEQ = 1:4, SMSTDTC = c("2020", "2020-01", "2021-01", "2021-03")
+  ), meta = NULL)
+  check <- list(name = "SMSEQ", operator = "target_is_not_sorted_by", within = "USUBJID",
+                value = list(list(name = "SMSTDTC", null_position = "last", sort_order = "asc")))
+  expect_equal(in_core1(evaluate_check(check, ds, "SM")), c(TRUE, FALSE, FALSE, FALSE))
+  ds$data$SMSTDTC <- c("2020-01", "2020-03", "2020-02", "2020-04")
+  expect_equal(in_core1(evaluate_check(check, ds, "SM")), c(FALSE, TRUE, TRUE, FALSE))
+})

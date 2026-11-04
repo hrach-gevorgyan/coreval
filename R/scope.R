@@ -89,9 +89,17 @@ domain_class <- function(domain) {
 #' @param key The dataset's key (file name).
 #' @return A single class name, or `NA_character_` if it cannot be told.
 #' @noRd
-dataset_class <- function(dataset, key) {
+dataset_class <- function(dataset, key, ig = NULL) {
   code <- if (is.null(dataset)) toupper(key) else dataset_unsplit_name(dataset, key)
-  cls <- domain_class(code)
+  # CORE 1.0 looks the class up in the declared Implementation Guide version
+  # only (SdtmStandardsContext.derive_class). A domain that version does not
+  # define, such as SM under SDTMIG 3.2 or the SEND domain TX under 3.4, has
+  # no class there unless its topic variable gives one, so a class-scoped
+  # rule passes it by (CORE-000864, CORE-000088). SUPP-- and AP-- datasets
+  # keep the class they take from their parent.
+  known_in_ig <- is.null(ig) || startsWith(code, "SUPP") || startsWith(code, "AP") ||
+    domain_in_ig(code, ig$standard, ig$version)
+  cls <- if (known_in_ig) domain_class(code) else NA_character_
   if (!is.na(cls) || is.null(dataset) || is.null(dataset$data)) {
     return(cls)
   }
@@ -108,6 +116,29 @@ dataset_class <- function(dataset, key) {
   NA_character_
 }
 
+#' Does an Implementation Guide version define this domain?
+#'
+#' Answered from the bundled Library variables. With no standard or version
+#' declared, or a standard other than SDTMIG, there is nothing to narrow by
+#' and the answer is TRUE.
+#'
+#' @param code A domain code.
+#' @param standard,version The declared standard and version, or `NULL`.
+#' @return A single logical.
+#' @noRd
+domain_in_ig <- function(code, standard, version) {
+  if (is.null(standard) || is.null(version) || !identical(toupper(standard), "SDTMIG")) {
+    return(TRUE)
+  }
+  lv <- .coreval_env$library_variables
+  want <- gsub("[.]", "-", as.character(version))
+  in_version <- lv$domain[tolower(lv$standard) == "sdtmig" & lv$version == want]
+  if (length(in_version) == 0) {
+    return(TRUE)
+  }
+  toupper(code) %in% toupper(in_version)
+}
+
 #' Test a rule's Scope > Classes block against a dataset
 #'
 #' Findings About is a kind of Findings: a rule written for Findings also
@@ -119,8 +150,8 @@ dataset_class <- function(dataset, key) {
 #' @param dataset The dataset, or `NULL`.
 #' @return A single logical.
 #' @noRd
-class_matches <- function(classes_spec, domain, dataset = NULL) {
-  cls <- toupper(dataset_class(dataset, domain))
+class_matches <- function(classes_spec, domain, dataset = NULL, ig = NULL) {
+  cls <- toupper(dataset_class(dataset, domain, ig))
   include_exclude_matches(classes_spec, function(pattern) {
     pattern <- toupper(pattern)
     if (pattern == "ALL") {
@@ -201,7 +232,7 @@ entities_match <- function(entities_spec, domain, dataset = NULL) {
 #' @param use_case Optional use case to also filter on.
 #' @return A single logical.
 #' @noRd
-rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL) {
+rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL, ig = NULL) {
   scope <- rule$scope
   # `Domains: Include: [ALL]` alongside a narrower `Classes` filter does NOT
   # widen scope to every domain: both still have to match. Tested directly -
@@ -209,7 +240,10 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   # breaks 11 other rules, a net loss of 8. Whatever the reference does for
   # those three, it is not this. Over a hundred rules pair the two, so do not
   # retry this without measuring the whole sweep.
-  if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain, dataset)) {
+  # A CORE 1.0 rule takes the class from the declared SDTMIG version only.
+  # See dataset_class().
+  ig <- if (identical(rule$source, "core_contributor")) ig else NULL
+  if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain, dataset, ig)) {
     return(FALSE)
   }
   if (!is.null(scope$Domains) && !domains_scope_applies(scope$Domains, domain, dataset)) {

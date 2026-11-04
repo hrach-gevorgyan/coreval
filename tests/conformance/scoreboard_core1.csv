@@ -70,7 +70,7 @@ CORE-000084,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000085,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000086,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000087,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000088,core_contributor,Record Data,Fully Executable,Record,FAIL,"[TX] record mismatch: expected {}, got {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24}"
+CORE-000088,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000090,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000092,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000093,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -264,7 +264,7 @@ CORE-000518,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000527,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000529,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000534,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000535,core_contributor,Record Data,Fully Executable,Record,FAIL,"[SM] record mismatch: expected {}, got {2,3,6,7,8}"
+CORE-000535,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000538,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000539,core_contributor,Dataset Metadata Check,Fully Executable,Record,FAIL,"[QSAE] record mismatch: expected {2}, got {1}"
 CORE-000540,core_contributor,Dataset Metadata Check,Fully Executable,Dataset,PASS,
@@ -302,7 +302,7 @@ CORE-000757,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000758,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000760,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000763,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000765,core_contributor,Dataset Metadata Check,Fully Executable,Dataset,FAIL,"[DM] Dataset-sensitivity mismatch: expected violation=TRUE, got FALSE"
+CORE-000765,core_contributor,Dataset Metadata Check,Fully Executable,Dataset,PASS,
 CORE-000774,core_contributor,Record Data,Partially Executable - Possible Overreporting,Record,PASS,
 CORE-000776,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000783,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -315,7 +315,7 @@ CORE-000852,core_contributor,Variable Metadata Check,Fully Executable,Dataset,PA
 CORE-000853,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000862,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000863,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000864,core_contributor,Record Data,Fully Executable,Dataset,FAIL,"[SM] Dataset-sensitivity mismatch: expected violation=FALSE, got TRUE"
+CORE-000864,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000865,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000866,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000867,core_contributor,Value Check with Variable Metadata,Fully Executable,Record,PASS,
@@ -325,7 +325,7 @@ CORE-000892,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000901,core_contributor,Record Data,Partially Executable - Possible Underreporting,Record,PASS,
 CORE-000914,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000916,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000929,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[CM] record mismatch: expected {72}, got {2}"
+CORE-000929,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[CM] record mismatch: expected {72}, got {37}"
 CORE-000953,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-001034,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000002,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -485,7 +485,7 @@ CORE-001064,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-001078,core_contributor,Record Data,Fully Executable,Group,PASS,
 CORE-001079,core_contributor,Variable Metadata Check,Partially Executable - Possible Underreporting,Record,PASS,
 CORE-001080,core_contributor,Record Data,Fully Executable,Record,FAIL,"[TS] record mismatch: expected {}, got {16}"
-CORE-001081,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[SV] record mismatch: expected {1,5,12}, got {2,9,10}"
+CORE-001081,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[LB] record mismatch: expected {2,131}, got {2,47}"
 CORE-001082,core_contributor,Variable Metadata Check against Library Metadata,Partially Executable - Possible Overreporting,Record,PASS,
 CORE-000737,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000738,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -498,7 +498,7 @@ CORE-002002,core_contributor,Dataset Contents Check against Define XML,Fully Exe
 CORE-002003,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
 CORE-002004,core_contributor,Variable Metadata Check against Define XML,Fully Executable,Dataset,SKIPPED,evaluate_rule failed: needs metadata coreval does not build yet: define_variable_source_type
 CORE-002005,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
-CORE-002006,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,FAIL,"[SV] record mismatch: expected {}, got {11}"
+CORE-002006,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,PASS,
 CORE-002007,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Record,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
 CORE-002008,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the MedDRA dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002009,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the MedDRA dictionary, which is not supplied: coreval does not read external dictionaries yet"
@@ -522,7 +522,7 @@ CORE-002026,core_contributor,Domain Presence Check against Define XML,Fully Exec
 CORE-002027,core_contributor,Domain Presence Check against Define XML,Fully Executable,Record,PASS,
 CORE-002028,core_contributor,Domain Presence Check against Define XML,Fully Executable,Record,PASS,
 CORE-002029,core_contributor,Domain Presence Check against Define XML,Fully Executable,Record,PASS,
-CORE-002030,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,FAIL,"[SV] record mismatch: expected {}, got {9}"
+CORE-002030,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,PASS,
 CORE-002031,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the MedDRA dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002032,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002033,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -569,7 +569,7 @@ CORE-002073,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evalua
 CORE-002074,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the MedDRA dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002075,core_contributor,Record Data,Fully Executable,Record,SKIPPED,unimplemented Operations type(s): get_countries
 CORE-002076,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-002077,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,FAIL,"[AE] record mismatch: expected {33,36,38}, got {}"
+CORE-002077,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,PASS,
 CORE-002078,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002079,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002080,core_contributor,Record Data,Fully Executable,Dataset,PASS,
@@ -599,7 +599,7 @@ CORE-002103,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evalua
 CORE-002104,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002105,core_contributor,Record Data,Fully Executable,Group,PASS,
 CORE-002106,core_contributor,Record Data,Fully Executable,Record,SKIPPED,unimplemented Operations type(s): get_countries
-CORE-002107,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,FAIL,"[SV] record mismatch: expected {5}, got {}"
+CORE-002107,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,PASS,
 CORE-002108,core_contributor,Record Data,Partially Executable - Possible Overreporting,Record,PASS,
 CORE-002109,core_contributor,Record Data,Partially Executable - Possible Overreporting,Record,PASS,
 CORE-002110,core_contributor,Record Data,Fully Executable,Dataset,PASS,
