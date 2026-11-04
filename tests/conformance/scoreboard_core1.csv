@@ -493,10 +493,10 @@ CORE-000748,core_contributor,Record Data,Partially Executable - Possible Overrep
 CORE-000348,core_contributor,Variable Metadata Check against Define XML,Fully Executable,Dataset,PASS,
 CORE-000845,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002000,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
-CORE-002001,core_contributor,Value Check against Define XML Variable,Fully Executable,Record,SKIPPED,unimplemented Operations type(s): define_variable_metadata
+CORE-002001,core_contributor,Value Check against Define XML Variable,Fully Executable,Record,PASS,
 CORE-002002,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
 CORE-002003,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
-CORE-002004,core_contributor,Variable Metadata Check against Define XML,Fully Executable,Dataset,SKIPPED,evaluate_rule failed: needs metadata coreval does not build yet: define_variable_source_type
+CORE-002004,core_contributor,Variable Metadata Check against Define XML,Fully Executable,Dataset,PASS,
 CORE-002005,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Dataset,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
 CORE-002006,core_contributor,Variable Metadata Check against Define XML and Library Metadata,Fully Executable,Record,PASS,
 CORE-002007,core_contributor,Dataset Contents Check against Define XML,Fully Executable,Record,SKIPPED,unimplemented rule type: Dataset Contents Check against Define XML
@@ -548,13 +548,13 @@ CORE-002052,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evalua
 CORE-002053,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002054,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002055,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-002056,core_contributor,Record Data,Partially Executable - Possible Overreporting,Study,SKIPPED,unimplemented Operations type(s): standard_domains
+CORE-002056,core_contributor,Record Data,Partially Executable - Possible Overreporting,Study,PASS,
 CORE-002057,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the FDA Data Standards Catalog, a reference table CORE 1.0's engine ships and coreval does not bundle"
 CORE-002058,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002059,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002060,core_contributor,Record Data,Fully Executable,Record,SKIPPED,unimplemented Operations type(s): get_countries
 CORE-002061,core_contributor,Global Value Check with Variable Metadata,Fully Executable,Group,SKIPPED,unimplemented rule type: Global Value Check with Variable Metadata
-CORE-002062,core_contributor,Value Check with Variable Metadata,Fully Executable,Group,SKIPPED,evaluate_rule failed: needs metadata coreval does not build yet: variable_length
+CORE-002062,core_contributor,Value Check with Variable Metadata,Fully Executable,Group,PASS,
 CORE-002063,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the UNII dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002064,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the UNII dictionary, which is not supplied: coreval does not read external dictionaries yet"
 CORE-002065,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the UNII dictionary, which is not supplied: coreval does not read external dictionaries yet"
@@ -616,7 +616,7 @@ CORE-002120,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"unimpl
 CORE-002121,core_contributor,Value Check with Dataset Metadata,Fully Executable,Record,PASS,
 CORE-002122,core_contributor,Record Data,Partially Executable - Possible Underreporting,Record,SKIPPED,unimplemented Operations type(s): label_referenced_variable_metadata
 CORE-002123,core_contributor,Value Check against Library Metadata,Fully Executable,Record,SKIPPED,unimplemented rule type: Value Check against Library Metadata
-CORE-002124,core_contributor,Record Data,Fully Executable,Dataset,SKIPPED,unimplemented Operations type(s): define_variable_metadata
-CORE-002125,core_contributor,Record Data,Fully Executable,Dataset,SKIPPED,unimplemented Operations type(s): define_variable_metadata
+CORE-002124,core_contributor,Record Data,Fully Executable,Dataset,PASS,
+CORE-002125,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-002126,core_contributor,Value Check against Define XML VLM,Fully Executable,Record,SKIPPED,unimplemented rule type: Value Check against Define XML VLM
 CORE-002127,core_contributor,Value Check against Define XML VLM,Fully Executable,Record,SKIPPED,unimplemented rule type: Value Check against Define XML VLM

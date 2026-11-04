@@ -224,3 +224,44 @@ test_that("1.0's sort check compares positions and refuses overlapping partial d
   ds$data$SMSTDTC <- c("2020-01", "2020-03", "2020-02", "2020-04")
   expect_equal(in_core1(evaluate_check(check, ds, "SM")), c(FALSE, TRUE, TRUE, FALSE))
 })
+
+test_that("standard_domains lists the IG's domains of a class, not a dataset called the class (CORE-002056)", {
+  study <- one_dataset(list(TSPARMCD = "X"), domain = "TS")
+  study$standard <- list(product = "SDTMIG", version = "3-4")
+  ops <- list(list(operator = "standard_domains", id = "$td", domain_class = "TRIAL DESIGN"))
+  b <- operation_bindings_for_rule(list(operations = ops), study, "TS", study$datasets$TS)
+  expect_true(all(c("TA", "TE", "TS", "TV") %in% b$`$td`$value))
+  expect_false("DM" %in% b$`$td`$value)
+})
+
+test_that("define_variable_metadata reads one attribute, booleans written as Python does (CORE-002001)", {
+  study <- one_dataset(list(AEDUR = "P1D"), domain = "AE")
+  study$define <- list(variables = data.frame(
+    define_dataset_name = "AE", define_variable_name = "AEDUR",
+    define_variable_is_collected = FALSE, define_variable_ccode = "C1", stringsAsFactors = FALSE
+  ))
+  op <- function(attr) list(list(id = "$x", name = "--DUR", operator = "define_variable_metadata",
+                                 attribute_name = attr))
+  ds <- study$datasets$AE
+  ds$data$DOMAIN <- "AE"
+  expect_equal(operation_bindings_for_rule(list(operations = op("define_variable_is_collected")),
+                                           study, "AE", ds)$`$x`$value, "False")
+  expect_equal(operation_bindings_for_rule(list(operations = op("define_variable_ccode")),
+                                           study, "AE", ds)$`$x`$value, "C1")
+  expect_error(operation_bindings_for_rule(list(operations = list(list(
+    id = "$x", name = "AENOPE", operator = "define_variable_metadata", attribute_name = "define_variable_ccode"))),
+    study, "AE", ds), "has no define_variable_ccode for AENOPE")
+})
+
+test_that("the per-value table carries each value's length, and the declared length when known (CORE-002062)", {
+  built <- build_variable_value_check_dataset(list(
+    data = data.table::data.table(C = c("abc", ""), N = c(10.5, NA)),
+    meta = data.table::data.table(variable = c("C", "N"), label = "", type = c("Char", "Num"), length = c(20, 8))
+  ))
+  expect_equal(built$data$variable_value_length, c(3L, 0L, 3L, NA))
+  expect_equal(built$data$variable_length, c(20, 20, 8, 8))
+  no_len <- build_variable_value_check_dataset(list(
+    data = data.table::data.table(C = "a"), meta = data.table::data.table(variable = "C", label = "", type = "Char")
+  ))
+  expect_false("variable_length" %in% names(no_len$data))
+})

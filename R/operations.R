@@ -1006,6 +1006,7 @@ implemented_operation_types <- c(
   "get_model_filtered_variables",
   "get_parent_model_column_order",
   "get_xhtml_errors",
+  "define_variable_metadata",
   "intersect",
   "codelist_extensible",
   "map",
@@ -1017,6 +1018,7 @@ implemented_operation_types <- c(
   "record_count",
   "referenced_domain_variable_names",
   "required_variables",
+  "standard_domains",
   "study_domains",
   "valid_codelist_dates",
   "variable_count",
@@ -1099,7 +1101,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # CURRENT dataset's own name fits the template, the rule is talking about
   # the dataset being checked - which is the case for every bundled rule
   # scoped to SUPP--/CO/RELREC.
-  domain <- if (!is.null(op$domain)) op$domain else current_domain
+  # Exact, not `op$domain`: `$` on a list matches a prefix, so an operation
+  # with only `domain_class: TRIAL DESIGN` (CORE-002056's standard_domains)
+  # read as one over a dataset called "TRIAL DESIGN".
+  op_domain <- op[["domain", exact = TRUE]]
+  domain <- if (!is.null(op_domain)) op_domain else current_domain
   if (is.character(domain) && length(domain) == 1L && grepl("--", domain, fixed = TRUE)) {
     resolved <- sub("--", dataset_wildcard(current_dataset, current_domain), domain, fixed = TRUE)
     domain <- if (!is.null(study$datasets[[toupper(resolved)]])) {
@@ -1127,7 +1133,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # every row as passing (CORE-000039 with no TV), where the reference skips
   # it as "operation domain not found".
   ds <- domain_dataset(study, domain)
-  if (is.null(ds) && !is.null(op$domain) && !is.null(study$datasets) &&
+  if (is.null(ds) && !is.null(op_domain) && !is.null(study$datasets) &&
       !identical(toupper(domain), toupper(current_domain))) {
     # CORE 1.0's distinct answers a missing domain with an empty set
     # (sql_operations/distinct.py, `_empty_result_set_query()`), and its
@@ -1171,7 +1177,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   # every count and aggregate computed over them. The fallback widens only the
   # case the raw data genuinely does not cover, which is an operation keying on
   # a column the join produced.
-  if (is.null(op$domain) && !is.null(current_dataset)) {
+  if (is.null(op_domain) && !is.null(current_dataset)) {
     wanted <- operation_columns_used(op)
     joined <- current_dataset$data
     if (length(wanted) > 0 && !all(wanted %in% names(dt)) && all(wanted %in% names(joined))) {
@@ -1302,6 +1308,45 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         return(scalar_binding(unique(left[!is.na(left) & !left %in% right[!is.na(right)]])))
       }
       scalar_binding(set_difference(left, right, isTRUE(op$order_insensitive)))
+    },
+    # CORE 1.0's standard_domains.py: the domains the study's Implementation
+    # Guide defines, optionally only those of one class (CORE-002056 asks for
+    # the Trial Design ones and subtracts those the study has).
+    standard_domains = {
+      tbl <- .coreval_env$library_variables
+      product <- tolower(study$standard$product %||% NA_character_)
+      standard <- if (is.na(product)) "sdtmig" else product
+      rows <- tbl[tbl$standard == standard, ]
+      if (nrow(rows) == 0) {
+        stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
+      }
+      version <- study$standard$version %||% NA_character_
+      use <- if (!is.na(version) && version %in% rows$version) version else newest_library_version(rows$version)
+      doms <- unique(rows$domain[rows$version == use])
+      if (!is.null(op$domain_class)) {
+        cls <- vapply(doms, domain_class, character(1))
+        doms <- doms[!is.na(cls) & toupper(cls) == toupper(op$domain_class)]
+      }
+      scalar_binding(doms)
+    },
+    # CORE 1.0's define_variable_metadata.py: one attribute of one variable
+    # as this dataset's define declares it. A boolean comes as Python writes
+    # it, "True" or "False", which is what CORE-002001 compares with. A
+    # variable the define does not have stops the rule, as it does there.
+    define_variable_metadata = {
+      dv <- study$define$variables
+      if (is.null(dv) || nrow(dv) == 0) {
+        stop("needs define.xml variable metadata, and this study has none", call. = FALSE)
+      }
+      target <- resolve_var_name(op$name, dataset_wildcard(current_dataset, current_domain))
+      own <- toupper(dv$define_dataset_name) %in%
+        toupper(c(current_domain, dataset_unsplit_name(current_dataset, current_domain)))
+      hit <- dv[own & dv$define_variable_name == target, ]
+      if (nrow(hit) == 0 || !op$attribute_name %in% names(hit)) {
+        stop("the define has no ", op$attribute_name, " for ", target, call. = FALSE)
+      }
+      v <- hit[[op$attribute_name]][[1]]
+      scalar_binding(if (is.logical(v)) if (isTRUE(v)) "True" else "False" else as.character(v))
     },
     # CORE 1.0's intersect.py: the values of `name` also present in
     # `subtract`, once each, in `name`'s order. Upper-cased first when

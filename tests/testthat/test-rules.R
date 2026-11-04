@@ -296,12 +296,14 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
     # the study's define.xml, so this needs nothing bundled; it is unrelated
     # to Controlled Terminology, which the codelist's C-code above points at.
     "define_variable_codelist_coded_codes",
+    # Built: def:Origin's Source; the declared length where the metadata
+    # gives it (refused otherwise, as below).
+    "define_variable_source_type", "variable_length",
     # Not built. assert_referenced_metadata_available() refuses a rule whose
     # Check names one, so it is skipped with a reason.
     "define_dataset_class", "define_dataset_is_non_standard",
     "define_key_sequence_is_unique", "define_variable_codelist_coded_values",
-    "define_variable_source_type", "define_vlm_ccode", "file_tag_name",
-    "variable_length",
+    "define_vlm_ccode", "file_tag_name",
     # Refused by the same function's library_* check unless a builder made it.
     "library_variable_ccode_values"
   )

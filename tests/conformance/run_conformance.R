@@ -382,6 +382,19 @@ run_case_graded <- function(rule, case_dir) {
     } else if (identical(rule$sensitivity, "Group") && !is.null(rule$grouping_variables)) {
       dataset <- study$datasets[[domain]]
       actual <- group_first_violations(dataset, violations, rule$grouping_variables, domain)
+      # Grouped by a column only the rule's own table has (variable_name, in a
+      # one-row-per-value Value Check), the groups are found there, as
+      # check_study() finds them, and each group's first row is reported as
+      # the record it came from.
+      gv <- resolve_var_name(rule$grouping_variables, dataset_wildcard(dataset, domain))
+      if (!any(gv %in% names(dataset$data))) {
+        run <- tryCatch(run_rule_on_domain(rule, study, domain), error = function(e) NULL)
+        if (!is.null(run) && any(gv %in% names(run$dataset$data))) {
+          idx <- group_first_violations(run$dataset, run$violations, rule$grouping_variables, domain)
+          ids <- run$dataset$data[[".coreval_row_id"]]
+          actual <- sort(unique(if (is.null(ids)) idx else ids[idx]))
+        }
+      }
       if (!identical(sort(actual), sort(expected))) {
         return(list(status = "FAIL", reason = sprintf(
           "[%s] Group-sensitivity record mismatch: expected {%s}, got {%s}",

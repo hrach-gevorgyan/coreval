@@ -338,7 +338,12 @@ v1_dataset <- function(sheet, where) {
 # visited first.
 v1_results_csv <- function(results_json, rule, frames = list()) {
   r <- jsonlite::fromJSON(results_json, simplifyVector = FALSE)
-  study_level <- isTRUE(startsWith(rule$rule_type %||% "", "Domain Presence Check"))
+  # A Study-sensitivity rule answers once for the whole study, and 1.0 files
+  # that answer under whichever dataset it reached first (CORE-002056 under
+  # TE in one case, TS and TA in others). It is graded as the study-level
+  # fact it is.
+  study_level <- isTRUE(startsWith(rule$rule_type %||% "", "Domain Presence Check")) ||
+    identical(rule$sensitivity, "Study")
   # In a Value Check rule 1.0 reports a finding's row in its own one-row-per-
   # value table (values.py, _unpivot_view): column by column, each column's
   # records in order, so CM's CMSTDTC of record 2 can be "row 47". CDISC's
@@ -346,7 +351,8 @@ v1_results_csv <- function(results_json, rule, frames = list()) {
   # mapped back here, and each mapping is proved against the value 1.0 says it
   # saw in that cell, so a wrong guess about the layout stops the run.
   long_rows <- isTRUE(rule$rule_type %in% c("Value Check with Variable Metadata",
-                                             "Value Check with Dataset Metadata"))
+                                             "Value Check with Dataset Metadata",
+                                             "Value Check against Define XML Variable"))
   to_record <- function(name, e) {
     frame <- frames[[name]]
     var <- e$value$variable_name
@@ -357,6 +363,12 @@ v1_results_csv <- function(results_json, rule, frames = list()) {
     rec <- e$row - (match(var, names(frame)) - 1L) * n
     seen <- e$value$variable_value
     cell <- if (rec >= 1 && rec <= n) frame[[var]][[rec]] else NULL
+    # A finding that does not report the value (CORE-002062 reports lengths)
+    # can only be checked for landing on a record at all.
+    if (!"variable_value" %in% names(e$value)) {
+      if (is.null(cell)) stop("1.0 row ", e$row, " of ", name, " is past its last record", call. = FALSE)
+      return(as.character(rec))
+    }
     same <- !is.null(cell) && (identical(as.character(cell), as.character(seen %||% "")) ||
       (is.na(cell) && is.null(seen)) ||
       isTRUE(suppressWarnings(as.numeric(cell) == as.numeric(seen))))

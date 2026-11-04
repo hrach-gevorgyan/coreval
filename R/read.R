@@ -798,6 +798,11 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
     label = vmeta$label,
     type = vmeta$type
   )
+  # The declared length, where the manifest gives one. A transport file read
+  # through haven does not report it, so only these datasets carry it.
+  if ("length" %in% names(vmeta)) {
+    meta$length <- suppressWarnings(as.numeric(vmeta$length))
+  }
 
   list(data = dt, meta = meta, label = dataset_label)
 }

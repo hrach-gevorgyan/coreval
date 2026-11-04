@@ -668,7 +668,7 @@ assert_referenced_metadata_available <- function(rule, dataset) {
   unbuilt_fields <- c(
     "define_dataset_class", "define_dataset_is_non_standard",
     "define_key_sequence_is_unique", "define_variable_codelist_coded_values",
-    "define_variable_source_type", "define_vlm_ccode", "file_tag_name",
+    "define_vlm_ccode", "file_tag_name",
     "variable_length"
   )
   checked <- collect_rule_targets(list(check = rule$check))
@@ -866,6 +866,27 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     "Variable Metadata Check against Define XML and Library Metadata",
     "Value Check against Define XML Variable"
   ))) {
+    # CORE 1.0 checks each VALUE of the dataset with its variable's define
+    # fields for this rule type (values.against_define_variables), where
+    # CDISC's engine has one row per variable. CORE-002001 asks whether a
+    # populated --DUR value belongs to a variable the define says was not
+    # collected.
+    if (engine_is_core1() && identical(rule$rule_type, "Value Check against Define XML Variable")) {
+      out <- build_variable_value_check_dataset(dataset)
+      dv <- study$define$variables
+      if (!is.null(dv) && nrow(dv) > 0) {
+        own <- toupper(dv$define_dataset_name) %in%
+          toupper(c(domain, dataset_unsplit_name(dataset, domain)))
+        dv <- data.table::as.data.table(dv[own & !duplicated(paste(dv$define_dataset_name, dv$define_variable_name)), ])
+        dv$define_dataset_name <- NULL
+        dv <- dv[!duplicated(dv$define_variable_name)]
+        hit <- match(out$data$variable_name, dv$define_variable_name)
+        for (col in names(dv)) {
+          data.table::set(out$data, j = col, value = dv[[col]][hit])
+        }
+      }
+      return(out)
+    }
     if (engine_is_core1() &&
         identical(rule$rule_type, "Variable Metadata Check against Define XML and Library Metadata")) {
       return(cached_build(
@@ -1157,6 +1178,10 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
     variable_label = meta$label,
     variable_data_type = meta$type
   )
+  # Declared length, when the metadata has it (see build_variable_value_check_dataset()).
+  if ("length" %in% names(meta) && !anyNA(meta$length)) {
+    data$variable_length <- meta$length
+  }
 
   # "Is this variable carrying any data at all?" - the reference's
   # get_variable_null_stats(): a value counts as absent when it is NA or the
@@ -1391,7 +1416,12 @@ build_variable_value_check_dataset <- function(real_dataset) {
       meta = NULL
     ))
   }
-  list(
+  # Declared lengths, only when the metadata has them for every variable, so
+  # that a rule comparing variable_length is refused rather than answered
+  # from blanks (assert_referenced_metadata_available()).
+  length_of <- if (!is.null(meta) && "length" %in% names(meta)) meta$length[match(variables, meta$variable)]
+  if (!is.null(length_of) && anyNA(length_of)) length_of <- NULL
+  out <- list(
     data = data.table::data.table(
       .coreval_row_id = rep(seq_len(n_records), times = length(variables)),
       variable_name = rep(variables, each = n_records),
@@ -1419,6 +1449,26 @@ build_variable_value_check_dataset <- function(real_dataset) {
     ),
     meta = NULL
   )
+  if (!is.null(length_of)) {
+    out$data$variable_length <- rep(length_of, each = n_records)
+  }
+  # How long each value is, as CORE 1.0 measures it (values.py,
+  # value_length_sql): the text's length, and for a number without leading
+  # zeros or the decimal point. A missing value has no length. CORE-002062
+  # takes the longest per variable and compares it with variable_length.
+  value_length <- integer(n_records * length(variables))
+  for (i in seq_along(variables)) {
+    x <- data[[variables[i]]]
+    len <- if (is.numeric(x)) {
+      nchar(gsub(".", "", sub("^0+", "", target_text(x)), fixed = TRUE))
+    } else {
+      nchar(as.character(x))
+    }
+    len[is.na(x)] <- NA_integer_
+    value_length[((i - 1L) * n_records + 1L):(i * n_records)] <- len
+  }
+  out$data$variable_value_length <- value_length
+  out
 }
 
 #' Compute a rule's Operations bindings, if it has any

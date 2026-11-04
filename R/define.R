@@ -325,6 +325,11 @@ read_define_xml <- function(path) {
     # the union is unambiguous. NA where a variable declares no Origin at
     # all, which is not the same as declaring a non-collected one.
     define_variable_origin_type = define_origin_type(items),
+    # def:Origin's Source attribute (Define-XML 2.1: Investigator, Sponsor,
+    # Subject, Vendor), which CORE 1.0's CORE-002004 reads. NA without one.
+    define_variable_source_type = xml2::xml_attr(
+      xml2::xml_find_first(items, "./*[local-name()='Origin']"), "Source"
+    ),
     stringsAsFactors = FALSE
   )
 
