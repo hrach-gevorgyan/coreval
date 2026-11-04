@@ -369,9 +369,10 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   releases and judging a study against one it never declared would both
 #'   invent violations and hide real ones. Every published package is bundled;
 #'   `list_ct_packages()` shows them.
-#' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
-#'   default: a deprecated rule has a published replacement, so running both
-#'   reports the same defect twice.
+#' @param include_deprecated Also run retired rules: those CDISC has
+#'   deprecated, and, for an SDTM study, CDISC's SDTM rules that CORE 1.0 no
+#'   longer carries. `FALSE` by default: a retired rule has a current
+#'   replacement, so running both can report the same defect twice.
 #' @return An object of class `coreval_result`, holding three tables. Because
 #'   it has a class, typing the result's name prints a readable report rather
 #'   than dumping the list, and provenance rides along as attributes:
@@ -523,6 +524,15 @@ render_progress <- function(done, total, domain, index, n, width = 28L) {
 #' @noRd
 run_checks <- function(study, use_case = NULL, require_referenced_domains = FALSE,
                        max_records = 1000, include_deprecated = FALSE) {
+  # An SDTM study is checked with the CORE 1.0 rules, a SEND or TIG study with
+  # CDISC's. See rule_family().
+  family <- rule_family(study$standard$product)
+  if (!identical(family, .coreval_env$rule_family)) {
+    return(with_rule_family(family, run_checks(
+      study, use_case = use_case, require_referenced_domains = require_referenced_domains,
+      max_records = max_records, include_deprecated = include_deprecated
+    )))
+  }
   domains <- names(study$datasets)
   # The domain each dataset belongs to, worked out once: every rule asks, for
   # every dataset. See dataset_unsplit_name().
@@ -912,7 +922,7 @@ define_only_rules <- function(standard, version, include_deprecated) {
     keep <- keep & rules_for_standard(rules, standard, version)
   }
   if (!isTRUE(include_deprecated)) {
-    keep <- keep & vapply(rules, function(r) !identical(r$source, "deprecated_dir"), logical(1))
+    keep <- keep & !vapply(rules, rule_is_retired, logical(1))
   }
   names(rules)[keep]
 }

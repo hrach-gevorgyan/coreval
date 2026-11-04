@@ -44,9 +44,10 @@ flags every row of a large dataset would otherwise produce more findings
 than anyone can read or Excel can hold. The true count is kept in
 \code{truncated}. Use \code{Inf} for every record.}
 
-\item{include_deprecated}{Also run rules CDISC has deprecated. \code{FALSE} by
-default: a deprecated rule has a published replacement, so running both
-reports the same defect twice.}
+\item{include_deprecated}{Also run retired rules: those CDISC has
+deprecated, and, for an SDTM study, CDISC's SDTM rules that CORE 1.0 no
+longer carries. \code{FALSE} by default: a retired rule has a current
+replacement, so running both can report the same defect twice.}
 
 \item{ct_package}{Which CDISC Controlled Terminology package the study
 follows, e.g. \code{"sdtmct-2026-03-27"}. Rules that ask whether a value is a

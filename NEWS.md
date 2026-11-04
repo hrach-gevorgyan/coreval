@@ -1,5 +1,23 @@
 # coreval (development version)
 
+* **CORE 1.0.** CDISC's CORE 1.0 (3 November 2026) moved the SDTMIG and FDA
+  Business Rules to Verisian's repository, verisianHQ/core-contributor, and
+  its engine; SENDIG, TIG and USDM stay with CDISC. coreval follows:
+  - An SDTM study is checked with the 1.0 rules: 621, of which 130 are new.
+    A SEND or TIG study is checked with CDISC's rules, as before, including
+    CDISC's version of a rule both repositories carry.
+  - A 1.0 rule runs the way 1.0's engine runs it where the two engines
+    differ: patterns search anywhere in a value, a filter wildcard is `%`,
+    text and numbers compare by value, and a few more.
+  - CDISC's SDTM rules that 1.0 does not carry run on an SDTM study only with
+    `include_deprecated = TRUE`.
+  - `rules_version` now names both repositories and their commits.
+  - Several checks quietly found nothing and now work: a list of columns
+    where one was expected, a related record's variable as the thing checked,
+    the dataset name in a Value Check with Dataset Metadata rule, and a
+    written-out list read as its first item. Rules naming metadata coreval
+    does not build yet are skipped with the reason instead.
+
 * **Findings that were not real.**
   - A RELREC relationship linked records of different subjects whenever the
     subjects reused a RELID, so a findings-about record was compared with

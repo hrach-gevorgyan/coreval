@@ -20,9 +20,10 @@ Description: Finds conformance problems in clinical trial data without
     with or endorsed by 'CDISC', and not a 'CORE'-certified conformance engine.
 Copyright: Hrach Gevorgyan holds the copyright in this package's own code.
     The bundled rule definitions under inst/extdata are derived from
-    cdisc-org/cdisc-open-rules and the bundled standards metadata and
-    controlled terminology from cdisc-org/cdisc-rules-engine, both copyright
-    CDISC and both used under their MIT licenses. Two further bundled
+    verisianHQ/core-contributor, copyright Verisian, and
+    cdisc-org/cdisc-open-rules, copyright CDISC, and the bundled standards
+    metadata and controlled terminology from cdisc-org/cdisc-rules-engine,
+    copyright CDISC, all used under their MIT licenses. Two further bundled
     components belong to others: inst/extdata/js/jsonata.min.js is JSONata,
     copyright IBM Corp., under the MIT license, and
     inst/extdata/schema/xml/xhtml-1.1 holds the XHTML Schema modules,

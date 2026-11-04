@@ -12,7 +12,7 @@ test_that("invalid_date rejects a syntactically-shaped but calendar-invalid date
   #     to the loose shape check for a string that actually contains an
   #     uncertainty marker ("/", "--", "-:"), which this one doesn't. An
   #     earlier version of is_valid_date_str() had no such gate at all.
-  rule <- .coreval_env$data$rules[["CORE-000505"]]
+  rule <- fixture_rule("CORE-000505")
   for (case in c("negative/01", "positive/01", "negative/02", "positive/02")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000505", case)
     study <- read_study(file.path(dir, "data"))
@@ -41,7 +41,7 @@ test_that("invalid_duration's negative flag is a per-operator parameter, not a g
   # invalid_duration's own already-negative-aware result and silently
   # flagging a perfectly valid duration like "P40Y" as invalid.
   for (id in c("CORE-000730", "CORE-000731")) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     for (case in c("negative", "positive")) {
       dir <- test_path("fixtures", "core_rules", id, case, "01")
       study <- read_study(file.path(dir, "data"))
@@ -56,7 +56,7 @@ test_that("invalid_duration's negative flag is a per-operator parameter, not a g
 })
 
 test_that("invalid_duration matches CDISC's reference results.csv", {
-  rule <- .coreval_env$data$rules[["CORE-000294"]]
+  rule <- fixture_rule("CORE-000294")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000294", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -69,7 +69,7 @@ test_that("invalid_duration matches CDISC's reference results.csv", {
 })
 
 test_that("contains matches CDISC's reference results.csv", {
-  rule <- .coreval_env$data$rules[["CORE-000305"]]
+  rule <- fixture_rule("CORE-000305")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000305", case, "01")
     study <- read_study(file.path(dir, "data"))

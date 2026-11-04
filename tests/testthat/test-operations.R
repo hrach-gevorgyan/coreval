@@ -3,7 +3,7 @@ test_that("distinct (ungrouped) matches CDISC's reference results.csv - cross-da
   # used to check SV.VISIT is_not_contained_by $tv_visit. Needs the full
   # study (TV and SV are different datasets) - the exact case that pushed
   # evaluate_rule() to accept a study, not just one dataset.
-  rule <- .coreval_env$data$rules[["CORE-000036"]]
+  rule <- fixture_rule("CORE-000036")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000036", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -19,7 +19,7 @@ test_that("record_count (grouped, filtered) matches CDISC's reference results.cs
   # CORE-000214: $disposition_event_count = record_count of DS rows where
   # DSCAT == "DISPOSITION EVENT", grouped by [USUBJID, EPOCH] - a grouped
   # binding joined back onto each row of the same (DS) dataset.
-  rule <- .coreval_env$data$rules[["CORE-000214"]]
+  rule <- fixture_rule("CORE-000214")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000214", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -111,7 +111,7 @@ test_that("compute_dy resolves a '--'-templated name against the CURRENT domain,
 
 test_that("not_equal_to/equal_to matches CDISC's reference results.csv across the --DY/dy Operations family (CORE-000436/CORE-000529/CORE-000552/CORE-000553)", {
   for (id in c("CORE-000436", "CORE-000529", "CORE-000552", "CORE-000553")) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     for (case in c("negative", "positive")) {
       cases <- fixture_cases(id, case)
       for (dir in cases) {
@@ -135,7 +135,7 @@ test_that("not_equal_to leaves an unresolvable Operations aggregate's blank comp
   # here would wrongly flag RFXENDTC as violating just because the
   # AGGREGATE had nothing to aggregate. Confirmed against CORE-000454's
   # real fixture (negative/02: EXENDTC blank on every row).
-  rule <- .coreval_env$data$rules[["CORE-000454"]]
+  rule <- fixture_rule("CORE-000454")
   for (case in c("negative", "positive")) {
     cases <- fixture_cases("CORE-000454", case)
     for (dir in cases) {
@@ -179,7 +179,7 @@ test_that("resolve_binding returns NULL (unresolvable), not a literal-NA vector,
 })
 
 test_that("is_not_contained_by matches CDISC's reference results.csv across every applicable domain (CORE-000168)", {
-  rule <- .coreval_env$data$rules[["CORE-000168"]]
+  rule <- fixture_rule("CORE-000168")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000168", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -197,7 +197,7 @@ test_that("domain_label matches CDISC's reference results.csv (CORE-000219)", {
   # "--SCAT equal_to_case_insensitive $domain_label" - the dataset's own
   # label (from _datasets.csv's Label column / an XPT dataset label), not
   # a per-variable label.
-  rule <- .coreval_env$data$rules[["CORE-000219"]]
+  rule <- fixture_rule("CORE-000219")
   for (case in c("negative/01", "negative/02", "positive/01", "positive/02")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000219", case)
     study <- read_study(file.path(dir, "data"))
@@ -227,7 +227,7 @@ test_that("expected_variables matches CDISC's reference results.csv (CORE-000334
   # fixture declares SDTMIG 3.4, the negative fixture SDTMIG 3.3, so this
   # also exercises picking the study's OWN declared version rather than
   # always defaulting to the newest.
-  rule <- .coreval_env$data$rules[["CORE-000334"]]
+  rule <- fixture_rule("CORE-000334")
   for (case in c("negative/01", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000334", case)
     study <- read_study(file.path(dir, "data"))
@@ -252,7 +252,7 @@ test_that("not_contains_all against an unresolvable $required_variables binding 
   # because it's genuinely missing a required SENDIG variable that this
   # package has no SENDIG variable-metadata to detect (a separate, already
   # documented gap - see sdtmig_variables_for()'s own docs).
-  rule <- .coreval_env$data$rules[["CORE-000355"]]
+  rule <- fixture_rule("CORE-000355")
   for (case in c("negative/01", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000355", case)
     study <- read_study(file.path(dir, "data"))
@@ -312,7 +312,7 @@ test_that("get_model_column_order matches CDISC's reference results.csv (CORE-00
   # "variable_name is_not_contained_by $allowed_variables" - $allowed_variables
   # is the full set of variable names the SDTM Model allows for the domain's
   # observation class (including inherited base-class variables).
-  rule <- .coreval_env$data$rules[["CORE-000550"]]
+  rule <- fixture_rule("CORE-000550")
   for (case in c("negative/01", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000550", case)
     study <- read_study(file.path(dir, "data"))
@@ -387,7 +387,7 @@ test_that("dataset_names is UPPERCASE, matching the reference engine's own Filen
 
 test_that("prefix_is_not_contained_by correctly identifies a missing parent domain (CORE-000539/CORE-000540)", {
   for (id in c("CORE-000539", "CORE-000540")) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     for (polarity in c("negative", "positive")) {
       case_dirs <- fixture_cases(id, polarity)
       for (dir in case_dirs) {
@@ -461,7 +461,7 @@ test_that("a \"&\" prefix-wildcard filter matches CDISC's reference results.csv 
   # neither violates "less_than_or_equal_to 1"; a literal "RACE&" match
   # finds 0 rows for everyone and wrongly flags both. negative/01 passed
   # even with the bug only by accident (its true counts are 1 and 1).
-  rule <- .coreval_env$data$rules[["CORE-000846"]]
+  rule <- fixture_rule("CORE-000846")
   for (case in c("negative/01", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000846", case)
     study <- read_study(file.path(dir, "data"))
@@ -881,7 +881,7 @@ test_that("minus subtracts one binding from another, both ways the reference doe
     meta = data.frame(variable = c("STUDYID", "DOMAIN", "USUBJID"),
                       label = "x", type = "Char", length = 8)
   )), standard = list(product = "SDTMIG", version = "3.4"))
-  rule <- .coreval_env$data$rules[["CORE-000355"]]
+  rule <- fixture_rule("CORE-000355")
   b <- operation_bindings_for_rule(rule, study, "DM", study$datasets$DM)
   missing <- b[["$missing_required_variables"]]$value
   expect_true("SUBJID" %in% missing)       # required and absent

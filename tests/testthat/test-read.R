@@ -126,7 +126,7 @@ test_that("a dataset CSV is found when the declared name's case differs from the
 })
 
 test_that("evaluate_rule matches CDISC's reference results.csv for a fixture with no _datasets.csv (CORE-000395)", {
-  rule <- .coreval_env$data$rules[["CORE-000395"]]
+  rule <- fixture_rule("CORE-000395")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000395", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -156,7 +156,7 @@ test_that("read_study doesn't crash the whole study when one dataset has zero _v
 })
 
 test_that("evaluate_rule matches CDISC's reference results.csv for a fixture with an untyped dataset (CORE-000094)", {
-  rule <- .coreval_env$data$rules[["CORE-000094"]]
+  rule <- fixture_rule("CORE-000094")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000094", case, "01")
     study <- read_study(file.path(dir, "data"))

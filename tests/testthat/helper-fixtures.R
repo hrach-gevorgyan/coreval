@@ -48,3 +48,17 @@ fixture_cases <- function(id, polarity) {
   )
   dirs
 }
+
+#' A rule as CDISC publishes it, for the fixtures copied from CDISC
+#'
+#' The fixtures under fixtures/core_rules are CDISC's own test cases, written
+#' for CDISC's version of each rule. Since CORE 1.0 the bundled SDTM set holds
+#' 1.0's version of a rule both repositories carry, which can differ from it.
+#' CDISC's version is still the one a SEND or TIG study runs, so these tests
+#' keep pinning it.
+#'
+#' @param id A rule id.
+#' @return The rule record.
+fixture_rule <- function(id) {
+  .coreval_env$data$cdisc_originals[[id]] %||% .coreval_env$data$rules[[id]]
+}

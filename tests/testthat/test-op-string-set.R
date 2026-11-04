@@ -5,7 +5,7 @@ test_that("matches_regex/not_matches_regex anchor at the string's start (CORE-00
   # fixtures: "-5.18,3.1416,2,2.88" must NOT match this number-format regex
   # (it's a comma-separated list, not a single number), even though the
   # regex's own trailing "2.88" substring would satisfy an unanchored search.
-  rule <- .coreval_env$data$rules[["CORE-000576"]]
+  rule <- fixture_rule("CORE-000576")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000576", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -45,7 +45,7 @@ test_that("matches_regex/not_matches_regex are FALSE (not a forced result) for a
 })
 
 test_that("not_matches_regex matches CDISC's reference results.csv, exempting blank values (CORE-000558)", {
-  rule <- .coreval_env$data$rules[["CORE-000558"]]
+  rule <- fixture_rule("CORE-000558")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000558", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -111,7 +111,7 @@ test_that("does_not_equal_string_part matches CDISC's reference results.csv (COR
   # "RDOMAIN does_not_equal_string_part regex: .{4}(..).*, value: $dataset_name"
   # extracts characters 5-6 of the dataset name (e.g. "AE" from "SUPPAE")
   # and flags every row where RDOMAIN doesn't match it.
-  rule <- .coreval_env$data$rules[["CORE-000538"]]
+  rule <- fixture_rule("CORE-000538")
   for (case in c("negative/01", "negative/02", "negative/03", "positive/01", "positive/02", "positive/03")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000538", case)
     study <- read_study(file.path(dir, "data"))

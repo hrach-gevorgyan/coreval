@@ -5,7 +5,7 @@ test_that("empty/non_empty are unresolvable (NA), not TRUE, when the column does
   # real, blank AGSTAT and IS expected to violate in the SAME test case).
   # An earlier version of empty() defaulted a missing column to TRUE,
   # wrongly flagging every EC row here.
-  rule <- .coreval_env$data$rules[["CORE-000018"]]
+  rule <- fixture_rule("CORE-000018")
   dir <- test_path("fixtures", "core_rules", "CORE-000018", "negative", "01")
   study <- read_study(file.path(dir, "data"))
   results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
@@ -28,7 +28,7 @@ test_that("inconsistent_enumerated_columns matches CDISC's reference results.csv
   # "--VAL inconsistent_enumerated_columns" - flags a gap in the
   # COVAL/COVAL1/COVAL2 family: once one is blank, every later one in the
   # sequence must be blank too.
-  rule <- .coreval_env$data$rules[["CORE-000780"]]
+  rule <- fixture_rule("CORE-000780")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000780", case, "01")
     study <- read_study(file.path(dir, "data"))

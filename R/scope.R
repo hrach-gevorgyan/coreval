@@ -518,9 +518,7 @@ rule_ids_for_domain <- function(domain, use_case = NULL, dataset = NULL,
   # Deprecated rules have been superseded by a published replacement, so
   # running them reports the same defect twice.
   if (!isTRUE(include_deprecated)) {
-    keep <- keep & vapply(
-      rules, function(r) !identical(r$source, "deprecated_dir"), logical(1)
-    )
+    keep <- keep & !vapply(rules, rule_is_retired, logical(1))
   }
 
   vapply(rules[keep], function(r) r$id, character(1), USE.NAMES = FALSE)
@@ -542,7 +540,8 @@ rule_ids_for_domain <- function(domain, use_case = NULL, dataset = NULL,
 #' @noRd
 rules_for_standard <- function(rules, standard, version = NULL) {
   has_version <- !is.null(version) && length(version) == 1 && !is.na(version) && nzchar(version)
-  cache_key <- paste0("std:", toupper(standard), ":", if (has_version) normalise_version(version) else "")
+  cache_key <- paste0("std:", .coreval_env$rule_family %||% "sdtm", ":", toupper(standard), ":",
+                      if (has_version) normalise_version(version) else "")
   if (is.null(.coreval_env$standard_filter)) {
     .coreval_env$standard_filter <- new.env(parent = emptyenv())
   }

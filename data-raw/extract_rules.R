@@ -135,7 +135,12 @@ read_rule_yaml <- function(path) {
     `bool#yes` = preserve_bool_text,
     `bool#no` = preserve_bool_text
   )
-  tryCatch(yaml::yaml.load_file(path, handlers = handlers), error = function(e) {
+  # 89 of core-contributor's files end without a newline, which is harmless
+  # and would otherwise bury any warning that matters.
+  quiet <- function(expr) withCallingHandlers(expr, warning = function(w) {
+    if (grepl("incomplete final line", conditionMessage(w))) invokeRestart("muffleWarning")
+  })
+  tryCatch(quiet(yaml::yaml.load_file(path, handlers = handlers)), error = function(e) {
     if (!grepl("Duplicate map key", conditionMessage(e))) stop(e)
     lines <- readLines(path, encoding = "UTF-8", warn = FALSE)
     repeat_of_previous <- c(FALSE, lines[-1] == lines[-length(lines)]) &
@@ -333,20 +338,84 @@ stopifnot(
   "expected 30 sendig_draft rules" = sum(vapply(rules, function(r) r$source == "sendig_draft", logical(1))) == 30
 )
 
+# ---- CORE 1.0: the SDTM rules come from verisianHQ/core-contributor ----------
+#
+# CORE 1.0 (2026-11-03) moved the SDTMIG and FDA Business Rules to
+# verisianHQ/core-contributor, run by Verisian's engine, while SENDIG, TIG and
+# USDM stay here and on CDISC's engine. Many rules are in both repositories and
+# name SDTMIG, SENDIG and TIG alike. So a rule can have two versions:
+#
+#   * `rules`          - the set an SDTM study (or one declaring no standard)
+#                        is checked with. A rule 1.0 carries is 1.0's version,
+#                        narrowed to SDTMIG.
+#   * `cdisc_originals` - for a rule in both, CDISC's version exactly as
+#                        CDISC publishes it. When the package loads,
+#                        build_rule_sets() narrows it to the standards other
+#                        than SDTMIG, and a SEND or TIG study is checked with
+#                        that instead. Kept whole so the conformance harness
+#                        can still grade CDISC's own rule set on CDISC's own
+#                        test cases. See rule_family().
+#
+# A CDISC rule naming SDTMIG that 1.0 does not carry is kept and marked
+# `retired_in_core1`: an SDTM study runs it only on request
+# (include_deprecated), and a SEND or TIG study runs it as before.
+core1_dir <- file.path("data-raw", "upstream", "core-contributor")
+core1_sha <- system2("git", c("-C", core1_dir, "rev-parse", "HEAD"), stdout = TRUE)
+core1_files <- sort(Sys.glob(file.path(core1_dir, "sdtm_rules", "*", "*.yml")))
+core1 <- lapply(core1_files, extract_one, source = "core_contributor")
+names(core1) <- vapply(core1, function(r) r$id, character(1))
+stopifnot(
+  "a 1.0 rule file was not read" = !any(vapply(core1, is.null, logical(1))),
+  "duplicate 1.0 rule ids" = !anyDuplicated(names(core1)),
+  "expected 621 CORE 1.0 rules" = length(core1) == 621
+)
+
+# Keep only the parts of a rule that belong to the given standards.
+narrow_to <- function(r, keep) {
+  r$standards <- r$standards[keep(r$standards)]
+  family <- sub("[[:space:]].*$", "", r$standard_versions)
+  r$standard_versions <- r$standard_versions[keep(family)]
+  r
+}
+is_sdtm <- function(x) x == "SDTMIG"
+
+cdisc_originals <- list()
+for (id in names(core1)) {
+  if (!is.null(rules[[id]])) {
+    cdisc_originals[[id]] <- rules[[id]]
+  }
+  rules[[id]] <- narrow_to(core1[[id]], is_sdtm)
+}
+for (id in names(rules)) {
+  r <- rules[[id]]
+  if (!identical(r$source, "core_contributor") && "SDTMIG" %in% r$standards) {
+    rules[[id]]$retired_in_core1 <- TRUE
+  }
+}
+cat("CORE 1.0:", length(core1), "SDTM rules;", length(cdisc_originals),
+    "also in CDISC's repository;",
+    sum(vapply(rules, function(r) isTRUE(r$retired_in_core1), logical(1))),
+    "CDISC SDTM rules not in 1.0\n")
+
 rules_data <- list(
   upstream_sha = sha,
-  rules = rules
+  core1_sha = core1_sha,
+  rules = rules,
+  cdisc_originals = cdisc_originals
 )
 
 dir.create(file.path("inst", "extdata"), recursive = TRUE, showWarnings = FALSE)
 saveRDS(rules_data, file.path("inst", "extdata", "rules.rds"), compress = "xz")
 
 writeLines(sha, file.path("data-raw", "UPSTREAM_SHA"))
-# This pins the rules repository only. Everything else in inst/extdata comes
+writeLines(core1_sha, file.path("data-raw", "UPSTREAM_SHA_CORE1"))
+# These pin the two rules repositories. Everything else in inst/extdata comes
 # from cdisc-rules-engine, pinned separately in UPSTREAM_SHA_ENGINE. Re-record
 # that one whenever the dump_*.py scripts are re-run against a newer clone:
 #   git -C data-raw/upstream/cdisc-rules-engine rev-parse HEAD \
 #     > data-raw/UPSTREAM_SHA_ENGINE
-# Both pins are cited in inst/COPYRIGHTS, so a stale one misstates provenance.
+# All three pins are cited in inst/COPYRIGHTS, so a stale one misstates
+# provenance.
 
-cat(sprintf("Extracted %d rules from upstream SHA %s\n", length(rules), sha))
+cat(sprintf("Extracted %d rules from cdisc-open-rules %s and core-contributor %s\n",
+            length(rules), sha, core1_sha))

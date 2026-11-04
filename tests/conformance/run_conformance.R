@@ -561,8 +561,18 @@ rules <- if (nzchar(rules_override)) {
     stop("COREVAL_CONFORMANCE_RULES points at no such file: ", rules_override, call. = FALSE)
   }
   readRDS(rules_override)$rules
+} else if (v1) {
+  # The SDTM set coreval ships, which is CORE 1.0's.
+  .coreval_env$rule_sets$sdtm
 } else {
-  .coreval_env$data$rules
+  # CDISC's own rule set, as CDISC publishes it, for CDISC's own test cases:
+  # every bundled rule that came from cdisc-open-rules, with a rule CORE 1.0
+  # also carries put back in CDISC's version. This is the guard that SEND,
+  # TIG and USDM answers do not move. The 1.0 SDTM rules are graded against
+  # 1.0's cases instead, by pointing the harness at core-contributor.
+  r <- .coreval_env$data$rules
+  r[names(.coreval_env$data$cdisc_originals)] <- .coreval_env$data$cdisc_originals
+  Filter(function(x) !identical(x$source, "core_contributor"), r)
 }
 
 # In 1.0 mode the scoreboard is one row per 1.0 rule. A 1.0 rule with nothing
@@ -676,7 +686,7 @@ if (nrow(fail_rows) > 0) {
 
 if (is.null(target_ids) && v1) {
   out_path <- file.path("tests", "conformance",
-                        if (nzchar(rules_override)) "scoreboard_v1_upstream.csv" else "scoreboard_v1_bundled.csv")
+                        if (nzchar(rules_override)) "scoreboard_v1_upstream.csv" else "scoreboard_core1.csv")
   data.table::fwrite(scoreboard, out_path)
   cat("
 Full 1.0 scoreboard written to", out_path, "

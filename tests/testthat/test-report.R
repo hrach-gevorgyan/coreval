@@ -18,7 +18,7 @@ test_that("every finding carries a plain-language description of the problem", {
 })
 
 test_that("rule_message prefers the rule's Message, and falls back to its description", {
-  rule <- .coreval_env$data$rules[["CORE-000547"]]
+  rule <- fixture_rule("CORE-000547")
   expect_equal(rule_message(rule), rule$outcome[["Message"]])
 
   # Every bundled rule has a Message today, so the fallback is only reachable

@@ -96,7 +96,7 @@ test_that("equal_to/equal_to_case_insensitive treat two blank values as never eq
 })
 
 test_that("equal_to_case_insensitive matches CDISC's reference results.csv (CORE-000195)", {
-  rule <- .coreval_env$data$rules[["CORE-000195"]]
+  rule <- fixture_rule("CORE-000195")
   for (case in c("negative", "positive")) {
     cases <- fixture_cases("CORE-000195", case)
     for (dir in cases) {
@@ -113,7 +113,7 @@ test_that("equal_to_case_insensitive matches CDISC's reference results.csv (CORE
 })
 
 test_that("not_equal_to matches CDISC's reference results.csv across all domains (CORE-000542)", {
-  rule <- .coreval_env$data$rules[["CORE-000542"]]
+  rule <- fixture_rule("CORE-000542")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000542", case, "01")
     study <- read_study(file.path(dir, "data"))

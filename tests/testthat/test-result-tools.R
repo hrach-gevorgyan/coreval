@@ -145,7 +145,7 @@ test_that("every rule carries the ids Pinnacle 21 uses, and the guidance it enfo
 
   # Scoped to the standards the rule was kept for: quoting a SEND id on an
   # SDTM-only rule would send the reader to the wrong row of the spreadsheet.
-  iso <- .coreval_env$data$rules[["CORE-000547"]]
+  iso <- fixture_rule("CORE-000547")
   expect_true(all(grepl("^(SEND|TIG)", iso$legacy_ids)))
   expect_false(any(grepl("^CG", iso$legacy_ids)))
 })

@@ -1,16 +1,42 @@
 test_that("list_rules returns the combined SDTMIG/SENDIG/TIG/ADaMIG rule set", {
   rules <- list_rules()
-  expect_equal(nrow(rules), 1054)
+  expect_equal(nrow(rules), 1184)
   expect_true(all(
     c("id", "source", "status", "standard", "authority", "rule_type",
       "executability", "sensitivity") %in% names(rules)
   ))
-  expect_equal(length(unique(rules$id)), 1054)
+  expect_equal(length(unique(rules$id)), 1184)
 
+  # The SDTM set: CORE 1.0's 621 SDTMIG rules, and CDISC's rules for
+  # everything else. 491 of the 621 are also in CDISC's repository, which is
+  # why its published and deprecated counts are smaller here than there.
   by_source <- table(rules$source)
-  expect_equal(unname(by_source[["published"]]), 823)
-  expect_equal(unname(by_source[["deprecated_dir"]]), 163)
-  expect_equal(unname(by_source[["fda_business_rules_draft"]]), 27)
+  expect_equal(unname(by_source[["core_contributor"]]), 621)
+  expect_equal(unname(by_source[["published"]]), 494)
+  expect_equal(unname(by_source[["deprecated_dir"]]), 4)
+  expect_equal(unname(by_source[["fda_business_rules_draft"]]), 24)
+})
+
+test_that("a rule in both repositories is 1.0's for SDTM and CDISC's for SEND and TIG", {
+  sdtm <- list_rules(standard = "SDTMIG")
+  send <- list_rules(standard = "SENDIG")
+  tig <- list_rules(standard = "TIG")
+  expect_equal(sdtm$source[sdtm$id == "CORE-000272"], "core_contributor")
+  expect_equal(sdtm$standard[sdtm$id == "CORE-000272"], "SDTMIG")
+  expect_equal(send$source[send$id == "CORE-000272"], "published")
+  expect_false(grepl("SDTMIG", send$standard[send$id == "CORE-000272"]))
+  expect_equal(tig$source[tig$id == "CORE-000272"], "published")
+  # Asking about one set never leaves the other in place.
+  expect_equal(.coreval_env$rule_family, "sdtm")
+  # A 1.0 rule with no CDISC version is not run on a SEND study.
+  expect_false(any(send$source == "core_contributor"))
+})
+
+test_that("a CDISC SDTM rule that 1.0 dropped runs on SDTM only when asked for", {
+  # CORE-000516 names SDTMIG and SENDIG; 1.0 does not carry it.
+  expect_false("CORE-000516" %in% list_rules(standard = "SDTMIG", include_deprecated = FALSE)$id)
+  expect_true("CORE-000516" %in% list_rules(standard = "SDTMIG", include_deprecated = TRUE)$id)
+  expect_true("CORE-000516" %in% list_rules(standard = "SENDIG", include_deprecated = FALSE)$id)
 })
 
 test_that("rules_version reports the pinned upstream SHA", {
@@ -97,7 +123,10 @@ test_that("YAML 1.1 single-letter Y/N is preserved as text, but a full-word bool
     logical_value_checks,
     function(h) {
       startsWith(h$name, "$") ||
-        grepl("_exists|_is_|is_custom|has_no_data", h$name, ignore.case = TRUE)
+        grepl("_exists|_is_|is_custom|has_no_data", h$name, ignore.case = TRUE) ||
+        # CORE 1.0's interval operators take `value: true` as a setting of the
+        # operator, not a data value (CORE-002118).
+        isTRUE(h$operator %in% c("invalid_duration", "invalid_date_interval"))
     },
     logical(1)
   )))
@@ -266,7 +295,15 @@ test_that("no rule references a pseudo-column that would silently resolve to lit
     # The term codes declared inside the variable's own codelist. Read from
     # the study's define.xml, so this needs nothing bundled; it is unrelated
     # to Controlled Terminology, which the codelist's C-code above points at.
-    "define_variable_codelist_coded_codes"
+    "define_variable_codelist_coded_codes",
+    # Not built. assert_referenced_metadata_available() refuses a rule whose
+    # Check names one, so it is skipped with a reason.
+    "define_dataset_class", "define_dataset_is_non_standard",
+    "define_key_sequence_is_unique", "define_variable_codelist_coded_values",
+    "define_variable_source_type", "define_vlm_ccode", "file_tag_name",
+    "variable_length",
+    # Refused by the same function's library_* check unless a builder made it.
+    "library_variable_ccode_values"
   )
 
   collect_names <- function(check, acc = character(0)) {
@@ -340,7 +377,9 @@ test_that("list_rules() refuses a bare version instead of silently ignoring it",
   # same failure mode as an unrecognised standard scoping everything out.
   expect_error(list_rules(version = "3.4"), "needs `standard` too")
   expect_error(list_rules(standard = "NOPE"), "no bundled rule targets")
-  expect_equal(nrow(list_rules(standard = "SDTMIG", version = "3.4")), 456L)
+  # 560 CORE 1.0 rules for SDTMIG 3.4 and 25 retired CDISC ones, which
+  # list_rules() includes by default.
+  expect_equal(nrow(list_rules(standard = "SDTMIG", version = "3.4")), 585L)
 })
 
 test_that("list_ct_packages lists the bundled terminology packages", {

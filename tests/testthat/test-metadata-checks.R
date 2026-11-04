@@ -10,7 +10,7 @@ test_that("Variable Metadata Check evaluates one row per variable, not per recor
   # real fixtures that "Record" for this rule type (when Sensitivity:
   # Record) is the variable's 1-based position within that dataset's
   # variable list, matching _variables.csv's own row order.
-  rule <- .coreval_env$data$rules[["CORE-000182"]]
+  rule <- fixture_rule("CORE-000182")
   expect_equal(rule$rule_type, "Variable Metadata Check")
   dir <- test_path("fixtures", "core_rules", "CORE-000182", "negative", "01")
   study <- read_study(file.path(dir, "data"))
@@ -27,7 +27,7 @@ test_that("a 'Variable Metadata Check against Library Metadata' rule still gets 
   # this rule down the ordinary record-level path instead, where its
   # pseudo-field `variable_name` isn't a real column - silently resolving
   # to "no violation" instead of actually evaluating the rule.
-  rule <- .coreval_env$data$rules[["CORE-000902"]]
+  rule <- fixture_rule("CORE-000902")
   expect_equal(rule$rule_type, "Variable Metadata Check against Library Metadata")
   for (case in c("negative/01", "negative/02", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000902", case)
@@ -40,7 +40,7 @@ test_that("a 'Variable Metadata Check against Library Metadata' rule still gets 
 })
 
 test_that("Variable Metadata Check resolves a literal array value (CORE-000376)", {
-  rule <- .coreval_env$data$rules[["CORE-000376"]]
+  rule <- fixture_rule("CORE-000376")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000376", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -56,7 +56,7 @@ test_that("Variable Metadata Check resolves a literal array value (CORE-000376)"
 })
 
 test_that("Variable Metadata Check supports a full regex against variable_label (CORE-000594)", {
-  rule <- .coreval_env$data$rules[["CORE-000594"]]
+  rule <- fixture_rule("CORE-000594")
   dir <- test_path("fixtures", "core_rules", "CORE-000594", "negative", "01")
   study <- read_study(file.path(dir, "data"))
   for (domain in names(study$datasets)) {
@@ -87,7 +87,7 @@ test_that("Dataset Metadata Check matches CDISC's reference results.csv (CORE-00
   # here reports exactly Record = 1 regardless of the real record count,
   # since the underlying fact is constant across every real record.
   for (id in c("CORE-000293", "CORE-000357")) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     expect_equal(rule$rule_type, "Dataset Metadata Check")
     for (case in c("negative", "positive")) {
       case_dirs <- fixture_cases(id, case)
@@ -111,7 +111,7 @@ test_that("Dataset Metadata Check resolves a Check condition against the real DO
   # reference to the real dataset's own DOMAIN variable value (e.g. a split
   # dataset "AB" legitimately has DOMAIN == "LB"), not the literal text
   # "DOMAIN".
-  rule <- .coreval_env$data$rules[["CORE-000598"]]
+  rule <- fixture_rule("CORE-000598")
   for (case in c("negative/01", "negative/02", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000598", case)
     study <- read_study(file.path(dir, "data"))
@@ -136,7 +136,7 @@ test_that("build_dataset_metadata_dataset carries through the real DOMAIN column
 test_that("Value Check with Variable Metadata matches CDISC's reference results.csv (CORE-000890)", {
   # One row per (record, variable) pair - confirmed a record can be flagged
   # via a DIFFERENT variable than another record in the same dataset.
-  rule <- .coreval_env$data$rules[["CORE-000890"]]
+  rule <- fixture_rule("CORE-000890")
   expect_equal(rule$rule_type, "Value Check with Variable Metadata")
   dir <- test_path("fixtures", "core_rules", "CORE-000890", "negative", "01")
   study <- read_study(file.path(dir, "data"))
@@ -156,7 +156,7 @@ test_that("Variable Metadata Check preserves a real trailing space in a variable
   # fread()'s default strip.white = TRUE on _variables.csv would silently
   # trim that space, making the label look 40 chars long and missing the
   # violation entirely.
-  rule <- .coreval_env$data$rules[["CORE-000019"]]
+  rule <- fixture_rule("CORE-000019")
   expect_equal(rule$rule_type, "Variable Metadata Check")
   dir <- test_path("fixtures", "core_rules", "CORE-000019", "negative", "01")
   study <- read_study(file.path(dir, "data"))

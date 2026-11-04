@@ -1,15 +1,105 @@
-#' CDISC Open Rules upstream commit
+#' The upstream commits the bundled rules came from
 #'
 #' Internal. Reachable as `attr(list_rules(), "rules_version")`, and written
 #' into every exported file's `about` sheet by [write_findings()] - which is
 #' where it matters, since the point of recording it is to say which snapshot
-#' of CDISC's rules produced a given set of results.
+#' of the rules produced a given set of results.
 #'
-#' @return A single string: the git commit SHA of `cdisc-org/cdisc-open-rules`
-#'   that the bundled rule set was extracted from.
+#' @return A single string naming both repositories and the commit of each:
+#'   `cdisc-org/cdisc-open-rules` (SENDIG, TIG, USDM) and
+#'   `verisianHQ/core-contributor` (the CORE 1.0 SDTMIG rules).
 #' @noRd
 rules_version <- function() {
-  .coreval_env$data$upstream_sha
+  paste0(
+    "cdisc-org/cdisc-open-rules ", .coreval_env$data$upstream_sha,
+    "; verisianHQ/core-contributor ", .coreval_env$data$core1_sha
+  )
+}
+
+#' Which of the two bundled rule sets a study is checked with
+#'
+#' CORE 1.0 took the SDTMIG rules to verisianHQ/core-contributor and left
+#' SENDIG, TIG and USDM with cdisc-org/cdisc-open-rules. A rule in both
+#' repositories has a version from each: an SDTM study gets the 1.0 one, a
+#' SEND or TIG study CDISC's. A study that declares no standard is checked as
+#' SDTM, the standard coreval assumes elsewhere when none is given.
+#'
+#' @param standard The study's declared standard, or `NULL`.
+#' @return `"sdtm"` or `"cdisc"`.
+#' @noRd
+rule_family <- function(standard) {
+  s <- toupper(standard %||% "")
+  if (length(s) == 1 && !is.na(s) && (startsWith(s, "SEND") || s == "TIG")) "cdisc" else "sdtm"
+}
+
+#' Make one rule set the bundled rules for the duration of `code`
+#'
+#' Everything that reads `.coreval_env$data$rules` then sees that set, and the
+#' caches built over it are kept per set, so neither answer leaks into the
+#' other.
+#'
+#' @param family `"sdtm"` or `"cdisc"`, see [rule_family()].
+#' @param code Code to run.
+#' @return The value of `code`.
+#' @noRd
+with_rule_family <- function(family, code) {
+  old <- .coreval_env$rule_family %||% "sdtm"
+  set_rule_family(family)
+  on.exit(set_rule_family(old), add = TRUE)
+  force(code)
+}
+
+#' Switch the bundled rules to one rule set
+#' @param family `"sdtm"` or `"cdisc"`.
+#' @return `NULL`, invisibly.
+#' @noRd
+set_rule_family <- function(family) {
+  sets <- .coreval_env$rule_sets
+  if (is.null(sets[[family]])) {
+    stop("unknown rule set: ", family, call. = FALSE)
+  }
+  .coreval_env$rule_family <- family
+  .coreval_env$data$rules <- sets[[family]]
+  invisible(NULL)
+}
+
+#' Is a rule left out unless retired rules are asked for?
+#'
+#' A rule CDISC has deprecated is, and so, for an SDTM study, is a CDISC SDTM
+#' rule that CORE 1.0 no longer carries: 1.0 is now where SDTM rules live, and
+#' running one it dropped beside its replacement can report a defect twice. A
+#' SEND or TIG study still runs those, since CDISC's set is the current one
+#' there.
+#'
+#' @param r A rule record.
+#' @return A single logical.
+#' @noRd
+rule_is_retired <- function(r) {
+  identical(r$source, "deprecated_dir") ||
+    (isTRUE(r$retired_in_core1) && identical(.coreval_env$rule_family %||% "sdtm", "sdtm"))
+}
+
+#' Build the two rule sets from the bundled data
+#' @param data The bundled `rules.rds` list.
+#' @return `list(sdtm, cdisc)`.
+#' @noRd
+build_rule_sets <- function(data) {
+  cdisc <- data$rules
+  for (id in names(data$cdisc_originals)) {
+    r <- data$cdisc_originals[[id]]
+    keep <- r$standards != "SDTMIG"
+    # A rule CDISC wrote for SDTMIG alone has nothing left for SEND or TIG;
+    # the 1.0 version, which names only SDTMIG, stays in its place.
+    if (!any(keep)) {
+      next
+    }
+    r$standards <- r$standards[keep]
+    r$standard_versions <- r$standard_versions[
+      sub("[[:space:]].*$", "", r$standard_versions) != "SDTMIG"
+    ]
+    cdisc[[id]] <- r
+  }
+  list(sdtm = data$rules, cdisc = cdisc)
 }
 
 #' Build the full rule table, one row per bundled rule
@@ -22,7 +112,8 @@ build_rules_table <- function() {
   # a seven-domain study rebuilt the same table seven times. Allocation
   # profiling put 600 MB of a 51,000-row study's 2.9 GB total in here, a fifth
   # of everything allocated, none of it touching the study's data at all.
-  cached <- .coreval_env$rules_table
+  family <- .coreval_env$rule_family %||% "sdtm"
+  cached <- .coreval_env$rules_table[[family]]
   if (!is.null(cached)) {
     # A copy, so a caller that modifies the table it gets back cannot corrupt
     # the cache for every later call.
@@ -53,7 +144,7 @@ build_rules_table <- function() {
       status = r$status
     )
   }))
-  .coreval_env$rules_table <- out
+  .coreval_env$rules_table[[family]] <- out
   data.table::copy(out)
 }
 
@@ -122,6 +213,15 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   # in silence: list_rules(version = "3.4") returned all 797 rules.
   validate_check_args(standard = standard, version = version, domain = domain,
                       use_case = use_case, include_deprecated = include_deprecated)
+  # A SEND or TIG standard is answered from CDISC's rule set, everything else
+  # from the CORE 1.0 one, as check_study() would run them. See rule_family().
+  family <- rule_family(standard)
+  if (!identical(family, .coreval_env$rule_family)) {
+    return(with_rule_family(family, list_rules(
+      id = id, domain = domain, standard = standard, version = version,
+      use_case = use_case, include_deprecated = include_deprecated
+    )))
+  }
   out <- build_rules_table()
 
   # Looking up an id is a different question from "what would run": it should
@@ -197,7 +297,8 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
       out <- out[keep, ]
     }
     if (!isTRUE(include_deprecated)) {
-      out <- out[out$source != "deprecated_dir", ]
+      retired <- names(Filter(rule_is_retired, .coreval_env$data$rules))
+      out <- out[!out$id %in% retired, ]
     }
   }
 

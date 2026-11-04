@@ -10,7 +10,7 @@ test_that("value falls back to a literal when no column matches it, even with va
   # which is what the fallback had been inferring all along. The fallback
   # itself is still what runs for a rule that omits the key, so it is checked
   # on a condition built here, where upstream cannot take it away.
-  rule <- .coreval_env$data$rules[["CORE-000006"]]
+  rule <- fixture_rule("CORE-000006")
   bare <- list(name = "DTHFL", operator = "not_equal_to", value = "Y")
   expect_null(bare$value_is_literal)
   dm <- list(data = data.table::data.table(DTHFL = c("Y", "N")), meta = NULL)
@@ -41,7 +41,7 @@ test_that("a multi-element literal value (e.g. is_not_contained_by: [Y, N]) reso
   # multi-element value can never be a single column reference, so the
   # fallback has to reach the literal array on its own: checked on a condition
   # built here, then the rule itself is still graded against its fixtures.
-  rule <- .coreval_env$data$rules[["CORE-000123"]]
+  rule <- fixture_rule("CORE-000123")
   cond <- rule$check$all[[2]]
   expect_equal(cond$value, c("Y", "N"))
   bare <- list(name = "AESCAN", operator = "is_not_contained_by", value = c("Y", "N"))

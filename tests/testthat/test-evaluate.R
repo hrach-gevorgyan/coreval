@@ -18,7 +18,7 @@ expected_violations <- function(results_csv_path, n) {
 test_that("evaluate_rule matches CDISC's reference results.csv - value_is_literal: true", {
   # CORE-000001: IECAT equal_to "INCLUSION" (literal) AND IEORRES not_equal_to
   # "N" (literal). Both conditions have value_is_literal: true.
-  rule <- .coreval_env$data$rules[["CORE-000001"]]
+  rule <- fixture_rule("CORE-000001")
   expect_true(isTRUE(rule$check$all[[1]]$value_is_literal))
 
   for (case in c("negative", "positive")) {
@@ -36,7 +36,7 @@ test_that("evaluate_rule matches CDISC's reference results.csv - value_is_litera
   # CORE-000025: IESTRESC not_equal_to IEORRES - value_is_literal is absent,
   # so `value: IEORRES` must be resolved as a column reference, not the
   # literal string "IEORRES".
-  rule <- .coreval_env$data$rules[["CORE-000025"]]
+  rule <- fixture_rule("CORE-000025")
   expect_null(rule$check$all[[1]]$value_is_literal)
 
   for (case in c("negative", "positive")) {
@@ -319,7 +319,7 @@ test_that("check_study() and evaluate_rule() take the same evaluation path", {
   ran <- setdiff(rules_for_domain("DM", dataset = study$datasets$DM)$id,
                  result$skipped$rule_id)
   for (id in ran) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     if (is.null(rule) || isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
         rule$rule_type %in% c("JSONata", "JSON Schema Check")) next
     direct <- tryCatch(which(evaluate_rule(rule, study, "DM")), error = function(e) NULL)

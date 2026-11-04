@@ -21,13 +21,13 @@ test_that("get_output_variables falls back to Check condition names, in order, w
 })
 
 test_that("get_output_variables uses the declared Output Variables when present, resolving -- templates", {
-  rule <- .coreval_env$data$rules[["CORE-000004"]]
+  rule <- fixture_rule("CORE-000004")
   expect_equal(rule$outcome[["Output Variables"]], c("ECTRT", "ECDOSE", "ECOCCUR"))
   expect_equal(get_output_variables(rule, "EC"), c("ECTRT", "ECDOSE", "ECOCCUR"))
 })
 
 test_that("assemble_findings matches CDISC's reference results.csv for a Record-sensitivity rule", {
-  rule <- .coreval_env$data$rules[["CORE-000001"]]
+  rule <- fixture_rule("CORE-000001")
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))
   violations <- evaluate_rule(rule, study, "IE")
@@ -103,7 +103,7 @@ test_that("group_first_violations collapses per-row violations to one flagged ro
   # driven by a grouped `distinct` binding, constant per group) - the
   # reference reports exactly one finding per violating group, at its
   # first row: record 5 for SET2, record 8 for SET3.
-  rule <- .coreval_env$data$rules[["CORE-000888"]]
+  rule <- fixture_rule("CORE-000888")
   dir <- test_path("fixtures", "core_rules", "CORE-000888", "negative", "01")
   study <- read_study(file.path(dir, "data"))
   dataset <- prepare_dataset_for_rule(rule, study, "TX")
@@ -118,7 +118,7 @@ test_that("group_first_violations collapses per-row violations to one flagged ro
 
 test_that("assemble_findings reports one finding per group for Sensitivity: Group, including a $-bound set Output Variable (CORE-000888/CORE-000993)", {
   for (id in c("CORE-000888", "CORE-000993")) {
-    rule <- .coreval_env$data$rules[[id]]
+    rule <- fixture_rule(id)
     for (case in c("negative/01", "positive/01")) {
       dir <- test_path("fixtures", "core_rules", id, case)
       study <- read_study(file.path(dir, "data"))
@@ -161,7 +161,7 @@ test_that("Domain Presence Check matches CDISC's reference results.csv (CORE-000
   # output was dataset level, and coreval followed the output. CDISC corrected
   # the declaration to Dataset in its October 2026 release, so the two now
   # agree; the answer coreval gives did not change either way.
-  rule <- .coreval_env$data$rules[["CORE-000183"]]
+  rule <- fixture_rule("CORE-000183")
   expect_equal(rule$rule_type, "Domain Presence Check")
   expect_equal(rule$sensitivity, "Dataset")
   for (case in c("negative/01", "positive/01", "positive/02")) {

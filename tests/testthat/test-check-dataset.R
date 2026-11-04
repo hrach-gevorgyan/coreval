@@ -140,10 +140,10 @@ test_that("rule_external_domains expands templates, reads Child parents, and dro
   expect_match(rule_external_domains(child_rule, "SUPPAE"), "RDOMAIN")
 
   # An Operations block naming a domain counts too.
-  expect_equal(rule_external_domains(.coreval_env$data$rules[["CORE-000036"]], "TA"), "TV")
+  expect_equal(rule_external_domains(fixture_rule("CORE-000036"), "TA"), "TV")
 
   # A rule that references nothing external needs nothing external.
-  expect_length(rule_external_domains(.coreval_env$data$rules[["CORE-000547"]], "AE"), 0)
+  expect_length(rule_external_domains(fixture_rule("CORE-000547"), "AE"), 0)
 })
 
 test_that("check_dataset reads a csv, and a data.table, as well as a data frame", {
@@ -284,19 +284,22 @@ test_that("declaring a standard scopes the rules to it", {
 })
 
 test_that("deprecated rules are dropped by default and can be asked for", {
-  # A deprecated rule has a published replacement, so running both reports the
-  # same defect twice. CORE-000452 is the deprecated twin of CORE-000189.
-  dm <- data.frame(
-    STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"),
-    RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
-    AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
+  # A deprecated rule has a current replacement, so running both reports the
+  # same defect twice. CORE-000742 is deprecated in CDISC's repository and not
+  # carried by CORE 1.0. (CORE-000452, the example here before, was in CDISC's
+  # Deprecated folder only while it was parked there; 1.0 publishes it.)
+  ts <- data.frame(
+    STUDYID = "S1", DOMAIN = "TS", TSSEQ = 1, TSPARMCD = "INDIC",
+    TSPARM = "Trial Disease/Condition Indication", TSVAL = "",
+    TSVALNF = "UNK", stringsAsFactors = FALSE
   )
-  expect_false("CORE-000452" %in% check_dataset(dm)$findings$rule_id)
-  expect_true("CORE-000452" %in% check_dataset(dm, include_deprecated = TRUE)$findings$rule_id)
-
-  # rules_for_domain follows the same default.
-  expect_false("CORE-000452" %in% rules_for_domain("DM")$id)
-  expect_true("CORE-000452" %in% rules_for_domain("DM", include_deprecated = TRUE)$id)
+  expect_false("CORE-000742" %in% rules_for_domain("TS")$id)
+  expect_true("CORE-000742" %in% rules_for_domain("TS", include_deprecated = TRUE)$id)
+  ran <- function(...) {
+    r <- check_dataset(ts, ...)
+    unique(c(r$findings$rule_id, r$skipped$rule_id))
+  }
+  expect_false("CORE-000742" %in% ran())
 })
 
 test_that("the report says when no standard was declared", {

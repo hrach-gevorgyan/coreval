@@ -306,9 +306,10 @@ infer_domain <- function(dataset, path = NULL) {
 #'   releases and judging a study against one it never declared would both
 #'   invent violations and hide real ones. Every published package is bundled;
 #'   `list_ct_packages()` shows them.
-#' @param include_deprecated Also run rules CDISC has deprecated. `FALSE` by
-#'   default: a deprecated rule has a published replacement, so running both
-#'   reports the same defect twice.
+#' @param include_deprecated Also run retired rules: those CDISC has
+#'   deprecated, and, for an SDTM study, CDISC's SDTM rules that CORE 1.0 no
+#'   longer carries. `FALSE` by default: a retired rule has a current
+#'   replacement, so running both can report the same defect twice.
 #' @return An object of class `coreval_result`: a list of the three tables
 #'   `findings`, `skipped` and `truncated`, the same shape [check_study()]
 #'   returns, so [write_findings()] and [filter_findings()] work on it

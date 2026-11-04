@@ -2,7 +2,7 @@ test_that("a simple Match Datasets join (DS matched with DM) matches CDISC's ref
   # CORE-000034: DSSTDTC not_equal_to DM.DTHDTC, joined on USUBJID. DTHDTC
   # doesn't collide with any DS column, so it's referenced by its bare name
   # after the join.
-  rule <- .coreval_env$data$rules[["CORE-000034"]]
+  rule <- fixture_rule("CORE-000034")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000034", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -29,7 +29,7 @@ test_that("a one-to-many Match Datasets join matches CDISC's reference results.c
   # The schema's own Check condition also confirms the {MatchedDomain}.
   # {Column} collision-naming convention directly: both SV and SE have
   # EPOCH, and the condition literally references "SE.EPOCH".
-  rule <- .coreval_env$data$rules[["CORE-000097"]]
+  rule <- fixture_rule("CORE-000097")
   cond <- rule$check$all[[4]]
   expect_equal(cond$value, "SE.EPOCH")
 
@@ -102,7 +102,7 @@ test_that("evaluate_rule collapses an exploded join back to one result per origi
 })
 
 test_that("Match Datasets with a partial key matches CDISC's reference results.csv across every applicable domain (CORE-000270)", {
-  rule <- .coreval_env$data$rules[["CORE-000270"]]
+  rule <- fixture_rule("CORE-000270")
   for (case in c("negative", "positive")) {
     cases <- fixture_cases("CORE-000270", case)
     for (dir in cases) {
@@ -126,7 +126,7 @@ test_that("a Match Datasets self-join with an all-scalar Check matches CDISC's r
   # against. Confirmed this needs evaluate_condition() itself to recycle
   # every leaf to one value per row - without it, indexing the length-1
   # result by exploded row id produced NA past the first row.
-  rule <- .coreval_env$data$rules[["CORE-000291"]]
+  rule <- fixture_rule("CORE-000291")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000291", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -267,7 +267,7 @@ test_that("a SUPP dataset is pivoted from QNAM/QVAL into one column per QNAM and
 })
 
 test_that("a SUPP join matches CDISC's reference results.csv (CORE-000597)", {
-  rule <- .coreval_env$data$rules[["CORE-000597"]]
+  rule <- fixture_rule("CORE-000597")
   for (case in c("negative/01", "positive/01")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000597", case)
     study <- read_study(file.path(dir, "data"))
@@ -283,7 +283,7 @@ test_that("a RELREC relationship join matches CDISC's reference results.csv (COR
   # FA.FAGRPID, both RELREC IDVARVAL blank) joins FA's columns in under a
   # literal "RELREC." prefix - confirmed directly against the real
   # relrec.csv/results.csv (see apply_relrec_match()'s docstring).
-  rule <- .coreval_env$data$rules[["CORE-000757"]]
+  rule <- fixture_rule("CORE-000757")
   for (case in c("negative/01", "negative/02", "positive/01", "positive/02", "positive/03")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000757", case)
     study <- read_study(file.path(dir, "data"))
@@ -305,7 +305,7 @@ test_that("a RELREC group-level match with wildcard comparisons matches CDISC's 
   # group-level RELREC pairing (IDVARVAL blank on both sides) must still
   # only link records of the SAME USUBJID - without that, negative/01's
   # FALNKGRP-based grouping cross-matched unrelated subjects' AE records.
-  rule <- .coreval_env$data$rules[["CORE-000744"]]
+  rule <- fixture_rule("CORE-000744")
   for (case in c(
     "negative/01", "negative/02", "negative/03", "negative/04",
     "positive/01", "positive/02", "positive/03", "positive/04"

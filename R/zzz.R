@@ -14,6 +14,8 @@ utils::globalVariables(c(".N", ".SD"))
 .onLoad <- function(libname, pkgname) {
   path <- system.file("extdata", "rules.rds", package = pkgname)
   .coreval_env$data <- readRDS(path)
+  .coreval_env$rule_sets <- build_rule_sets(.coreval_env$data)
+  set_rule_family("sdtm")
 
   domain_classes_path <- system.file("extdata", "sdtm_domain_classes.rds", package = pkgname)
   .coreval_env$domain_classes <- readRDS(domain_classes_path)

@@ -67,7 +67,9 @@ test_that("rule_applies_to_domain filters on Use Case only when both sides speci
 test_that("rules_for_domain('AE') returns a plausible, real result", {
   r <- rules_for_domain("AE")
   expect_s3_class(r, "data.table")
-  expect_true(nrow(r) > 100 && nrow(r) < 250)
+  # 289 with CORE 1.0: it publishes 159 SDTM rules CDISC had parked in its
+  # Deprecated folder, so they now count as current.
+  expect_true(nrow(r) > 150 && nrow(r) < 350)
   expect_true(all(c("id", "source", "standard") %in% names(r)))
   expect_true(all(r$id %in% list_rules()$id))
 })

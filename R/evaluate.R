@@ -654,14 +654,22 @@ assert_referenced_metadata_available <- function(rule, dataset) {
   # reports FA record 2 and coreval reported none. `test-rules.R` keeps the
   # list of unbuilt pseudo-columns in step with this one.
   #
-  # The list is currently empty: every define_* field the bundled rules name is
-  # built. Keep the guard rather than deleting it, because the failure it
-  # catches is silent - a rule naming an unbuilt field finds nothing and looks
-  # like a clean dataset.
-  unbuilt <- unique(targets[targets %in% character(0)])
+  # CORE 1.0 named eight more. Two of its rules ran and found nothing because
+  # of it: CORE-002004 (define_variable_source_type) and CORE-002062
+  # (variable_length). Only the Check is looked at: a field a rule merely
+  # REPORTS (CDISC.SENDIG.SEND49 lists define_vlm_ccode among its Output
+  # Variables) shows as blank in the finding, which is visible, not silent.
+  unbuilt_fields <- c(
+    "define_dataset_class", "define_dataset_is_non_standard",
+    "define_key_sequence_is_unique", "define_variable_codelist_coded_values",
+    "define_variable_source_type", "define_vlm_ccode", "file_tag_name",
+    "variable_length"
+  )
+  checked <- collect_rule_targets(list(check = rule$check))
+  unbuilt <- unique(checked[checked %in% unbuilt_fields & !checked %in% names(dataset$data)])
   if (length(unbuilt) > 0) {
     stop(
-      "needs Define-XML detail coreval does not read: ",
+      "needs metadata coreval does not build yet: ",
       paste(unbuilt, collapse = ", "),
       call. = FALSE
     )

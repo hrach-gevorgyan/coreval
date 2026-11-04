@@ -2,7 +2,7 @@ test_that("does_not_have_next_corresponding_record matches CDISC's reference res
   # "SEENDTC does_not_have_next_corresponding_record ordering: SESEQ,
   # value: SESTDTC, within: USUBJID" - flags a subject's row whenever its
   # SEENDTC doesn't equal the following record's SESTDTC.
-  rule <- .coreval_env$data$rules[["CORE-000352"]]
+  rule <- fixture_rule("CORE-000352")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000352", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -29,7 +29,7 @@ test_that("does_not_have_next_corresponding_record never flags a group's last ro
 })
 
 test_that("empty_within_except_last_row matches CDISC's reference results.csv (CORE-000527)", {
-  rule <- .coreval_env$data$rules[["CORE-000527"]]
+  rule <- fixture_rule("CORE-000527")
   for (case in c("negative/01", "positive/01", "positive/02")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000527", case)
     study <- read_study(file.path(dir, "data"))
@@ -50,7 +50,7 @@ test_that("target_is_not_sorted_by matches CDISC's reference results.csv (CORE-0
     list(id = "CORE-000386", domain = "SJ", cases = c("negative/01", "positive/01")),
     list(id = "CORE-000535", domain = "SM", cases = c("negative/01"))
   )) {
-    rule <- .coreval_env$data$rules[[id_case$id]]
+    rule <- fixture_rule(id_case$id)
     for (case in id_case$cases) {
       dir <- test_path("fixtures", "core_rules", id_case$id, case)
       study <- read_study(file.path(dir, "data"))

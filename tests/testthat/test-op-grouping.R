@@ -4,7 +4,7 @@
 test_that("is_not_unique_set matches CDISC's reference results.csv (CORE-000186)", {
   # SUBJID is_not_unique_set [STUDYID]: flags duplicate (SUBJID, STUDYID)
   # combinations anywhere in the dataset.
-  rule <- .coreval_env$data$rules[["CORE-000186"]]
+  rule <- fixture_rule("CORE-000186")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000186", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -18,7 +18,7 @@ test_that("is_not_unique_set matches CDISC's reference results.csv (CORE-000186)
 
 test_that("is_not_unique_relationship matches CDISC's reference results.csv (CORE-000132)", {
   # ETCD <-> ELEMENT must be a one-to-one mapping within the TE dataset.
-  rule <- .coreval_env$data$rules[["CORE-000132"]]
+  rule <- fixture_rule("CORE-000132")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000132", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -45,7 +45,7 @@ test_that("is_inconsistent_across_dataset's positive (compliant) CDISC fixture s
   # (all-consistent, zero expected violations) fixture is asserted here;
   # the negative one is intentionally not, since coreval matches the
   # engine's own source and unit tests over a stale results.csv.
-  rule <- .coreval_env$data$rules[["CORE-000612"]]
+  rule <- fixture_rule("CORE-000612")
   dir <- test_path("fixtures", "core_rules", "CORE-000612", "positive", "01")
   study <- read_study(file.path(dir, "data"))
   actual <- evaluate_rule(rule, study$datasets$PC, domain = "PC")
@@ -64,7 +64,7 @@ test_that("is_inconsistent_across_dataset's minority-flagging matches CDISC's re
   # 3 majority rows nor the 1 (already-excluded) minority row end up
   # violating - the whole case is compliant, unlike what a
   # flag-everyone-in-an-inconsistent-group algorithm would wrongly report.
-  rule <- .coreval_env$data$rules[["CORE-000142"]]
+  rule <- fixture_rule("CORE-000142")
   for (case in c("negative/01", "positive/01", "positive/03")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000142", case)
     study <- read_study(file.path(dir, "data"))
@@ -114,7 +114,7 @@ test_that("is_inconsistent_across_dataset treats a blank target as its own value
 test_that("has_same_values matches CDISC's reference results.csv (CORE-000365)", {
   # "MHCAT non_empty AND MHCAT has_same_values" - flags every record when
   # the whole dataset's non-blank MHCAT values are all identical.
-  rule <- .coreval_env$data$rules[["CORE-000365"]]
+  rule <- fixture_rule("CORE-000365")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000365", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -154,7 +154,7 @@ test_that("is_not_unique_relationship refuses a comparator column the dataset la
 test_that("present_on_multiple_rows_within matches CDISC's reference results.csv (CORE-000363)", {
   # "DSDECOD present_on_multiple_rows_within: USUBJID" - flags every row
   # whose DSDECOD value appears on more than one row for the same subject.
-  rule <- .coreval_env$data$rules[["CORE-000363"]]
+  rule <- fixture_rule("CORE-000363")
   for (case in c("negative", "positive")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000363", case, "01")
     study <- read_study(file.path(dir, "data"))
@@ -346,6 +346,6 @@ test_that("a date-time column can be tested for blanks", {
     type = c("Num", "Char", "Num"), length = c(8, 1, 8)
   )
   study <- list(datasets = list(ADVS = list(data = data, meta = meta)))
-  hit <- evaluate_rule(.coreval_env$data$rules[["CORE-000690"]], study, "ADVS")
+  hit <- evaluate_rule(fixture_rule("CORE-000690"), study, "ADVS")
   expect_equal(which(hit), 2:3)
 })

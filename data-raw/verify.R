@@ -4,7 +4,7 @@
 #   Rscript data-raw/verify.R vignette  ~4s     + renders the vignette
 #   Rscript data-raw/verify.R roxygen   ~4s     + regenerates man/
 #   Rscript data-raw/verify.R code      ~20s    + the test suite
-#   Rscript data-raw/verify.R rules     ~52s    + the conformance sweep
+#   Rscript data-raw/verify.R rules     ~90s    + both conformance sweeps
 #   Rscript data-raw/verify.R release   ~2m     URLs + R CMD check --as-cran
 #
 # Each level includes the ones above it.
@@ -70,15 +70,19 @@ if (depth >= 4) {
 }
 
 if (depth >= 5) {
-  step("conformance sweep", 5)
-  before <- "tests/conformance/scoreboard.csv"
-  prior <- if (file.exists(before)) utils::read.csv(before, stringsAsFactors = FALSE) else NULL
-  system2("Rscript", c("tests/conformance/run_conformance.R",
-                       "data-raw/upstream/cdisc-open-rules"), stdout = NULL)
-  now <- utils::read.csv(before, stringsAsFactors = FALSE)
-  cat("\n", paste(names(table(now$status)), table(now$status), sep = " ",
-                  collapse = " / "), "\n", sep = "")
-  if (!is.null(prior)) {
+  step("conformance sweeps", 5)
+  # Two sweeps since CORE 1.0. CDISC's rule set against CDISC's test cases is
+  # the guard for SEND, TIG and USDM; the shipped SDTM set against CORE 1.0's
+  # test cases is the measure for SDTM. See tests/conformance/run_conformance.R.
+  sweep <- function(upstream, board) {
+    prior <- if (file.exists(board)) utils::read.csv(board, stringsAsFactors = FALSE) else NULL
+    system2("Rscript", c("tests/conformance/run_conformance.R", upstream), stdout = NULL)
+    now <- utils::read.csv(board, stringsAsFactors = FALSE)
+    cat("\n", basename(board), ": ", paste(names(table(now$status)), table(now$status), sep = " ",
+                                           collapse = " / "), "\n", sep = "")
+    if (is.null(prior)) {
+      return(invisible(NULL))
+    }
     merged <- merge(prior[c("id", "status", "reason")],
                     now[c("id", "status", "reason")], by = "id",
                     suffixes = c("_before", "_after"))
@@ -103,6 +107,8 @@ if (depth >= 5) {
       }
     }
   }
+  sweep("data-raw/upstream/cdisc-open-rules", "tests/conformance/scoreboard.csv")
+  sweep("data-raw/upstream/core-contributor", "tests/conformance/scoreboard_core1.csv")
 }
 
 if (depth >= 6) {
