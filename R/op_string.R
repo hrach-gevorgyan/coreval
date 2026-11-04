@@ -16,7 +16,10 @@
 #' @return A logical vector.
 #' @noRd
 matches_regex_check <- function(ctx) {
-  grepl(paste0("^(?:", ctx$value, ")"), target_text(ctx$target), perl = TRUE)
+  # CORE 1.0 searches anywhere in the value (PostgreSQL `target ~ pattern`),
+  # so its rules are not anchored. See rule_engine().
+  pattern <- if (engine_is_core1()) ctx$value else paste0("^(?:", ctx$value, ")")
+  grepl(pattern, target_text(ctx$target), perl = TRUE)
 }
 
 #' A target column as the text a pattern is matched against

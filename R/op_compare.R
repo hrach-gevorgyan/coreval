@@ -85,7 +85,13 @@ compare_op <- function(fn, set_fn = NULL) {
     # Confirmed against CORE-000542's real fixtures: LBSTRESC="200.00"
     # (character) vs LBSTRESN=200 (numeric) must NOT be flagged as
     # not_equal_to, even though they differ as raw strings.
-    if (isTRUE(ctx$condition$type_insensitive)) {
+    #
+    # CORE 1.0 does this for a text column against a numeric one even when
+    # type_insensitive is false: its own CORE-000542 results report "-1.234"
+    # against 1 as different, yet leave "1.00" against 1 and "-1.234" against
+    # -1.234 unreported. So for a 1.0 rule, a mixed pair compares by value.
+    mixed <- engine_is_core1() && xor(is.numeric(target), is.numeric(value))
+    if (isTRUE(ctx$condition$type_insensitive) || mixed) {
       target <- canonicalize_numeric_string(target)
       value <- canonicalize_numeric_string(value)
     }

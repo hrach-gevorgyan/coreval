@@ -423,6 +423,38 @@ test_that("an Operations filter value ending in \"&\" is a prefix wildcard, not 
   expect_equal(apply_operation_filter(dt, list(QNAM = "ETHNIC"))$QVAL, "d")
 })
 
+test_that("the filter wildcard is the rule's own engine's: \"%\" for CORE 1.0, \"&\" for CDISC", {
+  # CORE 1.0's base_operation.py treats a trailing "%" as the wildcard. CDISC's
+  # engine does not, and CDISC.SENDIG.190B filters on OMSTRESU "%", the unit,
+  # so a "%" read as a wildcard there would match every unit there is.
+  dt <- data.table::data.table(
+    QNAM = c("RACE1", "RACE2", "RACE&", "RACE%", "%"),
+    QVAL = c("a", "b", "c", "d", "e")
+  )
+  in_engine <- function(engine, filter) {
+    old <- .coreval_env$engine
+    on.exit(.coreval_env$engine <- old)
+    .coreval_env$engine <- engine
+    apply_operation_filter(dt, filter)$QVAL
+  }
+  expect_equal(in_engine("core1", list(QNAM = "RACE%")), c("a", "b", "c", "d"))
+  expect_equal(in_engine("core1", list(QNAM = "RACE&")), "c")
+  expect_equal(in_engine("cdisc", list(QNAM = "RACE%")), "d")
+  expect_equal(in_engine("cdisc", list(QNAM = "%")), "e")
+  expect_equal(in_engine("cdisc", list(QNAM = "RACE&")), c("a", "b", "c", "d"))
+})
+
+test_that("run_rule_on_domain() runs a rule under its own engine and restores the previous one", {
+  rule <- list(source = "core_contributor", check = list(
+    name = "X", operator = "matches_regex", value = "[0-9]$", value_is_literal = TRUE
+  ))
+  study <- as_study(list(data = data.table::data.table(X = c("A1", "1", "A")), meta = NULL), "XX")
+  expect_equal(evaluate_rule(rule, study, "XX"), c(TRUE, TRUE, FALSE))
+  rule$source <- "published"
+  expect_equal(evaluate_rule(rule, study, "XX"), c(FALSE, TRUE, FALSE))
+  expect_null(.coreval_env$engine)
+})
+
 test_that("a \"&\" prefix-wildcard filter matches CDISC's reference results.csv (CORE-000846)", {
   # $suppdm_race_count counts SUPPDM rows per USUBJID whose QNAM starts
   # with "RACE". positive/01 has subjects with 3 and 2 such rows, so
@@ -882,4 +914,88 @@ test_that("a codelist operation can answer from the study's own terminology vers
                          list(list("Codelist Code" = "C99999"))),
     "matches the filter the rule asks for"
   )
+})
+
+# The fixes below make CORE 1.0 rules give 1.0's answers. Each was found by a
+# rule that passed on its CDISC definition and failed on its 1.0 one.
+
+core1_rule <- function(check, ...) {
+  list(source = "core_contributor", check = check, ...)
+}
+one_dataset <- function(data, domain = "XX") {
+  as_study(list(data = data.table::as.data.table(data), meta = NULL), domain)
+}
+
+test_that("a 1.0 rule compares a text column with a numeric one by value (CORE-000542)", {
+  study <- one_dataset(list(C = c("1.00", "-1.234", "-1.234"), N = c(1, -1.234, 1)))
+  check <- list(name = "C", operator = "not_equal_to", value = "N", type_insensitive = FALSE)
+  expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(FALSE, FALSE, TRUE))
+  # CDISC's engine is unchanged: type_insensitive false compares as written.
+  expect_equal(evaluate_rule(list(check = check), study, "XX"), c(TRUE, FALSE, TRUE))
+})
+
+test_that("is_not_unique_relationship takes a list of columns as one key (CORE-000580)", {
+  study <- one_dataset(list(
+    ETCD = c("A", "A", "B", "C"),
+    X = c("1", "1", "1", "1"),
+    Y = c("p", "q", "r", "r")
+  ))
+  check <- list(name = "ETCD", operator = "is_not_unique_relationship", value = c("X", "Y"))
+  # A maps to two keys (1|p, 1|q); key 1|r is shared by B and C.
+  expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(TRUE, TRUE, TRUE, TRUE))
+  study$datasets$XX$data$Y <- c("p", "p", "r", "s")
+  expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(FALSE, FALSE, FALSE, FALSE))
+  check$value <- c("NOPE", "ALSO_NOPE")
+  expect_error(evaluate_rule(core1_rule(check), study, "XX"), "are not columns")
+})
+
+test_that("a Value Check with Dataset Metadata rule can see the dataset's name (CORE-000598)", {
+  study <- one_dataset(list(DOMAIN = c("LB", "LB")), domain = "ALB")
+  rule <- list(rule_type = "Value Check with Dataset Metadata", check = list(all = list(
+    list(name = "variable_name", operator = "equal_to", value = "DOMAIN", value_is_literal = TRUE),
+    list(name = "dataset_name", operator = "prefix_not_equal_to", prefix = 2L, value = "variable_value")
+  )))
+  expect_equal(evaluate_rule(rule, study, "ALB"), c(TRUE, TRUE))
+  study_ok <- one_dataset(list(DOMAIN = c("LB", "LB")), domain = "LBSA")
+  expect_equal(evaluate_rule(rule, study_ok, "LBSA"), c(FALSE, FALSE))
+})
+
+test_that("a RELREC.** template can be the variable a condition checks (CORE-000744)", {
+  ds <- list(data = data.table::data.table(
+    `RELREC.DOMAIN` = c("AE", "CM", NA),
+    `RELREC.AETERM` = c("HEADACHE", NA, NA),
+    `RELREC.CMTRT` = c(NA, "ASPIRIN", NA)
+  ), meta = NULL)
+  non_empty <- function(name) evaluate_check(list(name = name, operator = "non_empty"), ds, "FA")
+  expect_equal(non_empty("RELREC.**TERM"), c(TRUE, FALSE, FALSE))
+  expect_equal(non_empty("RELREC.**TRT"), c(FALSE, TRUE, FALSE))
+  not_exists <- function(name) evaluate_check(list(name = name, operator = "not_exists"), ds, "FA")
+  expect_true(all(not_exists("RELREC.**DECOD")))
+  expect_false(any(not_exists("RELREC.**TERM")))
+})
+
+test_that("a 1.0 rule's study_domains is derived from dataset names (CORE-000844)", {
+  study <- list(datasets = list(
+    DM = list(data = data.table::data.table(DOMAIN = "DM", RACE = "MULTIPLE"), meta = NULL),
+    SUPPDM = list(data = data.table::data.table(RDOMAIN = "DM"), meta = NULL),
+    POOLDEF = list(data = data.table::data.table(POOLID = "P1"), meta = NULL)
+  ))
+  rule <- core1_rule(
+    list(name = "$study_domains", operator = "does_not_contain", value = "SUPPDM", value_is_literal = TRUE),
+    operations = list(list(id = "$study_domains", operator = "study_domains"))
+  )
+  expect_equal(evaluate_rule(rule, study, "DM"), FALSE)
+  rule$check$value <- "PO"
+  expect_equal(evaluate_rule(rule, study, "DM"), FALSE)
+  expect_equal(core1_derive_domain(c("SUPPDM", "APFA1", "LB1", "RELREC1", "POOLDEF")),
+               c("SUPPDM", "APFA", "LB", "RELREC", "PO"))
+})
+
+test_that("a 1.0 rule's distinct over a missing domain is empty, not a refusal (CORE-000235)", {
+  study <- one_dataset(list(RSUBJID = c("S1", "S2")))
+  ops <- list(list(domain = "POOLDEF", id = "$poolid", name = "POOLID", operator = "distinct"))
+  check <- list(name = "RSUBJID", operator = "is_not_contained_by", value = "$poolid")
+  expect_equal(evaluate_rule(core1_rule(check, operations = ops), study, "XX"), c(TRUE, TRUE))
+  # CDISC's engine refuses, and coreval with it.
+  expect_error(evaluate_rule(list(check = check, operations = ops), study, "XX"), "POOLDEF")
 })

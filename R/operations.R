@@ -36,12 +36,15 @@ apply_operation_filter <- function(dt, filter) {
   if (is.null(filter)) {
     return(dt)
   }
+  # CORE 1.0 writes the wildcard as "%" (base_operation.py there); "&" is
+  # CDISC's. See rule_engine() for why one cannot stand in for the other.
+  wildcard <- if (engine_is_core1()) "%" else "&"
   keep <- rep(TRUE, nrow(dt))
   for (col in names(filter)) {
     if (col %in% names(dt)) {
       value <- filter[[col]]
-      matched <- if (is.character(value) && length(value) == 1L && endsWith(value, "&")) {
-        startsWith(as.character(dt[[col]]), sub("&+$", "", value))
+      matched <- if (is.character(value) && length(value) == 1L && endsWith(value, wildcard)) {
+        startsWith(as.character(dt[[col]]), sub(paste0("[", wildcard, "]+$"), "", value))
       } else {
         dt[[col]] == value
       }
@@ -1102,6 +1105,13 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
   ds <- domain_dataset(study, domain)
   if (is.null(ds) && !is.null(op$domain) && !is.null(study$datasets) &&
       !identical(toupper(domain), toupper(current_domain))) {
+    # CORE 1.0's distinct answers a missing domain with an empty set
+    # (sql_operations/distinct.py, `_empty_result_set_query()`), and its
+    # rules are written for that: CORE-000235 asks for POOLDEF's POOLIDs only
+    # in a branch it takes when the study has no POOLDEF.
+    if (engine_is_core1() && identical(op$operator, "distinct")) {
+      return(scalar_binding(distinct_values(character(0))))
+    }
     stop("operation needs ", toupper(domain), ", which is not in this study", call. = FALSE)
   }
   dt <- if (!is.null(ds)) ds$data else NULL
@@ -1476,7 +1486,13 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # SUPPEC.RDOMAIN="EC", while a name-based set contains "EC" and reports
     # nothing. The empty string is deliberately kept in the set, so a
     # domainless dataset makes an RDOMAIN of "" compare as present.
-    study_domains = scalar_binding(sort(unique(vapply(
+    #
+    # CORE 1.0 instead derives the domain from the dataset's NAME
+    # (SdtmStandardsContext.derive_domain), so SUPPDM is "SUPPDM" there.
+    # CORE-000844 in 1.0 asks whether $study_domains contains "SUPPDM".
+    study_domains = if (engine_is_core1()) {
+      scalar_binding(sort(unique(core1_derive_domain(names(study$datasets)))))
+    } else scalar_binding(sort(unique(vapply(
       study$datasets,
       function(d) {
         dom <- d$data[["DOMAIN"]]

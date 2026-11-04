@@ -202,10 +202,26 @@ register_operator("is_not_unique_relationship", function(ctx) {
   # so whether a row was reported depended on the order of the rows
   # (CORE-000141 on an EG without EGTPTNUM). The reference fails on the
   # missing column and skips the rule.
-  comparator <- resolve_var_name(as.character(ctx$condition$value)[[1]], ctx$wildcard)
-  if (!comparator %in% names(ctx$dataset$data)) {
-    stop("is_not_unique_relationship compares with ", comparator,
-         ", which is not a column of this dataset", call. = FALSE)
+  #
+  # CORE 1.0 also takes a list of columns (CORE-000580: ETCD against ELEMENT,
+  # TESTRL, TEENRL and TEDUR). Its is_not_unique_relationship_operator.py joins
+  # the ones present into one key, each blank written as "", separated by "|".
+  # Read as one column, the list compared ETCD with ELEMENT alone.
+  wanted <- vapply(as.character(ctx$condition$value), function(v) resolve_var_name(v, ctx$wildcard),
+                   character(1), USE.NAMES = FALSE)
+  present <- wanted[wanted %in% names(ctx$dataset$data)]
+  if (length(present) == 0) {
+    stop("is_not_unique_relationship compares with ", paste(wanted, collapse = ", "),
+         ", which ", if (length(wanted) > 1) "are not columns" else "is not a column",
+         " of this dataset", call. = FALSE)
+  }
+  if (length(wanted) > 1) {
+    as_key <- function(x) {
+      x <- target_text(x)
+      x[is.na(x)] <- ""
+      x
+    }
+    c_col <- do.call(paste, c(lapply(present, function(v) as_key(ctx$dataset$data[[v]])), sep = "|"))
   }
 
   keep <- !(is_blank(t_col) & is_blank(c_col))

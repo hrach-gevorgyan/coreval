@@ -300,6 +300,20 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     target <- if (exists) resolve_binding(binding, dataset) else NULL
     target_is_collection <- exists && identical(binding$kind, "scalar")
     target_is_binding <- TRUE
+  } else if (is_relrec_wildcard(condition$name)) {
+    # "RELREC.**TERM" as the thing checked, not only the thing compared with
+    # (CORE-000744 in 1.0: `RELREC.**TERM non_empty`). Both engines build it as
+    # one column of the RELREC-joined table (relrec.py renames AETERM to
+    # RELREC.**TERM), so it exists when any partner domain has the variable,
+    # and is blank on a row whose partner does not. Looked up as an ordinary
+    # name it was never a column, and every condition on it came out FALSE.
+    name <- condition$name
+    m <- regmatches(name, regexec("^([^.]+)\\.\\*\\*(.+)$", name))[[1]]
+    partner_cols <- grep(
+      paste0("^", m[2], "\\.[A-Z]{2}", m[3], "$"), names(dataset$data), value = TRUE
+    )
+    exists <- length(partner_cols) > 0
+    target <- if (exists) resolve_relrec_wildcard_value(name, dataset) else NULL
   } else {
     name <- resolve_var_name(condition$name, wildcard)
     exists <- name %in% names(dataset$data)
@@ -463,6 +477,11 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
 #'   logical over `dataset$data` with `NA` treated as "not a violation".
 #' @noRd
 run_rule_on_domain <- function(rule, study, domain) {
+  # Which engine's semantics this rule was written for. Read by the few
+  # operators where CDISC's engine and CORE 1.0 disagree; see rule_engine().
+  previous_engine <- .coreval_env$engine
+  .coreval_env$engine <- rule_engine(rule)
+  on.exit(.coreval_env$engine <- previous_engine, add = TRUE)
   study <- study_standard_from_rule(study, rule)
   assert_rule_inputs_available(rule, study)
   assert_labels_available(rule, study, domain)
@@ -480,6 +499,82 @@ run_rule_on_domain <- function(rule, study, domain) {
   }
   violations[is.na(violations)] <- FALSE
   list(dataset = dataset, violations = violations, bindings = bindings)
+}
+
+#' The engine a rule was written for
+#'
+#' CORE 1.0 moved the SDTM rules to a new engine (verisianHQ/cdisc-rules-engine)
+#' while SEND, TIG and USDM stay on CDISC's. The two read a few things
+#' differently, and each rule's test cases were graded by its own engine, so a
+#' rule is run the way its engine runs it:
+#'
+#' * `matches_regex` and `not_matches_regex`: CDISC's engine matches from the
+#'   start of the value (`re.match`); 1.0 searches anywhere in it
+#'   (PostgreSQL `~`).
+#' * An Operations `filter` value ending in a wildcard: `&` in CDISC's engine,
+#'   `%` in 1.0. Neither can serve both, since CDISC.SENDIG.190B filters on the
+#'   unit `"%"` itself.
+#'
+#' @param rule A rule record.
+#' @return `"core1"` for a rule taken from CORE 1.0's rule repository,
+#'   `"cdisc"` otherwise.
+#' @noRd
+rule_engine <- function(rule) {
+  if (identical(rule$source, "core_contributor")) "core1" else "cdisc"
+}
+
+#' Is the rule being evaluated a CORE 1.0 rule?
+#' @return `TRUE` inside `run_rule_on_domain()` for a 1.0 rule.
+#' @noRd
+engine_is_core1 <- function() {
+  identical(.coreval_env$engine, "core1")
+}
+
+#' A dataset's domain as CORE 1.0 derives it, from its name alone
+#'
+#' A port of `SdtmStandardsContext.derive_domain()` and `_get_unsplit_name()`
+#' (standards/sdtm_standards_context.py in verisianHQ/cdisc-rules-engine).
+#' CDISC's engine reads the DOMAIN column instead, which a SUPP dataset does
+#' not have.
+#'
+#' @param name Dataset names, e.g. `"SUPPDM"`, `"APDM"`, `"LB1"`.
+#' @return Upper-case domain codes, one per name.
+#' @noRd
+core1_derive_domain <- function(name) {
+  unsplit <- function(ds) {
+    if (startsWith(ds, "relrec")) return("relrec")
+    stem <- sub("[0-9]+$", "", ds)
+    if (nzchar(stem) && nchar(stem) < nchar(ds) && grepl("^[a-z]+$", stem)) return(stem)
+    if (!nzchar(stem)) return(ds)
+    if (ds %in% c("relsub", "pooldef", "aprelsub")) return(ds)
+    rest <- ds
+    prefix_length <- 0L
+    repeat {
+      p <- c("supp", "sqap", "sq", "ap")[startsWith(rest, c("supp", "sqap", "sq", "ap"))][1]
+      if (is.na(p)) break
+      prefix_length <- prefix_length + nchar(p)
+      rest <- substring(rest, nchar(p) + 1L)
+    }
+    if (nchar(rest) <= 2 || !grepl("^[a-z]+$", rest)) return(ds)
+    substr(ds, 1L, prefix_length + 2L)
+  }
+  vapply(tolower(name), function(ds) {
+    toupper(if (startsWith(ds, "supp")) {
+      substr(ds, 1L, 6L)
+    } else if (startsWith(ds, "sq")) {
+      substr(ds, 1L, 4L)
+    } else if (startsWith(ds, "relrec")) {
+      "relrec"
+    } else if (startsWith(ds, "relspec")) {
+      "relspec"
+    } else if (startsWith(ds, "relsub")) {
+      "relsub"
+    } else if (startsWith(ds, "ap")) {
+      unsplit(ds)
+    } else {
+      substr(ds, 1L, 2L)
+    })
+  }, character(1), USE.NAMES = FALSE)
 }
 
 #' Fill an undeclared study standard from the standard the rule targets
@@ -781,7 +876,18 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
     # 2.9 GB to 4.4 GB, because the cached table and each rule's copy of it
     # are alive together. A check that runs out of memory is worse than a
     # slow one.
-    return(build_variable_value_check_dataset(dataset))
+    out <- build_variable_value_check_dataset(dataset)
+    # The Dataset Metadata variant carries the dataset's own facts on every
+    # row: ValueCheckDatasetMetadataDatasetBuilder in CDISC's engine and
+    # values.with_dataset_metadata() in 1.0 both do. Without them
+    # `dataset_name` in CORE-000598 is a name that is not a column, and the
+    # rule found nothing on an ALB whose DOMAIN is LB.
+    if (identical(rule$rule_type, "Value Check with Dataset Metadata")) {
+      data.table::set(out$data, j = "dataset_name", value = domain)
+      data.table::set(out$data, j = "dataset_label", value = dataset$label %||% NA_character_)
+      data.table::set(out$data, j = "record_count", value = nrow(dataset$data))
+    }
+    return(out)
   }
   apply_match_datasets(dataset, rule, study, domain)
 }
