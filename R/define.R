@@ -150,7 +150,24 @@ find_define_xml <- function(path) {
   # A study directory can legitimately contain other XML (a stylesheet, an
   # annotated CRF); match the conventional define*.xml naming first and
   # only fall back to a lone .xml file.
+  #
+  # define.xml itself wins. Any other choice among several is said aloud: the
+  # first in sort order was taken silently, and "define-old.xml" sorts before
+  # "define.xml". A define named for its study ("cdiscpilot01-define.xml")
+  # beside another XML file was not found at all, and every define rule
+  # skipped as if there were none.
+  exact <- files[tolower(basename(files)) == "define.xml"]
+  if (length(exact) > 0) {
+    return(exact[[1]])
+  }
   define <- files[grepl("^define", basename(files), ignore.case = TRUE)]
+  if (length(define) == 0) {
+    define <- files[grepl("define", basename(files), ignore.case = TRUE)]
+  }
+  if (length(define) > 1) {
+    warning("more than one define file in ", basename(path), ": read ", basename(define[[1]]),
+            ", not ", paste(basename(define[-1]), collapse = ", "), call. = FALSE)
+  }
   if (length(define) > 0) {
     return(define[[1]])
   }
@@ -650,6 +667,11 @@ vlm_where_matches <- function(where, data) {
 #' @noRd
 find_stf_xml <- function(path) {
   files <- list.files(path, pattern = "^stf.*[.]xml$", ignore.case = TRUE, full.names = TRUE)
+  if (length(files) > 1) {
+    warning("more than one study tagging file in ", basename(path), ": read ",
+            basename(files[[1]]), ", not ", paste(basename(files[-1]), collapse = ", "),
+            call. = FALSE)
+  }
   if (length(files)) files[[1]] else NULL
 }
 
@@ -669,7 +691,10 @@ read_stf_xml <- function(path) {
   if (is.null(path) || !requireNamespace("xml2", quietly = TRUE)) {
     return(NULL)
   }
-  doc <- tryCatch(xml2::read_xml(path), error = function(e) {
+  # From memory, as read_define_xml() reads, so a parse error cannot leave
+  # the file open and locked on Windows.
+  raw <- tryCatch(readBin(path, "raw", file.size(path)), error = function(e) NULL)
+  doc <- tryCatch(xml2::read_xml(raw), error = function(e) {
     warning("could not read the study tagging file ", basename(path), ": ", conditionMessage(e),
             call. = FALSE)
     NULL

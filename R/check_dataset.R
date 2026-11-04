@@ -339,12 +339,9 @@ infer_domain <- function(dataset, path = NULL) {
 #'   `"SENDIG"`. Rules are scoped to it, which is usually what you want - a
 #'   SENDIG rule has nothing to say about an SDTM study.
 #'
-#'   It is not free, though, and CDISC's coverage is uneven. The general
-#'   "dates must be valid ISO 8601" rule (`CORE-000547`) is published for
-#'   SENDIG and TIG but **not for SDTMIG**, whose only equivalents are
-#'   `TSVAL`-specific or deprecated. So `standard = "SDTMIG"` can stop a
-#'   malformed `RFSTDTC` being reported at all. The report says how many rules were
-#'   set aside; leave `standard` unset to see everything.
+#'   It is not free, though: coverage differs between standards, and a rule
+#'   written only for another one is not run. The report says how many rules
+#'   were set aside; leave `standard` unset to see everything.
 #' @param version The standard's version, e.g. `"3-4"`.
 #' @param use_case Optional use case (e.g. `"INDH"`), as in [list_rules()].
 #' @param max_records Most records to keep per rule, default 1000. A rule that
@@ -369,9 +366,9 @@ infer_domain <- function(dataset, path = NULL) {
 #'   readable report rather than dumping the list.
 #'
 #'   `skipped` carries a `reason` for every rule that did not run - a dataset
-#'   you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
-#'   controlled terminology, if you did not say which package the study
-#'   follows - see `ct_package`. Nothing skipped is ever counted as a pass.
+#'   you did not supply, a missing Define-XML, or, for the rules that ask
+#'   whether a value is an allowed term, CDISC's controlled terminology if
+#'   you did not say which package the study follows - see `ct_package`. Nothing skipped is ever counted as a pass.
 #'
 #'   Provenance rides along as attributes: `checks_run` (how many rules were
 #'   evaluated), `domains`, and `excluded_by_standard` (how many rules the

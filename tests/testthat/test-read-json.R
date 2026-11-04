@@ -295,3 +295,12 @@ test_that("text in a Dataset-JSON column declared numeric is kept, not turned in
   expect_equal(dm$meta$type[dm$meta$variable == "AGE"], "Char")
   expect_equal(dm$data$SEQ, c(100000, 2))
 })
+
+test_that("a Dataset-JSON file with no rows and no record count is refused", {
+  # Read as an empty dataset, it had nothing to report, the same as a dataset
+  # that really is empty.
+  path <- tempfile(fileext = ".json")
+  on.exit(unlink(path))
+  writeLines('{"datasetJSONVersion": "1.1.0", "name": "AE", "columns": [{"itemOID": "IT.AE.STUDYID", "name": "STUDYID", "label": "Study", "dataType": "string"}]}', path)
+  expect_error(read_dataset_json(path), "has no rows")
+})

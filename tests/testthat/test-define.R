@@ -481,3 +481,21 @@ test_that("a folder with a define.xml and no datasets is checked against the def
   on.exit(unlink(empty, recursive = TRUE), add = TRUE)
   expect_error(check_study(empty), "no datasets found")
 })
+
+test_that("find_define_xml takes define.xml itself, says which of several it read, and finds a study-named define", {
+  dir <- tempfile("coreval_defines_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  file.create(file.path(dir, c("define-old.xml", "define.xml")))
+  # "define-old.xml" sorts first, and was taken without a word.
+  expect_equal(basename(find_define_xml(dir)), "define.xml")
+  unlink(file.path(dir, "define.xml"))
+  file.create(file.path(dir, "define-new.xml"))
+  expect_warning(find_define_xml(dir), "more than one define file")
+
+  other <- tempfile("coreval_studydefine_")
+  dir.create(other)
+  on.exit(unlink(other, recursive = TRUE), add = TRUE)
+  file.create(file.path(other, c("cdiscpilot01-define.xml", "annotated-crf.xml")))
+  expect_equal(basename(find_define_xml(other)), "cdiscpilot01-define.xml")
+})

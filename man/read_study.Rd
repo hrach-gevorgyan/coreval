@@ -15,14 +15,15 @@ on one file, so it has to be asked for. Without it, a folder holding only
 a USDM document is refused with a message saying so, never read as empty.}
 }
 \value{
-A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label)>, define, stf, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was
+A study object: \verb{list(datasets = <named list of domain -> list(data, meta, label, file_size)>, define, stf, ct = NULL, standard = list(product, version))}. \code{define} is the parsed Define-XML if one was
 found in \code{path} and the \code{xml2} package is installed, and \code{NULL}
 otherwise; \code{stf} likewise holds the study tagging file (\code{stf*.xml}),
 one row per document file tag; \code{ct} is always \code{NULL}. Each \code{data} is a
 \code{\link[data.table:data.table]{data.table::data.table()}};
 each \code{meta} is a data.table with columns \code{variable}, \code{label}, \code{type};
 \code{label} is the dataset's own label (e.g. \code{"Adverse Events"}), or \code{NA} if
-unavailable. \code{standard} is the study's declared standard/version (e.g.
+unavailable; \code{file_size} is the size in bytes of the file it was read
+from, which CORE 1.0's dataset size rules compare. \code{standard} is the study's declared standard/version (e.g.
 \code{list(product = "SDTMIG", version = "3-4")}), read from a CORE test
 case's \code{.env} file or a USDM document, and both \code{NA} for a folder of
 datasets, which does not declare one.

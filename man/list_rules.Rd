@@ -33,7 +33,7 @@ constraint always pass.}
 \item{include_deprecated}{Include superseded rules. \code{TRUE} here, unlike
 \code{\link[=check_dataset]{check_dataset()}} and \code{\link[=check_study]{check_study()}}, which default to \code{FALSE}. The
 difference is deliberate: \strong{listing is not running}. This function is the
-catalog of what is bundled, so hiding a fifth of it would make
+catalog of what is bundled, so hiding the retired rules would make
 \code{nrow(list_rules())} stop meaning "how many rules are there" - and \code{source}
 is right here to filter on. Checking is a different question, and there a
 superseded rule would report the same defect twice.
@@ -60,12 +60,16 @@ filter, join and script against.
 }
 \section{What \code{source} tells you}{
 
-Not every bundled rule carries the same weight:
+Where a rule comes from, and what standing it has there:
 \itemize{
-\item \code{"published"} - \verb{Published/} upstream, fully tested. The trusted core.
-\item \code{"deprecated_dir"} - superseded by a published replacement. Not returned
-unless you ask for it, since running both reports the same defect twice.
-\item \code{"fda_business_rules_draft"} - FDA drafts that already ship test data.
+\item \code{"core_contributor"} - a CORE 1.0 SDTMIG or FDA Business Rule, from
+Verisian's core-contributor repository. These check an SDTM study.
+\item \code{"published"} - \verb{Published/} in CDISC's cdisc-open-rules, fully tested.
+\item \code{"sendig_draft"}, \code{"sdtmig_draft"}, \code{"fda_business_rules_draft"} - drafts
+upstream that already ship test data.
+\item \code{"deprecated_dir"} - superseded by a published replacement. A check does
+not run it unless you ask, since running both reports the same defect
+twice.
 }
 }
 
@@ -79,6 +83,6 @@ list_rules(id = "CORE-000547")$issue
 # What applies to AE under SDTMIG 3.4?
 nrow(list_rules(domain = "AE", standard = "SDTMIG", version = "3.4"))
 
-# Which snapshot of CDISC's rules is this?
+# Which snapshot of the rules is this?
 attr(list_rules(), "rules_version")
 }

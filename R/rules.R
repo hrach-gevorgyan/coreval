@@ -157,11 +157,15 @@ build_rules_table <- function() {
 #' filter, join and script against.
 #'
 #' @section What `source` tells you:
-#' Not every bundled rule carries the same weight:
-#' * `"published"` - `Published/` upstream, fully tested. The trusted core.
-#' * `"deprecated_dir"` - superseded by a published replacement. Not returned
-#'   unless you ask for it, since running both reports the same defect twice.
-#' * `"fda_business_rules_draft"` - FDA drafts that already ship test data.
+#' Where a rule comes from, and what standing it has there:
+#' * `"core_contributor"` - a CORE 1.0 SDTMIG or FDA Business Rule, from
+#'   Verisian's core-contributor repository. These check an SDTM study.
+#' * `"published"` - `Published/` in CDISC's cdisc-open-rules, fully tested.
+#' * `"sendig_draft"`, `"sdtmig_draft"`, `"fda_business_rules_draft"` - drafts
+#'   upstream that already ship test data.
+#' * `"deprecated_dir"` - superseded by a published replacement. A check does
+#'   not run it unless you ask, since running both reports the same defect
+#'   twice.
 #'
 #' @param id Return only these rules, e.g. `"CORE-000547"`. This is how you
 #'   look up a rule id the report gave you.
@@ -177,7 +181,7 @@ build_rules_table <- function() {
 #' @param include_deprecated Include superseded rules. `TRUE` here, unlike
 #'   [check_dataset()] and [check_study()], which default to `FALSE`. The
 #'   difference is deliberate: **listing is not running**. This function is the
-#'   catalog of what is bundled, so hiding a fifth of it would make
+#'   catalog of what is bundled, so hiding the retired rules would make
 #'   `nrow(list_rules())` stop meaning "how many rules are there" - and `source`
 #'   is right here to filter on. Checking is a different question, and there a
 #'   superseded rule would report the same defect twice.
@@ -201,7 +205,7 @@ build_rules_table <- function() {
 #' # What applies to AE under SDTMIG 3.4?
 #' nrow(list_rules(domain = "AE", standard = "SDTMIG", version = "3.4"))
 #'
-#' # Which snapshot of CDISC's rules is this?
+#' # Which snapshot of the rules is this?
 #' attr(list_rules(), "rules_version")
 #' @export
 list_rules <- function(id = NULL, domain = NULL, standard = NULL,

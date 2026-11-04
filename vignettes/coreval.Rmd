@@ -109,7 +109,7 @@ If it ran those anyway, it would be comparing your data against columns that
 aren't there, and reporting problems that don't exist. Saying nothing is better
 than making something up.
 
-Nine rules ask a different kind of question: is this value one of the terms
+Some rules ask a different kind of question: is this value one of the terms
 CDISC's controlled terminology allows for this variable? `SEX` may be `F`, `M`,
 `U` or `INTERSEX` and nothing else. Those need to know which version of the
 terminology your study follows, because it changes between releases - `SEX`
@@ -156,8 +156,8 @@ Point it at the **folder**, not a file:
 study_result <- check_study(dir)
 ```
 
-coreval reads everything in there, and reading it all at once is the point.
-now the cross-dataset rules have both halves to work with. If there's a
+coreval reads everything in there, and reading it all at once is the point:
+the cross-dataset rules now have both halves to work with. If there's a
 Define-XML in the folder it finds it and uses it (that needs the `xml2`
 package).
 
@@ -203,8 +203,8 @@ sort(table(f$rule_id), decreasing = TRUE)[1:3]
 ```
 
 Slicing the data frame gives you rows. `filter_findings()` gives you back a
-*result*, the same object narrowed. That is the difference that matters:
-because a result is what `write_findings()` and `summary()` take:
+*result*, the same object narrowed, which is what `write_findings()` and
+`summary()` take:
 
 ```{r filter-findings}
 worst <- filter_findings(study_result, triage = "wrong value")
@@ -262,7 +262,8 @@ table(rules$source)
 attr(rules, "rules_version")
 ```
 
-That last one is the exact CDISC commit the bundled rules came from. Worth
+That last one names the two repositories the bundled rules came from, and the
+exact commit of each. Worth
 writing down next to your results, though `write_findings()` already records
 it in every file it saves.
 
@@ -308,11 +309,9 @@ those, and only for your version of the Implementation Guide:
 result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
 ```
 
-That cuts the list a lot, and it can cut too far. CDISC's coverage is uneven:
-the general "dates must be valid ISO 8601" rule is published for SEND and the
-Tobacco Implementation Guide but not for SDTM, so narrowing to SDTMIG stops a
-month of 13 being reported. The report always says how many rules it set
-aside. Leave `standard` unset if you'd rather see everything.
+That cuts the list a lot, and coverage differs between standards, so a rule
+written only for another one is not run. The report always says how many rules
+it set aside. Leave `standard` unset if you'd rather see everything.
 
 ## USDM study designs
 

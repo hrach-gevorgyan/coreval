@@ -107,6 +107,13 @@ build_dataset_from_dataset_json <- function(meta_obj, rows, source) {
   # 500 rows and carrying on means every rule reports clean for the 200 that
   # never arrived, and the report looks like a finished check.
   declared_records <- meta_obj$records
+  # With neither, there is no telling an empty dataset from a file whose data
+  # never arrived, and it was read as an empty dataset with nothing to report.
+  if (is.null(rows) && is.null(declared_records)) {
+    stop("Dataset-JSON file is malformed: ", basename(source), " has no rows and does ",
+         "not say how many records it holds, so there is no telling whether its ",
+         "data is missing. Nothing was checked.", call. = FALSE)
+  }
   if (!is.null(declared_records) && length(declared_records) == 1 &&
       !is.na(suppressWarnings(as.integer(declared_records)))) {
     expected <- as.integer(declared_records)

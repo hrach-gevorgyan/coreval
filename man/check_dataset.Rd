@@ -28,12 +28,9 @@ For one file of a split dataset with no \code{DOMAIN} column, such as
 \code{"SENDIG"}. Rules are scoped to it, which is usually what you want - a
 SENDIG rule has nothing to say about an SDTM study.
 
-It is not free, though, and CDISC's coverage is uneven. The general
-"dates must be valid ISO 8601" rule (\code{CORE-000547}) is published for
-SENDIG and TIG but \strong{not for SDTMIG}, whose only equivalents are
-\code{TSVAL}-specific or deprecated. So \code{standard = "SDTMIG"} can stop a
-malformed \code{RFSTDTC} being reported at all. The report says how many rules were
-set aside; leave \code{standard} unset to see everything.}
+It is not free, though: coverage differs between standards, and a rule
+written only for another one is not run. The report says how many rules
+were set aside; leave \code{standard} unset to see everything.}
 
 \item{version}{The standard's version, e.g. \code{"3-4"}.}
 
@@ -65,9 +62,9 @@ unchanged. Because it has a class, typing the result's name prints a
 readable report rather than dumping the list.
 
 \code{skipped} carries a \code{reason} for every rule that did not run - a dataset
-you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
-controlled terminology, if you did not say which package the study
-follows - see \code{ct_package}. Nothing skipped is ever counted as a pass.
+you did not supply, a missing Define-XML, or, for the rules that ask
+whether a value is an allowed term, CDISC's controlled terminology if
+you did not say which package the study follows - see \code{ct_package}. Nothing skipped is ever counted as a pass.
 
 Provenance rides along as attributes: \code{checks_run} (how many rules were
 evaluated), \code{domains}, and \code{excluded_by_standard} (how many rules the

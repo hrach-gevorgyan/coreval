@@ -58,7 +58,9 @@ only used when \code{study} is a folder path; see \code{\link[=read_study]{read_
 An object of class \code{coreval_result}, holding three tables. Because
 it has a class, typing the result's name prints a readable report rather
 than dumping the list, and provenance rides along as attributes:
-\code{checks_run}, \code{domains} and \code{excluded_by_standard}.
+\code{checks_run}, \code{domains}, \code{excluded_by_standard}, and \code{define_only}
+(\code{TRUE} when the folder held a define.xml and no datasets, so only the
+rules comparing the define with the study ran).
 \itemize{
 \item \code{findings} - what is wrong. One row per affected record, with \code{Dataset},
 \code{Record}, \code{Variable}, \code{Value}, the \code{issue} in words, and its \code{triage}.

@@ -19,7 +19,7 @@
 #'   on one file, so it has to be asked for. Without it, a folder holding only
 #'   a USDM document is refused with a message saying so, never read as empty.
 #' @return A study object: `list(datasets = <named list of domain ->
-#'   list(data, meta, label)>, define, stf, ct = NULL, standard =
+#'   list(data, meta, label, file_size)>, define, stf, ct = NULL, standard =
 #'   list(product, version))`. `define` is the parsed Define-XML if one was
 #'   found in `path` and the `xml2` package is installed, and `NULL`
 #'   otherwise; `stf` likewise holds the study tagging file (`stf*.xml`),
@@ -27,7 +27,8 @@
 #'   [data.table::data.table()];
 #'   each `meta` is a data.table with columns `variable`, `label`, `type`;
 #'   `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
-#'   unavailable. `standard` is the study's declared standard/version (e.g.
+#'   unavailable; `file_size` is the size in bytes of the file it was read
+#'   from, which CORE 1.0's dataset size rules compare. `standard` is the study's declared standard/version (e.g.
 #'   `list(product = "SDTMIG", version = "3-4")`), read from a CORE test
 #'   case's `.env` file or a USDM document, and both `NA` for a folder of
 #'   datasets, which does not declare one.

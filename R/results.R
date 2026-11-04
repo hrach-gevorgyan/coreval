@@ -414,7 +414,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' @return An object of class `coreval_result`, holding three tables. Because
 #'   it has a class, typing the result's name prints a readable report rather
 #'   than dumping the list, and provenance rides along as attributes:
-#'   `checks_run`, `domains` and `excluded_by_standard`.
+#'   `checks_run`, `domains`, `excluded_by_standard`, and `define_only`
+#'   (`TRUE` when the folder held a define.xml and no datasets, so only the
+#'   rules comparing the define with the study ran).
 #'
 #'   * `findings` - what is wrong. One row per affected record, with `Dataset`,
 #'     `Record`, `Variable`, `Value`, the `issue` in words, and its `triage`.
