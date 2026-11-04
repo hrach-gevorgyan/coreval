@@ -1,43 +1,26 @@
 ## Submission
 
-Update to coreval. The previous version on CRAN is 0.1.0, published on
-2026-09-12.
+Update to coreval, from 0.3.0 on CRAN to 0.4.0.
 
-## Why this update follows so soon
+## Why this update
 
-I know updates are expected no more often than every one to two months, and I
-would not ask for an exception without a reason. 0.1.0 has defects that make
-checks quietly report nothing, which for a conformance checker means data with
-problems is reported as clean. Anyone installing it today gets that version.
+On 3 November 2026 CDISC released CORE 1.0, its conformance rules engine. With
+it, the SDTM rules moved from CDISC's rules repository to one maintained by
+Verisian (verisianHQ/core-contributor), and they now run under a different
+engine whose semantics differ from the previous one in places. The rules CRAN's
+0.3.0 bundles for SDTM are the ones CDISC no longer maintains. This release
+checks an SDTM study with the CORE 1.0 rules, and keeps CDISC's rules for SEND,
+TIG and USDM, where CDISC still maintains them.
 
-Since 0.1.0 the package has been checked against CDISC's own engine on a
-complete real submission (CDISC's pilot study), rule by rule, which found and
-fixed three defects in how real transport files are read. It was also run on
-studies of up to 5.9 million rows, and fed 95 broken or malformed inputs, which
-found cases where a damaged file was checked in part instead of refused. Those
-are fixed too.
+It also fixes defects that made a check quietly report nothing, found by
+checking CDISC's pilot submission with this package and with CORE 1.0's own
+engine and comparing every finding. See NEWS.md for the full list.
 
-This release fixes several defects that made a check quietly report nothing,
-adds CDISC Controlled Terminology support, reads the terminology version a
-study declares in TS or in its Define-XML, adds support for CDISC's USDM
-study-design model, and makes checking a large study about twenty times
-faster, with a further halving of time and lower memory use on large studies.
-See NEWS.md for the full list.
-
-The interface only gains. `list_ct_packages()` is new, and `check_study()` and
-`check_dataset()` take a new optional `ct_package` argument that defaults to
-NULL. `check_study()` also gains `standard` and `version`, both optional.
-Nothing existing changed its meaning, nothing is deprecated, and nothing is
-removed, so code written against 0.1.0 runs unchanged. The one exception is
-input that was never valid and used to be accepted silently: a misspelt
-`use_case`, a non-logical `include_deprecated`, duplicate column names, and
-damaged or truncated files are now refused with an error that says what is
-wrong.
-
-The installed size grows, from about 1.2 MB to about 1.9 MB. All of it is
-bundled CDISC reference data and the two third-party files described below,
-and it is what makes the package work offline: contacting CDISC's Library
-would need an API key and a network call at check time.
+The interface only gains. Nothing existing changed its meaning, nothing is
+deprecated, and nothing is removed. Input that was never valid and used to be
+accepted silently is now refused with an error that says what is wrong: a
+transport file holding more than one dataset, a CSV with a row of the wrong
+length, and a Dataset-JSON file with neither rows nor a record count.
 
 ## Test environments
 
@@ -47,29 +30,27 @@ would need an API key and a network call at check time.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-* win-builder (R-devel and R-release): `Days since last update: 3`. This is
-  the early update explained above.
-* Local `R CMD check --as-cran`, and GitHub Actions on Linux, macOS and
-  Windows: no notes.
+0 errors | 0 warnings | 0 notes
 
 ## Notes for the reviewer
 
-The package bundles CDISC's published conformance rules and the reference
-metadata they need, extracted at build time from two MIT-licensed CDISC
-repositories, each at a pinned commit. `inst/COPYRIGHTS` names each bundled
-file and the repository it came from, and reproduces both MIT notices, which
-differ between the two repositories. The rules commit is recorded in the
-package too, and written into every findings file.
+The package bundles published conformance rules and the reference metadata
+they need, extracted at build time from three MIT-licensed repositories, each
+at a pinned commit: CDISC's cdisc-open-rules and cdisc-rules-engine, and
+Verisian's core-contributor. A few small reference tables (the FDA guides list,
+the FDA Data Standards Catalog, ISO 3166 and GENC country lists) come from
+Verisian's fork of the engine, under the same MIT notice as CDISC's.
+`inst/COPYRIGHTS` names each bundled file and the repository it came from, and
+reproduces the three MIT notices, which differ between repositories. Both rules
+commits are recorded in the package too, and written into every findings file.
 
 No CDISC API is contacted at build time or at run time, and nothing is
 downloaded. CDISC's own engine requires an API key for the CDISC Library; this
 package does not, and takes its data only from files committed to those public
 repositories under MIT.
 
-Two bundled components are not CDISC's, and `inst/COPYRIGHTS` describes the terms
-of each:
+Two bundled components are not from those repositories, and `inst/COPYRIGHTS`
+describes the terms of each:
 
 * `inst/extdata/schema/xml/xhtml-1.1/` is the W3C's XHTML Schema modules,
   redistributed verbatim to validate XHTML offline. They carry the W3C's own
@@ -91,7 +72,7 @@ answered.
 
 Examples and tests write only to `tempdir()`.
 
-The conformance harness that compares this package against CDISC's own
+The conformance harness that compares this package against the rules' own
 published expected results is not part of the build. It lives in
-`tests/conformance/` and is excluded via `.Rbuildignore`, because it needs a
-clone of CDISC's rules repository that is far too large to ship.
+`tests/conformance/` and is excluded via `.Rbuildignore`, because it needs
+clones of the rules repositories that are far too large to ship.

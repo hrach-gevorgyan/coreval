@@ -15,7 +15,7 @@ maintainer tooling and never ship.
 | Rules in the engine's bundled `rules.pkl` | 981 |
 | of those, USDM (study-definition JSON, not tabular datasets) | 257 |
 | tabular rules (SDTM/SEND/TIG) | 724 |
-| Rules coreval bundles | 1,054 |
+| Rules coreval bundled from cdisc-open-rules when this was measured | 1,054 |
 | **Overlap** | **980** |
 | Tabular engine rules coreval lacks | **1** (`CORE-000845`) |
 | coreval rules absent from the engine's cache | 74 |
@@ -25,6 +25,10 @@ cache but has no folder in `cdisc-open-rules` at the pinned commit at all. The
 engine's cache came from the CDISC Library API, coreval extracts from the public
 rules repository, and the two disagree. The 74 the other way are draft and
 unpublished rules the repo ships and the cache does not.
+
+This table compares CDISC's engine with CDISC's rule set, before CORE 1.0
+moved the SDTM rules to Verisian's repository. The SDTM rules now come from
+there, and are compared with CORE 1.0's own engine in [REAL-STUDY.md](REAL-STUDY.md).
 
 The comparison above is for tabular data. USDM study designs are read too, and
 their rules are compared separately.
@@ -253,7 +257,42 @@ Rscript tests/conformance/pilot_scale.R <folder of pilot .xpt files> <k>
 
 Time is `system.time()` around `check_study()` only. Peak is the operating
 system's peak working set for the whole R process, study included. Same
-machine as above, one process, all 4,001 checks run at every scale.
+machine as above, one process.
+
+Since CORE 1.0 an SDTM study is checked with 1.0's rules, which ask more: 4,081
+checks run at every scale, against 4,001 with CDISC's rules, and several of the
+new ones look at every value of a dataset rather than every record. Measured at
+commit `e987c78`:
+
+| k | rows | time | peak | findings |
+|---|---|---|---|---|
+| 1 | 294,677 | 62 s | 636 MB | 72,546 |
+| 10 | 2,945,870 | 393 s | 4,070 MB | 122,170 |
+| 20 | 5,891,640 | 794 s | 8,024 MB | 142,560 |
+
+With CDISC's rules, before CORE 1.0, the same study took 32 s, 226 s and
+451 s (table below). The first build running 1.0's rules took 288 s at k = 1
+(commit `71e04ea`), and 1,061 s at k = 10 with the first fixes below already
+in. What the profile showed there:
+
+- **Four checks worked row by row.** Durations, 1.0's date test, the substring
+  test and the IG domain lookup each ran once per row, though a column repeats
+  few values. Each now runs once per distinct value. Together they were 210 of
+  259 profiled seconds at k = 1.
+- **The RELREC join grew with the square of the study.** For each RELREC row
+  it re-read the whole key column of the dataset being joined, so CORE-000766
+  took 25 s at k = 4 and 2.4 s at k = 1. Keys are now indexed once per column:
+  2.8 s at k = 4.
+- **The one-row-per-value table was rebuilt for every rule.** It is now built
+  once per dataset and handed to each rule as a new table over the same
+  columns, which copies nothing; only the current dataset's is kept. At k = 10
+  that took 599 s to 438 s and the peak from 4.4 GB to 4.1 GB. Keeping a copy
+  per rule had been tried before and turned down, because the copies raised
+  the peak by 1.5 GB.
+
+### With CDISC's rules, before CORE 1.0
+
+All 4,001 checks run at every scale.
 
 | k | rows | before | after | findings |
 |---|---|---|---|---|

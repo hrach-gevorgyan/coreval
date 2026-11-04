@@ -1,20 +1,66 @@
 # Coverage: which rules pass, and why the rest do not
 
-coreval bundles 1,054 CDISC rules and runs each against the example data CDISC
-publishes with it. This file explains the ones that do not come back clean.
+coreval bundles two rule sets and runs each against the example data published
+with it: CORE 1.0's SDTMIG and FDA Business Rules from Verisian's
+core-contributor, which check an SDTM study, and CDISC's cdisc-open-rules,
+which check SEND, TIG and USDM. This file explains the rules that do not come
+back clean.
 
-`tests/conformance/run_conformance.R` gives the live answer, rule by rule, and
-takes about three minutes on eight cores. Counts in prose go stale; that run
-does not.
+`tests/conformance/run_conformance.R` gives the live answer, rule by rule, for
+either set. Counts in prose go stale; that run does not.
 
-At the last full sweep: **958 pass, 56 disagree, 40 cannot be measured.**
+```bash
+Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor
+Rscript tests/conformance/run_conformance.R data-raw/upstream/cdisc-open-rules
+```
+
+At the last full sweep:
+
+| rule set | pass | disagree | cannot be measured |
+|---|---|---|---|
+| CORE 1.0 (`scoreboard_core1.csv`) | 589 | 5 | 27 |
+| CDISC's (`scoreboard.csv`) | 958 | 56 | 40 |
 
 A rule counts as passing only if a case that expects findings was graded. A rule
 whose clean cases pass while the case built to catch something could not be run
 is reported as not measurable, with the reason: a green rule has to have been
 shown to find what it is for.
 
-## USDM
+## CORE 1.0
+
+1.0's cases are Excel workbooks; `tests/conformance/v1_case.R` reads them into
+the shape the harness grades, and `tests/conformance/check_v1_reader.R` proves
+the reader against every cell the engine reports.
+
+**The 27 that cannot be measured** all need data coreval does not have, and are
+skipped with that reason rather than answered:
+
+| why | rules |
+|---|---|
+| An external dictionary: MedDRA, WHODrug, UNII, MED-RT, SNOMED CT or LOINC | 26 |
+| Controlled terminology synonyms, which the bundled terminology does not carry (CORE-002117) | 1 |
+
+Dictionaries are licensed separately and supplied by the user to 1.0's engine
+too; its rules report "not applicable" without one.
+
+**The 5 that disagree:**
+
+- **CORE-000539, CORE-000929, CORE-001081.** The same finding on a different
+  record number. 1.0 numbers a record after its own joins and sorting, and
+  the sheets carry that number; coreval reports the record's row in the file.
+  CORE-001081 also needs the Model's variables for a sponsor-defined domain.
+- **CORE-000550.** Needs the SDTM Model for each IG version; only the newest
+  is bundled, so one of three expected records is missed. On the pilot study
+  1.0's engine crashes on this rule (docs/REAL-STUDY.md).
+- **CORE-001080.** The sheet expects nothing; coreval reports TS record 16,
+  whose `TSVALCD` `C49563` is not a term code of the package its `TSVCDREF`
+  cites. By the rule's text it is a violation, and CDISC's engine reported the
+  same record for CDISC's version of this rule (below). 1.0's engine has not
+  been run on this case, so it is not settled.
+
+## CDISC's rule set
+
+### USDM
 
 257 of the bundled rules are USDM, and all but 4 of them pass. They arrived
 together with the reader that makes them runnable, so they have no history of
@@ -35,7 +81,7 @@ CDISC's own service over a document to produce them and
 `tests/conformance/compare_usdm_reader.R` diffs coreval's against those, cell
 by cell.
 
-## The 40 that cannot be measured
+### The 40 that cannot be measured
 
 36 are fixtures with nothing to check against and 4 need a rule type coreval
 does not implement.
@@ -70,7 +116,7 @@ A rule with no published expected output cannot pass or fail. Counting these as
 failures understates the package; hiding them overstates it. They are reported
 as skipped, by name, with the reason, every time you run.
 
-## The 56 that disagree
+### The 56 that disagree
 
 coreval flags different rows than the answer sheet says it should.
 
@@ -82,7 +128,7 @@ coreval flags different rows than the answer sheet says it should.
 | SENDIG draft | 5 | yes, marked draft |
 | SDTMIG draft | 1 | yes, marked draft |
 
-### Two that disagree because they are now graded at all
+#### Two that disagree because they are now graded at all
 
 Both used to count as passing without ever being tested on the case that
 matters.
@@ -102,7 +148,7 @@ case ships an `lb.csv` whose `DOMAIN` column says `EX`, so by the DOMAIN value,
 which is how the reference matches a define entry to a dataset too, the study
 has no LB. The sheet expects nothing. The fixture contradicts its own name.
 
-### What the reference says about the 55 that disagreed before
+#### What the reference says about the 55 that disagreed before
 
 Settled by running CDISC's own engine (0.17.1 at commit `8740d201`) over every
 case of every non-passing rule, not by reading its source and reasoning about
@@ -125,7 +171,7 @@ own `test.py` requires one too. Fourteen of the 55 are in that state. Counting
 those as agreement would be the vacuous-truth version of the silent-failure bug
 this package keeps finding in itself, so they are held separate.
 
-### The 16 published ones trace to stale answer sheets
+#### The 16 published ones trace to stale answer sheets
 
 **coreval matched the engine on all sixteen. The committed `results.csv`
 differed from the engine on every one.**
@@ -154,7 +200,7 @@ CORE-000652 (`SENDIG-GENETOX 1.0`) ships a `.env`, so the standard is never
 declared and the run never starts. CORE-000554's sheet is stale on signature
 anyway. CORE-000652 is the one published rule in the unadjudicated set.
 
-### The 8 nobody can currently settle
+#### The 8 nobody can currently settle
 
 For these the engine cannot run the fixture and the sheet does not contradict
 its own data, so neither side can be shown wrong. They are not claimed as
@@ -168,7 +214,7 @@ stale sheets and not conceded as coreval defects. They are open.
 
 What would settle them is a `.env` in the fixture, which is upstream's to add.
 
-### Why the sheets drift
+#### Why the sheets drift
 
 Three mechanical signatures, each detectable without judgement:
 
@@ -185,7 +231,7 @@ Three mechanical signatures, each detectable without judgement:
 Applied mechanically to the sheets, these three signatures prove 28 of those 55
 stale without any judgement.
 
-## CORE-001080, settled by CDISC's own engine
+### CORE-001080, settled by CDISC's own engine
 
 The case that disagrees is `positive/02`, whose `results.csv` lists nothing.
 coreval reports TS records 3 and 16. Both rows match `CDISC` in `TSVCDREF` and
@@ -228,6 +274,11 @@ written to be acted on:
   dataset the study does not have, so it has nothing to compare with.
 - *"needs controlled terminology, and this study does not say which version it
   follows"* - the study's TS has no `TSVCDVER`; pass `ct_package`.
+- *"needs the MedDRA dictionary, which is not supplied"* - a CORE 1.0 rule
+  checks terms against a licensed dictionary, which coreval does not read.
+- *"an operation groups by EPOCH, which the dataset does not have"* - the rule
+  computes something over a column this dataset lacks, and both engines stop
+  there too rather than compute it over fewer columns.
 - *"unimplemented Operations type: X"* - coreval cannot evaluate that rule at
   all. It will never silently answer one of these.
 
