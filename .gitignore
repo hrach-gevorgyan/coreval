@@ -20,6 +20,8 @@ data-raw/ct_pref_terms.csv
 # would only be a second thing to keep in step.
 data-raw/vendor/
 tests/conformance/scoreboard.csv
+tests/conformance/scoreboard_v1_*.csv
+tests/conformance/.v1_rules.rds
 # docs/ is public except for the maintainer's own files.
 docs/RELEASING.md
 docs/archive/

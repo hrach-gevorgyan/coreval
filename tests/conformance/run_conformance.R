@@ -28,6 +28,16 @@ if (!dir.exists(upstream_dir)) {
   stop("Upstream clone not found at: ", upstream_dir, call. = FALSE)
 }
 
+# A CORE 1.0 rules checkout (verisianHQ/core-contributor) instead of
+# cdisc-open-rules. Its cases are Excel workbooks; v1_case.R converts each into
+# the cdisc-open-rules layout so they are read and graded by the same code as
+# every other case.
+#   Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor
+v1 <- dir.exists(file.path(upstream_dir, "sdtm_rules"))
+if (v1) {
+  source(file.path("tests", "conformance", "v1_case.R"))
+}
+
 source_root <- function(source) {
   switch(source,
     published = file.path(upstream_dir, "Published"),
@@ -162,6 +172,12 @@ reference_ct_results <- local({
   }
 })
 
+# Captured from CDISC's 0.17 engine against cdisc-open-rules cases, keyed by
+# rule and case label. A 1.0 case can share both and is a different case.
+if (v1) {
+  reference_ct_results <- list()
+}
+
 # Does the committed sheet state nothing at all for any dataset?
 sheet_is_silent <- function(results_csv) {
   results <- read_reference_results(results_csv)
@@ -227,6 +243,15 @@ run_case_graded <- function(rule, case_dir) {
   # harness supplies the same package that was used to capture the reference's
   # own answers for them (see reference_ct_results.json), so the rule actually
   # runs and is graded rather than passed over.
+  # A 1.0 case names its terminology in its Library sheet, and the reference
+  # runner hands exactly that list to the engine as the case's codelists.
+  library_ct <- file.path(data_dir, "_library_ct.txt")
+  if (file.exists(library_ct)) {
+    named <- intersect(readLines(library_ct), coreval:::ct_package_names())
+    family <- if (identical(toupper(study$standard$product %||% ""), "SENDIG")) "sendct" else "sdtmct"
+    pick <- c(named[startsWith(named, family)], named)
+    if (length(pick)) study$ct_package <- pick[[1]]
+  }
   if (is.null(study$ct_package)) {
     study$ct_package <- ct_package_from_ts(study) %||% ct_package_from_define(study)
   }
@@ -427,6 +452,21 @@ jsonata_case <- function(rule, case_dir) {
   list(status = "PASS", reason = NA_character_)
 }
 
+# A 1.0 case, converted into a temporary cdisc-open-rules case and graded as
+# one. The temporary directory keeps the case's polarity/number, so anything
+# that labels a case by its path still reads "negative/01".
+v1_case <- function(rule, case_dir) {
+  root <- tempfile("v1case_")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  out <- file.path(root, basename(dirname(case_dir)), basename(case_dir))
+  converted <- tryCatch(v1_convert_case(case_dir, rule, out), error = function(e) e)
+  if (inherits(converted, "error")) {
+    return(list(status = "SKIPPED", expects = TRUE,
+                reason = paste("the 1.0 test case could not be read:", conditionMessage(converted))))
+  }
+  run_case(rule, out)
+}
+
 run_rule <- function(rule) {
   # A JSONata rule's check is one expression string, not a tree of conditions,
   # so the operator and Operations preflight below has nothing to read: walking
@@ -462,7 +502,12 @@ run_rule <- function(rule) {
   # the other silently reported "no test case folders found" for rules whose
   # data was sitting right there.
   folder <- if (!is.null(rule$upstream_folder)) rule$upstream_folder else rule$id
-  rule_dir <- file.path(source_root(rule$source), folder)
+  # core-contributor names every rule folder by its CORE id.
+  rule_dir <- if (v1) {
+    file.path(upstream_dir, "sdtm_rules", rule$id)
+  } else {
+    file.path(source_root(rule$source), folder)
+  }
   # Most rules number their cases (positive/01/, positive/02/, ...), but some
   # FDA Business Rules drafts put data/ and results/ directly under
   # positive/negative with no numbered subfolder at all (a flat layout).
@@ -479,7 +524,7 @@ run_rule <- function(rule) {
     return(list(status = "SKIPPED", reason = "no test case folders found"))
   }
 
-  runner <- if (is_jsonata) jsonata_case else run_case
+  runner <- if (is_jsonata) jsonata_case else if (v1) v1_case else run_case
   results <- lapply(case_dirs, runner, rule = rule)
   fails <- Filter(function(r) r$status == "FAIL", results)
   if (length(fails) > 0) {
@@ -518,6 +563,15 @@ rules <- if (nzchar(rules_override)) {
   readRDS(rules_override)$rules
 } else {
   .coreval_env$data$rules
+}
+
+# In 1.0 mode the scoreboard is one row per 1.0 rule. A 1.0 rule with nothing
+# to grade it against here (not bundled, or its rule file unreadable) gets a
+# row saying so rather than no row: a missing row reads as a rule nobody asked
+# about.
+v1_ids <- if (v1) basename(list.dirs(file.path(upstream_dir, "sdtm_rules"), recursive = FALSE)) else character(0)
+if (v1) {
+  rules <- rules[intersect(names(rules), v1_ids)]
 }
 
 # Optional targeted mode: any rule IDs after the upstream dir restrict the run
@@ -580,6 +634,17 @@ graded <- if (workers > 1) {
   lapply(rules, grade_rule)
 }
 scoreboard <- data.table::rbindlist(graded)
+if (v1 && is.null(target_ids)) {
+  absent <- setdiff(v1_ids, scoreboard$id)
+  if (length(absent)) {
+    scoreboard <- data.table::rbindlist(list(scoreboard, data.table::data.table(
+      id = absent, source = NA_character_, rule_type = NA_character_,
+      executability = NA_character_, sensitivity = NA_character_, status = "SKIPPED",
+      reason = if (nzchar(rules_override)) "the 1.0 rule file could not be read" else
+        "coreval does not bundle this rule"
+    )))
+  }
+}
 
 cat("\n=== Overall ===\n")
 print(table(scoreboard$status))
@@ -609,7 +674,14 @@ if (nrow(fail_rows) > 0) {
   cat("(none)\n")
 }
 
-if (is.null(target_ids) && !nzchar(rules_override)) {
+if (is.null(target_ids) && v1) {
+  out_path <- file.path("tests", "conformance",
+                        if (nzchar(rules_override)) "scoreboard_v1_upstream.csv" else "scoreboard_v1_bundled.csv")
+  data.table::fwrite(scoreboard, out_path)
+  cat("
+Full 1.0 scoreboard written to", out_path, "
+")
+} else if (is.null(target_ids) && !nzchar(rules_override)) {
   out_path <- file.path("tests", "conformance", "scoreboard.csv")
   data.table::fwrite(scoreboard, out_path)
   cat("\nFull scoreboard written to", out_path, "\n")
