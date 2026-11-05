@@ -86,11 +86,13 @@ where the rule came from and how settled it is:
 |---|---|---|
 | `core_contributor` | CORE 1.0's published SDTM and FDA rules | yes |
 | `published` | CDISC's published rules | yes |
-| `sdtmig_draft`, `sendig_draft`, `fda_business_rules_draft` | drafts in CDISC's repository | yes |
+| `sendig_draft` | drafts in CDISC's repository | yes |
+| `sdtmig_draft`, `fda_business_rules_draft` | drafts in CDISC's repository | mostly no, see below |
 | `deprecated_dir` | retired by CDISC | no |
 
 Retired rules, and CDISC's SDTM rules that CORE 1.0 no longer carries, run
-only with `include_deprecated = TRUE`. They are off by default because a
+only with `include_deprecated = TRUE`. That second group takes in every
+SDTMIG draft and some of the FDA drafts, since CORE 1.0 replaced them. They are off by default because a
 retired rule usually has a current replacement, and running both reports the
 same defect twice.
 
@@ -126,16 +128,18 @@ Some details that matter in practice:
   CSV on its own with `check_dataset()`.
 * **The define.xml**: a file called `define.xml` is preferred. Failing that,
   any XML file whose name contains "define" is used, with a warning if there is
-  more than one candidate. The define gives rules the variable metadata,
+  more than one candidate, and a folder holding a single XML file uses that
+  one whatever its name. The define gives rules the variable metadata,
   value-level metadata and controlled terminology version they compare against.
 * **Blank values**: character columns hold `""` for a missing value, as SAS
   transport files do, and numeric columns hold `NA`. Column types are taken
   from the file, never guessed, so an identifier like `"007"` stays text.
 * **Text encoding**: bytes that are not valid UTF-8 are repaired rather than
   allowed to fail a rule silently.
-* An empty folder, a folder that does not exist, or a folder holding nothing
-  coreval can read is refused with an error. It is never reported as a
-  clean study.
+* `check_study()` refuses, with an error, an empty folder, a folder that does
+  not exist, or a folder holding nothing coreval can read. It never reports
+  one as a clean study. `read_study()` refuses a missing folder, and returns
+  an empty study for an empty one.
 
 ### One dataset
 
@@ -162,10 +166,14 @@ evaluates each one. Selection uses, in order:
 3. **Standard and version.** With `standard` (and optionally `version`) set,
    only rules written for that standard and version run. The number set aside
    is kept in the `excluded_by_standard` attribute and shown in the report.
-   With no standard, every standard's rules run, and the report says so.
+   With no standard, the rules for SDTM and for every other standard run, and
+   the report says so. A few rules CDISC wrote for both SDTM and SEND or TIG
+   run only when `standard` names SEND or TIG, since CORE 1.0 replaced their
+   SDTM half.
 4. **Domain and class.** A rule's scope names the domains and observation
    classes it applies to. A domain's class (Events, Findings, ...) is looked up
-   from the bundled SDTMIG metadata for the declared version.
+   from the bundled SDTMIG metadata. For a CORE 1.0 rule, the declared SDTMIG
+   version also decides whether the IG defines the domain at all.
 5. **Use case**, if you pass `use_case` (for example `"INDH"`).
 
 A study folder does not declare its standard, so for a folder of datasets
@@ -179,7 +187,8 @@ Controlled Terminology release the study follows, because terms are added and
 removed between releases. coreval takes it from, in order:
 
 1. `ct_package`, if you pass one (for example `"sdtmct-2026-03-27"`);
-2. the study's `TS` dataset (`TSPARMCD = "TSVCDVER"`);
+2. the study's `TS` dataset: the `TSVCDVER` column, on rows whose `TSVCDREF`
+   is `CDISC` or `CDISC CT`;
 3. the define.xml's `def:Standards` declaration.
 
 If none of those names a release, the terminology rules are skipped with a
@@ -199,9 +208,11 @@ Every dataset in a study is read once, then every applicable rule is run
 against it. `check_study()` and `check_dataset()` go through the same
 evaluation loop, so a rule behaves the same in both. The only difference is
 what counts as missing: checking one dataset, every other dataset is
-*unsupplied*, and rules that need one are skipped; checking a study, a dataset
-that is not there is *absent*, and the rule's own logic decides what that
-means.
+*unsupplied*, and rules that need one are skipped. Checking a study, a rule
+that needs a dataset the study does not have is skipped too, saying the
+dataset is not in the study, except where the rule itself says what an absent
+one means: an optional (left) join, and a CORE 1.0 rule computing a set of
+values from it, which is then empty.
 
 A rule can be about:
 
@@ -225,7 +236,7 @@ ones:
 | *needs DM, which was not supplied* | the rule compares with another dataset, and you checked one on its own | run `check_study()` on the folder |
 | *needs TV, which is not in this study* | the dataset it compares with does not exist in the study | nothing, if the study has no TV |
 | *asks which datasets the whole study contains* | a presence rule, asked of one dataset | run `check_study()` |
-| *needs controlled terminology* | no CT release was found | pass `ct_package`, or add `TSVCDVER` to TS |
+| *needs controlled terminology* | no CT release was found | pass `ct_package`, or fill `TSVCDREF` and `TSVCDVER` in TS |
 | *... needs define.xml ...* | the rule compares data with the define | add the define to the folder and install `xml2` |
 | *needs AESER, which this dataset does not have* | a CDISC rule reads a column the dataset lacks | often nothing: the column may be legitimately absent |
 | *needs the MedDRA dictionary* | dictionary not bundled | check with your licensed tool |
@@ -402,7 +413,8 @@ each release of the engines.
   no way to show they would be right.
 * **Licensed dictionaries** (MedDRA, WHODrug), as above.
 * **Severity.** CDISC's rules do not carry one. The `legacy_ids` column of
-  `list_rules()` gives the Pinnacle 21 and Conformance Rules ids, which is how
+  `list_rules()` gives the CDISC Conformance Rules and FDA Business Rules ids,
+  which is how
   to match a finding to a severity in another tool.
 * **Tracking between runs.** Each check stands alone. The `Status`, `Owner`
   and `Notes` columns of a saved file are for tracking by hand.

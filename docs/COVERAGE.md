@@ -240,8 +240,8 @@ carry a `TSVALCD` that is not a term code in the package they cite: `C00001` and
 `C49563`, neither among the 26,240 term codes of `sdtmct-2025-09-26`. By the
 rule's own text both are violations.
 
-This could not be settled before. Run at the engine commit pinned in
-`UPSTREAM_SHA_ENGINE`, the engine named no rows at all on any of the three
+This could not be settled before. Run at engine commit `8740d201`, pinned
+at the time, the engine named no rows at all on any of the three
 cases: it reported TS with a blank record, which cannot say which rows are
 violations. `TSVCDREF` is empty on 23 of the 51 rows, and the operator reading
 the start of a text value refused a column holding blanks. Engine commit

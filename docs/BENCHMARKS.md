@@ -1,7 +1,7 @@
 # coreval vs CDISC's CORE engine: measured
 
 Everything here was produced by installing `cdisc-org/cdisc-rules-engine` at the
-commit `cdisc-open-rules` pins (`8740d201`, engine version 0.17.1) and running
+commit `cdisc-open-rules` pinned at the time (`8740d201`, engine version 0.17.1) and running
 it against the same data as coreval. Nothing is estimated.
 
 The engine was installed into a throwaway virtualenv. coreval itself still
@@ -117,7 +117,7 @@ to beat on speed.
     python core.py validate -d <study> -dep <study>/.env -s SDTMIG -v 3-4 \
       -of JSON -o <out> -p disabled -l disabled
 
-Run from a source checkout of the engine at commit `8740d201` (the commit
+Run from a source checkout of the engine at commit `8740d201` (the commit then
 `cdisc-open-rules` pins), engine version 0.17.1, in a venv with its 26
 dependencies. No `-ct` and no external dictionaries, which is the
 configuration coreval can match; with CT the engine would find more than
@@ -441,7 +441,7 @@ other - which is the point: the fixtures do not exercise these shapes.
 * **XML schema validation** of Define-XML (`-vx`), which coreval does not do.
 * **Rule currency.** `update-cache` pulls today's rules from the CDISC Library;
   coreval's are pinned at build time.
-* **Parallelism.** It uses every core by default. coreval is single-process.
+* **Parallelism.** It runs 10 worker processes by default. coreval is single-process.
 
 ### Where coreval is ahead
 

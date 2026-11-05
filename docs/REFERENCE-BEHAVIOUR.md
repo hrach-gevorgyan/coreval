@@ -1,7 +1,11 @@
-# How CDISC's engine actually behaves
+# How the reference engines actually behave
 
-coreval is judged against `cdisc-org/cdisc-rules-engine`. Where the two differ
-and no third source settles it, the reference is right by definition.
+coreval is judged against two engines: Verisian's
+`verisianHQ/cdisc-rules-engine` (CORE 1.0) for the SDTM rules, and CDISC's
+`cdisc-org/cdisc-rules-engine` for SEND, TIG and USDM. Most entries below
+concern CDISC's engine; those about CORE 1.0 say so. Where coreval and the
+engine for a rule differ and no third source settles it, the engine is right
+by definition.
 
 **Read the relevant entry before changing anything in that area.** Most of what
 follows looks like a bug in coreval until you know the reference does the same
@@ -113,7 +117,9 @@ an inconvenient result was set aside.
     returns a term's code instead of the codelist's.
 
 19. **Controlled terminology must be supplied, never guessed.** The engine's
-    `-ct` is required and it errors without one. Terminology moves between
+    `-ct` is optional, but without it some terminology operations raise
+    (`codelist_terms`) and one answers with an empty set
+    (`get_codelist_attributes`). Terminology moves between
     releases: `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`.
 
 ## Reference behaviour that is a defect, not a rule
@@ -124,8 +130,8 @@ an inconvenient result was set aside.
     and then be refused. The operation is recomputed. On a 10,000-subject study
     the distinct-`USUBJID` list trips it.
 
-21. **`prefix_equal_to` raises on non-string values.** On CORE-001080's own
-    fixture it raises "The operator can't be used with non-string values",
+21. **`prefix_equal_to` raised on non-string values** at commit `8740d201`,
+    fixed in `0be94c38`. On CORE-001080's own fixture it raised "The operator can't be used with non-string values",
     because `TSVCDREF` is empty on 23 of 51 rows.
 
 22. **Some rules error on their own fixtures.** The engine reports
@@ -140,12 +146,12 @@ the right records only when the data is already sorted by `within` and then
 
 ## Rule sets and denominators
 
-23. **16 rules are Partially Executable by design** and will never match
-    reference output exactly. Exclude them from the pass-rate denominator and
-    say so.
+23. **Partially Executable rules** are marked so by their authors and may not
+    match reference output exactly. Most pass anyway; the harness reports a
+    Fully Executable pass rate beside the full one.
 
 24. **Many rules ship no expected output at all**: no `positive/`/`negative/`
-    directories (CORE-000110/645/765 contain only `rule.yml`), or `data/` with
+    directories (CORE-000765 contains only `rule.yml`), or `data/` with
     no sibling `results/` (CORE-000675, most of `Deprecated/`). These are
     unmeasurable, not failing. Verified as a genuine absence, not a harness
     layout bug.
@@ -213,5 +219,14 @@ None of them is reached by the rules' own examples.
   blank, missing and unmatched together. The two agree where the engine reads
   blanks as missing (CSV and Dataset-JSON, as the rules' examples are) and
   could differ on XPT input. Affects CORE-001034.
+- **TIG use cases need the sub-standard (CDISC's engine).** The engine keys
+  its use-case domain lists by whether a TIG study is SDTM or SEND
+  (constants/use_cases.py, `USE_CASE_DOMAINS[substandard]`); coreval has no
+  way to state the sub-standard and merges the lists, so a TIG dataset gets
+  rules for both. Pass `use_case` to narrow it.
+- **CORE 1.0 and blank join keys.** 1.0 joins `l.key = r.key`, so a blank key
+  can pair with another blank one; coreval never pairs blank keys.
+- **CORE 1.0 numeric comparison of text.** 1.0 casts to a number and fails
+  the whole rule on a value that is not one; coreval answers row by row.
 - **A set of one shown as text.** A computed set holding one value is reported
   as `ARMCD`; CDISC's sheets write `['ARMCD']`. Display only.

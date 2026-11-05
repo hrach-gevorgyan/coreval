@@ -147,7 +147,8 @@ Without `standard`, rules from every standard run and the report reminds you.
 
 Rules about allowed values (is `SEX` one of the permitted terms?) need to know
 which Controlled Terminology release your study uses. coreval reads it from
-`TSVCDVER` in your TS dataset, or from the define.xml. If neither says, tell
+`TSVCDVER` in your TS dataset (on rows whose `TSVCDREF` is `CDISC`), or from
+the define.xml. If neither says, tell
 it:
 
 ```{r ct, eval = FALSE}
@@ -180,7 +181,7 @@ The report ends each problem with a rule id. Look it up:
 ```{r rule}
 rule <- list_rules(id = "CORE-000718")
 rule$issue        # what it checks
-rule$legacy_ids   # the same rule's id in Pinnacle 21 and CDISC's older lists
+rule$legacy_ids   # the same rule's id in CDISC's Conformance Rules or FDA lists
 ```
 
 `print(result, guidance = TRUE)` adds the Implementation Guide sentence behind

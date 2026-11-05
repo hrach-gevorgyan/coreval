@@ -47,8 +47,9 @@ automatically.
 
 ## Two conformance denominators are reported, always
 
-81 rules ship no reference output at all and can neither pass nor fail. Counting
-them as failures understates conformance by ~10 points; hiding them overstates
+Some rules ship no reference output at all and can neither pass nor fail (the
+scoreboards list them, with the reason). Counting them as failures understates
+conformance; hiding them overstates
 it. Report both, and say which is which.
 
 ## The conformance harness is the oracle: but only for what it covers
@@ -112,9 +113,10 @@ Which version to use is not coreval's choice. Terminology moves between
 releases: `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`. Judging a study
 against a version it never declared would invent violations and hide real ones.
 So the version comes from the study's own TS (`TSVCDREF` names the publisher,
-`TSVCDVER` the version), and `ct_package` is the override for setting it by
-hand. With neither, those rules skip and say so. CDISC's engine takes the same
-position: its `-ct` is required and it errors without one.
+`TSVCDVER` the version), failing that from the define.xml's `def:Standards`,
+and `ct_package` is the override for setting it by hand. With none of these,
+those rules skip and say so. CDISC's engine does not guess either: without
+`-ct`, some of its terminology operations raise.
 
 Preferred terms are bundled in a file of their own, read only when a rule asks
 for one, so a study with no such rule pays nothing for them. They are about as

@@ -51,9 +51,9 @@ not match, with the reason. The disagreements fall into a few groups:
 - **Answer sheets that are out of date.** Some of CDISC's sheets were written
   for an older version of the rule or the engine. Where CDISC's engine itself
   disagrees with its sheet, coreval follows the engine.
-- **Defects in the engines.** CDISC's engine errors on the examples shipped
-  with some of its rules (CORE-000929, CORE-001081), and one of its operators
-  fails on blank values (CORE-001080). These are listed in
+- **Defects in the engines.** At commit `8740d201`, CDISC's engine errored on
+  the examples shipped with some of its rules (CORE-000929, CORE-001081), and
+  one of its operators failed on blank values (CORE-001080, fixed since). These are listed in
   [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md).
 
 ### Behaviour that differs on purpose
@@ -90,14 +90,15 @@ lower-case headers.
   rules (26 of CORE 1.0's).
 - **They are the reference.** When coreval and an engine disagree and nothing
   else settles it, the engine is right by definition.
-- **More input formats.** Both also read Excel and Parquet. coreval reads
-  XPT, SAS, Dataset-JSON, CSV and USDM.
-- **Define-XML schema validation**, in CDISC's engine. coreval reads the
+- **Excel input.** CDISC's engine also reads Excel workbooks. Verisian's reads
+  XPT and SAS datasets by default. coreval reads XPT, SAS, Dataset-JSON, CSV
+  and USDM.
+- **Define-XML schema validation**, in both engines. coreval reads the
   define but does not validate it against its schema.
 - **Newest rules.** CDISC's engine can download today's rules from the CDISC
   Library with an API key. coreval's rules are fixed when the package is built.
-- **Several cores.** CDISC's engine runs on every core by default. coreval uses
-  one.
+- **Several processes.** Both engines run 10 worker processes by default.
+  coreval uses one.
 
 ### coreval
 
@@ -148,7 +149,7 @@ The comparisons on this page were made with:
 
 | | |
 |---|---|
-| CDISC's engine | 0.17.1, commit `8740d201` |
+| CDISC's engine | 0.17.1, commit `8740d201` for the speed and rule comparisons |
 | Verisian's engine | 1.0.0, commit `4a734105540a83f1df80d061df5049bd4b6bda4d` |
 | core-contributor rules | `a3b4d0b08e45f44bcd1aafe16687aa76fe9680e3` |
 | coreval | commit `e987c78` for the pilot study |
