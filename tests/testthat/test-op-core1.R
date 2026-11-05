@@ -616,8 +616,10 @@ test_that("every bad value on one record is reported by a one-row-per-value rule
                    RACE = c("WHITE", "PURPLE"), AGE = c(30, 40), AGEU = c("YEARS", "DECADES"))
   skip_if_not("sdtmct-2024-03-29" %in% list_ct_packages())
   r <- check_dataset(dm, standard = "SDTMIG", version = "3.4", ct_package = "sdtmct-2024-03-29")
-  bad <- r$findings$Value[r$findings$rule_id == "CORE-002123" & r$findings$Variable == "variable_value"]
-  expect_setequal(bad, c("X", "PURPLE", "DECADES"))
+  hit <- r$findings[r$findings$rule_id == "CORE-002123" &
+                      !startsWith(r$findings$Variable, "library_"), ]
+  # Reported as the variable each value belongs to.
+  expect_setequal(paste(hit$Variable, hit$Value), c("SEX X", "RACE PURPLE", "AGEU DECADES"))
 })
 
 test_that("a CORE 1.0 join on a key the dataset lacks is refused, not passed (CORE-000270)", {

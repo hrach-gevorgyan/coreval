@@ -58,8 +58,8 @@ AGEU must be populated when AGE is populated.
 
 [wrong value]
 Value must be a valid ISO 8601 datetime or interval.
-  1 record · variable_name, variable_value
-    row 2  STUDY1-002  variable_name = "RFSTDTC", variable_value = "2024-13-01"
+  1 record · RFSTDTC
+    row 2  STUDY1-002  RFSTDTC = "2024-13-01"
     CORE-002121  · also CG0011
 
   ... and 2 more here. See result$findings for all of them.

@@ -387,6 +387,37 @@ add_record_keys <- function(findings, dataset, domain, rule) {
   findings
 }
 
+# CORE 1.0 checks many variables in one go by turning a dataset into a table
+# of one row per value: `variable_name` (the column) and `variable_value` (its
+# value on the record). Reported as they come, a finding read
+# `variable_name = "RFSTDTC", variable_value = "2024-13-01"`, and Variable was
+# "variable_value", so asking for RFSTDTC's problems found none. Each finding
+# is put back in the form every other rule reports: `RFSTDTC = "2024-13-01"`.
+# Only what the user gets changes; the conformance harness grades
+# evaluate_rule(), which keeps 1.0's own shape to compare with 1.0's answers.
+#' Report a per-value finding as the variable it is about
+#' @param findings One rule's findings for one dataset, from
+#'   [assemble_findings()]: one block of rows per finding, one row per Output
+#'   Variable.
+#' @return `findings`, each `variable_value` row renamed to the variable its
+#'   `variable_name` row names, and the `variable_name` row dropped.
+#' @noRd
+fold_value_rows <- function(findings) {
+  vars <- unique(findings$Variable)
+  if (!all(c("variable_name", "variable_value") %in% vars) || nrow(findings) %% length(vars) != 0) {
+    return(findings)
+  }
+  block <- rep(seq_len(nrow(findings) / length(vars)), each = length(vars))
+  name_row <- findings$Variable == "variable_name"
+  named <- findings$Value[name_row][match(block, block[name_row])]
+  value_row <- findings$Variable == "variable_value" & !is.na(named) & nzchar(named) &
+    named != "Not in dataset"
+  findings$Variable[value_row] <- named[value_row]
+  # A variable_name row is dropped only where its value row took the name.
+  drop <- name_row & block %in% block[value_row]
+  findings[!drop]
+}
+
 #' Check a whole study against CDISC Open Rules
 #'
 #' Runs every rule that applies to every dataset in the study, including the
@@ -886,6 +917,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
           findings$Dataset <- "STUDY"
           findings$Record <- NA_integer_
         }
+        findings <- fold_value_rows(findings)
         findings <- add_record_keys(findings, study$datasets[[domain]], domain, rule)
         findings$rule_id <- rule_id
         # The rule's own one-line statement of what is wrong. It is the single
@@ -926,6 +958,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       if (nrow(findings) > 0) {
         findings$Dataset <- "STUDY"
         findings$Record <- NA_integer_
+        findings <- fold_value_rows(findings)
         findings <- add_record_keys(findings, NULL, "STUDY", rule)
         findings$rule_id <- rule_id
         findings$issue <- rule_message(rule)

@@ -20,8 +20,8 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 
   # CORE 1.0's CORE-002121 is SDTM's ISO 8601 rule. It checks every date
-  # variable's value, and reports the date as a variable_name/variable_value
-  # pair.
+  # variable's value through a variable_name/variable_value table, and the
+  # finding is reported as the variable itself.
   bad_date <- result$findings[result$findings$Value == "2024-02-30" &
                                 result$findings$rule_id == "CORE-002121", ]
   expect_equal(bad_date$rule_id, "CORE-002121")
@@ -33,7 +33,31 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   # Found by subject and sequence number, as a programmer looks a record up.
   expect_equal(bad_date$USUBJID, "01")
   expect_equal(bad_date$SEQ, 2)
-  expect_equal(bad_date$Variable, "variable_value")
+  expect_equal(bad_date$Variable, "AESTDTC")
+  expect_false(any(result$findings$Variable %in% c("variable_name", "variable_value")))
+  # So asking for the variable finds it.
+  expect_true("CORE-002121" %in% filter_findings(result, variable = "AESTDTC")$findings$rule_id)
+})
+
+test_that("a per-value finding is reported as the variable it is about", {
+  f <- data.table::data.table(
+    Dataset = "AE", Record = c(1L, 1L, 1L, 1L, 2L, 2L),
+    Variable = rep(c("variable_name", "variable_value"), 3),
+    Value = c("AESTDTC", "2024-02-30", "AEENDTC", "", "AESTDTC", "x")
+  )
+  out <- fold_value_rows(data.table::copy(f))
+  expect_equal(out$Variable, c("AESTDTC", "AEENDTC", "AESTDTC"))
+  expect_equal(out$Value, c("2024-02-30", "", "x"))
+  expect_equal(out$Record, c(1L, 1L, 2L))
+  # Anything else on the finding stays with it.
+  g <- data.table::data.table(Dataset = "DM", Record = 3L,
+                              Variable = c("USUBJID", "variable_name", "variable_value"),
+                              Value = c("07", "RFSTDTC", "2024-13-01"))
+  expect_equal(fold_value_rows(g)$Variable, c("USUBJID", "RFSTDTC"))
+  # A rule with no value column is left alone.
+  h <- data.table::data.table(Dataset = "DM", Record = NA, Variable = "variable_name",
+                              Value = "TOOLONGNAME")
+  expect_identical(fold_value_rows(h), h)
 })
 
 test_that("USUBJID and SEQ come from the record a finding names, and stay blank otherwise", {

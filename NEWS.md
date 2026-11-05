@@ -7,6 +7,12 @@
   has no such variable, for a finding about the dataset as a whole, and for a
   rule about variable or dataset metadata, whose rows are not records.
 
+* **A CORE 1.0 finding names its variable.** Rules that check many variables
+  at once reported `variable_name = "RFSTDTC", variable_value = "2024-13-01"`,
+  with `Variable` set to `variable_value`, so a filter on the `Variable`
+  column in Excel or R missed them. They now read
+  `RFSTDTC = "2024-13-01"`, like every other rule.
+
 * **`standard` is required.** `check_study()` and `check_dataset()` stop
   without it, as CDISC's and Verisian's engines do. Left out, every
   standard's rules ran: on CDISC's pilot SDTM study, 45 SEND and TIG rules
