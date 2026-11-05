@@ -194,7 +194,7 @@ test_that("Domain Presence Check matches CDISC's reference results.csv (CORE-000
 test_that("check_study runs end-to-end on a real test case and reports the expected finding", {
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))
-  result <- check_study(study)
+  result <- check_study(study, standard = "SDTMIG")
 
   expect_true(all(c("findings", "skipped") %in% names(result)))
   ie_findings <- result$findings[result$findings$rule_id == "CORE-000001", ]
@@ -236,7 +236,7 @@ test_that("check_study reports a Domain Presence Check once, under the STUDY sen
   dir <- test_path("fixtures", "core_rules", "CORE-000183", "negative", "01")
   skip_if_not(dir.exists(file.path(dir, "data")))
   study <- read_study(file.path(dir, "data"))
-  res <- check_study(study)
+  res <- check_study(study, standard = "SDTMIG")
 
   dpc_ids <- unique(res$findings$rule_id[res$findings$Dataset == "STUDY"])
   expect_true(length(dpc_ids) > 0)
@@ -255,13 +255,13 @@ test_that("progress reporting is off by default in scripts and never changes the
     RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
     AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
   )
-  silent <- capture.output(quiet <- check_dataset(dm), type = "output")
+  silent <- capture.output(quiet <- check_dataset(dm, standard = "SDTMIG"), type = "output")
   expect_length(silent, 0)
 
   withr_opt <- getOption("coreval.progress")
   options(coreval.progress = TRUE)
   on.exit(options(coreval.progress = withr_opt), add = TRUE)
-  noisy_out <- capture.output(noisy <- check_dataset(dm), type = "output")
+  noisy_out <- capture.output(noisy <- check_dataset(dm, standard = "SDTMIG"), type = "output")
   expect_true(length(noisy_out) > 0)
 
   expect_identical(quiet$findings, noisy$findings)
@@ -274,15 +274,15 @@ test_that("check_study() refuses anything that is not a study, instead of report
   # and the result printed "Nothing to fix in the 0 checks that ran." A data
   # frame passed by mistake, or a NULL from an earlier failed step, was
   # reported as clean data.
-  expect_error(check_study(NULL), "must be a folder path")
-  expect_error(check_study(list(a = 1)), "must be a folder path")
-  expect_error(check_study(data.frame(a = 1)), "check_dataset")
-  expect_error(check_study(c("a", "b")), "one folder path")
+  expect_error(check_study(NULL, standard = "SDTMIG"), "must be a folder path")
+  expect_error(check_study(list(a = 1), standard = "SDTMIG"), "must be a folder path")
+  expect_error(check_study(data.frame(a = 1), standard = "SDTMIG"), "check_dataset")
+  expect_error(check_study(c("a", "b"), standard = "SDTMIG"), "one folder path")
 
   empty <- tempfile("coreval_empty_")
   dir.create(empty)
   on.exit(unlink(empty, recursive = TRUE), add = TRUE)
-  expect_error(check_study(empty), "no datasets found")
+  expect_error(check_study(empty, standard = "SDTMIG"), "no datasets found")
 })
 
 test_that("read_study() errors on a missing folder rather than returning an empty study", {
@@ -308,11 +308,10 @@ test_that("check_study() takes the standard/version its own report tells you to 
     file.path(dir, "dm.xpt")
   )
 
-  everything <- check_study(dir)
   narrowed <- check_study(dir, standard = "SDTMIG")
   versioned <- check_study(dir, standard = "SDTMIG", version = "3.4")
 
-  expect_lt(attr(narrowed, "checks_run"), attr(everything, "checks_run"))
+  expect_gt(attr(narrowed, "excluded_by_standard"), 0)
   expect_lte(attr(versioned, "checks_run"), attr(narrowed, "checks_run"))
 
   expect_error(check_study(dir, standard = "NOPE"), "no bundled rule targets")

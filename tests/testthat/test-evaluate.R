@@ -307,28 +307,35 @@ test_that("check_study() and evaluate_rule() take the same evaluation path", {
     ),
     file.path(dir, "dm.xpt")
   )
-  study <- read_study(dir)
-  result <- check_study(dir)
+  # Once per rule set: SDTMIG runs CORE 1.0's rules, SENDIG CDISC's.
+  for (standard in c("SDTMIG", "SENDIG")) {
+    study <- read_study(dir)
+    study$standard <- list(product = standard, version = NA_character_)
+    result <- check_study(dir, standard = standard)
 
-  # For every rule check_study() RAN, evaluate_rule() must flag exactly the
-  # same records - including the rules check_study() found nothing for. The
-  # silent kind of drift is a rule that quietly finds nothing on one path, and
-  # comparing only the rules that reported something could never see it.
-  reported <- unique(result$findings$rule_id)
-  expect_gt(length(reported), 0)
-  ran <- setdiff(rules_for_domain("DM", dataset = study$datasets$DM)$id,
-                 result$skipped$rule_id)
-  for (id in ran) {
-    # The rule check_study() runs for this study, not CDISC's original of it.
-    rule <- .coreval_env$data$rules[[id]]
-    if (is.null(rule) || isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
-        rule$rule_type %in% c("JSONata", "JSON Schema Check")) next
-    direct <- tryCatch(which(evaluate_rule(rule, study, "DM")), error = function(e) NULL)
-    if (is.null(direct)) next
-    via_check <- sort(unique(result$findings$Record[result$findings$rule_id == id]))
-    via_check <- via_check[!is.na(via_check)]
-    if (length(via_check) == 0 && id %in% reported) next  # dataset-level finding
-    expect_equal(sort(direct), as.integer(via_check), info = id)
+    # For every rule check_study() RAN, evaluate_rule() must flag exactly the
+    # same records - including the rules check_study() found nothing for. The
+    # silent kind of drift is a rule that quietly finds nothing on one path,
+    # and comparing only the rules that reported something could never see it.
+    reported <- unique(result$findings$rule_id)
+    expect_gt(length(reported), 0)
+    with_rule_family(rule_family(standard), {
+      ran <- setdiff(rules_for_domain("DM", dataset = study$datasets$DM,
+                                      standard = standard)$id,
+                     result$skipped$rule_id)
+      for (id in ran) {
+        # The rule check_study() runs for this study, from its own rule set.
+        rule <- .coreval_env$data$rules[[id]]
+        if (is.null(rule) || isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
+            rule$rule_type %in% c("JSONata", "JSON Schema Check")) next
+        direct <- tryCatch(which(evaluate_rule(rule, study, "DM")), error = function(e) NULL)
+        if (is.null(direct)) next
+        via_check <- sort(unique(result$findings$Record[result$findings$rule_id == id]))
+        via_check <- via_check[!is.na(via_check)]
+        if (length(via_check) == 0 && id %in% reported) next  # dataset-level finding
+        expect_equal(sort(direct), as.integer(via_check), info = paste(standard, id))
+      }
+    })
   }
 })
 

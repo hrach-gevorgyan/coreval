@@ -496,7 +496,7 @@ test_that("date-time columns reach the date rules as ISO 8601 text", {
   built <- build_dataset_from_data_frame(ae)
   expect_equal(built$data$AESTDTC, "2024-01-10T10:00:00")
   expect_equal(built$data$AEDTC, "2024-01-04")
-  expect_true("CORE-000718" %in% check_dataset(ae)$findings$rule_id)
+  expect_true("CORE-000718" %in% check_dataset(ae, standard = "SDTMIG")$findings$rule_id)
 })
 
 test_that("value labels are neither taken as the variable label nor fatal", {
@@ -590,7 +590,7 @@ test_that("an empty dataset keeps its text columns as text (CORE-001082)", {
   haven::write_xpt(ae0, file.path(dir, "ae.xpt"))
   expect_equal(read_study(dir)$datasets$AE$meta$type, c("Char", "Char", "Char", "Num", "Char"))
   expect_true(is.character(read_study(dir)$datasets$AE$data$AETERM))
-  result <- check_dataset(ae0, domain = "AE")
+  result <- check_dataset(ae0, domain = "AE", standard = "SDTMIG")
   expect_false("CORE-001082" %in% result$findings$rule_id)
 })
 

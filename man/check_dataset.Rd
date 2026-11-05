@@ -25,13 +25,10 @@ takes it from your \code{DOMAIN} column, or the file name if there isn't one.
 For one file of a split dataset with no \code{DOMAIN} column, such as
 \code{ae1.xpt}, set it yourself.}
 
-\item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
-\code{"SENDIG"}. Rules are scoped to it, which is usually what you want - a
-SENDIG rule has nothing to say about an SDTM study.
-
-It is not free, though: coverage differs between standards, and a rule
-written only for another one is not run. The report says how many rules
-were set aside; leave \code{standard} unset to see everything.}
+\item{standard}{Required. The standard the data follows, e.g. \code{"SDTMIG"},
+\code{"SENDIG"} or \code{"TIG"}. Only that standard's rules run: a SENDIG rule has
+nothing to say about an SDTM study. The report says how many rules were
+set aside.}
 
 \item{version}{The standard's version, e.g. \code{"3-4"}.}
 
@@ -107,7 +104,7 @@ ae <- data.frame(
   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
   AESTDTC = c("2024-01-10", "2024-02-30") # 30 February is not a date
 )
-result <- check_dataset(ae)
+result <- check_dataset(ae, standard = "SDTMIG")
 result$findings[result$findings$Value == "2024-02-30", ]
 
 # Always look at what could not run:

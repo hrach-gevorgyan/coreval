@@ -134,9 +134,9 @@ test_that("a USDM document is checked only when asked for", {
   writeLines(tiny_usdm(), file.path(dir, "study.json"))
 
   expect_error(read_study(dir), "usdm = TRUE", fixed = TRUE)
-  expect_error(check_study(dir), "study.json is a USDM study design document")
+  expect_error(check_study(dir, standard = "SDTMIG"), "study.json is a USDM study design document")
   expect_error(read_study(dir, usdm = "yes"), "`usdm` must be TRUE or FALSE")
-  expect_error(check_study(dir, usdm = NA), "`usdm` must be TRUE or FALSE")
+  expect_error(check_study(dir, usdm = NA, standard = "SDTMIG"), "`usdm` must be TRUE or FALSE")
 
   study <- read_study(dir, usdm = TRUE)
   expect_false(is.null(study$document))

@@ -156,7 +156,7 @@ test_that("the report shows the legacy ids, and guidance only when asked", {
     RFSTDTC = c("2024-01-05", "2024-13-01"), AGE = c(34, 61),
     AGEU = c("YEARS", ""), SEX = c("M", "F"), stringsAsFactors = FALSE
   )
-  result <- check_dataset(dm)
+  result <- check_dataset(dm, standard = "SDTMIG")
 
   plain <- paste(capture.output(print(result)), collapse = "\n")
   expect_match(plain, "also CG0665")
@@ -178,7 +178,7 @@ test_that("an exported file carries its own provenance", {
     LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
     stringsAsFactors = FALSE
   )
-  capped <- check_dataset(big, max_records = 10)
+  capped <- check_dataset(big, max_records = 10, standard = "SDTMIG")
   dir <- tempfile("coreval_prov_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -214,7 +214,7 @@ test_that("summary does not present a capped count as the true one", {
     LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
     stringsAsFactors = FALSE
   )
-  capped <- check_dataset(big, max_records = 10)
+  capped <- check_dataset(big, max_records = 10, standard = "SDTMIG")
   out <- capture.output(s <- summary(capped))
   joined <- paste(out, collapse = "\n")
 
@@ -225,7 +225,7 @@ test_that("summary does not present a capped count as the true one", {
   expect_match(joined, as.character(max(capped$truncated$records_found)))
 
   # And an uncapped result says none of that.
-  small <- check_dataset(big, max_records = Inf)
+  small <- check_dataset(big, max_records = Inf, standard = "SDTMIG")
   plain <- paste(capture.output(summary(small)), collapse = "\n")
   expect_false(grepl("or more", plain))
 })
@@ -236,7 +236,7 @@ test_that("filtering everything away does not claim the data is clean", {
     AESEQ = c(1, 2), AETERM = c("H", "R"),
     AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
   )
-  result <- check_dataset(ae)
+  result <- check_dataset(ae, standard = "SDTMIG")
   none <- filter_findings(result, rule = "CORE-000001")
   out <- paste(capture.output(print(none)), collapse = "\n")
 
@@ -262,7 +262,7 @@ test_that("print() and summary() refuse an object carrying the class but not the
     STUDYID = "S", DOMAIN = "AE", USUBJID = "1",
     AETERM = "X", AESTDTC = "2024-13-01"
   )
-  real <- check_dataset(ae)
+  real <- check_dataset(ae, standard = "SDTMIG")
   expect_s3_class(real, "coreval_result")
   expect_no_error(capture.output(print(real)))
   expect_equal(nrow(summary(real)), 1L)
@@ -282,7 +282,7 @@ test_that("filtering by a variable finds the finding that reports it missing", {
 test_that("a finding about the whole dataset is not counted as a record", {
   ae <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = c(1, 2),
                    AETERM = "X", AESTDTC = c("2024-13-01", "2024-02-30"))
-  s <- summary(check_dataset(ae))
+  s <- summary(check_dataset(ae, standard = "SDTMIG"))
   expect_lte(s$records, 2L)
 })
 

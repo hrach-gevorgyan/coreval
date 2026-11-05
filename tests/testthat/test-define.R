@@ -479,7 +479,7 @@ test_that("a folder with a define.xml and no datasets is checked against the def
   empty <- tempfile("coreval_empty_")
   dir.create(empty)
   on.exit(unlink(empty, recursive = TRUE), add = TRUE)
-  expect_error(check_study(empty), "no datasets found")
+  expect_error(check_study(empty, standard = "SDTMIG"), "no datasets found")
 })
 
 test_that("find_define_xml takes define.xml itself, says which of several it read, and finds a study-named define", {

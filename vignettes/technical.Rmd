@@ -46,8 +46,8 @@ coreval bundles both:
 Which set runs follows from the standard:
 
 * `standard = "SENDIG"` (or any SEND variant) or `"TIG"` uses CDISC's set.
-* Anything else, including no standard at all, uses the CORE 1.0 set for SDTM
-  and CDISC's set for everything else.
+* `"SDTMIG"` uses the CORE 1.0 set. `"ADaMIG"` and `"USDM"` use CDISC's
+  rules for those standards.
 
 Some rules exist in both repositories under the same id. A study checked as
 SDTM gets the CORE 1.0 version. A study checked as SEND or TIG gets CDISC's
@@ -105,7 +105,8 @@ bundled, not what will run.
 
 ### A study folder
 
-`check_study(path)` and `read_study(path)` read every dataset in the folder:
+`check_study(path, standard = )` and `read_study(path)` read every dataset in
+the folder:
 
 | Format | Extension | Notes |
 |---|---|---|
@@ -146,7 +147,7 @@ Some details that matter in practice:
 
 ### One dataset
 
-`check_dataset(x)` takes a data frame, or one `.xpt`, `.sas7bdat` or `.csv`
+`check_dataset(x, standard = )` takes a data frame, or one `.xpt`, `.sas7bdat` or `.csv`
 file. The domain comes from the `DOMAIN` column; only a dataset with no
 `DOMAIN` column falls back to the file name. Set `domain =` to override
 either.
@@ -169,8 +170,9 @@ evaluates each one. Selection uses, in order:
 3. **Standard and version.** With `standard` (and optionally `version`) set,
    only rules written for that standard and version run. The number set aside
    is kept in the `excluded_by_standard` attribute and shown in the report.
-   With no standard, the rules for SDTM and for every other standard run, and
-   the report says so. A few rules CDISC wrote for both SDTM and SEND or TIG
+   A check without a standard is refused, as CDISC's and Verisian's engines
+   refuse it: running every standard's rules put SEND and TIG problems in an
+   SDTM report. A few rules CDISC wrote for both SDTM and SEND or TIG
    run only when `standard` names SEND or TIG, since CORE 1.0 replaced their
    SDTM half.
 4. **Domain and class.** A rule's scope names the domains and observation
@@ -183,7 +185,7 @@ evaluates each one. Selection uses, in order:
    check a TIG study without it.
 
 A study folder does not declare its standard, so for a folder of datasets
-`standard` is whatever you pass. A CORE test case or a USDM file declares its
+`standard` has to be passed. A CORE test case or a USDM file declares its
 own, and an explicit `standard` overrides it.
 
 ### Controlled terminology
@@ -354,8 +356,8 @@ Some practical points:
   on or off with `options(coreval.progress = TRUE)` or `FALSE`.
 * To check the same study several times, read it once with `read_study()` and
   pass the object to `check_study()`.
-* `standard` and `version` cut the number of rules a lot, and with them the
-  time.
+* `version` cuts the number of rules further than `standard` alone, and with
+  them the time.
 * USDM checks are opt-in (`usdm = TRUE`) because a few of their rules can take
   minutes on one file.
 

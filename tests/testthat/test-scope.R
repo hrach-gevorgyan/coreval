@@ -254,7 +254,7 @@ test_that("a domain present only as split files counts as present", {
                    file.path(dir, "pp.xpt"))
   haven::write_xpt(pc, file.path(dir, "pc1.xpt"))
   haven::write_xpt(pc, file.path(dir, "pc2.xpt"))
-  f <- check_study(dir)$findings
+  f <- check_study(dir, standard = "SDTMIG")$findings
   expect_false("CORE-000183" %in% f$rule_id)
 })
 
@@ -265,7 +265,7 @@ test_that("an SDTM study with no standard declared is not told it lacks ADSL or 
   haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "S-1"), file.path(dir, "dm.xpt"))
   haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "S-1", AESEQ = 1, AETERM = "X"),
                    file.path(dir, "ae.xpt"))
-  f <- check_study(dir)$findings
+  f <- check_study(dir, standard = "SDTMIG")$findings
   expect_false(any(c("CORE-000560", "CORE-000590") %in% f$rule_id))
 })
 
@@ -284,7 +284,7 @@ test_that("an operation over a domain the study lacks is skipped, not answered c
   expect_error(evaluate_rule(fixture_rule("CORE-000039"), study, "SV"), "needs TV")
   # CORE 1.0 reads a distinct over a missing domain as an empty set, so its
   # version reports every visit as one TV does not list.
-  result <- check_study(dir)
+  result <- check_study(dir, standard = "SDTMIG")
   expect_setequal(result$findings$Record[result$findings$rule_id == "CORE-000039"], c(1L, 2L))
 })
 

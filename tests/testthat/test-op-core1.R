@@ -428,7 +428,7 @@ test_that("a Study rule is reported once, under STUDY (CORE-002084)", {
   haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2")), file.path(dir, "dm.xpt"))
   haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1, AETERM = "X"),
                    file.path(dir, "ae.xpt"))
-  found <- check_study(dir)$findings
+  found <- check_study(dir, standard = "SDTMIG")$findings
   f <- found[found$rule_id == "CORE-002084", ]
   expect_equal(unique(f$Dataset), "STUDY")
   expect_true(all(is.na(f$Record)))

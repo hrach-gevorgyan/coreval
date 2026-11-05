@@ -25,5 +25,5 @@ ae <- data.frame(
   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
   AESTDTC = c("2024-01-10", "2024-02-30")
 )
-summary(check_dataset(ae))
+summary(check_dataset(ae, standard = "SDTMIG"))
 }

@@ -374,10 +374,12 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   Passing the path is the usual way; reading first is only worth it when
 #'   you want to check the same large study more than once without re-reading
 #'   it, or to look at what was parsed.
-#' @param standard The standard the data follows, e.g. `"SDTMIG"` or
-#'   `"SENDIG"`. Overrides whatever the study declares about itself. Rules
-#'   are written per standard, so this cuts the list sharply; leave it
-#'   unset to run every standard's rules and see everything.
+#' @param standard Required. The standard the data follows, e.g. `"SDTMIG"`,
+#'   `"SENDIG"` or `"TIG"`; [list_rules()] shows the rest. Rules are written
+#'   per standard, and a study checked against all of them gets SEND and TIG
+#'   problems reported on SDTM data, so coreval will not run without it, as
+#'   CDISC's and Verisian's engines will not. A CORE test case that declares
+#'   its standard in a `.env` file needs no argument.
 #' @param version The standard's version, e.g. `"3.4"`. Needs `standard`
 #'   too, since a bare version is ambiguous across standards.
 #' @param substandard For `standard = "TIG"` only, and required there:
@@ -447,7 +449,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #' dir.create(dir)
 #' haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
 #'
-#' result <- check_study(dir)
+#' result <- check_study(dir, standard = "SDTMIG")
 #' result$findings
 #' unlink(dir, recursive = TRUE)
 #' @export
@@ -480,6 +482,11 @@ check_study <- function(study, standard = NULL, version = NULL,
       )
     }
     folder <- study
+    # Refused before reading, which can take a minute on a large study. A
+    # USDM document declares its standard itself, so that waits for the read.
+    if (!isTRUE(usdm)) {
+      require_standard(standard, read_env_standard(folder)$product)
+    }
     study <- read_study(study, usdm = usdm)
   }
   # Anything that is not a study object went straight through to run_checks(),
@@ -497,6 +504,7 @@ check_study <- function(study, standard = NULL, version = NULL,
       call. = FALSE
     )
   }
+  require_standard(standard, study$standard$product)
   # Applied before the terminology is resolved: the family (sdtmct or
   # sendct) follows the standard, and a SEND study checked with
   # standard = "SENDIG" was judged against SDTM terminology.
@@ -971,7 +979,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
                if (!is.null(declared_version)) paste0(" ", declared_version), ")")
       },
       ", so nothing was checked. ",
-      "Check the standard and version, or leave them unset to see what applies.",
+      "Check the standard and version; list_rules(domain = ) shows the rules that exist.",
       call. = FALSE
     )
   }
@@ -1031,7 +1039,7 @@ no_datasets_message <- function(folder) {
     msg <- paste0(
       msg, " It holds ", length(singles), " .csv file",
       if (length(singles) > 1) "s", ", which are checked one at a time: ",
-      "check_dataset(\"", file.path(folder, singles[[1]]), "\")."
+      "check_dataset(\"", file.path(folder, singles[[1]]), "\", standard = \"SDTMIG\")."
     )
   }
   nested <- list.files(folder, pattern = readable, ignore.case = TRUE,

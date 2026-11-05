@@ -8,7 +8,7 @@ demo_ae <- function() {
 }
 
 test_that("check_dataset finds a violation in a plain in-memory data frame", {
-  result <- check_dataset(demo_ae())
+  result <- check_dataset(demo_ae(), standard = "SDTMIG")
 
   expect_true(all(c("findings", "skipped") %in% names(result)))
   # Same column contract as check_study(), so write_findings() works on either.
@@ -18,18 +18,18 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   )
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 
-  # CORE 1.0's CORE-002121 checks every date variable's value too, so it reports
-  # the same date as a variable_name/variable_value pair.
-  expect_true("CORE-002121" %in% result$findings$rule_id[result$findings$Value == "2024-02-30"])
+  # CORE 1.0's CORE-002121 is SDTM's ISO 8601 rule. It checks every date
+  # variable's value, and reports the date as a variable_name/variable_value
+  # pair.
   bad_date <- result$findings[result$findings$Value == "2024-02-30" &
-                                result$findings$rule_id == "CORE-000547", ]
-  expect_equal(bad_date$rule_id, "CORE-000547") # the ISO 8601 rule
-  # `issue` is the whole point: a row saying only "CORE-000547" cannot be
+                                result$findings$rule_id == "CORE-002121", ]
+  expect_equal(bad_date$rule_id, "CORE-002121")
+  # `issue` is the whole point: a row saying only "CORE-002121" cannot be
   # acted on without looking the rule up somewhere else.
   expect_match(bad_date$issue, "ISO 8601")
   expect_equal(bad_date$Dataset, "AE")
   expect_equal(bad_date$Record, 2L)
-  expect_equal(bad_date$Variable, "AESTDTC")
+  expect_equal(bad_date$Variable, "variable_value")
 })
 
 test_that("a rule needing another domain is skipped with that domain named, never evaluated", {
@@ -37,7 +37,7 @@ test_that("a rule needing another domain is skipped with that domain named, neve
   # returns the dataset unchanged when a referenced domain is absent, so a
   # cross-domain rule left to run would compare against columns that do not
   # exist and could report a confident finding built out of nothing.
-  result <- check_dataset(demo_ae())
+  result <- check_dataset(demo_ae(), standard = "SDTMIG")
 
   cross <- result$skipped[grepl("was not supplied", result$skipped$reason), ]
   expect_true(nrow(cross) > 0)
@@ -57,7 +57,7 @@ test_that("check_study is unaffected: a whole study still runs its cross-domain 
   # forgiving behaviour.
   dir <- test_path("fixtures", "core_rules", "CORE-000001", "negative", "01")
   study <- read_study(file.path(dir, "data"))
-  result <- check_study(study)
+  result <- check_study(study, standard = "SDTMIG")
   expect_false(any(grepl("was not supplied", result$skipped$reason)))
 })
 
@@ -70,7 +70,7 @@ test_that("the domain comes from the DOMAIN column, not the file name", {
   path <- file.path(dir, "ae1.xpt")
   haven::write_xpt(demo_ae(), path)
 
-  result <- check_dataset(path)
+  result <- check_dataset(path, standard = "SDTMIG")
   # "STUDY" is the sentinel a Domain Presence Check reports under, so the
   # assertion is that no OTHER domain appears - not that AE is the only value.
   expect_setequal(setdiff(unique(result$findings$Dataset), "STUDY"), "AE")
@@ -83,14 +83,14 @@ test_that("the domain falls back to the file name when there is no DOMAIN column
   path <- file.path(dir, "dm.xpt")
   haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), path)
 
-  result <- check_dataset(path)
+  result <- check_dataset(path, standard = "SDTMIG")
   expect_true(nrow(result$skipped) > 0)
   expect_equal(unique(result$skipped$domain), "DM")
 })
 
 test_that("an explicit domain= overrides both", {
   df <- data.frame(USUBJID = c("1", "2"), stringsAsFactors = FALSE)
-  result <- check_dataset(df, domain = "vs")
+  result <- check_dataset(df, domain = "vs", standard = "SDTMIG")
   expect_equal(unique(result$skipped$domain), "VS") # normalised to upper case
 })
 
@@ -98,13 +98,13 @@ test_that("check_dataset refuses input it cannot make sense of, with a usable me
   # More than one DOMAIN value: silently checking only the first would report
   # findings for rows the user did not think they were checking.
   mixed <- data.frame(DOMAIN = c("AE", "CM"), USUBJID = c("1", "2"), stringsAsFactors = FALSE)
-  expect_error(check_dataset(mixed), "more than one value")
+  expect_error(check_dataset(mixed, standard = "SDTMIG"), "more than one value")
 
   # No DOMAIN column and no file name to fall back on.
-  expect_error(check_dataset(data.frame(USUBJID = "1")), "pass domain=")
+  expect_error(check_dataset(data.frame(USUBJID = "1"), standard = "SDTMIG"), "pass domain=")
 
-  expect_error(check_dataset(123), "data frame")
-  expect_error(check_dataset("no-such-file.xpt"), "file not found")
+  expect_error(check_dataset(123, standard = "SDTMIG"), "data frame")
+  expect_error(check_dataset("no-such-file.xpt", standard = "SDTMIG"), "file not found")
 
   dir <- tempfile("coreval_folder_")
   dir.create(dir)
@@ -112,11 +112,11 @@ test_that("check_dataset refuses input it cannot make sense of, with a usable me
   # Points at check_study(), which takes the folder directly. It used to say
   # "read_study() then check_study()", which was advice from before that
   # simplification.
-  expect_error(check_dataset(dir), "use check_study()", fixed = TRUE)
+  expect_error(check_dataset(dir, standard = "SDTMIG"), "use check_study()", fixed = TRUE)
 
   bad <- file.path(dir, "data.parquet")
   writeLines("x", bad)
-  expect_error(check_dataset(bad), "\\.xpt")
+  expect_error(check_dataset(bad, standard = "SDTMIG"), "\\.xpt")
 })
 
 test_that("rule_external_domains expands templates, reads Child parents, and drops self", {
@@ -160,7 +160,7 @@ test_that("a CORE 1.0 distinct over an unsupplied domain is needed, not empty (C
 
   ae <- data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "02"),
                    AESEQ = c(1, 1), AETERM = c("Headache", "Rash"))
-  result <- check_dataset(ae)
+  result <- check_dataset(ae, standard = "SDTMIG")
   expect_false("CORE-000172" %in% result$findings$rule_id)
   expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-000172"],
                "needs DM, which was not supplied")
@@ -173,15 +173,15 @@ test_that("check_dataset reads a csv, and a data.table, as well as a data frame"
   path <- file.path(dir, "ae.csv")
   utils::write.csv(demo_ae(), path, row.names = FALSE)
 
-  from_csv <- check_dataset(path)
+  from_csv <- check_dataset(path, standard = "SDTMIG")
   expect_true("2024-02-30" %in% from_csv$findings$Value)
 
-  from_dt <- check_dataset(data.table::as.data.table(demo_ae()))
+  from_dt <- check_dataset(data.table::as.data.table(demo_ae()), standard = "SDTMIG")
   expect_true("2024-02-30" %in% from_dt$findings$Value)
 })
 
 test_that("write_findings works on a check_dataset() result unchanged", {
-  result <- check_dataset(demo_ae())
+  result <- check_dataset(demo_ae(), standard = "SDTMIG")
   dir <- tempfile("coreval_out_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -202,7 +202,7 @@ test_that("factor columns are checked, not crashed on", {
     AESTDTC = c("2024-01-10", "2024-02-30"),
     stringsAsFactors = TRUE
   )
-  result <- expect_no_error(check_dataset(as_factors))
+  result <- expect_no_error(check_dataset(as_factors, standard = "SDTMIG"))
   expect_true("2024-02-30" %in% result$findings$Value)
 
   # And it must agree with the same data as character.
@@ -212,7 +212,7 @@ test_that("factor columns are checked, not crashed on", {
   })
   expect_setequal(
     unique(result$findings$rule_id),
-    unique(check_dataset(as_chars)$findings$rule_id)
+    unique(check_dataset(as_chars, standard = "SDTMIG")$findings$rule_id)
   )
 })
 
@@ -229,8 +229,8 @@ test_that("a trailing blank in DOMAIN does not silently change the answer", {
   clean <- padded
   clean$DOMAIN <- "AE"
 
-  a <- check_dataset(padded)
-  b <- check_dataset(clean)
+  a <- check_dataset(padded, standard = "SDTMIG")
+  b <- check_dataset(clean, standard = "SDTMIG")
 
   # Same domain, so the same rules are in scope.
   expect_equal(unique(a$findings$Dataset), unique(b$findings$Dataset))
@@ -258,17 +258,17 @@ test_that("an empty or row-less dataset says which situation it is", {
   no_rows <- data.frame(
     STUDYID = character(0), DOMAIN = character(0), USUBJID = character(0)
   )
-  expect_error(check_dataset(no_rows), "no rows")
+  expect_error(check_dataset(no_rows, standard = "SDTMIG"), "no rows")
 
   all_blank <- data.frame(DOMAIN = c("", ""), USUBJID = c("1", "2"), stringsAsFactors = FALSE)
-  expect_error(check_dataset(all_blank), "blank")
+  expect_error(check_dataset(all_blank, standard = "SDTMIG"), "blank")
 
   # Both should still name the way out.
-  expect_error(check_dataset(no_rows), "domain=")
-  expect_error(check_dataset(all_blank), "domain=")
+  expect_error(check_dataset(no_rows, standard = "SDTMIG"), "domain=")
+  expect_error(check_dataset(all_blank, standard = "SDTMIG"), "domain=")
 
   # And an explicit domain makes a row-less dataset checkable.
-  expect_no_error(check_dataset(no_rows, domain = "DM"))
+  expect_no_error(check_dataset(no_rows, domain = "DM", standard = "SDTMIG"))
 })
 
 test_that("declaring a standard scopes the rules to it", {
@@ -282,12 +282,10 @@ test_that("declaring a standard scopes the rules to it", {
   )
   sdtm <- check_dataset(dm, standard = "SDTMIG")
   send <- check_dataset(dm, standard = "SENDIG")
-  open <- check_dataset(dm)
 
-  # Declaring one runs strictly fewer rules than declaring none.
-  n <- function(r) attr(r, "checks_run") + nrow(r$skipped)
-  expect_lt(n(sdtm), n(open))
-  expect_lt(n(send), n(open))
+  # Each sets aside the rules written for other standards.
+  expect_gt(attr(sdtm, "excluded_by_standard"), 0)
+  expect_gt(attr(send, "excluded_by_standard"), 0)
 
   # The same defect is written up once per standard. Declaring the standard
   # picks the right one instead of reporting both.
@@ -316,25 +314,10 @@ test_that("deprecated rules are dropped by default and can be asked for", {
   expect_false("CORE-000742" %in% rules_for_domain("TS")$id)
   expect_true("CORE-000742" %in% rules_for_domain("TS", include_deprecated = TRUE)$id)
   ran <- function(...) {
-    r <- check_dataset(ts, ...)
+    r <- check_dataset(ts, ..., standard = "SDTMIG")
     unique(c(r$findings$rule_id, r$skipped$rule_id))
   }
   expect_false("CORE-000742" %in% ran())
-})
-
-test_that("the report says when no standard was declared", {
-  # Silently measuring an SDTM study against SENDIG rules is how one defect
-  # came to be reported twice; the reader has to know that happened.
-  dm <- data.frame(
-    STUDYID = "S1", DOMAIN = "DM", USUBJID = "01",
-    AGE = 34, AGEU = "", SEX = "M", stringsAsFactors = FALSE
-  )
-  open <- paste(capture.output(print(check_dataset(dm))), collapse = "\n")
-  expect_match(open, "No standard declared")
-  expect_match(open, "SDTMIG")
-
-  named <- paste(capture.output(print(check_dataset(dm, standard = "SDTMIG"))), collapse = "\n")
-  expect_false(grepl("No standard declared", named))
 })
 
 test_that("declaring an IG version narrows further than the standard alone", {
@@ -398,15 +381,15 @@ test_that("check_study takes a folder path, so read_study is optional", {
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   haven::write_xpt(demo_ae(), file.path(dir, "ae.xpt"))
 
-  from_path <- check_study(dir)
-  from_object <- check_study(read_study(dir))
+  from_path <- check_study(dir, standard = "SDTMIG")
+  from_object <- check_study(read_study(dir), standard = "SDTMIG")
   expect_identical(from_path$findings, from_object$findings)
   expect_identical(from_path$skipped, from_object$skipped)
 
   # A file is not a folder, and the message should point at the right function.
-  expect_error(check_study(file.path(dir, "ae.xpt")), "check_dataset")
-  expect_error(check_study("no-such-folder"), "no such folder")
-  expect_error(check_study(c("a", "b")), "one folder path")
+  expect_error(check_study(file.path(dir, "ae.xpt"), standard = "SDTMIG"), "check_dataset")
+  expect_error(check_study("no-such-folder", standard = "SDTMIG"), "no such folder")
+  expect_error(check_study(c("a", "b"), standard = "SDTMIG"), "one folder path")
 })
 
 test_that("a single CSV is read with the same protections as a folder of them", {
@@ -471,14 +454,14 @@ test_that("a one-column CSV with spaces in its values is read whole", {
 
 test_that("domain= that contradicts the DOMAIN column is refused", {
   dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("1", "2"))
-  expect_error(check_dataset(dm, domain = "AE"), "DOMAIN column says DM")
+  expect_error(check_dataset(dm, domain = "AE", standard = "SDTMIG"), "DOMAIN column says DM")
   lb <- data.frame(STUDYID = "S1", DOMAIN = "LB", USUBJID = "1", LBSEQ = 1)
-  expect_s3_class(check_dataset(lb, domain = "LB1"), "coreval_result")
+  expect_s3_class(check_dataset(lb, domain = "LB1", standard = "SDTMIG"), "coreval_result")
 })
 
 test_that("a rule about the whole study is skipped on one dataset (CORE-002084, CORE-002056)", {
   dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"))
-  result <- check_dataset(dm)
+  result <- check_dataset(dm, standard = "SDTMIG")
   expect_false(any(c("CORE-002084", "CORE-002056") %in% result$findings$rule_id))
   expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-002084"][1],
                "whole study")

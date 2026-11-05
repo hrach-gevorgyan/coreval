@@ -358,13 +358,10 @@ infer_domain <- function(dataset, path = NULL) {
 #'   takes it from your `DOMAIN` column, or the file name if there isn't one.
 #'   For one file of a split dataset with no `DOMAIN` column, such as
 #'   `ae1.xpt`, set it yourself.
-#' @param standard The standard the data follows, e.g. `"SDTMIG"` or
-#'   `"SENDIG"`. Rules are scoped to it, which is usually what you want - a
-#'   SENDIG rule has nothing to say about an SDTM study.
-#'
-#'   It is not free, though: coverage differs between standards, and a rule
-#'   written only for another one is not run. The report says how many rules
-#'   were set aside; leave `standard` unset to see everything.
+#' @param standard Required. The standard the data follows, e.g. `"SDTMIG"`,
+#'   `"SENDIG"` or `"TIG"`. Only that standard's rules run: a SENDIG rule has
+#'   nothing to say about an SDTM study. The report says how many rules were
+#'   set aside.
 #' @param version The standard's version, e.g. `"3-4"`.
 #' @param substandard For `standard = "TIG"` only, and required there:
 #'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
@@ -408,7 +405,7 @@ infer_domain <- function(dataset, path = NULL) {
 #'   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
 #'   AESTDTC = c("2024-01-10", "2024-02-30") # 30 February is not a date
 #' )
-#' result <- check_dataset(ae)
+#' result <- check_dataset(ae, standard = "SDTMIG")
 #' result$findings[result$findings$Value == "2024-02-30", ]
 #'
 #' # Always look at what could not run:
@@ -425,6 +422,7 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
   on.exit(.coreval_env$substandard <- old_sub, add = TRUE)
   validate_check_args(standard, version, domain, max_records,
                       use_case = use_case, include_deprecated = include_deprecated)
+  require_standard(standard)
   path <- NULL
   if (is.character(x)) {
     if (length(x) != 1) {

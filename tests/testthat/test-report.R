@@ -8,8 +8,10 @@ demo_dm <- function() {
 }
 
 test_that("every finding carries a plain-language description of the problem", {
+  # The report's behaviour, shown on CORE-000547, the SEND date rule, which
+  # flags both an empty date and an impossible one.
   # The reason this column exists: "CORE-000547" is not actionable on its own.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SENDIG")
   expect_true("issue" %in% names(result$findings))
   expect_true(all(nzchar(result$findings$issue)))
 
@@ -29,7 +31,9 @@ test_that("rule_message prefers the rule's Message, and falls back to its descri
 })
 
 test_that("the printed report explains the problem, not just the rule number", {
-  result <- check_dataset(demo_dm())
+  # The report's behaviour, shown on CORE-000547, the SEND date rule, which
+  # flags both an empty date and an impossible one.
+  result <- check_dataset(demo_dm(), standard = "SENDIG")
   out <- paste(capture.output(print(result)), collapse = "\n")
 
   expect_match(out, "ISO 8601")             # what is wrong, in words
@@ -44,7 +48,7 @@ test_that("the printed report explains the problem, not just the rule number", {
 test_that("the report hides coreval's internal bindings from the reader", {
   # `$dataset_variables` is an Operations binding, not a column of anyone's
   # data. Printing "$dataset_variables = STUDYID" is noise.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   out <- paste(capture.output(print(result)), collapse = "\n")
   expect_false(grepl("$dataset_variables", out, fixed = TRUE))
 })
@@ -79,14 +83,14 @@ test_that("a clean result says so plainly instead of printing an empty table", {
 })
 
 test_that("print returns its input invisibly, so it composes normally", {
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   capture.output(expect_invisible(print(result)))
   capture.output(back <- print(result))
   expect_identical(back$findings, result$findings)
 })
 
 test_that("write_findings adds empty columns to fill in, and can leave them out", {
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   dir <- tempfile("coreval_track_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -112,7 +116,7 @@ test_that("write_findings adds empty columns to fill in, and can leave them out"
 test_that("write_findings does not mutate the result it was given", {
   # The tracking columns are added to a copy; a second call, or any later use
   # of result$findings, must not see Status/Owner/Notes bolted on.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   before <- names(result$findings)
   dir <- tempfile("coreval_nomutate_")
   dir.create(dir)
@@ -126,7 +130,7 @@ test_that("a set-valued binding reports the whole set, not its first element", {
   # $expected_variables holds 17 names; row 1 gave "RFSTDTC", which was then
   # reported as if RFSTDTC were the finding - while the variables actually
   # missing were never named anywhere.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   # CDISC's October 2026 release subtracts the two sets itself, with a `minus`
   # operation, so the finding carries the missing names under
   # $missing_required_variables rather than the two sets it used to compare.
@@ -174,7 +178,7 @@ test_that("the report names the missing variables instead of saying 'at least on
   # CDISC's own wording is "At least one required variable is missing from
   # dataset", which does not say which. Both sets are in the finding, so the
   # difference between them can be shown.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   out <- paste(capture.output(print(result)), collapse = "\n")
   expect_match(out, "missing required variables: ")
   expect_match(out, "SUBJID")
@@ -183,12 +187,14 @@ test_that("the report names the missing variables instead of saying 'at least on
 test_that("a finding reports every variable on the row that holds a value", {
   # Rules that compare a variable's label against the IG's label are useless
   # if only one side is shown.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   out <- paste(capture.output(print(result)), collapse = "\n")
   expect_match(out, 'AGE = "61", AGEU = \\(empty\\)')
 })
 
 test_that("a whole-study report is grouped by dataset, worst first", {
+  # The report's behaviour, shown on CORE-000547, the SEND date rule, which
+  # flags both an empty date and an impossible one.
   dir <- tempfile("coreval_studyrep_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -202,7 +208,7 @@ test_that("a whole-study report is grouped by dataset, worst first", {
     file.path(dir, "ae.xpt")
   )
 
-  result <- check_study(read_study(dir))
+  result <- check_study(read_study(dir), standard = "SENDIG")
   out <- capture.output(print(result))
   joined <- paste(out, collapse = "\n")
 
@@ -236,17 +242,19 @@ test_that("n limits problems per dataset, not across the whole study", {
     ),
     file.path(dir, "ae.xpt")
   )
-  result <- check_study(read_study(dir))
+  result <- check_study(read_study(dir), standard = "SDTMIG")
   out <- capture.output(print(result, n = 1))
   # Each dataset that had more than one problem says so separately.
   expect_gt(length(grep("more here", out)), 1)
 })
 
 test_that("triage separates values that are wrong from things merely absent", {
+  # The report's behaviour, shown on CORE-000547, the SEND date rule, which
+  # flags both an empty date and an impossible one.
   # The distinction that governs what you look at first. A month of 13 is
   # never right. An empty RFSTDTC may be a screen-failure subject, or raw data
   # you have not received - coreval cannot know, and must not pretend to.
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SENDIG")
   expect_true("triage" %in% names(result$findings))
   expect_true(all(result$findings$triage %in% TRIAGE_LEVELS))
 
@@ -302,7 +310,7 @@ test_that("finding_triage classifies from the finding itself", {
 })
 
 test_that("the report leads with wrong values, not with things merely absent", {
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   out <- capture.output(print(result))
 
   # The summary names each tier with a plain-language hint.
@@ -316,6 +324,8 @@ test_that("the report leads with wrong values, not with things merely absent", {
 })
 
 test_that("within a problem, the record holding a real bad value is shown first", {
+  # The report's behaviour, shown on CORE-000547, the SEND date rule, which
+  # flags both an empty date and an impossible one.
   # RFSTDTC is EMPTY on an earlier row and "2024-13-01" on a later one, so the
   # natural row order puts the harmless-looking one first. Leading with an
   # empty value buries the one that certainly is wrong - the complaint that
@@ -330,7 +340,7 @@ test_that("within a problem, the record holding a real bad value is shown first"
     AGE = c(34, 61, 47), AGEU = c("YEARS", "YEARS", "YEARS"),
     SEX = c("M", "F", "F"), stringsAsFactors = FALSE
   )
-  result <- check_dataset(dm)
+  result <- check_dataset(dm, standard = "SENDIG")
   out <- capture.output(print(result))
 
   iso_block <- out[grep("ISO 8601", out)[1]:length(out)]
@@ -342,7 +352,7 @@ test_that("within a problem, the record holding a real bad value is shown first"
 })
 
 test_that("triage survives export, so a spreadsheet can be sorted by it", {
-  result <- check_dataset(demo_dm())
+  result <- check_dataset(demo_dm(), standard = "SDTMIG")
   dir <- tempfile("coreval_triage_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -362,7 +372,7 @@ test_that("a rule flagging every row is capped, and the true count is still repo
     LBSEQ = seq_len(n), LBTESTCD = "ALT",
     LBDTC = "2024-01-10", stringsAsFactors = FALSE
   )
-  capped <- check_dataset(d, max_records = 10)
+  capped <- check_dataset(d, max_records = 10, standard = "SDTMIG")
 
   expect_true(nrow(capped$truncated) > 0)
   expect_true(all(capped$truncated$records_kept <= 10))
@@ -387,12 +397,12 @@ test_that("max_records = Inf keeps everything, and the cap changes nothing else"
     LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10",
     stringsAsFactors = FALSE
   )
-  full <- check_dataset(d, max_records = Inf)
+  full <- check_dataset(d, max_records = Inf, standard = "SDTMIG")
   expect_equal(nrow(full$truncated), 0)
 
   # Capping must only ever DROP records - never change which rules fire, nor
   # what any kept finding says.
-  capped <- check_dataset(d, max_records = 5)
+  capped <- check_dataset(d, max_records = 5, standard = "SDTMIG")
   expect_setequal(unique(capped$findings$rule_id), unique(full$findings$rule_id))
   expect_setequal(unique(capped$findings$issue), unique(full$findings$issue))
   expect_true(nrow(capped$findings) < nrow(full$findings))
@@ -401,7 +411,7 @@ test_that("max_records = Inf keeps everything, and the cap changes nothing else"
 test_that("the report says a record count is a floor when records were capped", {
   dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = paste0("S1-", 1:5),
                    SUBJID = as.character(1:5), RFSTDTC = "2024-13-01", AGE = 30, AGEU = "")
-  result <- check_dataset(dm, max_records = 1)
+  result <- check_dataset(dm, max_records = 1, standard = "SDTMIG")
   expect_gt(nrow(result$truncated), 0)
   expect_match(paste(utils::capture.output(print(result)), collapse = "\n"), "or more record")
 })
@@ -418,7 +428,7 @@ test_that("a blank required value in CORE 1.0's long output is missing required 
 })
 
 test_that("print refuses a negative n", {
-  result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"))
+  result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"), standard = "SDTMIG")
   expect_error(print(result, n = -1), "`n` must be")
   expect_error(print(result, rows = NA), "`rows` must be")
 })

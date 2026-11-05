@@ -66,7 +66,7 @@ respin_result <- function(result, findings) {
 #'   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
 #'   AESTDTC = c("2024-01-10", "2024-02-30")
 #' )
-#' result <- check_dataset(ae)
+#' result <- check_dataset(ae, standard = "SDTMIG")
 #'
 #' # Just the things that are definitely wrong:
 #' filter_findings(result, triage = "wrong value")
@@ -139,7 +139,7 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
 #'   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
 #'   AESTDTC = c("2024-01-10", "2024-02-30")
 #' )
-#' summary(check_dataset(ae))
+#' summary(check_dataset(ae, standard = "SDTMIG"))
 #' @export
 summary.coreval_result <- function(object, ...) {
   assert_coreval_result(object, "object")

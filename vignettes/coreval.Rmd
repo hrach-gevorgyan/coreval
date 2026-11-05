@@ -50,7 +50,8 @@ result <- check_dataset(ae, standard = "SDTMIG", version = "3.4")
 result
 ```
 
-A file works too: `check_dataset("ae.xpt")`, or a `.sas7bdat` or `.csv`.
+A file works too: `check_dataset("ae.xpt", standard = "SDTMIG")`, or a
+`.sas7bdat` or `.csv`.
 
 ### 3. Check the whole study
 
@@ -134,14 +135,16 @@ result with `write_findings()`. The saved file notes that it is a subset.
 
 ### My study is SDTMIG 3.3, or SEND
 
-Say so, and only the rules for that standard and version run:
+`standard` is required, and only the rules for that standard and version
+run:
 
 ```{r standard, eval = FALSE}
 check_study("path/to/sdtm", standard = "SDTMIG", version = "3.3")
 check_study("path/to/send", standard = "SENDIG", version = "3.1")
 ```
 
-Without `standard`, rules from every standard run and the report reminds you.
+Leave `version` out and the rules for every version of that standard run.
+`list_rules()` shows which standards and versions there are.
 
 ### It says terminology checks were skipped
 
@@ -153,7 +156,7 @@ it:
 
 ```{r ct, eval = FALSE}
 list_ct_packages("sdtm")   # every release you can choose from
-check_study("path/to/sdtm", ct_package = "sdtmct-2026-03-27")
+check_study("path/to/sdtm", standard = "SDTMIG", ct_package = "sdtmct-2026-03-27")
 ```
 
 ### Many checks say "was not supplied"
@@ -200,12 +203,13 @@ them all.
 
 ### Check one file of a split dataset
 
-`check_dataset("lb1.xpt")` reads the domain from the `DOMAIN` column. If the
-file has none, say which domain it is: `check_dataset("lb1.xpt", domain = "LB")`.
+`check_dataset("lb1.xpt", standard = "SDTMIG")` reads the domain from the
+`DOMAIN` column. If the file has none, say which domain it is with
+`domain = "LB"`.
 
 ### Check a big study faster
 
-* Set `standard` and `version`: fewer rules run.
+* Set `version` as well as `standard`: fewer rules run.
 * Read once, check several times:
 
 ```{r reuse, eval = FALSE}
@@ -219,7 +223,8 @@ A progress bar shows in interactive sessions. Turn it off with
 ### Check a USDM study design
 
 Put the USDM JSON file in a folder of its own and ask for it. It needs the
-`jsonlite` and `QuickJSR` packages.
+`jsonlite` and `QuickJSR` packages, and no `standard`, since the document is
+USDM.
 
 ```{r usdm, eval = FALSE}
 check_study("path/to/usdm", usdm = TRUE)
@@ -258,8 +263,8 @@ thing you can report.
 
 | Function | Use it to |
 |---|---|
-| `check_dataset(x)` | check one data frame or file |
-| `check_study(path)` | check a whole study folder |
+| `check_dataset(x, standard = )` | check one data frame or file |
+| `check_study(path, standard = )` | check a whole study folder |
 | `write_findings(result, path)` | save to Excel or CSV |
 | `filter_findings(result, ...)` | narrow a result |
 | `list_rules()` | look up rules |

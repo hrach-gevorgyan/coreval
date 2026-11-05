@@ -76,7 +76,7 @@ test_that("one dataset is not told what the rest of the study lacks", {
     STUDYID = "S1", DOMAIN = "DM", USUBJID = c("S1-1", "S1-2"),
     AGE = c(30, 40), AGEU = c("YEARS", "YEARS")
   )
-  result <- check_dataset(dm)
+  result <- check_dataset(dm, standard = "SDTMIG")
   presence <- vapply(result$findings$rule_id, function(id) {
     startsWith(coreval:::.coreval_env$data$rules[[id]]$rule_type, "Domain Presence Check")
   }, logical(1))
@@ -86,7 +86,7 @@ test_that("one dataset is not told what the rest of the study lacks", {
 
 test_that("a data frame with no labels is not reported for wrong labels", {
   dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "S1-1")
-  result <- check_dataset(dm)
+  result <- check_dataset(dm, standard = "SDTMIG")
   label_rules <- c("CORE-000019", "CORE-000398", "CORE-000507", "CORE-000594",
                    "CORE-000690", "CDISC.SENDIG.6A")
   expect_false(any(result$findings$rule_id %in% label_rules))
@@ -96,6 +96,6 @@ test_that("a data frame with no labels is not reported for wrong labels", {
   attr(labelled$STUDYID, "label") <- "Not the right label"
   attr(labelled$DOMAIN, "label") <- "Domain Abbreviation"
   attr(labelled$USUBJID, "label") <- "Unique Subject Identifier"
-  result <- check_dataset(labelled)
+  result <- check_dataset(labelled, standard = "SDTMIG")
   expect_true("CORE-000398" %in% result$findings$rule_id)
 })

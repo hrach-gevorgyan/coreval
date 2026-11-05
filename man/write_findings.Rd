@@ -67,7 +67,7 @@ dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
 study <- read_study(dir)
-result <- check_study(study)
+result <- check_study(study, standard = "SDTMIG")
 
 out <- file.path(dir, "findings.csv")
 written <- write_findings(result, out)

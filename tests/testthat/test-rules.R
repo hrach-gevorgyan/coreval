@@ -242,10 +242,10 @@ test_that("arguments that would silently check nothing are refused, naming the a
   expect_error(check_dataset(dm, standard = "NOPE"), "Available:")
   expect_error(check_dataset(dm, standard = "SDTMIG", version = "9.9"), "version '9.9'")
   expect_error(check_dataset(dm, version = "3.4"), "needs `standard` too")
-  expect_error(check_dataset(dm, domain = NA), "single, non-empty string")
-  expect_error(check_dataset(dm, domain = 42), "single, non-empty string")
-  expect_error(check_dataset(dm, max_records = 0), "1 or more")
-  expect_error(check_study(tempdir(), max_records = -1), "1 or more")
+  expect_error(check_dataset(dm, domain = NA, standard = "SDTMIG"), "single, non-empty string")
+  expect_error(check_dataset(dm, domain = 42, standard = "SDTMIG"), "single, non-empty string")
+  expect_error(check_dataset(dm, max_records = 0, standard = "SDTMIG"), "1 or more")
+  expect_error(check_study(tempdir(), max_records = -1, standard = "SDTMIG"), "1 or more")
 
   # Both dashed and dotted version spellings stay acceptable.
   expect_silent(validate_check_args(standard = "SDTMIG", version = "3.4"))
@@ -414,4 +414,25 @@ test_that("every operator and Operations type a bundled rule uses is implemented
     function(o) as.character(o$operator %||% NA_character_), character(1)))))
   op_types <- op_types[!is.na(op_types)]
   expect_identical(setdiff(op_types, implemented_operation_types), character(0))
+})
+
+test_that("a check with no standard is refused, not run against every standard", {
+  # Without one, every standard's rules ran: SEND and TIG rules reported
+  # 26,678 problems on CDISC's pilot SDTM study.
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "01")
+  expect_error(check_dataset(dm), "say which standard the data follows")
+  expect_error(check_dataset(dm), "SDTMIG, SENDIG")
+
+  dir <- tempfile("nostd_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(dm, file.path(dir, "dm.xpt"))
+  expect_error(check_study(dir), "say which standard the data follows")
+  expect_error(check_study(read_study(dir)), "say which standard the data follows")
+
+  # A study that declares its standard itself, as a CORE test case does in
+  # its .env file, needs no argument.
+  study <- read_study(dir)
+  study$standard <- list(product = "SDTMIG", version = NA_character_)
+  expect_s3_class(check_study(study), "coreval_result")
 })

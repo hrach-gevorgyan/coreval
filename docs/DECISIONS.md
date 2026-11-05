@@ -5,11 +5,31 @@ silently re-litigated or accidentally reversed.
 
 ---
 
+## A check needs a standard (decided 2026-11-05)
+
+`check_study()` and `check_dataset()` stop when no standard is given and the
+study does not declare one. Before, every standard's rules ran. On CDISC's
+pilot SDTM study that was 74,954 findings against 48,276 with
+`standard = "SDTMIG"`: 45 SEND and TIG rules added 26,678, among them a SEND
+date rule with 16,730. A programmer who left out one argument got a report a
+third of which did not apply, and nothing on screen said so. Both reference
+engines refuse to run without a standard.
+
+A USDM document and a CORE test case's `.env` declare a standard, and count as
+giving one.
+
+Rejected: working the standard out from the define.xml or TS (a define 1.0
+says "CDISC SDTM 3.1.2", a version no rule targets, and TS rarely says
+anything), and keeping the old behaviour with a warning at the top of the
+report (a warning is read less often than the findings under it).
+
+---
+
 ## Two rule sets, each run the way its own engine runs it (decided 2026-11-04)
 
 CORE 1.0 (3 November 2026) moved the SDTMIG and FDA Business Rules to
 Verisian's repository and engine, and left SEND, TIG and USDM with CDISC. Both
-rule sets are bundled. An SDTM study, or one with no standard, is checked with
+rule sets are bundled. An SDTM study is checked with
 CORE 1.0's rules plus CDISC's for the other standards; a SEND or TIG study
 with CDISC's (`rule_family()`, `build_rule_sets()`). A rule in both
 repositories keeps both versions, the 1.0 one for SDTM and CDISC's for SEND

@@ -112,7 +112,7 @@ purpose.
   caveats; one study shape on one machine is not a general claim.
 - **Memory.** On that 511,000-row study, before CORE 1.0: 833 MB against
   about 5 GB. With the CORE 1.0 rules, CDISC's pilot study peaks at about
-  720 MB.
+  810 MB.
 - **Install.** Two R packages and under 2 MB of bundled data. Each engine needs
   26 Python packages, and CDISC's needs a 463 MB metadata cache as well.
 - **Offline.** No API key, no download, no cache to fill. Everything is

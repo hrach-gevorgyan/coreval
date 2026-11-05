@@ -75,7 +75,7 @@ test_that("write_findings rejects something that isn't a check_study() result", 
 test_that("write_findings rejects a path that isn't a single string", {
   result <- check_dataset(
     data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"),
-    "DM"
+    "DM", standard = "SDTMIG"
   )
   # Left to fwrite, a number came back as
   # "is.character(file) && length(file) == 1L ... is not TRUE", and two paths
@@ -161,7 +161,7 @@ test_that("a stale _truncated.csv is removed when nothing is capped", {
   dir <- tempfile("out_")
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE))
-  result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"))
+  result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"), standard = "SDTMIG")
   stale <- file.path(dir, "x_truncated.csv")
   writeLines("rule_id,domain", stale)
   write_findings(result, file.path(dir, "x.csv"))
@@ -171,7 +171,7 @@ test_that("a stale _truncated.csv is removed when nothing is capped", {
 test_that("an Excel export refuses a value longer than a cell can hold", {
   skip_if_not_installed("writexl")
   result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1,
-                                     AETERM = strrep("x", 40000)))
+                                     AETERM = strrep("x", 40000)), standard = "SDTMIG")
   skip_if(!any(nchar(result$findings$Value) > 32767))
   expect_error(write_findings(result, tempfile(fileext = ".xlsx")), "32,767")
 })

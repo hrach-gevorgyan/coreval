@@ -22,10 +22,12 @@ Passing the path is the usual way; reading first is only worth it when
 you want to check the same large study more than once without re-reading
 it, or to look at what was parsed.}
 
-\item{standard}{The standard the data follows, e.g. \code{"SDTMIG"} or
-\code{"SENDIG"}. Overrides whatever the study declares about itself. Rules
-are written per standard, so this cuts the list sharply; leave it
-unset to run every standard's rules and see everything.}
+\item{standard}{Required. The standard the data follows, e.g. \code{"SDTMIG"},
+\code{"SENDIG"} or \code{"TIG"}; \code{\link[=list_rules]{list_rules()}} shows the rest. Rules are written
+per standard, and a study checked against all of them gets SEND and TIG
+problems reported on SDTM data, so coreval will not run without it, as
+CDISC's and Verisian's engines will not. A CORE test case that declares
+its standard in a \code{.env} file needs no argument.}
 
 \item{version}{The standard's version, e.g. \code{"3.4"}. Needs \code{standard}
 too, since a bare version is ambiguous across standards.}
@@ -127,7 +129,7 @@ dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
 
-result <- check_study(dir)
+result <- check_study(dir, standard = "SDTMIG")
 result$findings
 unlink(dir, recursive = TRUE)
 }

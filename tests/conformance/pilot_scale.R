@@ -54,7 +54,7 @@ rows <- sum(vapply(study$datasets, function(d) nrow(d$data), integer(1)))
 invisible(gc())
 mem_loaded <- peak_mb()
 
-t_check <- system.time(result <- check_study(study))[["elapsed"]]
+t_check <- system.time(result <- check_study(study, standard = "SDTMIG"))[["elapsed"]]
 cat(sprintf(
   "k=%d rows=%s read=%.0fs check=%.0fs peak_after_load=%dMB peak=%dMB checks=%s findings=%s\n",
   k, format(rows, big.mark = ","), t_read, t_check, mem_loaded, peak_mb(),

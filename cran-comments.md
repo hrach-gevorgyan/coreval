@@ -18,6 +18,10 @@ engine and comparing every finding. See NEWS.md for the full list.
 
 Some behaviour changes on purpose, each listed in NEWS.md:
 
+* `check_study()` and `check_dataset()` require `standard`, as CDISC's and
+  Verisian's engines do. Without it every standard's rules ran, and an SDTM
+  study was reported SEND and TIG problems. A call without it now stops with
+  an error that says what to add.
 * A folder holding a USDM study design document is checked only with
   `usdm = TRUE`, because some of its rules take minutes on one file.
 * `standard = "TIG"` now needs the new `substandard` argument (`"SDTM"`,
@@ -33,7 +37,8 @@ Some behaviour changes on purpose, each listed in NEWS.md:
 * The `rules_version` attribute names both rule repositories and their
   commits.
 
-Nothing is deprecated and nothing is removed. Input that was never valid and
+Nothing is deprecated and nothing is removed, though a call with no
+`standard` now has to name one. Input that was never valid and
 used to be accepted silently is now refused with an error that says what is
 wrong: a transport file holding more than one dataset, a single CSV with a row
 of the wrong length, and a Dataset-JSON file with neither rows nor a record

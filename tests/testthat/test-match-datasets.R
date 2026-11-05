@@ -637,7 +637,7 @@ test_that("a RELREC link relates records of one subject only", {
                         RELTYPE = "", RELID = c("1", "1", "1", "1"))
   )
   on.exit(unlink(dir, recursive = TRUE))
-  expect_length(rule_records(check_study(dir), "CORE-000744"), 0)
+  expect_length(rule_records(check_study(dir, standard = "SDTMIG"), "CORE-000744"), 0)
 })
 
 test_that("records of a domain RELREC does not mention are not compared with anything", {
@@ -651,7 +651,7 @@ test_that("records of a domain RELREC does not mention are not compared with any
                         IDVAR = c("CMSEQ", "AESEQ"), IDVARVAL = "1", RELTYPE = "", RELID = "1")
   )
   on.exit(unlink(dir, recursive = TRUE))
-  expect_length(rule_records(check_study(dir), "CORE-000744"), 0)
+  expect_length(rule_records(check_study(dir, standard = "SDTMIG"), "CORE-000744"), 0)
 })
 
 test_that("a rule joining a dataset the study lacks is skipped with the reason, not evaluated", {
@@ -664,7 +664,7 @@ test_that("a rule joining a dataset the study lacks is skipped with the reason, 
     AE = data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-001", AESEQ = 1, AETERM = "Y")
   )
   on.exit(unlink(dir, recursive = TRUE))
-  result <- check_study(dir)
+  result <- check_study(dir, standard = "SDTMIG")
   expect_length(rule_records(result, "CORE-000034"), 0)
   why <- result$skipped$reason[result$skipped$rule_id == "CORE-000034"]
   expect_match(why, "needs DM, which is not in this study")
@@ -686,7 +686,7 @@ test_that("SUPP qualifiers join whatever way the record key is written", {
                           IDVAR = "AESEQ", IDVARVAL = case$idvarval, QNAM = "AESOSP",
                           QLABEL = "Other", QVAL = "Something", QORIG = "CRF", QEVAL = "")
     )
-    result <- check_study(dir)
+    result <- check_study(dir, standard = "SDTMIG")
     expect_equal(rule_records(result, "CORE-000597"), c(1L, 2L), info = case$idvarval)
     # CORE 1.0's CORE-000206 joins by number but then compares the key as
     # text, so it reports a key written any other way than the parent's
@@ -707,7 +707,7 @@ test_that("a SUPP row with no parent record keeps its own subject in the finding
                         QLABEL = "Treatment emergent", QVAL = "Y", QORIG = "DERIVED", QEVAL = "")
   )
   on.exit(unlink(dir, recursive = TRUE))
-  f <- check_study(dir)$findings
+  f <- check_study(dir, standard = "SDTMIG")$findings
   orphan <- f[f$rule_id == "CORE-000206", ]
   expect_equal(unique(orphan$Record), 2L)
   # The row's own values, not the parent's. CDISC's October 2026 release
@@ -729,7 +729,7 @@ test_that("SUPP rows find their parent in a domain split across files", {
                         QVAL = "Y", QORIG = "CRF", QEVAL = "")
   )
   on.exit(unlink(dir, recursive = TRUE))
-  expect_equal(rule_records(check_study(dir), "CORE-000206"), 3L)
+  expect_equal(rule_records(check_study(dir, standard = "SDTMIG"), "CORE-000206"), 3L)
 })
 
 test_that("a SUPP whose IDVAR the parent lacks is refused, not joined on the subject alone", {

@@ -517,7 +517,7 @@ describe_skipped <- function(skipped, width, g) {
 #'   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
 #'   AESTDTC = c("2024-01-10", "2024-02-30")
 #' )
-#' check_dataset(ae)
+#' check_dataset(ae, standard = "SDTMIG")
 #' @export
 print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   # An object carrying the class but not the contents printed its banner and
@@ -642,26 +642,16 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     describe_skipped(skipped, width, g)
   }
 
-  # Without a declared standard every standard's rules ran, so an SDTM study
-  # was also measured against SENDIG rules. Say so: the alternative is
-  # silently reporting SEND findings on SDTM data, which is how one defect
-  # came to be reported twice.
-  if (is.null(attr(x, "standard"))) {
-    cat("\nNo standard declared, so rules from every standard ran.\n")
-    cat("  Narrow with  standard = \"SDTMIG\"  (or \"SENDIG\", \"TIG\", ...)\n")
-  } else {
-    # Never silent about what scoping cost. CDISC's own coverage is uneven -
-    # the general "--DTC must be valid ISO 8601" rule is published for SENDIG
-    # and TIG but NOT for SDTMIG, whose only equivalents are TSVAL-specific or
-    # deprecated - so narrowing can genuinely stop a real defect being
-    # reported. The reader has to be able to see that happened.
-    dropped <- attr(x, "excluded_by_standard")
-    if (!is.null(dropped) && dropped > 0) {
-      cat("\nScoped to ", attr(x, "standard"), ": ", dropped,
-        " rules written for other standards, or other versions of this one, were not run.\n",
-        sep = ""
-      )
-    }
+  # Never silent about what scoping cost: coverage differs between standards,
+  # so narrowing can stop a defect being reported. The reader has to be able
+  # to see that happened. (A check always has a standard now; see
+  # require_standard().)
+  dropped <- attr(x, "excluded_by_standard")
+  if (!is.null(dropped) && dropped > 0) {
+    cat("\nScoped to ", attr(x, "standard"), ": ", dropped,
+      " rules written for other standards, or other versions of this one, were not run.\n",
+      sep = ""
+    )
   }
 
   cat("\n")

@@ -1,5 +1,12 @@
 # coreval (development version)
 
+* **`standard` is required.** `check_study()` and `check_dataset()` stop
+  without it, as CDISC's and Verisian's engines do. Left out, every
+  standard's rules ran: on CDISC's pilot SDTM study, 45 SEND and TIG rules
+  added 26,678 problems, a third of the report. Add `standard = "SDTMIG"` (or
+  `"SENDIG"`, `"TIG"`, ...) to existing calls. A USDM document, and a CORE
+  test case with a `.env` file, declare their own and need nothing.
+
 * **CORE 1.0.** CDISC's CORE 1.0 (3 November 2026) moved the SDTMIG and FDA
   Business Rules to Verisian's repository, verisianHQ/core-contributor, and
   its engine; SENDIG, TIG and USDM stay with CDISC. coreval follows:

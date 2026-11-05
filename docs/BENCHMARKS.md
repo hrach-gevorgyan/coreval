@@ -265,12 +265,19 @@ machine as above, one process.
 
 Since CORE 1.0 an SDTM study is checked with 1.0's rules, which ask more, and
 several of the new ones look at every value of a dataset rather than every
-record. Measured at commit `2f963fe`, 3,809 checks running at every scale:
+record. Measured with `standard = "SDTMIG"` at the commit that made `standard`
+required, 3,199 checks running at every scale:
 
 | k | rows | time | peak | findings |
 |---|---|---|---|---|
-| 1 | 294,677 | 27 s | 720 MB | 72,546 |
-| 10 | 2,945,870 | 190 s | 4,363 MB | 122,170 |
+| 1 | 294,677 | 27 s | 807 MB | 48,276 |
+| 10 | 2,945,870 | 184 s | 4,998 MB | 82,283 |
+
+Every measurement below ran with no standard, so every standard's rules ran,
+SEND and TIG ones included. At commit `2f963fe` that was 3,809 checks: 27 s,
+720 MB and 72,546 findings at k = 1, 190 s, 4,363 MB and 122,170 findings at
+k = 10. The 610 SEND and TIG checks cost almost no time; the peak at k = 10 is
+higher now, by 635 MB, and has not been traced.
 
 Commit `e987c78`, measured again on the same machine with the machine
 otherwise idle, took 26 s at k = 1 and 189 s and 4,077 MB at k = 10, with the
@@ -337,8 +344,8 @@ What still sets the peak is the Value Check with Variable Metadata rule type
 (CORE-000867 and its kind). CDISC defines it over one row per (record,
 variable) pair, so a 1.2 million-row QS with 16 columns becomes 19.5 million
 rows, about 1.3 GB, before the check runs. With the CORE 1.0 rules the pilot
-at k = 10 (2.9 million rows) peaks at about 4.4 GB, so a 10 million-row study
-needs in the order of 15 GB of free memory.
+at k = 10 (2.9 million rows) peaks at about 5 GB, so a 10 million-row study
+needs in the order of 17 GB of free memory.
 
 ## Footprint
 

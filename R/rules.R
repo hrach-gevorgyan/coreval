@@ -504,6 +504,26 @@ validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
   invisible(NULL)
 }
 
+# A check with no standard ran every standard's rules. On CDISC's pilot SDTM
+# study that added 26,678 findings from 45 SEND and TIG rules, a third of the
+# report, with nothing on screen to say so. Both reference engines refuse to
+# run without a standard, and so does coreval. A study that declares its own
+# standard (a CORE test case's .env) counts as giving one.
+require_standard <- function(standard, declared = NA_character_) {
+  if (!is.null(standard) || (length(declared) == 1 && !is.na(declared) && nzchar(declared))) {
+    return(invisible(NULL))
+  }
+  pairs <- unlist(lapply(.coreval_env$data$rules, function(r) r$standard_versions))
+  products <- sort(unique(sub("[[:space:]].*$", "", pairs)))
+  stop(
+    "say which standard the data follows, e.g. standard = \"SDTMIG\".\n",
+    "Available: ", paste(products, collapse = ", "), ".\n",
+    "Rules are written per standard, and running all of them reports SEND and ",
+    "TIG problems on an SDTM study.",
+    call. = FALSE
+  )
+}
+
 #' Controlled Terminology packages coreval bundles
 #'
 #' Which version of CDISC's Controlled Terminology a study follows decides

@@ -163,7 +163,8 @@ test_that("one word in a numeric column does not switch off every numeric compar
                PCSTRESU = "ng/mL")
   }
   flagged <- function(orres) {
-    f <- check_dataset(pc(orres))$findings
+    # CORE-000722 is a SENDIG rule.
+    f <- check_dataset(pc(orres), standard = "SENDIG")$findings
     sort(unique(f$Record[f$rule_id == "CORE-000722"]))
   }
   expect_equal(flagged(c("9", "10", "11", "5")), c(1L, 4L))
