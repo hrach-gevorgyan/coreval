@@ -180,8 +180,12 @@ are bundled with the package.
 
 ## Learn more
 
-- **Getting started guide:** `vignette("coreval")` walks through a real
-  session, reading results, narrowing to one standard, and looking up a rule.
+- **Getting started:** `vignette("coreval")` gives the four steps you need,
+  then answers the common questions: only the real errors, your standard and
+  version, terminology, stopping a program on errors, a large study.
+- **How it works:** `vignette("technical")` is the full reference. It covers
+  the files read, which rules run and why, every skip reason, and every column
+  of a result.
 - **Every function** is documented: `?check_dataset`, `?check_study`,
   `?write_findings`, `?list_rules`, `?filter_findings`, `?read_study`,
   `?list_ct_packages`.

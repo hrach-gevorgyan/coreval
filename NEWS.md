@@ -50,6 +50,10 @@
   - A RELREC relationship linked records of different subjects whenever the
     subjects reused a RELID, so a findings-about record was compared with
     another subject's adverse event (CORE-000744, CORE-000757).
+  - Checking one dataset on its own, a CORE 1.0 rule that reads values from
+    another dataset treated the missing one as empty, so CORE-000172
+    reported every record of an AE for a STUDYID "not in DM". Such a rule is
+    now skipped, saying which dataset it needs.
   - With a domain RELREC does not mention, or no RELREC at all, every record
     of that domain was reported.
   - A Define-XML 1.0 was read with every label blank, so the rule comparing
@@ -158,6 +162,12 @@
   seconds against 26 before, with the same findings. A study ten times its
   size, about three million records, takes 156 seconds against 184 and a
   little less memory. USDM study documents are read in half the time.
+
+* **Two guides.** `vignette("coreval")` is now a short getting-started page:
+  four steps, then answers to the tasks and questions that come up most.
+  The new `vignette("technical")` is the full reference: which files are
+  read and how, which rule set runs when, what each skip reason means, and
+  every part of a result.
 
 * **Stricter testing.** The conformance harness no longer counts a rule as
   passing when the only cases it could grade were the ones expecting nothing,

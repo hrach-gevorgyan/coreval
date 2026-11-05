@@ -19,7 +19,7 @@ home:
 
 navbar:
   structure:
-    left: [intro, reference, evidence, news]
+    left: [intro, articles, reference, evidence, news]
     right: [search, github]
   components:
     evidence:

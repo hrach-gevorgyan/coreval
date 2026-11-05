@@ -16,7 +16,7 @@
 #' look identical if you only read the first table.
 #'
 #' [write_findings()] saves both to Excel or CSV. `vignette("coreval")` walks
-#' through all of it.
+#' through all of it, and `vignette("technical")` explains how it works.
 #'
 #' @section Status:
 #' **coreval is a personal open-source project.** It is not a CDISC product, is

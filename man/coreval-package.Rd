@@ -29,7 +29,7 @@ empty \verb{$findings} can mean clean data \emph{or} rules that never ran, and t
 look identical if you only read the first table.
 
 \code{\link[=write_findings]{write_findings()}} saves both to Excel or CSV. \code{vignette("coreval")} walks
-through all of it.
+through all of it, and \code{vignette("technical")} explains how it works.
 }
 \section{Status}{
 
