@@ -6,10 +6,10 @@ These are written for anyone reading the repository.
 |---|---|
 | [COMPARISON.md](COMPARISON.md) | coreval, CDISC's engine and Verisian's engine side by side: differences, problems and strengths |
 | [DECISIONS.md](DECISIONS.md) | why coreval is built the way it is, and what has been tried and rejected |
-| [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) | how CDISC's own engine actually behaves, with the evidence |
+| [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) | how CDISC's and Verisian's engines actually behave, with the evidence |
 | [COVERAGE.md](COVERAGE.md) | which rules pass, which disagree, and why |
 | [BENCHMARKS.md](BENCHMARKS.md) | speed and memory against the reference engine, and how to reproduce it |
-| [REAL-STUDY.md](REAL-STUDY.md) | CDISC's pilot submission checked by coreval and by CDISC's engine, every finding compared |
+| [REAL-STUDY.md](REAL-STUDY.md) | CDISC's pilot submission checked by coreval and by CORE 1.0's engine, every finding compared |
 
 Two rules keep these useful:
 

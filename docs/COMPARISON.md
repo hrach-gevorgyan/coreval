@@ -105,12 +105,14 @@ purpose.
 
 - **Inside R.** It checks a data frame you have open, while you write the code
   that builds it. The engines check a folder of files from the command line.
-- **Speed.** On the pilot study coreval took 58 seconds and Verisian's engine
-  106 seconds for the validation alone, on the same machine. On a 511,000-row
-  test study CDISC's engine took 1,689 seconds on thirteen cores and coreval
-  77 seconds on one. [BENCHMARKS.md](BENCHMARKS.md) has the method and the
+- **Speed.** On the pilot study coreval took 33 seconds and Verisian's engine
+  181 seconds, each for the whole command, on the same machine. On a 511,000-row
+  test study, before CORE 1.0, CDISC's engine took 1,689 seconds with its ten
+  worker processes and coreval 77 seconds in one. [BENCHMARKS.md](BENCHMARKS.md) has the method and the
   caveats; one study shape on one machine is not a general claim.
-- **Memory.** On that 511,000-row study: 833 MB against about 5 GB.
+- **Memory.** On that 511,000-row study, before CORE 1.0: 833 MB against
+  about 5 GB. With the CORE 1.0 rules, CDISC's pilot study peaks at about
+  720 MB.
 - **Install.** Two R packages and under 2 MB of bundled data. Each engine needs
   26 Python packages, and CDISC's needs a 463 MB metadata cache as well.
 - **Offline.** No API key, no download, no cache to fill. Everything is

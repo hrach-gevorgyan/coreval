@@ -87,12 +87,14 @@ where the rule came from and how settled it is:
 | `core_contributor` | CORE 1.0's published SDTM and FDA rules | yes |
 | `published` | CDISC's published rules | yes |
 | `sendig_draft` | drafts in CDISC's repository | yes |
-| `sdtmig_draft`, `fda_business_rules_draft` | drafts in CDISC's repository | mostly no, see below |
+| `sdtmig_draft`, `fda_business_rules_draft` | drafts in CDISC's repository | for SEND and TIG; not for SDTM, see below |
 | `deprecated_dir` | retired by CDISC | no |
 
 Retired rules, and CDISC's SDTM rules that CORE 1.0 no longer carries, run
-only with `include_deprecated = TRUE`. That second group takes in every
-SDTMIG draft and some of the FDA drafts, since CORE 1.0 replaced them. They are off by default because a
+only with `include_deprecated = TRUE`. That second group takes in the SDTMIG
+drafts, the FDA drafts written for SDTMIG and two published rules, since
+CORE 1.0 replaced them; the same rules still run for SEND or TIG where CDISC
+wrote them for those too. They are off by default because a
 retired rule usually has a current replacement, and running both reports the
 same defect twice.
 
@@ -123,7 +125,8 @@ Some details that matter in practice:
   Dataset-JSON, and a warning names the file left out. Two files of the
   same format for one dataset are refused, since there is no telling which
   is meant.
-* **CSV files in a study folder are not read**, because a CSV carries no column
+* **CSV files in a study folder are not read** (a CORE test case's folder,
+  with `_variables.csv`, is the exception), because a CSV carries no column
   types or labels. They are named in a warning so they are not missed. Check a
   CSV on its own with `check_dataset()`.
 * **The define.xml**: a file called `define.xml` is preferred. Failing that,
@@ -209,9 +212,10 @@ dictionary.
 
 Every dataset in a study is read once, then every applicable rule is run
 against it. `check_study()` and `check_dataset()` go through the same
-evaluation loop, so a rule behaves the same in both. The only difference is
-what counts as missing: checking one dataset, every other dataset is
-*unsupplied*, and rules that need one are skipped. Checking a study, a rule
+evaluation loop, so a rule behaves the same in both. They differ in what
+counts as missing: checking one dataset, every other dataset is
+*unsupplied*, and rules that need one are skipped, as are the rules about the
+study as a whole. Checking a study, a rule
 that needs a dataset the study does not have is skipped too, saying the
 dataset is not in the study, except where the rule itself says what an absent
 one means: an optional (left) join, and a CORE 1.0 rule computing a set of
@@ -238,7 +242,7 @@ ones:
 |---|---|---|
 | *needs DM, which was not supplied* | the rule compares with another dataset, and you checked one on its own | run `check_study()` on the folder |
 | *needs TV, which is not in this study* | the dataset it compares with does not exist in the study | nothing, if the study has no TV |
-| *asks which datasets the whole study contains* | a presence rule, asked of one dataset | run `check_study()` |
+| *asks which datasets the whole study contains*, *asks about the whole study* | a rule about the study as a whole, asked of one dataset | run `check_study()` |
 | *needs controlled terminology* | no CT release was found | pass `ct_package`, or fill `TSVCDREF` and `TSVCDVER` in TS |
 | *... needs define.xml ...* | the rule compares data with the define | add the define to the folder and install `xml2` |
 | *needs AESER, which this dataset does not have* | a CDISC rule reads a column the dataset lacks | often nothing: the column may be legitimately absent |

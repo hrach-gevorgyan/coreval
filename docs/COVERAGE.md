@@ -14,7 +14,7 @@ Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor
 Rscript tests/conformance/run_conformance.R data-raw/upstream/cdisc-open-rules
 ```
 
-At the last full sweep:
+At the sweep of 5 November 2026 (commit `ed09da7`):
 
 | rule set | pass | disagree | cannot be measured |
 |---|---|---|---|
@@ -125,9 +125,9 @@ coreval flags different rows than the answer sheet says it should.
 |---|---|---|
 | `deprecated_dir` | 26 | no, deprecated rules are off by default |
 | `published` | 17 | **yes** |
-| FDA business rules, draft | 7 | yes, marked draft |
+| FDA business rules, draft | 7 | four, on a SEND study only (FB0801, FB0802, FB3211, FB6505) |
 | SENDIG draft | 5 | yes, marked draft |
-| SDTMIG draft | 1 | yes, marked draft |
+| SDTMIG draft | 1 | no, CORE 1.0 replaced it |
 
 #### Two that disagree because they are now graded at all
 
@@ -172,7 +172,7 @@ own `test.py` requires one too. Fourteen of the 55 are in that state. Counting
 those as agreement would be the vacuous-truth version of the silent-failure bug
 this package keeps finding in itself, so they are held separate.
 
-#### The 16 published ones trace to stale answer sheets
+#### The 16 published ones that disagreed before CORE 1.0 trace to stale answer sheets
 
 **coreval matched the engine on all sixteen. The committed `results.csv`
 differed from the engine on every one.**

@@ -5,6 +5,30 @@ silently re-litigated or accidentally reversed.
 
 ---
 
+## Two rule sets, each run the way its own engine runs it (decided 2026-11-04)
+
+CORE 1.0 (3 November 2026) moved the SDTMIG and FDA Business Rules to
+Verisian's repository and engine, and left SEND, TIG and USDM with CDISC. Both
+rule sets are bundled. An SDTM study, or one with no standard, is checked with
+CORE 1.0's rules plus CDISC's for the other standards; a SEND or TIG study
+with CDISC's (`rule_family()`, `build_rule_sets()`). A rule in both
+repositories keeps both versions, the 1.0 one for SDTM and CDISC's for SEND
+and TIG. CDISC's SDTM rules that 1.0 dropped run only with
+`include_deprecated = TRUE`, because each has a 1.0 replacement and running
+both reports one defect twice.
+
+The two engines disagree on points of semantics (a missing column, pattern
+anchoring, joins, blanks), and each rule's worked examples were graded by its
+own engine, so a rule runs with its engine's semantics (`rule_engine()`,
+`engine_is_core1()`). Every place the two differ is recorded in
+REFERENCE-BEHAVIOUR.md with the engine source that settles it.
+
+Rejected: running only CORE 1.0's rules (it covers no SEND, TIG or USDM), and
+merging the two sets into one semantics (each set's examples then fail in the
+other's places).
+
+---
+
 ## Rules are data; operators are code
 
 Every rule is driven by a data-defined registry (`inst/extdata/rules.rds`) plus

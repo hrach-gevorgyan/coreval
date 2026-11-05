@@ -76,19 +76,40 @@ if (depth >= 5) {
   # test cases is the measure for SDTM. See tests/conformance/run_conformance.R.
   sweep <- function(upstream, board) {
     prior <- if (file.exists(board)) utils::read.csv(board, stringsAsFactors = FALSE) else NULL
-    system2("Rscript", c("tests/conformance/run_conformance.R", upstream), stdout = NULL)
+    started <- Sys.time()
+    status <- system2("Rscript", c("tests/conformance/run_conformance.R", upstream), stdout = NULL)
+    # A sweep that failed leaves the previous scoreboard in place, and diffing
+    # that against itself reported "no rule changed status". Refused instead.
+    if (!identical(as.integer(status), 0L) || !file.exists(board) ||
+          file.mtime(board) < started) {
+      stop("the conformance sweep over ", upstream, " failed (exit status ", status,
+           ") or did not rewrite ", board, call. = FALSE)
+    }
     now <- utils::read.csv(board, stringsAsFactors = FALSE)
     cat("\n", basename(board), ": ", paste(names(table(now$status)), table(now$status), sep = " ",
                                            collapse = " / "), "\n", sep = "")
     if (is.null(prior)) {
       return(invisible(NULL))
     }
+    # all = TRUE, so a rule added or removed upstream is listed too: an inner
+    # merge left a new rule out of the diff, however it graded.
     merged <- merge(prior[c("id", "status", "reason")],
-                    now[c("id", "status", "reason")], by = "id",
+                    now[c("id", "status", "reason")], by = "id", all = TRUE,
                     suffixes = c("_before", "_after"))
-    moved <- merged[merged$status_before != merged$status_after, ]
-    changed <- merged[merged$status_before == merged$status_after &
-                        merged$reason_before != merged$reason_after, ]
+    differs <- function(a, b) (is.na(a) != is.na(b)) | (!is.na(a) & !is.na(b) & a != b)
+    added <- merged$id[is.na(merged$status_before)]
+    removed <- merged$id[is.na(merged$status_after)]
+    both <- merged[!is.na(merged$status_before) & !is.na(merged$status_after), ]
+    moved <- both[differs(both$status_before, both$status_after), ]
+    changed <- both[!differs(both$status_before, both$status_after) &
+                      differs(both$reason_before, both$reason_after), ]
+    if (length(added)) {
+      cat("new rules:", length(added), "\n")
+      for (id in added) cat(sprintf("  %s: %s\n", id, merged$status_after[merged$id == id]))
+    }
+    if (length(removed)) {
+      cat("rules no longer present:", paste(removed, collapse = ", "), "\n")
+    }
     if (nrow(moved) == 0 && nrow(changed) == 0) {
       cat("no rule changed status, and no failing rule changed its answer\n")
     } else {

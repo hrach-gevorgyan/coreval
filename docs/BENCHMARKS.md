@@ -49,7 +49,8 @@ that exists it is quoted alongside, and it agrees with the external
 measurement to within about 1%.
 
 Machine: 20 logical cores, Windows 11. coreval runs in one process. The engine
-parallelises by default and used 13-15 worker processes.
+parallelises by default (10 worker processes, `--pool-size`), and 13-15
+processes were seen running.
 
 ### The test studies
 
@@ -74,6 +75,10 @@ python data-raw/benchmark/benchmark.py bench-studies s10 s100     --engine ../cd
 
 ### Measured
 
+Measured before CORE 1.0, with CDISC's SDTM rules, at coreval 0.2.x. The
+CORE 1.0 rules ask more of an SDTM study; the pilot study below has current
+numbers.
+
 | study | coreval | peak | CORE engine | peak |
 |---|---|---|---|---|
 | s1 (5,115 rows) | 4.9s* | - | 31.8s | 2,648 MB |
@@ -82,7 +87,7 @@ python data-raw/benchmark/benchmark.py bench-studies s10 s100     --engine ../cd
 
 `*` s1 coreval is `system.time()` only; the rest are external.
 
-At s100 that is **21.8x**, on one core against thirteen, in about a sixth of
+At s100 that is **21.8x**, on one core against the engine's ten workers, in about a sixth of
 the memory. Finding counts are comparable, so neither tool is skipping work:
 coreval 767,917 findings uncapped (`max_records = Inf`), the engine 728,033
 issues with no limit set.
@@ -125,9 +130,8 @@ coreval can.
 
 **Caveats that are still open.** These numbers come from ONE study shape on
 ONE machine, run from source rather than CDISC's packaged binary. The s100 run
-was given CSV input with `_datasets.csv` and `_variables.csv`; `-d` documents
-XPT, Dataset-JSON and Excel, so CSV may be a test-only path - an XPT run is
-the way to settle that. Do not quote the 21.8x as a general claim about the
+was given CSV input with `_datasets.csv` and `_variables.csv`; the same study
+as XPT took the engine 1,404 s (above). Do not quote the 21.8x as a general claim about the
 two tools.
 
 ### An engine limitation worth recording
@@ -268,12 +272,15 @@ record. Measured at commit `2f963fe`, 3,809 checks running at every scale:
 | 1 | 294,677 | 27 s | 720 MB | 72,546 |
 | 10 | 2,945,870 | 190 s | 4,363 MB | 122,170 |
 
-At commit `e987c78` the same study took 62 s at k = 1, 393 s at k = 10 and
-794 s at k = 20 (5,891,640 rows, peak 8,024 MB, 142,560 findings), with the
-same findings at k = 1 and 10. 4,081 checks ran then. The 272 that no longer
-run are CDISC rules reading a column the dataset lacks, which CDISC's engine
-skips too (docs/REFERENCE-BEHAVIOUR.md, item 13); they reported nothing on
-this study. k = 20 has not been measured since.
+Commit `e987c78`, measured again on the same machine with the machine
+otherwise idle, took 26 s at k = 1 and 189 s and 4,077 MB at k = 10, with the
+same findings: the later commits did not make it faster. 4,081 checks ran
+there. The 272 that no longer run are CDISC rules reading a column the dataset
+lacks, which CDISC's engine skips too (docs/REFERENCE-BEHAVIOUR.md, item 13);
+they reported nothing on this study. An earlier record of 62 s and 393 s for
+that commit was taken while other work was running on the machine, and is
+withdrawn. k = 20 (5,891,640 rows) took 794 s with a peak of 8,024 MB at
+`e987c78`, measured under the same load, and has not been measured since.
 
 With CDISC's rules, before CORE 1.0, the same study took 32 s, 226 s and
 451 s (table below). The first build running 1.0's rules took 288 s at k = 1
@@ -329,8 +336,9 @@ What the per-rule profile showed, and what changed:
 What still sets the peak is the Value Check with Variable Metadata rule type
 (CORE-000867 and its kind). CDISC defines it over one row per (record,
 variable) pair, so a 1.2 million-row QS with 16 columns becomes 19.5 million
-rows, about 1.3 GB, before the check runs. At the rate measured here, a
-10 million-row study needs roughly 9 GB of free memory.
+rows, about 1.3 GB, before the check runs. With the CORE 1.0 rules the pilot
+at k = 10 (2.9 million rows) peaks at about 4.4 GB, so a 10 million-row study
+needs in the order of 15 GB of free memory.
 
 ## Footprint
 
@@ -342,6 +350,7 @@ rows, about 1.3 GB, before the check runs. At the rate measured here, a
 
 ## Agreement across every non-passing rule
 
+This section predates CORE 1.0 and grades CDISC's rule set as it stood then.
 192 test cases of the 93 non-passing rules could be run by both. 50 more could
 not: 48 ship no `.env`, which CDISC's own `test.py` also requires.
 
@@ -396,7 +405,7 @@ The lesson is the one this repository keeps relearning: a harness that loops
 over hundreds of cases is itself code that can be wrong, and a number it
 produces is worth less than a number you can reproduce by hand.
 
-## Agreement on a real study
+## Agreement on the fixture study
 
 On the three-dataset fixture study, of the 13 rules the engine reports issues
 for:
@@ -450,7 +459,7 @@ other - which is the point: the fixtures do not exercise these shapes.
 
 ### Where coreval is ahead
 
-* **Speed**: 21.8x on the 511k-row study, single-process against 13 workers.
+* **Speed**: 21.8x on the 511k-row study, single-process against 10 workers.
 * **Memory**: 833 MB against ~5 GB on that study.
 * **Install**: two R packages against 26 Python ones; under 2 MB against ~790 MB.
 * **Offline by construction.** No API key, no cache to populate.

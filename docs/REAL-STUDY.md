@@ -79,10 +79,10 @@ python tests/conformance/compare_pilot.py <out>/engine.json <out>
 
 | | |
 |---|---|
-| coreval | commit `e987c78` |
+| coreval | the commit that recorded this run, 5 November 2026; the same 507 rules came out the same way at `e987c78` |
 | Rules | verisianHQ/core-contributor `a3b4d0b08e45f44bcd1aafe16687aa76fe9680e3` |
 | Engine | verisianHQ/cdisc-rules-engine 1.0.0, `4a734105540a83f1df80d061df5049bd4b6bda4d` |
-| Time | coreval 58 s, engine 106 s for validation alone, on the same machine |
+| Time | coreval 33 s, engine 181 s, each the whole command, on the same machine |
 
 ## What came out
 
