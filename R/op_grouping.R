@@ -110,6 +110,12 @@ register_operator("is_not_unique_set", function(ctx) {
   )))
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
+    # CDISC's engine groups by nothing and fails (groupby([])); a rule cannot
+    # be answered about columns none of which are there.
+    if (!engine_is_core1()) {
+      stop("needs ", paste(unique(c(ctx$name, unlist(ctx$condition$value))), collapse = ", "),
+           ", none of which this dataset has", call. = FALSE)
+    }
     return(rep(FALSE, ctx$n))
   }
   # A domain SPLIT ACROSS FILES is still one domain: --SEQ must be unique
@@ -179,7 +185,12 @@ register_operator("is_unique_set", function(ctx) {
   # Not a plain negation: is_not_unique_set() answers FALSE for a
   # column that is not there, so negating it claimed uniqueness of a column
   # the dataset does not have. Nothing can be asserted about absent data.
-  if (!ctx$exists) {
+  #
+  # CDISC's engine does assert it about the columns that are there
+  # (is_unique_set keeps those of target and comparator that exist), so for
+  # its rules the negation stands; CORE 1.0's never reach this with a
+  # missing target (core1_names_missing_column()).
+  if (!ctx$exists && engine_is_core1()) {
     return(rep(FALSE, ctx$n))
   }
   !get_operator("is_not_unique_set")(ctx)

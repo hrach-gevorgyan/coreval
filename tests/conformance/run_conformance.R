@@ -189,9 +189,24 @@ sheet_is_silent <- function(results_csv) {
 run_case <- function(rule, case_dir) {
   out <- run_case_graded(rule, case_dir)
   results_csv <- file.path(case_dir, "results", "results.csv")
+  # A sheet expects findings when it names one. Placeholder rows (`LB,,,`, a
+  # dataset looked at that had nothing, which is also how CDISC's engine
+  # records a dataset it skipped) do not; expected_records() already drops
+  # them. Counted here, a case whose datasets both coreval and the engine
+  # skip for a missing column (CORE-000651's negative/02, LB and PC without
+  # --TPTNUM) read as an expectation coreval could not grade.
   out$expects <- file.exists(results_csv) && !sheet_is_silent(results_csv) &&
-    !reference_crashed(results_csv)
+    !reference_crashed(results_csv) && sheet_names_a_finding(results_csv)
   out
+}
+
+#' Does an answer sheet name any finding, beyond placeholder rows?
+#' @param results_csv Path to a results.csv.
+#' @return A single logical.
+#' @noRd
+sheet_names_a_finding <- function(results_csv) {
+  results <- read_reference_results(results_csv)
+  any(nzchar(trimws(results$Dataset)) & nzchar(trimws(results$Variable)))
 }
 
 # The part of the file a split dataset's rows occupy in the domain the reference

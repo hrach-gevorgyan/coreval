@@ -401,6 +401,24 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   if (engine_is_core1() && core1_names_missing_column(condition, ctx)) {
     return(rep(FALSE, ctx$n))
   }
+  # CDISC's engine reads the target column for every operator but these
+  # (dataframe_operators.py), and a missing one raises KeyError, which skips
+  # the rule ("Column not found in data", rules_engine.py). Answered here
+  # with NA, it became "no violation": CORE-000303 on an LB without LBTEST
+  # reported a clean pass where the engine says the rule could not run.
+  # evaluate_check() carries the engine's any/all handling of it.
+  if (!engine_is_core1() && !exists && !target_is_binding &&
+      !is_relrec_wildcard(condition$name) &&
+      # is_unique_set keeps whichever of its columns exist, the target too
+      # (CORE-000580's negative/02 has no TEDUR and still expects findings).
+      !(condition$operator %in% c("exists", "not_exists", "inconsistent_enumerated_columns",
+                                  "is_unique_set", "is_not_unique_set"))) {
+    stop(structure(
+      class = c("coreval_missing_column", "error", "condition"),
+      list(message = paste0("needs ", name, ", which this dataset does not have"),
+           call = NULL, column = name)
+    ))
+  }
   op_fn <- get_operator(condition$operator)
   result <- op_fn(ctx)
   # Every leaf condition must return one value per row of `dataset` -
@@ -440,7 +458,28 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
     return(Reduce(`&`, parts))
   }
   if (!is.null(check$any)) {
-    parts <- lapply(check$any, evaluate_check, dataset = dataset, domain = domain, bindings = bindings, study = study)
+    # CDISC's engine (business_rules engine.py) lets one branch of an `any`
+    # name a missing column, counting it as no match, and skips the rule only
+    # when every branch does. `all` and `not` pass the error on.
+    missing <- character(0)
+    parts <- lapply(check$any, function(part) {
+      tryCatch(
+        evaluate_check(part, dataset = dataset, domain = domain, bindings = bindings, study = study),
+        coreval_missing_column = function(e) {
+          missing <<- c(missing, e$column)
+          NULL
+        }
+      )
+    })
+    if (length(missing) == length(check$any)) {
+      stop(structure(
+        class = c("coreval_missing_column", "error", "condition"),
+        list(message = paste0("needs ", paste(unique(missing), collapse = ", "),
+                              ", which this dataset does not have"),
+             call = NULL, column = unique(missing)[[1]])
+      ))
+    }
+    parts <- Filter(Negate(is.null), parts)
     return(Reduce(`|`, parts))
   }
   if (!is.null(check$not)) {

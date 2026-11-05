@@ -78,3 +78,20 @@ core1_rule <- function(check, ...) {
 one_dataset <- function(data, domain = "XX") {
   as_study(list(data = data.table::as.data.table(data), meta = NULL), domain)
 }
+
+#' A rule's per-record violations, or none where it is skipped for a missing column
+#'
+#' CDISC's engine skips a rule on a dataset that lacks a column its Check
+#' reads, and its answer sheet then lists no record for that dataset; coreval
+#' refuses there too. Comparing against the sheet still requires it to expect
+#' nothing for the dataset, so a refusal can never stand in for a finding.
+#' @param rule,study,domain As for evaluate_rule().
+#' @return A logical vector, one per record.
+violations_or_skipped <- function(rule, study, domain) {
+  tryCatch(evaluate_rule(rule, study, domain), error = function(e) {
+    if (!grepl("which this dataset does not have|none of which this dataset has", conditionMessage(e))) {
+      stop(e)
+    }
+    rep(FALSE, nrow(study$datasets[[domain]]$data))
+  })
+}

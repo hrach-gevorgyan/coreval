@@ -163,7 +163,7 @@ test_that("evaluate_rule matches CDISC's reference results.csv for a fixture wit
     results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
     for (domain in names(study$datasets)) {
       if (!rule_applies_to_domain(rule, domain)) next
-      actual <- which(evaluate_rule(rule, study, domain))
+      actual <- which(violations_or_skipped(rule, study, domain))
       expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
       expect_equal(sort(unname(actual)), expected)
     }

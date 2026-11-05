@@ -74,56 +74,83 @@ an inconvenient result was set aside.
     first-row-only shape survives rather than inverting into "every row but the
     first".
 
+13. **A column the dataset lacks skips the rule, through `all` but not `any`.**
+    CDISC's engine reads the target column for nearly every operator, and a
+    missing one raises KeyError, which skips the rule ("Column not found in
+    data", rules_engine.py). In the business-rules evaluator (engine.py) an
+    `all` evaluates every child, so one missing column skips it even beside an
+    `exists` guard; an `any` treats a branch that raises as no match, and
+    raises only when every branch does. `exists`, `not_exists` and
+    `inconsistent_enumerated_columns` read no column, and `is_unique_set`
+    keeps whichever of its columns exist, the target included.
+
+14. **CORE 1.0 answers the same case with FALSE.** A condition naming a column
+    the dataset lacks is FALSE there (postgresql_operators.py,
+    `_missing_columns_for_operator`), with its own list of exempt operators,
+    and the rule runs. A missing column in an Operation (grouping, filter,
+    target) still skips it (ColumnNotFoundError).
+
+15. **CORE 1.0's `type_insensitive: true` is a text cast.** Only
+    `type_insensitive: numeric` compares numbers (equal_to_operator.py). So
+    an IDVARVAL of `"       1"` differs from the parent's sequence number 1,
+    though the join that found the parent compares numbers.
+
 ## Metadata the engine reads, and from where
 
-13. **`domain_label` comes from the standard, not from the study.** The engine
+16. **`domain_label` comes from the standard, not from the study.** The engine
     reads the label the standard gives a domain
     (`operations/domain_label.py`), and the standards differ: SENDIG calls `LB`
     "Laboratory" where SDTMIG calls it "Laboratory Test Results".
 
-14. **A variable's codelist C-code is a link, not a field.** It is the last
+17. **A variable's codelist C-code is a link, not a field.** It is the last
     segment of `_links.codelist[0].href`
     (`/mdr/root/ct/sendct/codelists/C66770` gives `C66770`), taken from the
     first link only (`base_dataset_builder`).
 
-15. **A Define-XML codelist's C-code is its own `Alias` with Context
+18. **A Define-XML codelist's C-code is its own `Alias` with Context
     `nci:ExtCodeID`**, matched as a *direct child*. Every `EnumeratedItem`
     inside the codelist carries one too, one per term, so matching descendants
     returns a term's code instead of the codelist's.
 
-16. **Controlled terminology must be supplied, never guessed.** The engine's
+19. **Controlled terminology must be supplied, never guessed.** The engine's
     `-ct` is required and it errors without one. Terminology moves between
     releases: `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`.
 
 ## Reference behaviour that is a defect, not a rule
 
-17. **Its operation cache rejects values it accepted.** `InMemoryCacheService.add()`
+20. **Its operation cache rejects values it accepted.** `InMemoryCacheService.add()`
     guards with `get_data_size(data) > self.max_size` while the `LRUCache`
     behind it measures with a different function, so a value can pass the guard
     and then be refused. The operation is recomputed. On a 10,000-subject study
     the distinct-`USUBJID` list trips it.
 
-18. **`prefix_equal_to` raises on non-string values.** On CORE-001080's own
+21. **`prefix_equal_to` raises on non-string values.** On CORE-001080's own
     fixture it raises "The operator can't be used with non-string values",
     because `TSVCDREF` is empty on 23 of 51 rows.
 
-19. **Some rules error on their own fixtures.** The engine reports
+22. **Some rules error on their own fixtures.** The engine reports
     `EXECUTION ERROR` for CORE-000929 and CORE-001081 on the data CDISC ships
     with them.
 
+**`does_not_have_next_corresponding_record` mislines its answers.** It
+sorts by `ordering` alone, groups by `within`, and assigns the exploded
+results back by position (dataframe_operators.py), so its answers belong to
+the right records only when the data is already sorted by `within` and then
+`ordering`. coreval keeps each answer on its own record.
+
 ## Rule sets and denominators
 
-20. **16 rules are Partially Executable by design** and will never match
+23. **16 rules are Partially Executable by design** and will never match
     reference output exactly. Exclude them from the pass-rate denominator and
     say so.
 
-21. **Many rules ship no expected output at all**: no `positive/`/`negative/`
+24. **Many rules ship no expected output at all**: no `positive/`/`negative/`
     directories (CORE-000110/645/765 contain only `rule.yml`), or `data/` with
     no sibling `results/` (CORE-000675, most of `Deprecated/`). These are
     unmeasurable, not failing. Verified as a genuine absence, not a harness
     layout bug.
 
-22. **Do not write a pass rate into this file.** It moves whenever a rule is
+25. **Do not write a pass rate into this file.** It moves whenever a rule is
     fixed or the upstream pin changes. The conformance harness gives the
     current answer: `tests/conformance/scoreboard_core1.csv` (tracked) for the
     CORE 1.0 rules, and `tests/conformance/scoreboard.csv`, which it writes

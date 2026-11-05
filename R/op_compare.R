@@ -162,7 +162,8 @@ compare_op <- function(fn, set_fn = NULL) {
     # CORE 1.0's comparison against the column each row names
     # (_check_equality_reference, equal_to_operator.py) has its own table: a
     # row naming no column is FALSE either way, and for not_equal_to a blank
-    # target differs only from a populated column.
+    # target counts as different only from a blank column (its SQL: WHEN the
+    # target is empty THEN the column is empty), whatever its docstring says.
     if (core1 && isTRUE(ctx$condition$value_is_reference) &&
         ctx$condition$operator %in% c("equal_to", "not_equal_to")) {
       if (is_negation) {

@@ -19,7 +19,7 @@ At the last full sweep:
 | rule set | pass | disagree | cannot be measured |
 |---|---|---|---|
 | CORE 1.0 (`scoreboard_core1.csv`) | 589 | 5 | 27 |
-| CDISC's (`scoreboard.csv`) | 958 | 56 | 40 |
+| CDISC's (`scoreboard.csv`) | 957 | 56 | 41 |
 
 A rule counts as passing only if a case that expects findings was graded. A rule
 whose clean cases pass while the case built to catch something could not be run
@@ -81,10 +81,10 @@ CDISC's own service over a document to produce them and
 `tests/conformance/compare_usdm_reader.R` diffs coreval's against those, cell
 by cell.
 
-### The 40 that cannot be measured
+### The 41 that cannot be measured
 
-36 are fixtures with nothing to check against and 4 need a rule type coreval
-does not implement.
+36 are fixtures with nothing to check against, 4 need a rule type coreval
+does not implement, and 1 reads a column its rule type's table does not have.
 
 | why | rules | |
 |---|---|---|
@@ -95,6 +95,7 @@ does not implement.
 | The rule's `Check` block is empty upstream | 1 | unmeasurable |
 | The fixture lacks a dataset the rule computes over (FDA.SENDIG.FB6403, PR) | 1 | unmeasurable; CDISC's engine skips it the same way |
 | The case expecting findings cannot be read (CDISC.SDTMIG.CG0096 names a file `WHODD.csv.csv`) | 1 | unmeasurable |
+| The Check reads `define_variable_is_collected`, which the Value Check with Dataset Metadata table does not carry in CDISC's engine either (CDISC.SDTMIG.CG0431) | 1 | unmeasurable; its only graded case expected nothing |
 
 Each of these was re-derived from the upstream tree rather than read back off
 the reason string. The five scope skips were the ones worth doubting, because
@@ -274,6 +275,9 @@ written to be acted on:
   dataset the study does not have, so it has nothing to compare with.
 - *"needs controlled terminology, and this study does not say which version it
   follows"* - the study's TS has no `TSVCDVER`; pass `ct_package`.
+- *"needs AESER, which this dataset does not have"* - a check reads a column
+  the dataset lacks. CDISC's engine skips the rule there too; a CORE 1.0
+  rule answers such a condition with FALSE instead, as 1.0's engine does.
 - *"needs the MedDRA dictionary, which is not supplied"* - a CORE 1.0 rule
   checks terms against a licensed dictionary, which coreval does not read.
 - *"an operation groups by EPOCH, which the dataset does not have"* - the rule

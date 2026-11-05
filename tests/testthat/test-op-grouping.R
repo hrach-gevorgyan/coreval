@@ -320,10 +320,14 @@ test_that("uniqueness is not asserted about a column that is absent", {
   # is_unique_set and is_unique_relationship were plain negations of their
   # is_not_* counterparts, which answer FALSE for a column that is not there -
   # so negating them claimed a missing column's values were unique.
-  for (op in c("is_unique_set", "is_unique_relationship")) {
-    ctx <- list(exists = FALSE, n = 3L, target = rep(NA_character_, 3))
-    expect_equal(get_operator(op)(ctx), rep(FALSE, 3), info = op)
-  }
+  ctx <- list(exists = FALSE, n = 3L, target = rep(NA_character_, 3))
+  expect_equal(get_operator("is_unique_relationship")(ctx), rep(FALSE, 3))
+  # is_unique_set follows CDISC's engine, which keeps whichever of its columns
+  # exist and fails when none does; CORE 1.0 answers FALSE.
+  study <- one_dataset(list(A = c("x", "y", "x")), "XX")
+  rule <- list(check = list(name = "B", operator = "is_unique_set", value = "C"))
+  expect_error(evaluate_rule(rule, study, "XX"), "none of which this dataset has")
+  expect_equal(evaluate_rule(core1_rule(rule$check), study, "XX"), rep(FALSE, 3))
 })
 
 test_that("a date-time column can be tested for blanks", {

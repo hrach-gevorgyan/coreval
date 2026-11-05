@@ -110,7 +110,7 @@ test_that("Match Datasets with a partial key matches CDISC's reference results.c
       results <- data.table::fread(file.path(dir, "results", "results.csv"), colClasses = "character")
       for (domain in names(study$datasets)) {
         if (!rule_applies_to_domain(rule, domain)) next
-        actual <- which(evaluate_rule(rule, study, domain))
+        actual <- which(violations_or_skipped(rule, study, domain))
         expected <- sort(unique(as.integer(results$Record[results$Dataset == domain])))
         expect_equal(sort(unname(actual)), expected, info = paste(dir, domain))
       }
@@ -287,7 +287,7 @@ test_that("a RELREC relationship join matches CDISC's reference results.csv (COR
   for (case in c("negative/01", "negative/02", "positive/01", "positive/02", "positive/03")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000757", case)
     study <- read_study(file.path(dir, "data"))
-    actual <- evaluate_rule(rule, study, domain = "CM")
+    actual <- violations_or_skipped(rule, study, "CM")
     expect_equal(
       actual,
       expected_violations_for(file.path(dir, "results", "results.csv"), "CM", nrow(study$datasets$CM$data))

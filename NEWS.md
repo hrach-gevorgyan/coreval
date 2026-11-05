@@ -70,6 +70,11 @@
   - A rule whose check names only a computed value reported nothing when it
     found something. CORE-000579 found an empty dataset and passed it, and
     three SEND TX rules found their problems and said nothing.
+  - A CDISC rule whose check reads a column the dataset lacks answered "no
+    violation". CDISC's engine skips such a rule, and now coreval does too,
+    saying which column it needs; within an `any`, a branch on a missing
+    column counts as no match, as it does there. `is_unique_set` keeps the
+    columns that exist, as the engine does, rather than answering FALSE.
   - An operation grouping, filtering or collecting by a column its dataset
     lacks dropped the column, or the filter, or answered "no violation". It
     is now skipped with the reason, as both engines skip it. A grouping

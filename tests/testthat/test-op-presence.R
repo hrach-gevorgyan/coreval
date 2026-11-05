@@ -17,11 +17,15 @@ test_that("empty/non_empty are unresolvable (NA), not TRUE, when the column does
   }
 })
 
-test_that("empty returns NA for a missing column, non_empty propagates it (stays NA, not TRUE/FALSE)", {
+test_that("empty and non_empty on a missing column refuse for a CDISC rule, and are FALSE for a 1.0 one", {
+  # Both used to answer NA, which became "no violation". CDISC's engine reads
+  # the column and skips the rule when it is not there; CORE 1.0 answers FALSE.
   data <- data.table::data.table(X = c("a", ""))
   dataset <- list(data = data, meta = NULL)
-  expect_equal(evaluate_check(list(name = "Y", operator = "empty"), dataset, "TS"), c(NA, NA))
-  expect_equal(evaluate_check(list(name = "Y", operator = "non_empty"), dataset, "TS"), c(NA, NA))
+  expect_error(evaluate_check(list(name = "Y", operator = "empty"), dataset, "TS"), "needs Y")
+  expect_error(evaluate_check(list(name = "Y", operator = "non_empty"), dataset, "TS"), "needs Y")
+  study <- one_dataset(list(X = c("a", "")), "TS")
+  expect_equal(evaluate_rule(core1_rule(list(name = "Y", operator = "empty")), study, "TS"), c(FALSE, FALSE))
 })
 
 test_that("inconsistent_enumerated_columns matches CDISC's reference results.csv (CORE-000780)", {

@@ -482,7 +482,7 @@ test_that("a CORE 1.0 comparison against the column each row names follows 1.0's
   )
   check <- list(name = "IDVARVAL", operator = "not_equal_to", value = "IDVAR", value_is_reference = TRUE)
   # Named column found whatever its case; a row naming no column is FALSE;
-  # a blank target differs only from a populated column.
+  # a blank target counts as different only from a blank column.
   expect_equal(evaluate_rule(core1_rule(check), one_dataset(xx), "XX"), c(FALSE, FALSE, TRUE, FALSE))
 })
 

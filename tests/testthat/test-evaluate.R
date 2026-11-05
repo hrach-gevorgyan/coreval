@@ -366,3 +366,39 @@ test_that("rules sharing a dataset's value table cannot change it for each other
   expect_equal(other$data$variable_value, "z")
   expect_identical(.coreval_env$prep_cache$value_table$domain, "YY")
 })
+
+test_that("a CDISC rule naming a column the dataset lacks is skipped, as CDISC's engine skips it", {
+  # The engine reads the target of every operator but a few, and a missing
+  # one raises KeyError, which skips the rule. Answered with NA, it became
+  # "no violation", and CORE-000303 on an LB without LBTEST passed.
+  study <- one_dataset(list(LBTESTCD = c("A", "B"), LBSEQ = 1:2), "LB")
+  rule <- list(check = list(all = list(
+    list(name = "LBTESTCD", operator = "exists"),
+    list(name = "LBTEST", operator = "non_empty")
+  )))
+  expect_error(evaluate_rule(rule, study, "LB"), "needs LBTEST")
+  # In an `any`, a branch naming a missing column counts as no match ...
+  either <- list(check = list(any = list(
+    list(name = "LBTEST", operator = "non_empty"),
+    list(name = "LBTESTCD", operator = "equal_to", value = "B", value_is_literal = TRUE)
+  )))
+  expect_equal(evaluate_rule(either, study, "LB"), c(FALSE, TRUE))
+  # ... and only when every branch does is the rule skipped.
+  neither <- list(check = list(any = list(
+    list(name = "LBTEST", operator = "non_empty"),
+    list(name = "LBORRES", operator = "non_empty")
+  )))
+  expect_error(evaluate_rule(neither, study, "LB"), "needs LBTEST, LBORRES")
+  # A CORE 1.0 rule reads such a condition as FALSE instead.
+  expect_equal(evaluate_rule(core1_rule(rule$check), study, "LB"), c(FALSE, FALSE))
+})
+
+test_that("is_unique_set keeps the columns that exist, as CDISC's engine does (CORE-000580)", {
+  study <- one_dataset(list(ELEMENT = c("A", "A", "B"), TEENRL = c("X", "X", "Y")), "TE")
+  rule <- list(check = list(name = "TEDUR", operator = "is_not_unique_set", value = c("ELEMENT", "TEENRL")))
+  expect_equal(evaluate_rule(rule, study, "TE"), c(TRUE, TRUE, FALSE))
+  unique_rule <- list(check = list(name = "TEDUR", operator = "is_unique_set", value = c("ELEMENT", "TEENRL")))
+  expect_equal(evaluate_rule(unique_rule, study, "TE"), c(FALSE, FALSE, TRUE))
+  none <- list(check = list(name = "TEDUR", operator = "is_not_unique_set", value = "TESTRL"))
+  expect_error(evaluate_rule(none, study, "TE"), "none of which this dataset has")
+})

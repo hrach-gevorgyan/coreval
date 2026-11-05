@@ -189,7 +189,9 @@ read_csv_dataset <- function(path) {
   # case, a row with the wrong number of values is refused rather than padded:
   # there is no telling which value is missing.
   header_line <- readLines(path, n = 1L, warn = FALSE)
-  sep <- if (length(header_line) == 1 && grepl(",", header_line, fixed = TRUE, useBytes = TRUE)) "," else "auto"
+  # A tab in the header means a tab-separated file, whatever else it holds.
+  sep <- if (length(header_line) == 1 && grepl(",", header_line, fixed = TRUE, useBytes = TRUE) &&
+             !grepl("\t", header_line, fixed = TRUE, useBytes = TRUE)) "," else "auto"
   read <- function(...) {
     # Noted and raised once fread has returned: stopping inside its warning
     # leaves fread's own state half torn down for the next call.
@@ -217,10 +219,13 @@ read_csv_dataset <- function(path) {
   # More values on every row than the header names: fread invents a name for
   # the extra column rather than stopping, but the values belong to no
   # variable, and which variable each was meant for cannot be known.
-  header_names <- strsplit(header_line, ",", fixed = TRUE, useBytes = TRUE)[[1]]
-  if (sep == "," && ncol(dt) > length(header_names)) {
+  # Counted by separators, not by strsplit(), which drops an empty last
+  # field: a header ending in a comma, as some spreadsheets write, names one
+  # more (empty) column than strsplit() reports.
+  header_fields <- lengths(gregexpr(",", header_line, fixed = TRUE, useBytes = TRUE)) + 1L
+  if (sep == "," && ncol(dt) > header_fields) {
     stop("could not read all of '", name, "': some rows have more values than the header ",
-         "names (", length(header_names), "), so there is no telling which variable each ",
+         "names (", header_fields, "), so there is no telling which variable each ",
          "belongs to. Nothing was checked.", call. = FALSE)
   }
   repair_doubled_quotes(dt, path)

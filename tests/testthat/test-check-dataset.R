@@ -421,3 +421,14 @@ test_that("a single CSV is read with the same protections as a folder of them", 
   semi <- read_csv_dataset(write_lines("semi.csv", c("STUDYID;AETERM", "S1;Rash, mild")))
   expect_equal(semi$AETERM, "Rash, mild")
 })
+
+test_that("a CSV header ending in a comma is not taken for a row with too many values", {
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path))
+  writeLines(c("STUDYID,USUBJID,AETERM,", "S,1,HEADACHE,", "S,2,NAUSEA,"), path)
+  expect_equal(nrow(read_csv_dataset(path)), 2)
+  tab <- tempfile(fileext = ".csv")
+  on.exit(unlink(tab), add = TRUE)
+  writeLines(c("STUDYID\tUSUBJID\tAETERM", "S\t1\tRash, mild"), tab)
+  expect_equal(ncol(read_csv_dataset(tab)), 3)
+})
