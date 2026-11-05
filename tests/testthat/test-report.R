@@ -52,9 +52,11 @@ test_that("the report hides coreval's internal bindings from the reader", {
 test_that("a variable absent from the dataset is said once, not once per row", {
   # Repeating 'row 1 SUBJID = Not in dataset' for every row says the same
   # thing N times and pushes the useful findings off the screen.
-  result <- check_dataset(demo_dm())
-  out <- paste(capture.output(print(result)), collapse = "\n")
-  expect_match(out, "not in the dataset: ")
+  ae <- data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "02", "03"),
+                   AESEQ = 1, AETERM = "Rash", AESTDTC = "2024-01-05")
+  result <- check_dataset(ae, standard = "SDTMIG", version = "3.4")
+  out <- paste(capture.output(print(result, n = Inf)), collapse = "\n")
+  expect_match(out, "not in the dataset: EPOCH")
   expect_lt(lengths(regmatches(out, gregexpr("Not in dataset", out)))[1], 3)
 })
 
@@ -402,4 +404,28 @@ test_that("the report says a record count is a floor when records were capped", 
   result <- check_dataset(dm, max_records = 1)
   expect_gt(nrow(result$truncated), 0)
   expect_match(paste(utils::capture.output(print(result)), collapse = "\n"), "or more record")
+})
+
+test_that("a blank required value in CORE 1.0's long output is missing required (CORE-000356)", {
+  sub <- data.table::data.table(
+    Dataset = "AE", Record = 1L, Variable = c("variable_name", "variable_value"),
+    Value = c("AEDECOD", ""), issue = "Required variable has a missing value.",
+    triage = NA_character_, rule_id = "CORE-000356"
+  )
+  expect_equal(finding_triage(sub), "missing required")
+  sub$Value[2] <- "2024-13-01"
+  expect_equal(finding_triage(sub), "wrong value")
+})
+
+test_that("print refuses a negative n", {
+  result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"))
+  expect_error(print(result, n = -1), "`n` must be")
+  expect_error(print(result, rows = NA), "`rows` must be")
+})
+
+test_that("variable-metadata rows are not counted as records", {
+  f <- data.table::data.table(Dataset = "AE", Record = c(3L, 5L, 6L), Variable = "variable_name",
+                              Value = c("USUBJID", "AETERM", "AEDECOD"), issue = "x",
+                              triage = "wrong value", rule_id = "CORE-002061")
+  expect_equal(count_records(f), 0L)
 })

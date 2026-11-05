@@ -42,8 +42,8 @@ Pass \code{FALSE} to see exactly what would run.}
 \value{
 A \code{\link[data.table:data.table]{data.table::data.table()}}, one row per rule: \code{id}, the one-line
 \code{issue} it reports, its fuller \code{description}, the \code{guidance} sentence
-from the Implementation Guide it enforces, the \code{legacy_ids} Pinnacle 21
-uses for it, \code{standard} and \code{standard_version}, \code{authority}, \code{rule_type},
+from the Implementation Guide it enforces, its \code{legacy_ids} (the ids the
+CDISC Conformance Rules and FDA Business Rules give it), \code{standard} and \code{standard_version}, \code{authority}, \code{rule_type},
 \code{sensitivity}, \code{executability}, \code{source} and \code{status}.
 
 The commit the bundled rules came from is on the result as

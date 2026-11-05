@@ -580,3 +580,36 @@ test_that("a column with no values at all is an empty text column, not a number"
   expect_equal(built$meta$type, c("Char", "Char"))
   expect_equal(built$data$AEENDTC, "")
 })
+
+test_that("an empty dataset keeps its text columns as text (CORE-001082)", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  ae0 <- data.frame(STUDYID = character(), DOMAIN = character(), USUBJID = character(),
+                    AESEQ = numeric(), AETERM = character())
+  haven::write_xpt(ae0, file.path(dir, "ae.xpt"))
+  expect_equal(read_study(dir)$datasets$AE$meta$type, c("Char", "Char", "Char", "Num", "Char"))
+  expect_true(is.character(read_study(dir)$datasets$AE$data$AETERM))
+  result <- check_dataset(ae0, domain = "AE")
+  expect_false("CORE-001082" %in% result$findings$rule_id)
+})
+
+test_that("a file whose name is not a dataset name is warned about", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "9"), file.path(dir, "dm_old.xpt"))
+  expect_warning(read_study(dir), "not a dataset name: DM_OLD")
+})
+
+test_that("CSV files beside a define are named as not read", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  utils::write.csv(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"),
+                   file.path(dir, "dm.csv"), row.names = FALSE)
+  writeLines("<ODM/>", file.path(dir, "define.xml"))
+  warnings <- testthat::capture_warnings(read_study(dir))
+  expect_true(any(grepl("not read: dm.csv", warnings, fixed = TRUE)))
+})

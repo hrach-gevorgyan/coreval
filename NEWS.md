@@ -54,6 +54,24 @@
     another dataset treated the missing one as empty, so CORE-000172
     reported every record of an AE for a STUDYID "not in DM". Such a rule is
     now skipped, saying which dataset it needs.
+  - Checking one dataset on its own, the rules about the study as a whole
+    ran too, so a single DM was told its study had no define.xml and no
+    trial design datasets. They are skipped there now.
+  - A dataset with no records had every text column typed as a number, so
+    the variable type rule reported each one.
+  - CORE 1.0 checks a record with no partner in a joined dataset only where
+    the rule asks for that; otherwise the record is left out, as 1.0's
+    engine does. An AE for a subject missing from DM was reported by every
+    rule comparing AE dates with DM's.
+  - CORE 1.0's length checks, its prefix and suffix pattern checks and its
+    string-part check answer "no problem" for a blank value, as 1.0's engine
+    does (CORE-000180, CORE-000538). `prefix_equal_to` ignores case in 1.0,
+    so a DOMAIN of "lb" is no longer reported (CORE-000598).
+  - Two CORE 1.0 rules about Associated Persons datasets took in split
+    datasets, so LBCH and LBHE were reported as badly named AP datasets
+    (CORE-000778, CORE-000357).
+  - In a bare CSV, text such as " 5" or "0x1A" was read as a number, so a
+    leading space went unreported. Only plain numbers make a column numeric.
   - With a domain RELREC does not mention, or no RELREC at all, every record
     of that domain was reported.
   - A Define-XML 1.0 was read with every label blank, so the rule comparing
@@ -71,6 +89,24 @@
     order.
 
 * **Problems that were never looked for.**
+  - A SEND study checked with `standard = "SENDIG"` was judged against SDTM
+    terminology. The terminology now follows the standard.
+  - A TS citing `TSVCDREF = "CDISC CT"`, which both engines accept, named no
+    terminology, so every terminology rule was skipped.
+  - CORE 1.0's `contains_all` gave its answer on the first record only, so
+    CORE-002058 missed a TS whose CTAUG row was not the first.
+  - CDISC's `is_inconsistent_across_dataset` with none of its grouping columns
+    passed the dataset; CDISC's engine fails there, and the rule is skipped.
+  - A CORE 1.0 SUPP merge with a blank IDVAR, or a qualifier named like a
+    parent variable, was answered; 1.0's engine stops there, and the rule is
+    now skipped with the reason.
+  - A blank sort date in a CORE 1.0 order check sorts first, as 1.0's engine
+    sorts it, rather than being set aside (CORE-000535).
+  - `check_dataset(x, domain = "AE")` on data whose DOMAIN column says DM ran
+    AE's rules and none of DM's. It is refused now.
+  - A stray copy such as `dm_old.xpt` beside `dm.xpt` was merged into DM
+    without a word. It is named in a warning.
+  - A one-column CSV with spaces in its values lost its header row.
   - A rule whose check names only a computed value reported nothing when it
     found something. CORE-000579 found an empty dataset and passed it, and
     three SEND TX rules found their problems and said nothing.
@@ -156,7 +192,20 @@
   - A value the rule requires, left blank, is "missing required", not "often
     legitimate".
   - `filter_findings(variable =)` finds a variable reported as missing, and
-    refuses a typo instead of matching nothing.
+    refuses a typo instead of matching nothing. It also finds CORE 1.0's
+    findings, which name the variable in a `variable_name` column.
+  - A blank required value in CORE 1.0's output is "missing required", not
+    "wrong value" (CORE-000356).
+  - Rules over the variable metadata no longer count variables as records,
+    and study-level findings are described as about the study.
+  - `summary()` no longer says "across 0 records" for findings about a
+    dataset or the study as a whole.
+  - Saving to a CSV path used before removes a `_truncated.csv` left from the
+    earlier run, which described caps that no longer applied.
+  - Saving a value longer than Excel's 32,767-character cell limit stops
+    with a message suggesting CSV, rather than an error from the Excel
+    writer.
+  - `print()` refuses a negative or missing `n` or `rows`.
 
 * **Faster, and lighter.** CDISC's pilot submission is checked in about 19
   seconds against 26 before, with the same findings. A study ten times its

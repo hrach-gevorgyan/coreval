@@ -20,8 +20,8 @@ filter_findings(
 \item \code{"wrong value"} - the data contains something that breaks the rule, like
 a month of 13. Nothing about your study explains it away. Start here.
 \item \code{"missing required"} - something the standard marks Required is absent.
-\item \code{"missing optional"} - something Expected is absent, or a value is
-blank. Often legitimate: a screen-failure subject with no reference
+\item \code{"missing optional"} - something Expected or Permissible is absent.
+Often legitimate: a screen-failure subject with no reference
 dates, a variable your raw data does not carry yet.
 }
 

@@ -304,6 +304,13 @@ read_define_xml <- function(path) {
   # schema would mean shipping their XSD, which carries its own terms and is
   # not the MIT-licensed material this package bundles.
   if (length(groups) == 0) {
+    # xml_ns_strip() removes only a default namespace. A define written with
+    # the ODM namespace as a prefix (<odm:ItemGroupDef>) is not read, and
+    # saying it has no ItemGroupDef would be untrue.
+    if (length(xml2::xml_find_all(doc, "//*[local-name()='ItemGroupDef']")) > 0) {
+      return(unreadable(paste0("its ODM elements carry a namespace prefix (odm:ItemGroupDef), ",
+                               "which coreval does not read; write ODM as the default namespace")))
+    }
     return(unreadable("no ItemGroupDef elements, so it does not describe any dataset"))
   }
 

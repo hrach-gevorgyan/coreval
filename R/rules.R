@@ -188,8 +188,8 @@ build_rules_table <- function() {
 #'   Pass `FALSE` to see exactly what would run.
 #' @return A [data.table::data.table()], one row per rule: `id`, the one-line
 #'   `issue` it reports, its fuller `description`, the `guidance` sentence
-#'   from the Implementation Guide it enforces, the `legacy_ids` Pinnacle 21
-#'   uses for it, `standard` and `standard_version`, `authority`, `rule_type`,
+#'   from the Implementation Guide it enforces, its `legacy_ids` (the ids the
+#'   CDISC Conformance Rules and FDA Business Rules give it), `standard` and `standard_version`, `authority`, `rule_type`,
 #'   `sensitivity`, `executability`, `source` and `status`.
 #'
 #'   The commit the bundled rules came from is on the result as

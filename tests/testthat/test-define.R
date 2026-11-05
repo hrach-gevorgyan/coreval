@@ -499,3 +499,13 @@ test_that("find_define_xml takes define.xml itself, says which of several it rea
   file.create(file.path(other, c("cdiscpilot01-define.xml", "annotated-crf.xml")))
   expect_equal(basename(find_define_xml(other)), "cdiscpilot01-define.xml")
 })
+
+test_that("a define with a prefixed ODM namespace is refused with the true reason", {
+  skip_if_not_installed("xml2")
+  f <- tempfile(fileext = ".xml")
+  on.exit(unlink(f))
+  writeLines(paste0('<?xml version="1.0"?><odm:ODM xmlns:odm="http://www.cdisc.org/ns/odm/v1.3">',
+                    '<odm:Study><odm:MetaDataVersion><odm:ItemGroupDef OID="IG.DM" Name="DM"/>',
+                    '</odm:MetaDataVersion></odm:Study></odm:ODM>'), f)
+  expect_warning(read_define_xml(f), "namespace prefix")
+})

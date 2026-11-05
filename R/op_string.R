@@ -67,14 +67,23 @@ register_operator("not_matches_regex", guarded_op(function(ctx) {
   !is_blank(ctx$target) & !matches_regex_check(ctx)
 }))
 
+# CORE 1.0 answers every length comparison FALSE for a blank target, the
+# negated ones included (string_length_comparison_operator.py, `CASE WHEN
+# empty THEN FALSE`; has_not_equal_length is the same operator with "!=",
+# postgresql_operators.py). CDISC's engine compares the blank's length.
+core1_blank_false <- function(ctx, out) {
+  if (engine_is_core1()) out[is_blank(ctx$target)] <- FALSE
+  out
+}
+
 # Operator: longer_than - target's character length exceeds value
 register_operator("longer_than", guarded_op(function(ctx) {
-  nchar(ctx$target) > ctx$value
+  core1_blank_false(ctx, nchar(ctx$target) > ctx$value)
 }))
 
 # Operator: shorter_than - target's character length is less than value
 register_operator("shorter_than", guarded_op(function(ctx) {
-  nchar(ctx$target) < ctx$value
+  core1_blank_false(ctx, nchar(ctx$target) < ctx$value)
 }))
 
 #' OR a match function across every element of a (possibly multi-value) comparator
@@ -168,12 +177,13 @@ register_operator("ends_with", guarded_op(function(ctx) {
 
 # Operator: has_equal_length - target's length equals value (a number or reference string)
 register_operator("has_equal_length", guarded_op(function(ctx) {
-  if (is.numeric(ctx$value)) nchar(ctx$target) == ctx$value else nchar(ctx$target) == nchar(ctx$value)
+  core1_blank_false(ctx, if (is.numeric(ctx$value)) nchar(ctx$target) == ctx$value else
+    nchar(ctx$target) == nchar(ctx$value))
 }))
 
 # Operator: has_not_equal_length - negation of has_equal_length
 register_operator("has_not_equal_length", function(ctx) {
-  !get_operator("has_equal_length")(ctx)
+  core1_blank_false(ctx, !get_operator("has_equal_length")(ctx))
 })
 
 # Operator: is_contained_by_case_insensitive - target matches value set, ignoring case
@@ -196,7 +206,9 @@ register_operator("prefix_matches_regex", guarded_op(function(ctx) {
 
 # Operator: not_prefix_matches_regex - negation of prefix_matches_regex
 register_operator("not_prefix_matches_regex", function(ctx) {
-  !get_operator("prefix_matches_regex")(ctx)
+  # prefix_matches_regex_operator.py: the inverted operator, not a NOT, and a
+  # blank target is FALSE either way.
+  core1_blank_false(ctx, !get_operator("prefix_matches_regex")(ctx))
 })
 
 # Operator: suffix_matches_regex - regex matches within the last N characters of target
@@ -209,11 +221,20 @@ register_operator("suffix_matches_regex", guarded_op(function(ctx) {
 
 # Operator: not_suffix_matches_regex - negation of suffix_matches_regex
 register_operator("not_suffix_matches_regex", function(ctx) {
-  !get_operator("suffix_matches_regex")(ctx)
+  core1_blank_false(ctx, !get_operator("suffix_matches_regex")(ctx))
 })
 
 # Operator: prefix_equal_to - target's first N characters (condition's `prefix`) literally equal value
 register_operator("prefix_equal_to", guarded_op(function(ctx) {
+  if (engine_is_core1()) {
+    # prefix_suffix_equal_to_operator.py, as suffix_equal_to: LOWER() on both
+    # sides, and a blank target never equal. Case-sensitive, CORE-000598
+    # reported a DOMAIN of "lb" on LB.
+    part <- tolower(core1_affix(ctx, "prefix"))
+    values <- tolower(as.character(unlist(ctx$value)))
+    hit <- if (length(values) == length(part) && !is.list(ctx$value)) part == values else part %in% values
+    return(!is_blank(ctx$target) & hit)
+  }
   substr(target_text(ctx$target), 1, ctx$condition$prefix) == ctx$value
 }))
 
@@ -254,5 +275,15 @@ register_operator("suffix_is_not_contained_by", function(ctx) {
 # Operator: does_not_equal_string_part - target doesn't match a regex-captured substring of value
 register_operator("does_not_equal_string_part", guarded_op(function(ctx) {
   extracted <- sub(ctx$condition$regex, "\\1", ctx$value, perl = TRUE)
-  ctx$target != extracted
+  out <- ctx$target != extracted
+  if (engine_is_core1()) {
+    # equals_string_part_operator.py (invert): FALSE for a blank target, a
+    # blank comparator, or a comparator the regex does not match, where sub()
+    # would hand back the whole value. CORE-000538 reported a SUPPAE row
+    # whose RDOMAIN was blank.
+    value <- rep_len(as.character(unlist(ctx$value)), length(out))
+    matched <- grepl(ctx$condition$regex, value, perl = TRUE)
+    out[is_blank(ctx$target) | is_blank(value) | !matched] <- FALSE
+  }
+  out
 }))

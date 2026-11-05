@@ -116,6 +116,13 @@ register_operator("contains_all", function(ctx) {
   if (is.list(ctx$value) || is.list(ctx$target)) {
     return(contains_all_per_row(ctx))
   }
+  # CORE 1.0 answers with one subquery that does not depend on the row, so
+  # every row gets the verdict (contains_all_operator.py; its own tests expect
+  # `[expected] * len`). On row 1 only, CORE-002058 reported the CTAUG row
+  # only when it happened to be TS record 1.
+  if (engine_is_core1()) {
+    return(rep(all(ctx$value %in% ctx$target), ctx$n))
+  }
   verdict_on_first_row(all(ctx$value %in% ctx$target), ctx$n)
 })
 
@@ -130,6 +137,9 @@ register_operator("not_contains_all", function(ctx) {
   }
   if (is.list(ctx$value) || is.list(ctx$target)) {
     return(!contains_all_per_row(ctx))
+  }
+  if (engine_is_core1()) {
+    return(rep(!all(ctx$value %in% ctx$target), ctx$n))
   }
   verdict_on_first_row(!all(ctx$value %in% ctx$target), ctx$n)
 })

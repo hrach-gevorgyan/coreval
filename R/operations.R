@@ -2021,7 +2021,10 @@ ct_package_from_ts <- function(study) {
   }
   ref <- toupper(trimws(as.character(ts$TSVCDREF)))
   ver <- trimws(as.character(ts$TSVCDVER))
-  keep <- !is.na(ver) & nzchar(ver) & !is.na(ref) & ref == "CDISC"
+  # "CDISC CT" is accepted by both engines (postgresql_data_service.py
+  # CDISC_CT_REFERENCES; get_codelist_attributes.py), and by
+  # ct_packages_per_row() below.
+  keep <- !is.na(ver) & nzchar(ver) & !is.na(ref) & ref %in% c("CDISC", "CDISC CT")
   if (!any(keep)) {
     return(NULL)
   }

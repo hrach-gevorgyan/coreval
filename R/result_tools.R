@@ -27,6 +27,7 @@ respin_result <- function(result, findings) {
     domains = attr(result, "domains"),
     standard = attr(result, "standard"),
     excluded_by_standard = attr(result, "excluded_by_standard"),
+    define_only = attr(result, "define_only"),
     # So the report can say it is a subset. A filtered report otherwise looks
     # exactly like a full one, and a screenshot of "2 problems" would read as
     # the whole picture.
@@ -45,8 +46,8 @@ respin_result <- function(result, findings) {
 #'   * `"wrong value"` - the data contains something that breaks the rule, like
 #'     a month of 13. Nothing about your study explains it away. Start here.
 #'   * `"missing required"` - something the standard marks Required is absent.
-#'   * `"missing optional"` - something Expected is absent, or a value is
-#'     blank. Often legitimate: a screen-failure subject with no reference
+#'   * `"missing optional"` - something Expected or Permissible is absent.
+#'     Often legitimate: a screen-failure subject with no reference
 #'     dates, a variable your raw data does not carry yet.
 #'
 #'   These are coreval's own triage, not a CDISC severity: the rules carry no
@@ -112,7 +113,12 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
     # finding ("$required_variables = ['AEDECOD']"), so a variable is looked
     # for there too. Matched on Variable alone, asking about AEDECOD answered
     # "no findings" while the report listed it as a missing Required variable.
-    keep <- keep & (f$Variable %in% variable | names_missing(f, variable))
+    # CORE 1.0 reports a value in two rows, `variable_name = RFSTDTC` and
+    # `variable_value = 2024-13-01`. Matched on Variable alone, asking about
+    # RFSTDTC found neither.
+    key <- paste(f$Dataset, f$rule_id, f$Record)
+    named <- f$Variable == "variable_name" & toupper(f$Value) %in% variable
+    keep <- keep & (f$Variable %in% variable | names_missing(f, variable) | key %in% key[named])
   }
 
   respin_result(result, f[keep, ])
@@ -159,10 +165,16 @@ summary.coreval_result <- function(object, ...) {
     capped_rules = n_capped
   )
 
+  # Findings about the study or a dataset as a whole name no record, so a
+  # result made only of those is not described as "across 0 records".
+  where <- if (out$problems > 0 && out$records == 0) {
+    if (all(f$Dataset == "STUDY")) " about the study as a whole" else ""
+  } else {
+    paste0(" across ", out$records, if (out$records == 1) " record" else " records",
+           if (n_capped > 0) " or more" else "")
+  }
   cat(
-    out$problems, if (out$problems == 1) " problem" else " problems",
-    " across ", out$records, if (out$records == 1) " record" else " records",
-    if (n_capped > 0) " or more" else "",
+    out$problems, if (out$problems == 1) " problem" else " problems", where,
     "  (", out$checks_run, " checks ran, ", out$could_not_run, " could not)\n",
     sep = ""
   )

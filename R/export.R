@@ -135,6 +135,14 @@ write_findings <- function(result, path, tracking = TRUE) {
         call. = FALSE
       )
     }
+    # Excel holds at most 32,767 characters in a cell, and writexl dies on a
+    # longer one with a message about libxlsxwriter. Said plainly instead.
+    too_long <- vapply(findings, function(col) is.character(col) && any(nchar(col, "chars") > 32767, na.rm = TRUE), logical(1))
+    if (any(too_long)) {
+      stop("a finding's ", paste(names(findings)[too_long], collapse = ", "),
+           " holds more than 32,767 characters, which Excel cannot store in a cell. ",
+           "Write CSV instead by using a '.csv' path.", call. = FALSE)
+    }
     sheets <- list(
       findings = as.data.frame(findings),
       skipped = as.data.frame(skipped),
@@ -169,10 +177,14 @@ write_findings <- function(result, path, tracking = TRUE) {
   write_csv(about, about_path)
   written <- c(path, skipped_path, about_path)
 
+  truncated_path <- sibling("truncated")
   if (nrow(truncated) > 0) {
-    truncated_path <- sibling("truncated")
     write_csv(truncated, truncated_path)
     written <- c(written, truncated_path)
+  } else if (file.exists(truncated_path)) {
+    # Left from an earlier export to the same path, it would report caps that
+    # do not apply to the findings beside it.
+    unlink(truncated_path)
   }
   invisible(written)
 }

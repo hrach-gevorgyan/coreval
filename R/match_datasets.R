@@ -193,6 +193,24 @@ apply_supp_match <- function(dataset, supp_dataset) {
   idvar_of <- if ("IDVAR" %in% names(supp)) trimws(as.character(supp$IDVAR)) else rep("", nrow(supp))
   idvar_of[is.na(idvar_of)] <- ""
 
+  # CORE 1.0's SUPP merge (merges/supp.py) takes every distinct IDVAR as a
+  # parent column it requires, so outside SUPPDM a blank IDVAR asks for a
+  # column named "" and the merge fails; and a QNAM the parent already has is
+  # refused rather than merged. The rule cannot be answered there, so it is
+  # not answered here.
+  if (engine_is_core1() && !identical(toupper(unique(left$DOMAIN)[1]), "DM")) {
+    if (any(!nzchar(idvar_of))) {
+      stop("the supplemental dataset has records with a blank IDVAR, which CORE 1.0 ",
+           "cannot link to their parent records", call. = FALSE)
+    }
+  }
+  if (engine_is_core1()) {
+    clash <- intersect(unique(as.character(supp$QNAM)), setdiff(names(left), ".coreval_row_id"))
+    if (length(clash) > 0) {
+      stop("the supplemental qualifier ", paste(clash, collapse = ", "),
+           " has the name of a variable the parent dataset already has", call. = FALSE)
+    }
+  }
   for (iv in unique(idvar_of)) {
     pivoted <- pivot_supp_dataset(supp[idvar_of == iv])
     keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
@@ -653,6 +671,16 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   ord <- order(l, method = "radix")
   l <- l[ord]
   r <- r[ord]
+  # CORE 1.0 joins INNER unless the spec says otherwise
+  # (base_standards_context.py, join_type "INNER"; merges/join.py), so a
+  # record with no partner is never evaluated. Kept with blank partner
+  # columns, an AE for a subject missing from DM was reported by every rule
+  # comparing it with DM's dates (CORE-000177, CORE-000262).
+  if (engine_is_core1() && !is_left_join(spec)) {
+    paired <- !is.na(r)
+    l <- l[paired]
+    r <- r[paired]
+  }
 
   # When every row kept exactly one place, the left columns are reused as
   # they are rather than copied. Nothing downstream writes into a checked

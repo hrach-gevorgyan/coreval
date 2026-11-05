@@ -451,7 +451,15 @@ register_operator("is_inconsistent_across_dataset", function(ctx) {
   cols <- resolve_var_name(ctx$condition$value, ctx$wildcard)
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
-    return(rep(FALSE, ctx$n))
+    # CORE 1.0 answers FALSE (is_inconsistent_across_dataset_operator.py).
+    # CDISC's engine groups by no columns and fails ("No group keys
+    # passed!"), so the rule is skipped there; answered FALSE, CORE-000612 on
+    # a PC with no PCTESTCD reported a clean pass.
+    if (engine_is_core1()) {
+      return(rep(FALSE, ctx$n))
+    }
+    stop("groups by ", paste(resolve_var_name(ctx$condition$value, ctx$wildcard), collapse = ", "),
+         ", none of which this dataset has", call. = FALSE)
   }
   if (engine_is_core1()) {
     return(core1_inconsistent_across_dataset(ctx, cols))

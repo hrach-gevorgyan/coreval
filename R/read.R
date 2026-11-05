@@ -152,8 +152,21 @@ read_study_folder <- function(path, skip = character(0)) {
   datasets <- datasets[keep]
   names(datasets) <- keys[keep]
 
+  # A dataset name is at most eight letters and digits. A file named otherwise,
+  # such as a stale dm_old.xpt left beside dm.xpt, was taken as part of the
+  # dataset its DOMAIN names and merged with it without a word: its subjects
+  # then hid a real "subject not in DM" finding.
+  odd <- names(datasets)[!grepl("^[A-Z][A-Z0-9]{0,7}$", names(datasets))]
+  if (length(odd) > 0) {
+    warning("not a dataset name: ", paste(odd, collapse = ", "), ". A file named so is ",
+            "checked as a dataset of its own, and joined to the domain its DOMAIN ",
+            "column names. Remove it if it is a stray copy.", call. = FALSE)
+  }
+
   csv <- list.files(path, pattern = "[.]csv$", ignore.case = TRUE)
-  if (length(datasets) > 0 && length(csv) > 0) {
+  # With nothing else to check, check_study() stops and names the CSVs itself;
+  # with a define beside them, the check goes ahead and they would be missed.
+  if (length(csv) > 0 && (length(datasets) > 0 || !is.null(find_define_xml(path)))) {
     warning("not read: ", paste(csv, collapse = ", "), ". A study folder is read ",
             "from .xpt, .sas7bdat and Dataset-JSON files; check a CSV on its own ",
             "with check_dataset().", call. = FALSE)
@@ -331,7 +344,12 @@ repair_invalid_utf8 <- function(dt) {
 fill_char_blanks <- function(dt) {
   for (v in names(dt)) {
     if (is.character(dt[[v]])) {
-      data.table::set(dt, j = v, value = ifelse(is.na(dt[[v]]), "", dt[[v]]))
+      # Not ifelse(): on a dataset with no rows it returns logical(0), so every
+      # text column of an empty dataset became logical, was typed Num, and
+      # CORE-001082 reported each one as the wrong type.
+      x <- dt[[v]]
+      x[is.na(x)] <- ""
+      data.table::set(dt, j = v, value = x)
     }
   }
   invisible(NULL)

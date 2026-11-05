@@ -448,3 +448,38 @@ test_that("a CSV header ending in a comma is not taken for a row with too many v
   writeLines(c("STUDYID\tUSUBJID\tAETERM", "S\t1\tRash, mild"), tab)
   expect_equal(ncol(read_csv_dataset(tab)), 3)
 })
+
+test_that("a bare CSV keeps text that is not a plain number as text (CORE-000867)", {
+  f <- tempfile(fileext = ".csv")
+  on.exit(unlink(f))
+  utils::write.csv(data.frame(STUDYID = "S", DOMAIN = "LB", LBORRES = c(" 5", "6"),
+                              X = c("0x1A", "1e3"), N = c("1", "2.5")), f, row.names = FALSE)
+  dt <- read_csv_dataset(f)
+  expect_identical(dt$LBORRES, c(" 5", "6"))
+  expect_identical(dt$X, c("0x1A", "1e3"))
+  expect_identical(dt$N, c(1, 2.5))
+})
+
+test_that("a one-column CSV with spaces in its values is read whole", {
+  f <- tempfile(fileext = ".csv")
+  on.exit(unlink(f))
+  writeLines(c("AETERM", "HEAD ACHE", "BACK PAIN"), f)
+  dt <- read_csv_dataset(f)
+  expect_identical(names(dt), "AETERM")
+  expect_identical(dt$AETERM, c("HEAD ACHE", "BACK PAIN"))
+})
+
+test_that("domain= that contradicts the DOMAIN column is refused", {
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("1", "2"))
+  expect_error(check_dataset(dm, domain = "AE"), "DOMAIN column says DM")
+  lb <- data.frame(STUDYID = "S1", DOMAIN = "LB", USUBJID = "1", LBSEQ = 1)
+  expect_s3_class(check_dataset(lb, domain = "LB1"), "coreval_result")
+})
+
+test_that("a rule about the whole study is skipped on one dataset (CORE-002084, CORE-002056)", {
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"))
+  result <- check_dataset(dm)
+  expect_false(any(c("CORE-002084", "CORE-002056") %in% result$findings$rule_id))
+  expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-002084"][1],
+               "whole study")
+})

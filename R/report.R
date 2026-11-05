@@ -154,7 +154,11 @@ finding_triage <- function(sub, rule = NULL) {
   # evidence about the record. Counted as evidence, one rule reporting a blank
   # ACTARM alongside USUBJID came out "wrong value" while its twin reporting
   # the blank ACTARMCD alone came out "often legitimate", for the same defect.
-  identifier <- real$Variable %in% c("STUDYID", "DOMAIN", "USUBJID", "POOLID", "APID", "SPDEVID") |
+  # So is `variable_name` in CORE 1.0's long output, which names the variable
+  # whose value is in `variable_value`: counted as evidence, every "required
+  # value is missing" finding (CORE-000356) came out "wrong value".
+  identifier <- real$Variable %in% c("STUDYID", "DOMAIN", "USUBJID", "POOLID", "APID", "SPDEVID",
+                                     "variable_name") |
     grepl("^[A-Z]{2}SEQ$", real$Variable)
   evidence <- real[!identifier, ]
 
@@ -310,8 +314,15 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
 
   for (grp in utils::head(groups, n)) {
     sub <- f[key == grp, ]
-    # A finding about the dataset as a whole names no record.
+    # A finding about the dataset as a whole names no record. A rule over the
+    # variable metadata numbers variables, not records.
     n_rec <- count_records(sub)
+    n_vars <- if (n_rec == 0 && rule_rows_are_variables(sub$rule_id[1])) {
+      length(unique(sub$Record[!is.na(sub$Record)]))
+    } else {
+      0L
+    }
+    whole <- if (identical(sub$Dataset[1], "STUDY")) "the study" else "the dataset"
 
     cat("\n[", sub$triage[1], "]\n", sep = "")
     for (ln in wrap_lines(sub$issue[1], width - 2, 2)) cat(ln, "\n", sep = "")
@@ -336,7 +347,8 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
       if (any(hit)) total_rec <- truncated$records_found[which(hit)[1]]
     }
     cat(
-      "  ", if (total_rec == 0) "the dataset" else paste(total_rec, if (total_rec == 1) "record" else "records"),
+      "  ", if (total_rec > 0) paste(total_rec, if (total_rec == 1) "record" else "records") else
+        if (n_vars > 0) paste(n_vars, if (n_vars == 1) "variable" else "variables") else whole,
       if (total_rec > n_rec) paste0(" (first ", n_rec, " kept)") else "",
       if (length(vars)) paste0(" ", g$dot, " ", paste(utils::head(vars, 4), collapse = ", ")) else "",
       "\n",
@@ -361,7 +373,7 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
       # Repeating "row 1 SUBJID = Not in dataset, row 2 SUBJID = Not in
       # dataset..." says the same thing N times. The variable is absent from
       # the dataset; say that once.
-      cat("    not in the dataset: ", paste(unique(real$Variable), collapse = ", "), "\n", sep = "")
+      cat("    not in ", whole, ": ", paste(unique(real$Variable), collapse = ", "), "\n", sep = "")
     } else {
       recs <- unique(real$Record[!is.na(real$Record)])
       if (length(recs) == 0) {
@@ -495,6 +507,12 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   # then died on `x$findings` with base R's "argument is of length zero",
   # which tells the reader nothing about what is wrong.
   assert_coreval_result(x)
+  for (arg in c("n", "rows")) {
+    v <- get(arg)
+    if (!is.numeric(v) || length(v) != 1L || is.na(v) || v < 0) {
+      stop("`", arg, "` must be a single number, 0 or more (Inf for all).", call. = FALSE)
+    }
+  }
   g <- report_glyphs()
   width <- max(60, min(getOption("width", 80), 100))
   f <- x$findings
@@ -633,8 +651,10 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   if (nrow(f) > 0) {
     cat("Fix what you can, then run this again.\n")
     cat("To track the rest:  write_findings(result, \"issues.xlsx\")\n")
-  } else if (nrow(skipped) > 0) {
+  } else if (any(grepl("was not supplied", skipped$reason, fixed = TRUE))) {
     cat("Run check_study() on the full folder for the checks that could not run here.\n")
+  } else if (nrow(skipped) > 0) {
+    cat("See result$skipped for the checks that could not run, and why.\n")
   }
   invisible(x)
 }
@@ -652,6 +672,39 @@ count_records <- function(f) {
   if (nrow(f) == 0) {
     return(0L)
   }
+  # A rule over variable or dataset metadata numbers rows of that table, not
+  # records: counted as records, two-row AE printed "across 9 records".
+  f <- f[!rule_rows_are_metadata(f$rule_id), ]
   keyed <- unique(f[, c("Dataset", "Record")])
   sum(!is.na(keyed$Record))
+}
+
+#' The rule type of each rule id, from either bundled rule set
+#' @param ids Rule ids.
+#' @return A character vector, `NA` for an id in neither set.
+#' @noRd
+rule_type_of <- function(ids) {
+  sets <- .coreval_env$rule_sets
+  vapply(ids, function(id) {
+    r <- sets$sdtm[[id]] %||% sets$cdisc[[id]] %||% .coreval_env$data$rules[[id]]
+    if (is.null(r$rule_type)) NA_character_ else r$rule_type
+  }, character(1), USE.NAMES = FALSE)
+}
+
+#' Does a rule's Record number a row of a metadata table rather than a record?
+#' @param ids Rule ids.
+#' @return A logical vector.
+#' @noRd
+rule_rows_are_metadata <- function(ids) {
+  u <- unique(ids)
+  hit <- grepl("Metadata Check|Global Value Check|Domain Presence|Define Item", rule_type_of(u))
+  hit[match(ids, u)]
+}
+
+#' Does a rule's Record number a variable of the dataset?
+#' @param ids Rule ids.
+#' @return A logical vector.
+#' @noRd
+rule_rows_are_variables <- function(ids) {
+  rule_rows_are_metadata(ids) & grepl("Variable Metadata", rule_type_of(ids))
 }

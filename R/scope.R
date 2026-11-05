@@ -261,7 +261,9 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
   if (!is.null(scope$Classes) && !class_matches(scope$Classes, domain, dataset, ig)) {
     return(FALSE)
   }
-  if (!is.null(scope$Domains) && !domains_scope_applies(scope$Domains, domain, dataset)) {
+  if (!is.null(scope$Domains) &&
+        !domains_scope_applies(scope$Domains, domain, dataset,
+                               core1 = identical(rule$source, "core_contributor"))) {
     return(FALSE)
   }
   # USDM rules scope by ENTITY, not by domain or class: a study-design document
@@ -301,9 +303,10 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
 #' @param domains_spec The rule's `scope$Domains` block.
 #' @param domain The dataset's key.
 #' @param dataset The dataset, or `NULL`.
+#' @param core1 Whether the rule is a CORE 1.0 rule.
 #' @return A single logical.
 #' @noRd
-domains_scope_applies <- function(domains_spec, domain, dataset = NULL) {
+domains_scope_applies <- function(domains_spec, domain, dataset = NULL, core1 = FALSE) {
   include_split <- domains_spec[["include_split_datasets"]]
   split <- !is.null(dataset) && dataset_is_split(dataset, domain)
   included <- is.null(domains_spec$Include) ||
@@ -314,7 +317,13 @@ domains_scope_applies <- function(domains_spec, domain, dataset = NULL) {
     if (isTRUE(include_split) && is.null(domains_spec$Include) && !split) {
       included <- FALSE
     }
-    if (isTRUE(include_split) && split && !excluded) {
+    # CDISC's engine adds every split dataset (rule_processor.py,
+    # _handle_split_domains). CORE 1.0 adds them only when the rule includes
+    # no domains; otherwise the included domains decide, split or not
+    # (sdtm_standards_context.py). Followed for a 1.0 rule, CORE-000778, a
+    # rule about AP dataset names, stopped reporting LBCH and LBHE.
+    if (isTRUE(include_split) && split && !excluded &&
+          !(core1 && !is.null(domains_spec$Include))) {
       included <- TRUE
     }
     if (identical(include_split, FALSE) && split) {

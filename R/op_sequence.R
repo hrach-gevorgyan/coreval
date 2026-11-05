@@ -195,8 +195,11 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   if (isTRUE(ctx$condition$strict_incremental_ordering)) {
     keys <- lapply(ctx$condition$value, function(sp) {
       col <- dt[[resolve_var_name(sp$name, ctx$wildcard)]]
+      # A blank text value is "", not missing, in CORE 1.0 as read from a
+      # transport file (xpt_data_reader.py only trims), so it sorts first
+      # ascending; null_position applies to a missing number only.
       x <- as.character(col)
-      x[is_blank(col)] <- NA_character_
+      if (!is.character(col)) x[is_blank(col)] <- NA_character_
       x
     })
     decreasing <- vapply(ctx$condition$value, function(sp) identical(tolower(sp$sort_order %||% "asc"), "desc"),
@@ -263,9 +266,8 @@ core1_sorted_by <- function(target, dt, group, ctx) {
   specs <- ctx$condition$value
   n <- length(target)
   cols <- lapply(specs, function(sp) {
-    x <- as.character(dt[[resolve_var_name(sp$name, ctx$wildcard)]])
-    x[!is.na(x) & !nzchar(x)] <- NA_character_
-    x
+    # As above: a blank text sort value is "", which sorts first ascending.
+    as.character(dt[[resolve_var_name(sp$name, ctx$wildcard)]])
   })
   desc <- vapply(specs, function(sp) identical(tolower(sp$sort_order %||% "asc"), "desc"), logical(1))
   nfirst <- vapply(specs, function(sp) identical(tolower(sp$null_position %||% "last"), "first"), logical(1))

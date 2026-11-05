@@ -35,19 +35,20 @@ dm <- data.frame(
   AGEU    = c("YEARS", "YEARS", "")                       # age with no unit
 )
 
-check_dataset(dm, standard = "SDTMIG", version = "3.4")
+result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
+print(result, n = 2)   # describe the first two problems; typing `result` shows ten
 ```
 
-You get a report like this (shortened here to the first two problems):
+You get a report like this:
 
 ```
 ── coreval — DM ────────────────────────────────────────────────────────────────
 
-6 problems across 2 records  (145 checks ran)
+4 problems across 2 records  (143 checks ran)
 
   wrong value         2   the data breaks the rule - start here
   missing required    1   the standard requires it
-  missing optional    3   often legitimate: not collected, screen failure, ...
+  missing optional    1   often legitimate: not collected, screen failure, ...
 
 [wrong value]
 AGEU must be populated when AGE is populated.
@@ -61,20 +62,21 @@ Value must be a valid ISO 8601 datetime or interval.
     row 2     variable_name = "RFSTDTC", variable_value = "2024-13-01"
     CORE-002121  · also CG0011
 
-  ... and 4 more here. See result$findings for all of them.
+  ... and 2 more here. See result$findings for all of them.
 
 ────────────────────────────────────────────────────────────────────────────────
-67 checks could not run.
+69 checks could not run.
   28 need other datasets (AE, CE, DD, DS, EX, RELREC, ...)
      → run check_study() on the whole folder to cover these
-  18 ask what the whole study contains
+  22 ask what the whole study contains
   13 need a define.xml
-  8 for other reasons, see result$skipped
+  6 for other reasons, see result$skipped
 ```
 
 Both planted mistakes are found. Definite errors come first, and each one
 shows the row and the value. The rule number is at the end, with the
-Pinnacle 21 number for the same rule after "also". The bottom part tells you
+same rule's number in CDISC's Conformance Rules or the FDA Business Rules
+after "also". The bottom part tells you
 what it couldn't check and how to fix that.
 
 ## Everyday use
@@ -128,12 +130,12 @@ So before you celebrate, look at `result$skipped`.
 ## Common questions
 
 **Which terminology version does it use?** The one your study declares, in TS
-(`TSVCDVER`) or in the define.xml. If neither says, the terminology rules are
+(`TSVCDVER`, with `TSVCDREF` = `CDISC`) or in the define.xml. If neither says, the terminology rules are
 skipped until you tell it, for example `ct_package = "sdtmct-2026-03-27"`.
 `list_ct_packages()` lists every release. It never guesses.
 
 **What does a rule check?** `list_rules(id = "CORE-000189")` gives its
-description, the guidance it comes from and its Pinnacle 21 numbers.
+description, the guidance it comes from and its Conformance Rules numbers.
 
 **Does my data leave my computer?** No. There's no internet access, account or
 API key. The rules and terminology are bundled in the package.

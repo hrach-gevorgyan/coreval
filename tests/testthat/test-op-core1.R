@@ -495,3 +495,57 @@ test_that("CORE 1.0's complete date is a shape, and its duration rule allows one
                c(FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE))
   expect_false(core1_invalid_duration("-P1D", negative = TRUE))
 })
+
+test_that("CORE 1.0 length and string-part checks answer FALSE for a blank (CORE-000180, 000538)", {
+  ds <- one_dataset(list(DOMAIN = c("AE", ""), RDOMAIN = c("AE", "")), "SUPPAE")
+  len <- list(name = "DOMAIN", operator = "has_not_equal_length", value = 2)
+  expect_equal(in_core1(evaluate_check(len, ds$datasets$SUPPAE, "SUPPAE")), c(FALSE, FALSE))
+  part <- list(name = "RDOMAIN", operator = "does_not_equal_string_part", value = "SUPPLB",
+               regex = ".{4}(..).*", value_is_literal = TRUE)
+  expect_equal(in_core1(evaluate_check(part, ds$datasets$SUPPAE, "SUPPAE")), c(TRUE, FALSE))
+})
+
+test_that("CORE 1.0 prefix_equal_to ignores case (CORE-000598)", {
+  ds <- one_dataset(list(DOMAIN = c("LB", "lb")), "LB")
+  chk <- list(name = "DOMAIN", operator = "prefix_equal_to", value = "LB", prefix = 2,
+              value_is_literal = TRUE)
+  expect_equal(in_core1(evaluate_check(chk, ds$datasets$LB, "LB")), c(TRUE, TRUE))
+})
+
+test_that("CORE 1.0 contains_all answers on every row (CORE-002058)", {
+  ds <- one_dataset(list(TSPARMCD = c("TITLE", "CTAUG")), "TS")
+  chk <- list(name = "TSPARMCD", operator = "not_contains_all", value = list("EGBLIND"),
+              value_is_literal = TRUE)
+  expect_equal(in_core1(evaluate_check(chk, ds$datasets$TS, "TS")), c(TRUE, TRUE))
+})
+
+test_that("CORE 1.0 joins INNER, so a record with no partner is not evaluated (CORE-000177)", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2"),
+                              RFSTDTC = "2024-01-01"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = c("1", "2", "9"),
+                              AESEQ = 1, AESTDTC = "2024-02-01", AESTDY = 32), file.path(dir, "ae.xpt"))
+  study <- read_study(dir)
+  spec <- list(Name = "DM", Keys = list("USUBJID"))
+  joined <- in_core1(apply_match_dataset(study$datasets$AE, spec, study, "AE"))
+  expect_equal(nrow(joined$data), 2L)
+  expect_equal(nrow(apply_match_dataset(study$datasets$AE, spec, study, "AE")$data), 3L)
+})
+
+test_that("CORE 1.0 refuses a SUPP merge with a blank IDVAR outside SUPPDM (CORE-002034)", {
+  parent <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1),
+                 meta = NULL)
+  supp <- list(data = data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "",
+                                             IDVARVAL = "", QNAM = "AETRTEM", QVAL = "Y"), meta = NULL)
+  expect_error(in_core1(apply_supp_match(parent, supp)), "blank IDVAR")
+  expect_s3_class(apply_supp_match(parent, supp)$data, "data.table")
+})
+
+test_that("CDISC's is_inconsistent_across_dataset with none of its columns is refused (CORE-000612)", {
+  ds <- one_dataset(list(PCORRES = c("1", "2")), "PC")
+  chk <- list(name = "PCORRES", operator = "is_inconsistent_across_dataset", value = "PCTESTCD")
+  expect_error(evaluate_check(chk, ds$datasets$PC, "PC"), "none of which")
+  expect_equal(in_core1(evaluate_check(chk, ds$datasets$PC, "PC")), c(FALSE, FALSE))
+})

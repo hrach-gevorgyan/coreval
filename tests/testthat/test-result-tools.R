@@ -285,3 +285,26 @@ test_that("a finding about the whole dataset is not counted as a record", {
   s <- summary(check_dataset(ae))
   expect_lte(s$records, 2L)
 })
+
+test_that("filter_findings(variable =) finds CORE 1.0's long output", {
+  f <- data.table::data.table(
+    Dataset = "DM", Record = 2L, Variable = c("dataset_name", "variable_name", "variable_value"),
+    Value = c("DM", "RFSTDTC", "2024-13-01"), issue = "x", triage = "wrong value", rule_id = "CORE-002121"
+  )
+  result <- structure(list(findings = f, skipped = data.table::data.table(rule_id = character(),
+    domain = character(), reason = character()), truncated = NULL), class = "coreval_result",
+    checks_run = 1L, define_only = TRUE)
+  out <- filter_findings(result, variable = "RFSTDTC")
+  expect_equal(nrow(out$findings), 3L)
+  expect_true(isTRUE(attr(out, "define_only")))
+})
+
+test_that("summary does not describe study-level findings as across 0 records", {
+  f <- data.table::data.table(Dataset = "STUDY", Record = NA_integer_, Variable = "define.xml",
+                              Value = "Not in dataset", issue = "x", triage = "missing optional",
+                              rule_id = "CORE-002084")
+  result <- structure(list(findings = f, skipped = data.table::data.table(rule_id = character(),
+    domain = character(), reason = character()), truncated = NULL), class = "coreval_result",
+    checks_run = 1L)
+  expect_output(summary(result), "about the study as a whole")
+})

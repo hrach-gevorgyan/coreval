@@ -197,6 +197,12 @@ read_csv_dataset <- function(path) {
   # A tab in the header means a tab-separated file, whatever else it holds.
   sep <- if (length(header_line) == 1 && grepl(",", header_line, fixed = TRUE, useBytes = TRUE) &&
              !grepl("\t", header_line, fixed = TRUE, useBytes = TRUE)) "," else "auto"
+  # A header with no separator at all is a single column. Left to fread, the
+  # spaces in "HEAD ACHE" made it choose a space, and the header and the first
+  # record were lost.
+  if (length(header_line) == 1 && !grepl("[,;\t|]", header_line, useBytes = TRUE)) {
+    sep <- ","
+  }
   read <- function(...) {
     # Noted and raised once fread has returned: stopping inside its warning
     # leaves fread's own state half torn down for the next call.
@@ -258,7 +264,11 @@ read_csv_dataset <- function(path) {
     x <- dt[[v]]
     gap <- x %in% c("", "NA")
     if (all(gap)) next
-    num <- suppressWarnings(as.numeric(x[!gap]))
+    # Plain decimal numbers only. as.numeric() also takes " 5", "0x1A" and
+    # "Inf": a text value with a leading space read as the number 5, and the
+    # rule about leading spaces (CORE-000867) never saw it.
+    plain <- grepl("^[-+]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][-+]?[0-9]+)?$", x[!gap], useBytes = TRUE)
+    num <- if (all(plain)) suppressWarnings(as.numeric(x[!gap])) else NA_real_
     if (!anyNA(num)) {
       out <- rep(NA_real_, length(x))
       out[!gap] <- num
@@ -437,6 +447,15 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     )
   }
   domain <- toupper(domain)
+  # A domain that contradicts the data's own DOMAIN column ran AE's rules over
+  # a DM and none of DM's, without a word. Refused: there is no telling which
+  # of the two is right. A split part (LB1, LBCH) starts with its domain.
+  declared <- unique(dataset$data$DOMAIN)
+  declared <- toupper(declared[!is.na(declared) & nzchar(declared)])
+  if (length(declared) == 1 && !startsWith(domain, declared) && !startsWith(declared, domain)) {
+    stop("domain = \"", domain, "\" but the DOMAIN column says ", declared,
+         ". Leave domain unset, or correct the data.", call. = FALSE)
+  }
 
   study <- list(
     datasets = stats::setNames(list(dataset), domain),

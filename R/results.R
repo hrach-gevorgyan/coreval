@@ -481,6 +481,21 @@ check_study <- function(study, standard = NULL, version = NULL,
       call. = FALSE
     )
   }
+  # Applied before the terminology is resolved: the family (sdtmct or
+  # sendct) follows the standard, and a SEND study checked with
+  # standard = "SENDIG" was judged against SDTM terminology.
+  # An explicitly supplied standard overrides whatever the study declares
+  # about itself, the same way it does in check_dataset(). Without this,
+  # check_study()'s own report told the reader to pass `standard = "SDTMIG"`
+  # and there was no such argument to pass it to.
+  if (!is.null(standard)) {
+    study$standard <- list(
+      product = toupper(standard),
+      version = if (is.null(version)) NA_character_ else version
+    )
+  } else if (!is.null(version)) {
+    study$standard$version <- version
+  }
   # Carried on the study so every operation can reach it without threading an
   # argument through each layer. Checked here rather than at first use, so a
   # typo is reported once and immediately instead of as a skip reason on every
@@ -503,18 +518,6 @@ check_study <- function(study, standard = NULL, version = NULL,
   # neither there is nothing to check.
   if (length(study$datasets) == 0 && is.null(study$define)) {
     stop(no_datasets_message(folder), call. = FALSE)
-  }
-  # An explicitly supplied standard overrides whatever the study declares
-  # about itself, the same way it does in check_dataset(). Without this,
-  # check_study()'s own report told the reader to pass `standard = "SDTMIG"`
-  # and there was no such argument to pass it to.
-  if (!is.null(standard)) {
-    study$standard <- list(
-      product = toupper(standard),
-      version = if (is.null(version)) NA_character_ else version
-    )
-  } else if (!is.null(version)) {
-    study$standard$version <- version
   }
   run_checks(
     study,
@@ -747,8 +750,13 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       # code was told that ADSL and TO were missing. That is a finding about
       # data nobody supplied, which is exactly what the skip above exists to
       # refuse.
+      # So, for the same reason, is any rule reported once for the whole
+      # study: checking one DM built in code, "Missing Define-XML document"
+      # and "At least one Trial Design Dataset is missing" were reported
+      # about a study nobody supplied (CORE-002084, CORE-002056).
       if (require_referenced_domains &&
-            isTRUE(startsWith(rule$rule_type, "Domain Presence Check"))) {
+            (isTRUE(startsWith(rule$rule_type, "Domain Presence Check")) ||
+               identical(rule$sensitivity, "Study"))) {
         all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
           rule_id = rule_id, domain = domain,
           reason = paste0(

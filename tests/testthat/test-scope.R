@@ -287,3 +287,17 @@ test_that("an operation over a domain the study lacks is skipped, not answered c
   result <- check_study(dir)
   expect_setequal(result$findings$Record[result$findings$rule_id == "CORE-000039"], c(1L, 2L))
 })
+
+test_that("a CORE 1.0 rule with an Include list does not take in split datasets (CORE-000778)", {
+  spec <- list(Include = list("AP--"), include_split_datasets = TRUE)
+  lb1 <- list(data = data.table::data.table(DOMAIN = "LB"), meta = NULL)
+  expect_false(domains_scope_applies(spec, "LBCH", lb1, core1 = TRUE))
+})
+
+test_that("CT follows the declared standard, and TS may cite CDISC CT", {
+  study <- list(datasets = list(TS = list(data = data.table::data.table(
+    TSPARMCD = "X", TSVCDREF = "CDISC CT", TSVCDVER = "2026-03-27"))),
+    standard = list(product = "SENDIG", version = "3.1"))
+  skip_if_not("sendct-2026-03-27" %in% list_ct_packages())
+  expect_equal(ct_package_from_ts(study), "sendct-2026-03-27")
+})
