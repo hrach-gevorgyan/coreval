@@ -128,6 +128,10 @@ read_study_folder <- function(path, skip = character(0)) {
                  toupper(tools::file_path_sans_ext(basename(files))), declared)
 
   keep <- rep(TRUE, length(files))
+  # Said once for the folder: a submission package holding every dataset as
+  # both .xpt and .json gave a warning per dataset, 22 of them.
+  used <- character(0)
+  dropped_all <- character(0)
   for (key in unique(keys[duplicated(keys)])) {
     idx <- which(keys == key)
     best <- min(rank[ext[idx]])
@@ -140,10 +144,16 @@ read_study_folder <- function(path, skip = character(0)) {
     }
     dropped <- setdiff(idx, winners)
     keep[dropped] <- FALSE
-    warning(basename(files[winners]), " and ",
-            paste(basename(files[dropped]), collapse = ", "),
-            " both hold the dataset ", key, "; only ", basename(files[winners]),
-            " was checked.", call. = FALSE)
+    used <- c(used, basename(files[winners]))
+    dropped_all <- c(dropped_all, basename(files[dropped]))
+  }
+  if (length(used) > 0) {
+    warning(length(used), if (length(used) == 1) " dataset is" else " datasets are",
+            " held in more than one file; checked ", paste(utils::head(used, 4), collapse = ", "),
+            if (length(used) > 4) ", ..." else "", " and left out ",
+            paste(utils::head(dropped_all, 4), collapse = ", "),
+            if (length(dropped_all) > 4) ", ..." else "",
+            ". Transport files win, then SAS datasets, then Dataset-JSON.", call. = FALSE)
   }
   # The file's size on disk, which CORE-000765 measures against 5 GB.
   for (i in seq_along(datasets)) {
@@ -690,7 +700,10 @@ read_env_standard <- function(path) {
   }, character(1)))
   list(
     product = toupper(vals[match("PRODUCT", keys)]),
-    version = vals[match("VERSION", keys)]
+    version = vals[match("VERSION", keys)],
+    # A TIG case says whether it is SDTM or SEND data, as CDISC's engine
+    # requires (core.py --substandard).
+    substandard = toupper(vals[match("SUBSTANDARD", keys)])
   )
 }
 
@@ -808,7 +821,10 @@ build_dataset_from_csv <- function(path, fname, variables_csv, dataset_label = N
   dt <- withCallingHandlers(
     do.call(data.table::fread, fread_args),
     warning = function(w) {
-      if (grepl("Attempt to override column", conditionMessage(w), fixed = TRUE)) {
+      # And "Column name 'STUDYID' (colClasses...) not found", when the header
+      # carries stray spaces: the names are trimmed and typed just below.
+      if (grepl("Attempt to override column", conditionMessage(w), fixed = TRUE) ||
+            grepl("(colClasses[[", conditionMessage(w), fixed = TRUE)) {
         invokeRestart("muffleWarning")
       }
     }

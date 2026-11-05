@@ -61,7 +61,7 @@ test_that("read_study captures a CORE test case's declared standard from .env", 
   writeLines("USUBJID\n1", file.path(dir, "dm.csv"))
   writeLines("PRODUCT=SDTMIG\nVERSION=3-4", file.path(dir, ".env"))
   study <- read_study(dir)
-  expect_equal(study$standard, list(product = "SDTMIG", version = "3-4"))
+  expect_equal(study$standard, list(product = "SDTMIG", version = "3-4", substandard = NA_character_))
 })
 
 test_that("read_study's standard is NA/NA when .env is absent (a real XPT study, or a test case without one)", {

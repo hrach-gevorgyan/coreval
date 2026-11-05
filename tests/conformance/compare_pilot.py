@@ -65,7 +65,9 @@ def main():
             if "id" in node and isinstance(node.get("results"), list):
                 for res in node["results"]:
                     if isinstance(res, dict) and res.get("executionStatus") == "skipped":
-                        engine_skipped_where[node["id"]].add((res.get("dataset") or "").upper())
+                        # "ta.xpt" there, "TA" in coreval's skips.
+                        name = (res.get("dataset") or "").upper()
+                        engine_skipped_where[node["id"]].add(name.rsplit(".", 1)[0])
             for value in node.values():
                 walk(value)
         elif isinstance(node, list):

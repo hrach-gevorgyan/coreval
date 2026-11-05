@@ -16,13 +16,28 @@ It also fixes defects that made a check quietly report nothing, found by
 checking CDISC's pilot submission with this package and with CORE 1.0's own
 engine and comparing every finding. See NEWS.md for the full list.
 
-One behaviour changed: a folder holding a USDM study design document is now
-checked only with `usdm = TRUE`, because some of its rules take minutes on one
-file; without it, the call stops with a message saying so. Otherwise the
-interface only gains: nothing is deprecated and nothing is removed. Input that was never valid and used to be
-accepted silently is now refused with an error that says what is wrong: a
-transport file holding more than one dataset, a CSV with a row of the wrong
-length, and a Dataset-JSON file with neither rows nor a record count.
+Some behaviour changes on purpose, each listed in NEWS.md:
+
+* A folder holding a USDM study design document is checked only with
+  `usdm = TRUE`, because some of its rules take minutes on one file.
+* `standard = "TIG"` now needs the new `substandard` argument (`"SDTM"`,
+  `"SEND"` or `"ADaM"`), as CDISC's own engine requires; a TIG rule's use case
+  covers different datasets in each.
+* An SDTM study is checked with the CORE 1.0 rules. CDISC's SDTM rules that
+  CORE 1.0 does not carry run only with `include_deprecated = TRUE`.
+* `check_dataset()` skips, with a reason, rules about the whole study and rules
+  that read a dataset it was not given, where it used to answer them as if
+  that dataset were empty.
+* `check_dataset(x, domain = )` with a domain that contradicts the data's
+  DOMAIN column is refused.
+* The `rules_version` attribute names both rule repositories and their
+  commits.
+
+Nothing is deprecated and nothing is removed. Input that was never valid and
+used to be accepted silently is now refused with an error that says what is
+wrong: a transport file holding more than one dataset, a single CSV with a row
+of the wrong length, and a Dataset-JSON file with neither rows nor a record
+count.
 
 ## Test environments
 

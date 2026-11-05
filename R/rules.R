@@ -176,11 +176,11 @@ build_rules_table <- function() {
 #' @param version The standard's version, e.g. `"3.4"` (or `"3-4"`). Only
 #'   narrows alongside `standard`, since a bare version is ambiguous across
 #'   standards.
-#' @param substandard For `standard = "TIG"` only, and required there:
-#'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
-#'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
-#'   CDISC's engine will not check a TIG study without it, and neither will
-#'   coreval. Optional here: left out, the use cases of all three apply.
+#' @param substandard For `standard = "TIG"` only: whether the tobacco study
+#'   is `"SDTM"` (clinical), `"SEND"` (nonclinical) or `"ADaM"`, which decides
+#'   the datasets a TIG rule's use case covers when `domain` is given.
+#'   Optional here, unlike [check_study()]: left out, the use cases of all three
+#'   apply.
 #' @param use_case Optional use case (e.g. `"INDH"`). Rules with no Use Case
 #'   constraint always pass.
 #' @param include_deprecated Include superseded rules. `TRUE` here, unlike
@@ -252,6 +252,15 @@ list_rules_impl <- function(id = NULL, domain = NULL, standard = NULL,
   # because the report may well have named it. So it short-circuits the
   # scoping filters rather than being narrowed by them.
   if (!is.null(id)) {
+    # Any case, and the older ids a report prints after "also" (CG0665, FB0801)
+    # find the rule too.
+    id <- toupper(trimws(id))
+    legacy <- strsplit(toupper(out$legacy_ids), ",[[:space:]]*")
+    id <- unique(unlist(lapply(id, function(x) {
+      if (x %in% out$id) return(x)
+      hit <- out$id[vapply(legacy, function(l) x %in% l, logical(1))]
+      if (length(hit) > 0) hit else x
+    })))
     unknown <- setdiff(id, out$id)
     if (length(unknown) > 0) {
       stop(
@@ -473,6 +482,9 @@ validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
     }
   }
   if (!is.null(version)) {
+    if (is.numeric(version)) {
+      stop("`version` must be text, e.g. version = \"3.4\", not a number.", call. = FALSE)
+    }
     one_string(version, "version")
     if (is.null(standard)) {
       stop("`version` needs `standard` too - a version alone is ambiguous.", call. = FALSE)

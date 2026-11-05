@@ -4,7 +4,9 @@ Version: 0.3.0.9000
 Authors@R:
     person("Hrach", "Gevorgyan", email = "hrach.gevorgyan@yandex.com", role = c("aut", "cre", "cph"))
 Description: Finds conformance problems in clinical trial data without
-    leaving R, using the openly published 'CDISC' Open Rules ('CORE'). Check a
+    leaving R, using the openly published 'CORE' conformance rules: the 'CORE'
+    1.0 rules maintained by Verisian for 'SDTM', and the 'CDISC' Open Rules for
+    'SEND', 'TIG' and 'USDM'. Check a
     single dataset while you are still writing the code that builds it, or a
     whole study folder once it exists, and get the findings back as a tidy
     data frame pointing at the exact row and variable. Reads transport
@@ -17,13 +19,16 @@ Description: Finds conformance problems in clinical trial data without
     for instance - it is reported as skipped with the reason, never counted as
     a pass. Meant as a quick first pass before a qualified validation system,
     never as a replacement for one. An independent project: not affiliated
-    with or endorsed by 'CDISC', and not a 'CORE'-certified conformance engine.
+    with or endorsed by 'CDISC' or Verisian, and not a 'CORE'-certified
+    conformance engine.
 Copyright: Hrach Gevorgyan holds the copyright in this package's own code.
     The bundled rule definitions under inst/extdata are derived from
     verisianHQ/core-contributor, copyright Verisian, and
     cdisc-org/cdisc-open-rules, copyright CDISC, and the bundled standards
     metadata and controlled terminology from cdisc-org/cdisc-rules-engine,
-    copyright CDISC, all used under their MIT licenses. Two further bundled
+    copyright CDISC, and reference tables in inst/extdata/core1_reference.rds
+    from verisianHQ/cdisc-rules-engine, copyright CDISC, all used under their
+    MIT licenses. Two further bundled
     components belong to others: inst/extdata/js/jsonata.min.js is JSONata,
     copyright IBM Corp., under the MIT license, and
     inst/extdata/schema/xml/xhtml-1.1 holds the XHTML Schema modules,

@@ -466,7 +466,7 @@ ct_terms_per_row <- function(op, study, dt, bindings = list()) {
     # single characters", so a codelist's terms came back as a pile of letters
     # and no row ever matched. Unreachable while every rule using this function
     # was skipped for want of preferred terms, which is exactly why it survived.
-    split_field <- function(x) if (nzchar(x)) strsplit(x, "", fixed = TRUE)[[1]] else character(0)
+    split_field <- function(x) if (nzchar(x)) strsplit(x, "\x1f", fixed = TRUE)[[1]] else character(0)
     from <- split_field(term_field(supplied, row))
     to <- split_field(term_field(returntype, row))
     if (length(from) == length(to)) {
@@ -706,10 +706,12 @@ library_variables_for <- function(study, domain) {
   tbl <- .coreval_env$library_variables
   product <- study$standard$product %||% NA_character_
   standard <- if (is.na(product)) "sdtmig" else tolower(product)
-  # TIG bundles per-substandard tables (tig-sdtm, tig-send, ...). Without a
-  # substandard signal, SDTM is the sensible default for tabulation data.
+  # TIG bundles a table per sub-standard (tig-sdtm, tig-send, tig-adam), as
+  # the engine fetches the Library standard per sub-standard
+  # (cdisc_library_service.py). Fixed to tig-sdtm, a SEND study was told its
+  # DM lacked RACE and DTHFL.
   if (identical(standard, "tig")) {
-    standard <- "tig-sdtm"
+    standard <- tig_library_standard(study)
   }
   if (!(standard %in% tbl$standard)) {
     return(tbl[0, ])
@@ -758,7 +760,7 @@ standard_domain_label <- function(study, domain, dataset = NULL) {
   product <- study$standard$product %||% NA_character_
   standard <- if (is.na(product)) "sdtmig" else tolower(product)
   if (identical(standard, "tig")) {
-    standard <- "tig-sdtm"
+    standard <- tig_library_standard(study)
   }
   rows <- tbl[tbl$standard == standard, ]
   if (nrow(rows) == 0) {
@@ -1041,7 +1043,7 @@ ct_terms_for <- function(op, study) {
       if (identical(returntype, "code")) rows$codelist_code[i] else rows$codelist[i]
     } else {
       field <- if (identical(returntype, "value")) rows$term_values[i] else rows$term_codes[i]
-      if (nzchar(field)) strsplit(field, "", fixed = TRUE)[[1]] else character(0)
+      if (nzchar(field)) strsplit(field, "\x1f", fixed = TRUE)[[1]] else character(0)
     })
   }
   out
@@ -2049,8 +2051,7 @@ ct_package_from_ts <- function(study) {
 
   # SEND studies cite SEND terminology, SDTM studies SDTM's, and the two
   # genuinely differ - SENDIG's LB codelist is not SDTMIG's.
-  product <- toupper(study$standard$product %||% NA_character_)
-  family <- if (!is.na(product) && startsWith(product, "SEND")) "sendct" else "sdtmct"
+  family <- ct_family(study$standard$product, tig_substandard(study))
   candidate <- paste0(family, "-", version)
   if (candidate %in% ct_package_names()) candidate else NULL
 }
@@ -2069,6 +2070,45 @@ ct_package_from_ts <- function(study) {
 #' @param product The study's standard, e.g. `"SENDIG"`.
 #' @return A character vector, `""` where the row cites nothing usable.
 #' @noRd
+#' The TIG sub-standard in force: the caller's, or the one the study declares
+#' @param study A study object.
+#' @return `"SDTM"`, `"SEND"`, `"ADAM"`, or `NULL`.
+#' @noRd
+tig_substandard <- function(study) {
+  sub <- .coreval_env$substandard %||% study$standard$substandard
+  if (is.null(sub) || length(sub) != 1 || is.na(sub) || !nzchar(sub)) NULL else toupper(sub)
+}
+
+#' The bundled Library standard for a TIG study, by its sub-standard
+#' @param study A study object.
+#' @return E.g. `"tig-send"`; `"tig-sdtm"` when no sub-standard is known.
+#' @noRd
+tig_library_standard <- function(study) {
+  paste0("tig-", tolower(tig_substandard(study) %||% "SDTM"))
+}
+
+#' The terminology family a standard cites
+#'
+#' For TIG the engine takes the sub-standard's (get_codelist_attributes.py:
+#' `if "tig" in std: std = substandard`), so a TIG-SEND study cites SEND
+#' terminology.
+#' @param product The standard, e.g. `"SENDIG"`.
+#' @param substandard The TIG sub-standard, or `NULL`.
+#' @return `"sdtmct"`, `"sendct"` or `"adamct"`.
+#' @noRd
+ct_family <- function(product, substandard = NULL) {
+  std <- toupper(product %||% "")
+  if (length(std) != 1 || is.na(std)) std <- ""
+  if (identical(std, "TIG") && !is.null(substandard)) std <- toupper(substandard)
+  if (grepl("ADAM", std, fixed = TRUE)) {
+    "adamct"
+  } else if (grepl("SEND", std, fixed = TRUE)) {
+    "sendct"
+  } else {
+    "sdtmct"
+  }
+}
+
 ct_packages_per_row <- function(dt, target, version, product) {
   n <- nrow(dt)
   if (!(target %in% names(dt)) || !(version %in% names(dt))) {
@@ -2076,14 +2116,7 @@ ct_packages_per_row <- function(dt, target, version, product) {
   }
   ref <- trimws(as.character(dt[[target]]))
   ver <- trimws(as.character(dt[[version]]))
-  std <- toupper(product %||% "")
-  family <- if (grepl("ADAM", std, fixed = TRUE)) {
-    "adamct"
-  } else if (grepl("SEND", std, fixed = TRUE)) {
-    "sendct"
-  } else {
-    "sdtmct"
-  }
+  family <- ct_family(product, .coreval_env$substandard)
   out <- ifelse(
     is.na(ver) | !nzchar(ver), "",
     ifelse(!is.na(ref) & ref %in% c("CDISC", "CDISC CT"),

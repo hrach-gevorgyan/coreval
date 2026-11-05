@@ -596,3 +596,47 @@ test_that("CORE 1.0 pairs blank text join keys, as `l.key = r.key` does", {
   joined <- in_core1(apply_match_dataset(study$datasets$AE, spec, study, "AE"))
   expect_equal(joined$data$RFSTDTC, c("2024-01-01", "2024-02-01"))
 })
+
+test_that("CORE 1.0 checks a value against a codelist's terms, not its text (CORE-002123)", {
+  # is_substring_of_operator.py: `= ANY(CAST(terms AS TEXT[]))`. Searched as
+  # text, SEX = "X" was found inside INTERSEX.
+  expect_equal(pg_array_terms('{F,INTERSEX,M,U}'), c("F", "INTERSEX", "M", "U"))
+  expect_equal(pg_array_terms('{"NOT REPORTED","A,B",X}'), c("NOT REPORTED", "A,B", "X"))
+  ds <- list(data = data.table::data.table(
+    variable_value = c("X", "M", "MO"),
+    library_variable_ccode_values = c("{F,INTERSEX,M,U}", "{F,INTERSEX,M,U}", "{DAYS,MONTHS}")
+  ), meta = NULL)
+  chk <- list(name = "variable_value", operator = "is_not_substring_of",
+              value = "library_variable_ccode_values")
+  expect_equal(in_core1(evaluate_check(chk, ds, "DM")), c(TRUE, FALSE, TRUE))
+})
+
+test_that("every bad value on one record is reported by a one-row-per-value rule", {
+  dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2"), SEX = c("M", "X"),
+                   RACE = c("WHITE", "PURPLE"), AGE = c(30, 40), AGEU = c("YEARS", "DECADES"))
+  skip_if_not("sdtmct-2024-03-29" %in% list_ct_packages())
+  r <- check_dataset(dm, standard = "SDTMIG", version = "3.4", ct_package = "sdtmct-2024-03-29")
+  bad <- r$findings$Value[r$findings$rule_id == "CORE-002123" & r$findings$Variable == "variable_value"]
+  expect_setequal(bad, c("X", "PURPLE", "DECADES"))
+})
+
+test_that("a CORE 1.0 join on a key the dataset lacks is refused, not passed (CORE-000270)", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1), file.path(dir, "ae.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "TV", VISITNUM = 1), file.path(dir, "tv.xpt"))
+  study <- read_study(dir)
+  spec <- list(Name = "TV", Keys = list("VISITNUM"))
+  expect_error(in_core1(apply_match_dataset(study$datasets$AE, spec, study, "AE")), "joins on VISITNUM")
+})
+
+test_that("a TIG study uses its sub-standard's Library and terminology", {
+  study <- list(standard = list(product = "TIG", version = "1-0", substandard = "SEND"))
+  expect_equal(tig_library_standard(study), "tig-send")
+  expect_equal(ct_family("TIG", "SEND"), "sendct")
+  expect_equal(ct_family("TIG", NULL), "sdtmct")
+  dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1", SPECIES = "RAT", SEX = "M")
+  r <- check_dataset(dm, standard = "TIG", version = "1.0", substandard = "SEND")
+  expect_false(any(grepl("RACE", r$findings$Value[r$findings$rule_id == "CORE-000334"])))
+})

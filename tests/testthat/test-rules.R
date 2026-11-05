@@ -393,3 +393,25 @@ test_that("list_ct_packages lists the bundled terminology packages", {
   # Every name listed is one check_study(ct_package =) accepts.
   expect_equal(validate_ct_package(pk[[1]]), pk[[1]])
 })
+
+test_that("every operator and Operations type a bundled rule uses is implemented", {
+  # A new operator upstream would otherwise surface only as a skipped rule in a
+  # conformance sweep; here it fails the build.
+  walk <- function(node, acc) {
+    if (is.list(node)) {
+      op <- node[["operator", exact = TRUE]]
+      if (is.character(op) && length(op) == 1) acc <- c(acc, op)
+      for (child in node) acc <- walk(child, acc)
+    }
+    acc
+  }
+  rules <- c(.coreval_env$rule_sets$sdtm, .coreval_env$rule_sets$cdisc)
+  check_ops <- unique(unlist(lapply(rules, function(r) walk(r$check, character(0)))))
+  missing_ops <- check_ops[!vapply(check_ops, function(o) exists(o, envir = .operator_registry, inherits = FALSE),
+                                   logical(1))]
+  expect_identical(missing_ops, character(0))
+  op_types <- unique(unlist(lapply(rules, function(r) vapply(r$operations %||% list(),
+    function(o) as.character(o$operator %||% NA_character_), character(1)))))
+  op_types <- op_types[!is.na(op_types)]
+  expect_identical(setdiff(op_types, implemented_operation_types), character(0))
+})

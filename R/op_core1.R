@@ -91,6 +91,20 @@ register_operator("is_substring_of", guarded_op(function(ctx) {
   }
   out <- rep(FALSE, length(target))
   todo <- !is_blank(target)
+  # The codelist-terms column holds a text array, '{F,INTERSEX,M,U}', and 1.0
+  # asks whether the value is one of its terms (`= ANY(CAST(... AS TEXT[]))`,
+  # is_substring_of_operator.py), not whether it appears in the text. Searched
+  # as text, SEX = "X" was found inside INTERSEX and never reported by
+  # CORE-002123.
+  if (identical(ctx$condition$value, "library_variable_ccode_values") &&
+        length(ctx$value) == ctx$n) {
+    hay <- as.character(ctx$value)
+    lists <- lapply(unique(hay), pg_array_terms)
+    at <- match(hay, unique(hay))
+    idx <- which(todo & !is.na(hay) & nzchar(hay))
+    out[idx] <- vapply(idx, function(i) target[i] %in% lists[[at[i]]], logical(1))
+    return(out)
+  }
   # Each distinct case is decided once: a value against one shared set, or a
   # value against its own row's comparator. Deciding row by row made this
   # operator a third of a pilot run.
@@ -115,6 +129,25 @@ register_operator("is_substring_of", guarded_op(function(ctx) {
   }
   out
 }))
+#' The terms of a PostgreSQL text array, as `CAST(x AS TEXT[])` reads it
+#'
+#' The inverse of the `pg_array()` that builds the codelist-terms column
+#' (evaluate.R): elements are comma-separated, and one holding a comma, a
+#' brace, a quote, a space or a backslash is double-quoted with `\\` and `\"`
+#' escaped.
+#' @param x One array literal, e.g. `'{F,"NOT REPORTED",U}'`.
+#' @return A character vector of terms.
+#' @noRd
+pg_array_terms <- function(x) {
+  if (is.na(x) || !nzchar(x)) return(character(0))
+  body <- sub("^[{]", "", sub("[}]$", "", x))
+  if (!nzchar(body)) return(character(0))
+  hits <- regmatches(body, gregexpr('"(?:[^"\\\\]|\\\\.)*"|[^,]+', body, perl = TRUE))[[1]]
+  quoted <- startsWith(hits, '"')
+  hits[quoted] <- gsub('\\\\(.)', "\\1", substr(hits[quoted], 2, nchar(hits[quoted]) - 1), perl = TRUE)
+  hits
+}
+
 register_operator("is_not_substring_of", function(ctx) {
   !get_operator("is_substring_of")(ctx)
 })

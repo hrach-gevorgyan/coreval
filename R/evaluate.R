@@ -572,6 +572,14 @@ run_rule_on_domain <- function(rule, study, domain) {
   .coreval_env$engine <- rule_engine(rule)
   on.exit(.coreval_env$engine <- previous_engine, add = TRUE)
   study <- study_standard_from_rule(study, rule)
+  # A TIG test case declares its sub-standard itself; the use-case lists read
+  # it from here (use_case_covers_dataset()).
+  if (is.null(.coreval_env$substandard) && !is.null(study$standard$substandard) &&
+        !is.na(study$standard$substandard) && nzchar(study$standard$substandard)) {
+    previous_sub <- .coreval_env$substandard
+    .coreval_env$substandard <- toupper(study$standard$substandard)
+    on.exit(.coreval_env$substandard <- previous_sub, add = TRUE)
+  }
   if (identical(.coreval_env$engine, "core1")) {
     study <- core1_case_blind_study(study)
   }
@@ -1069,7 +1077,7 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
       ))
     }
     return(cached_build(
-      paste0("varmeta", domain),
+      paste0("varmeta\x1f", domain),
       function() build_variable_metadata_dataset(dataset, study$define, domain, study)
     ))
   }
@@ -1084,7 +1092,7 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
       ))
     }
     return(cached_build(
-      paste0("defineitem", domain),
+      paste0("defineitem\x1f", domain),
       function() build_define_item_metadata_dataset(study, domain)
     ))
   }

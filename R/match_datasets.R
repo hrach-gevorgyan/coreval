@@ -554,6 +554,16 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   keys <- key_spec$left
   if (!all(key_spec$left %in% names(dataset$data)) ||
         !all(key_spec$right %in% names(match_dataset$data))) {
+    # CORE 1.0 stops on a join key either side lacks (merges/join.py,
+    # missing_match_key_error), and the rule is not answered. Returned
+    # unjoined, its conditions on the partner's columns were FALSE and the
+    # rule passed: CORE-000270 on an AE with no VISITNUM.
+    if (engine_is_core1()) {
+      gone <- c(setdiff(key_spec$left, names(dataset$data)),
+                setdiff(key_spec$right, names(match_dataset$data)))
+      stop("joins on ", paste(unique(gone), collapse = ", "),
+           ", which one of the datasets does not have", call. = FALSE)
+    }
     return(dataset)
   }
 

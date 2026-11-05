@@ -219,7 +219,7 @@ test_that("read_study prefers XPT when a folder holds both formats", {
   write_dataset_json(sample_dm(), file.path(dir, "dm.json"))
 
   # The other file is named rather than dropped in silence.
-  expect_warning(study <- read_study(dir), "only dm.xpt was checked")
+  expect_warning(study <- read_study(dir), "checked dm.xpt and left out dm.json")
   expect_equal(nrow(study$datasets$DM$data), 2)
 })
 

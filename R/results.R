@@ -301,7 +301,13 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     # variable's first row is record 1, so deduplicating by record merged a
     # SUPPAE's seven findings into one.
     grouped <- identical(rule$sensitivity, "Group") && !is.null(rule$grouping_variables)
-    keep <- if (grouped) rep(TRUE, length(records)) else !duplicated(records)
+    # A table with one row per value (variable_name, variable_value) holds
+    # several findings on one record, one per variable: deduplicated by
+    # record, CORE-002123 reported RACE = "PURPLE" and dropped AGEU =
+    # "DECADES" from the same DM record.
+    per_value <- "variable_name" %in% names(dataset$data) && "variable_value" %in% names(dataset$data)
+    key <- if (per_value) paste(records, dataset$data$variable_name[exploded_rows], sep = "\x1f") else records
+    keep <- if (grouped) rep(TRUE, length(records)) else !duplicated(key)
     exploded_rows <- exploded_rows[keep]
     records <- records[keep]
     if (length(exploded_rows) == 0) {
@@ -552,8 +558,7 @@ render_progress <- function(done, total, domain, index, n, width = 28L) {
   frac <- if (total > 0) min(1, done / total) else 1
   filled <- as.integer(round(frac * width))
   cat(sprintf(
-    "
-  %-8s %2d/%-2d |%s%s| %3.0f%%",
+    "\r  %-8s %2d/%-2d |%s%s| %3.0f%%",
     substr(domain, 1, 8), index, n,
     strrep("=", filled), strrep(" ", width - filled), frac * 100
   ))
@@ -715,8 +720,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     done_weight <- 0
     domain_index <- 0L
     n_domains <- length(domains)
-    on.exit(cat("
-"), add = TRUE)
+    on.exit(cat("\n"), add = TRUE)
   }
 
   for (domain in domains) {
@@ -769,10 +773,12 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
                identical(rule$sensitivity, "Study"))) {
         all_skipped[[length(all_skipped) + 1]] <- data.table::data.table(
           rule_id = rule_id, domain = domain,
-          reason = paste0(
-            "asks which datasets the whole study contains - check the whole ",
-            "study folder to run this rule"
-          )
+          reason = if (isTRUE(startsWith(rule$rule_type, "Domain Presence Check"))) {
+            paste0("asks which datasets the whole study contains - check the whole ",
+                   "study folder to run this rule")
+          } else {
+            "asks about the whole study - check the whole study folder to run this rule"
+          }
         )
         next
       }

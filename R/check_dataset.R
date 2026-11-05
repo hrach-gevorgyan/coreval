@@ -287,7 +287,10 @@ infer_domain <- function(dataset, path = NULL) {
   # The DOMAIN column is the authority, not the file name: a split dataset
   # lives in ae1.xpt / ae2.xpt but still carries DOMAIN == "AE", and that is
   # the code the rules are written against.
-  col <- dataset$data$DOMAIN
+  # Found whatever its case: a DOMAIN column named `domain`, as dplyr pipelines
+  # and name repair leave it, was "no single DOMAIN value".
+  domain_col <- names(dataset$data)[toupper(names(dataset$data)) == "DOMAIN"]
+  col <- if (length(domain_col) == 1) dataset$data[[domain_col]] else NULL
   has_domain_column <- !is.null(col)
   if (has_domain_column) {
     # Trailing blanks are everywhere in SAS-derived data, and an untrimmed

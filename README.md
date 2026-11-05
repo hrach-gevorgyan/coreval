@@ -70,7 +70,15 @@ Value must be a valid ISO 8601 datetime or interval.
      → run check_study() on the whole folder to cover these
   22 ask what the whole study contains
   13 need a define.xml
-  6 for other reasons, see result$skipped
+     → put it in the study folder (reading it needs the xml2 package)
+  2 need to know the controlled terminology version
+     → pass ct_package = "sdtmct-..." (see list_ct_packages()), or fill TSVCDREF and TSVCDVER in TS
+  4 for other reasons, see result$skipped
+
+Scoped to SDTMIG: 109 rules written for other standards, or other versions of this one, were not run.
+
+Fix what you can, then run this again.
+To track the rest:  write_findings(result, "issues.xlsx")
 ```
 
 Both planted mistakes are found. Definite errors come first, and each one

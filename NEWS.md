@@ -95,6 +95,20 @@
   the rules for both. `list_rules()` takes it too, optionally.
 
 * **Problems that were never looked for.**
+  - CORE-002123, the check that a value is a term of a non-extensible
+    codelist, searched the codelist as text, so a wrong value that is part of
+    a real term passed: SEX = "X" was found inside INTERSEX. It now asks
+    whether the value is one of the terms, as CORE 1.0's engine does.
+  - A rule with one row per value, such as CORE-002123, reported one finding
+    per record, so a second bad value on the same record was dropped. Each
+    variable's value is now its own finding.
+  - A TIG study declared SEND or ADaM was checked against TIG's SDTM variable
+    lists, labels and terminology, and was told its DM lacked RACE. The
+    sub-standard now decides all three, as it does in CDISC's engine, and a
+    CORE test case's own `SUBSTANDARD` is read.
+  - A CORE 1.0 rule joining on a column the dataset lacks passed; 1.0's
+    engine stops there, and the rule is now skipped with the reason
+    (CORE-000270 on an AE with no VISITNUM).
   - CDISC's sort-order check flags the records CDISC's engine flags, which a
     test on 4,912 generated records confirms; comparing neighbouring pairs
     flagged both rows of a bad pair, and every row around a blank date. It
@@ -224,6 +238,17 @@
     with a message suggesting CSV, rather than an error from the Excel
     writer.
   - `print()` refuses a negative or missing `n` or `rows`.
+  - The progress bar in an interactive session redraws one line, where it
+    printed a new line for every rule.
+  - The report's list of checks that could not run says how to switch on the
+    terminology checks (`ct_package`, or TS), names the licensed dictionaries
+    it cannot read, and says where a define.xml goes.
+  - It suggests saving to Excel only when the writexl package is installed.
+  - `list_rules(id = )` takes any case, and the older ids a report prints
+    after "also" (CG0665, FB0801).
+  - A DOMAIN column is found whatever the case of its name.
+  - A folder holding datasets in more than one format gives one warning, not
+    one per dataset.
   - A computed set holding one value is shown as a list, `['ARMCD']`, as the
     engines show it.
   - The negated prefix and suffix pattern checks no longer report a blank,

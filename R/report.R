@@ -461,7 +461,8 @@ describe_skipped <- function(skipped, width, g) {
     )
     cat("     ", g$arrow, " run check_study() on the whole folder to cover these\n", sep = "")
   }
-  need_study <- grepl("which datasets the whole study contains", skipped$reason, fixed = TRUE)
+  need_study <- grepl("which datasets the whole study contains", skipped$reason, fixed = TRUE) |
+    grepl("asks about the whole study", skipped$reason, fixed = TRUE)
   if (any(need_study)) {
     cat("  ", sum(need_study), " ask what the whole study contains\n", sep = "")
     if (!any(need_data)) {
@@ -471,8 +472,24 @@ describe_skipped <- function(skipped, width, g) {
   need_define <- grepl("define.xml", skipped$reason, fixed = TRUE)
   if (any(need_define)) {
     cat("  ", sum(need_define), " need a define.xml\n", sep = "")
+    cat("     ", g$arrow, " put it in the study folder (reading it needs the xml2 package)\n", sep = "")
   }
-  other <- !need_data & !need_study & !need_define
+  # The one most people can switch on themselves, so it gets its own line and
+  # says how. Lumped into "other reasons" it went unseen.
+  need_ct <- !need_data & !need_study & !need_define &
+    grepl("needs controlled terminology", skipped$reason, fixed = TRUE)
+  if (any(need_ct)) {
+    cat("  ", sum(need_ct), " need to know the controlled terminology version\n", sep = "")
+    cat("     ", g$arrow, " pass ct_package = \"sdtmct-...\" (see list_ct_packages()),",
+        " or fill TSVCDREF and TSVCDVER in TS\n", sep = "")
+  }
+  need_dict <- !need_data & !need_study & !need_define & !need_ct &
+    grepl("dictionary", skipped$reason, fixed = TRUE)
+  if (any(need_dict)) {
+    cat("  ", sum(need_dict), " need a licensed dictionary (MedDRA, WHODrug, ...), which coreval does not read\n",
+        sep = "")
+  }
+  other <- !need_data & !need_study & !need_define & !need_ct & !need_dict
   if (any(other)) {
     cat("  ", sum(other), " for other reasons, see result$skipped\n", sep = "")
   }
@@ -650,7 +667,10 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   cat("\n")
   if (nrow(f) > 0) {
     cat("Fix what you can, then run this again.\n")
-    cat("To track the rest:  write_findings(result, \"issues.xlsx\")\n")
+    # Excel needs writexl, which is optional: suggested without it, the hint
+    # led straight to an error.
+    cat("To track the rest:  write_findings(result, \"",
+        if (writexl_available()) "issues.xlsx" else "issues.csv", "\")\n", sep = "")
   } else if (any(grepl("was not supplied", skipped$reason, fixed = TRUE))) {
     cat("Run check_study() on the full folder for the checks that could not run here.\n")
   } else if (nrow(skipped) > 0) {
