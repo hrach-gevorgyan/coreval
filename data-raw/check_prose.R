@@ -13,11 +13,12 @@
 
 files <- c(
   "README.md", "NEWS.md", "NOTICE.md", "cran-comments.md",
-  "vignettes/coreval.Rmd",
+  "vignettes/coreval.Rmd", "vignettes/technical.Rmd",
   # The public half of docs/. RELEASING.md and archive/ are the maintainer's
   # own and are not held to this.
   "docs/README.md", "docs/DECISIONS.md", "docs/COVERAGE.md",
-  "docs/REFERENCE-BEHAVIOUR.md", "docs/BENCHMARKS.md",
+  "docs/REFERENCE-BEHAVIOUR.md", "docs/BENCHMARKS.md", "docs/REAL-STUDY.md",
+  "docs/COMPARISON.md",
   list.files("R", pattern = "[.]R$", full.names = TRUE)
 )
 

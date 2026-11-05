@@ -4,6 +4,7 @@ These are written for anyone reading the repository.
 
 | file | for |
 |---|---|
+| [COMPARISON.md](COMPARISON.md) | coreval, CDISC's engine and Verisian's engine side by side: differences, problems and strengths |
 | [DECISIONS.md](DECISIONS.md) | why coreval is built the way it is, and what has been tried and rejected |
 | [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) | how CDISC's own engine actually behaves, with the evidence |
 | [COVERAGE.md](COVERAGE.md) | which rules pass, which disagree, and why |

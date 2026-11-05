@@ -189,6 +189,9 @@ are bundled with the package.
 - **Every function** is documented: `?check_dataset`, `?check_study`,
   `?write_findings`, `?list_rules`, `?filter_findings`, `?read_study`,
   `?list_ct_packages`.
+- [**How it compares**](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COMPARISON.md)
+  with CDISC's engine and Verisian's CORE 1.0 engine: where the answers differ,
+  and where each one is ahead.
 - [**docs/**](https://github.com/hrach-gevorgyan/coreval/tree/master/docs) has
   the detail: which rules pass and why, a complete real study checked by both
   coreval and CDISC's engine, how that engine behaves, speed benchmarks, and the
