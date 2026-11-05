@@ -14,7 +14,8 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   # Same column contract as check_study(), so write_findings() works on either.
   expect_equal(
     names(result$findings),
-    c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
+    c("Dataset", "Record", "USUBJID", "SEQ", "Variable", "Value", "issue",
+      "triage", "rule_id")
   )
   expect_equal(names(result$skipped), c("rule_id", "domain", "reason"))
 
@@ -29,7 +30,33 @@ test_that("check_dataset finds a violation in a plain in-memory data frame", {
   expect_match(bad_date$issue, "ISO 8601")
   expect_equal(bad_date$Dataset, "AE")
   expect_equal(bad_date$Record, 2L)
+  # Found by subject and sequence number, as a programmer looks a record up.
+  expect_equal(bad_date$USUBJID, "01")
+  expect_equal(bad_date$SEQ, 2)
   expect_equal(bad_date$Variable, "variable_value")
+})
+
+test_that("USUBJID and SEQ come from the record a finding names, and stay blank otherwise", {
+  ae <- list(data = data.table::as.data.table(demo_ae()), meta = NULL)
+  record_rule <- list(rule_type = "Record Data")
+  f <- data.table::data.table(Dataset = "AE", Record = c(2L, 1L, NA),
+                              Variable = "AESTDTC", Value = "x")
+  out <- add_record_keys(data.table::copy(f), ae, "AE", record_rule)
+  expect_equal(names(out)[1:4], c("Dataset", "Record", "Variable", "Value"))
+  expect_equal(out$USUBJID, c("01", "01", NA))
+  expect_equal(out$SEQ, c(2, 1, NA))
+
+  # A metadata rule's Record numbers a row of the metadata table, not a
+  # record, so naming the subject on that row would point at the wrong thing.
+  meta <- add_record_keys(data.table::copy(f), ae, "AE",
+                          list(rule_type = "Variable Metadata Check"))
+  expect_true(all(is.na(meta$USUBJID)) && all(is.na(meta$SEQ)))
+
+  # A dataset with no --SEQ (DM) still gives the subject.
+  dm <- list(data = data.table::data.table(DOMAIN = "DM", USUBJID = "07"), meta = NULL)
+  one <- add_record_keys(f[1][, Record := 1L], dm, "DM", record_rule)
+  expect_equal(one$USUBJID, "07")
+  expect_true(is.na(one$SEQ))
 })
 
 test_that("a rule needing another domain is skipped with that domain named, never evaluated", {

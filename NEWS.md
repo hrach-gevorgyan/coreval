@@ -1,5 +1,12 @@
 # coreval (development version)
 
+* **Findings name the subject.** `result$findings`, the report and the files
+  `write_findings()` writes gain `USUBJID` and `SEQ` (the record's `--SEQ`)
+  beside `Record`, as both reference engines report them. A row number stops
+  meaning anything once the data is sorted. They are blank where the dataset
+  has no such variable, for a finding about the dataset as a whole, and for a
+  rule about variable or dataset metadata, whose rows are not records.
+
 * **`standard` is required.** `check_study()` and `check_dataset()` stop
   without it, as CDISC's and Verisian's engines do. Left out, every
   standard's rules ran: on CDISC's pilot SDTM study, 45 SEND and TIG rules

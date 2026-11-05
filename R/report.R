@@ -390,9 +390,30 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
         }, integer(1))
         recs <- recs[order(rec_weight, recs)]
         shown <- utils::head(recs, rows)
-        for (r in shown) {
+        # The subject and sequence number beside the row: that is how a
+        # programmer finds the record, and a row number stops meaning anything
+        # once the data is sorted.
+        first <- real[match(shown, real$Record), ]
+        who <- rep("", length(shown))
+        if ("USUBJID" %in% names(first)) {
+          has <- !is.na(first$USUBJID) & nzchar(first$USUBJID)
+          who[has] <- first$USUBJID[has]
+        }
+        if ("SEQ" %in% names(first)) {
+          has <- !is.na(first$SEQ)
+          who[has] <- paste0(who[has], ifelse(nzchar(who[has]), " ", ""),
+                             "seq ", format(first$SEQ[has], trim = TRUE))
+        }
+        labels <- sprintf("row %-5s", shown)
+        if (any(nzchar(who))) {
+          rowno <- paste("row", shown)
+          labels <- paste0(formatC(rowno, width = -max(nchar(rowno))), "  ",
+                           formatC(who, width = -max(nchar(who))), " ")
+        }
+        for (i in seq_along(shown)) {
+          r <- shown[i]
           text <- describe_cells(real[!is.na(real$Record) & real$Record == r, ])
-          prefix <- sprintf("    row %-5s ", r)
+          prefix <- paste0("    ", labels[i], " ")
           for (ln in wrap_lines(text, width - nchar(prefix), nchar(prefix))) {
             cat(prefix, ln, "\n", sep = "")
             prefix <- strrep(" ", nchar(prefix)) # continuations line up

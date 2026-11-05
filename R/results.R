@@ -351,6 +351,42 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   }
 }
 
+# Programmers find a record by subject and sequence number, not by its row in
+# the file; both reference engines report them. Read from the ORIGINAL record
+# the finding names, so a joined or per-value table cannot lend one record's
+# subject to another. Blank where the row is not a record: a dataset-level
+# finding (no Record), a rule over variable or dataset metadata (its Record
+# numbers a row of that table), or a dataset without the column.
+#' Add the record's USUBJID and --SEQ to one rule's findings for one dataset
+#' @param findings Findings from [assemble_findings()].
+#' @param dataset The study's dataset the findings are filed under, as read.
+#' @param domain The dataset's key.
+#' @param rule The rule.
+#' @return `findings` with `USUBJID` and `SEQ` after `Record`.
+#' @noRd
+add_record_keys <- function(findings, dataset, domain, rule) {
+  n <- nrow(findings)
+  usubjid <- rep(NA_character_, n)
+  seq_no <- rep(NA_real_, n)
+  data <- dataset$data
+  is_metadata <- grepl("Metadata Check|Global Value Check|Domain Presence|Define Item",
+                       rule$rule_type %||% "")
+  if (n > 0 && !is.null(data) && !is_metadata) {
+    rec <- findings$Record
+    ok <- !is.na(rec) & rec >= 1L & rec <= nrow(data)
+    if ("USUBJID" %in% names(data)) {
+      usubjid[ok] <- as.character(data$USUBJID[rec[ok]])
+    }
+    seq_var <- resolve_var_name("--SEQ", dataset_wildcard(dataset, domain))
+    if (seq_var %in% names(data)) {
+      seq_no[ok] <- suppressWarnings(as.numeric(data[[seq_var]][rec[ok]]))
+    }
+  }
+  data.table::set(findings, j = "USUBJID", value = usubjid)
+  data.table::set(findings, j = "SEQ", value = seq_no)
+  findings
+}
+
 #' Check a whole study against CDISC Open Rules
 #'
 #' Runs every rule that applies to every dataset in the study, including the
@@ -433,7 +469,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   rules comparing the define with the study ran).
 #'
 #'   * `findings` - what is wrong. One row per affected record, with `Dataset`,
-#'     `Record`, `Variable`, `Value`, the `issue` in words, and its `triage`.
+#'     `Record` (its row in the file), `USUBJID` and `SEQ` (its subject and
+#'     `--SEQ`, blank where the dataset has none or the row is not a record),
+#'     `Variable`, `Value`, the `issue` in words, and its `triage`.
 #'     `Not in dataset` under `Value` means the rule wanted a variable you do
 #'     not have, which is usually the finding itself.
 #'   * `skipped` - what could not be checked, with a `reason` for each. Read
@@ -848,6 +886,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
           findings$Dataset <- "STUDY"
           findings$Record <- NA_integer_
         }
+        findings <- add_record_keys(findings, study$datasets[[domain]], domain, rule)
         findings$rule_id <- rule_id
         # The rule's own one-line statement of what is wrong. It is the single
         # most useful thing on the row - "Variable value is not in correct ISO
@@ -887,6 +926,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       if (nrow(findings) > 0) {
         findings$Dataset <- "STUDY"
         findings$Record <- NA_integer_
+        findings <- add_record_keys(findings, NULL, "STUDY", rule)
         findings$rule_id <- rule_id
         findings$issue <- rule_message(rule)
         findings$triage <- finding_triage(findings, rule)
@@ -931,6 +971,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       )
     }
     if (nrow(findings) > 0) {
+      findings <- add_record_keys(findings, NULL, "STUDY", rule)
       findings$rule_id <- rule_id
       findings$issue <- rule_message(rule)
       findings$triage <- finding_triage(findings, rule)
@@ -940,14 +981,15 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
 
   findings <- if (length(all_findings) > 0) {
     data.table::rbindlist(all_findings)[
-      , c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
+      , c("Dataset", "Record", "USUBJID", "SEQ", "Variable", "Value", "issue", "triage", "rule_id")
     ]
   } else {
     cbind(
       empty_findings(),
+      USUBJID = character(0), SEQ = numeric(0),
       issue = character(0), triage = character(0), rule_id = character(0)
     )[
-      , c("Dataset", "Record", "Variable", "Value", "issue", "triage", "rule_id")
+      , c("Dataset", "Record", "USUBJID", "SEQ", "Variable", "Value", "issue", "triage", "rule_id")
     ]
   }
   skipped <- if (length(all_skipped) > 0) {

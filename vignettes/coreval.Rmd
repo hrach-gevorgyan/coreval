@@ -106,16 +106,18 @@ Every problem carries one of three tags:
 The detail is in two tables:
 
 ```{r tables}
-# what is wrong: dataset, row, variable, value
+# what is wrong: dataset, row, subject, variable, value
 f <- result$findings
-head(f[!is.na(f$Record), c("Dataset", "Record", "Variable", "Value", "triage")])
+head(f[!is.na(f$Record), c("Dataset", "Record", "USUBJID", "SEQ", "Variable", "Value")])
 
 # what could not be checked, and why
 head(unique(result$skipped$reason), 3)
 ```
 
-Each finding also has the `issue` in words and the `rule_id`. A blank
-`Record` means the problem is about the dataset as a whole, such as a missing
+`Record` is the row in the file. `USUBJID` and `SEQ` are the record's subject
+and `--SEQ`, which still find it after the data is sorted; they are blank in a
+dataset without them, such as `TS`. Each finding also has the `issue` in
+words, its `triage` and the `rule_id`. A blank `Record` means the problem is about the dataset as a whole, such as a missing
 variable.
 
 **Always look at `skipped`.** A short list of problems can mean clean data, or

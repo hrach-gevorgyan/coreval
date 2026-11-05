@@ -53,13 +53,13 @@ You get a report like this:
 [wrong value]
 AGEU must be populated when AGE is populated.
   1 record · AGE, AGEU
-    row 3     AGE = "47", AGEU = (empty)
+    row 3  STUDY1-003  AGE = "47", AGEU = (empty)
     CORE-000189  · also CG0665, TIG0699
 
 [wrong value]
 Value must be a valid ISO 8601 datetime or interval.
   1 record · variable_name, variable_value
-    row 2     variable_name = "RFSTDTC", variable_value = "2024-13-01"
+    row 2  STUDY1-002  variable_name = "RFSTDTC", variable_value = "2024-13-01"
     CORE-002121  · also CG0011
 
   ... and 2 more here. See result$findings for all of them.
@@ -82,7 +82,8 @@ To track the rest:  write_findings(result, "issues.xlsx")
 ```
 
 Both planted mistakes are found. Definite errors come first, and each one
-shows the row and the value. The rule number is at the end, with the
+shows the row, the subject (and the `--SEQ`, in a dataset that has
+one) and the value. The rule number is at the end, with the
 same rule's number in CDISC's Conformance Rules or the FDA Business Rules
 after "also". The bottom part tells you
 what it couldn't check and how to fix that.
