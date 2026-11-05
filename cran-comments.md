@@ -25,8 +25,8 @@ length, and a Dataset-JSON file with neither rows nor a record count.
 ## Test environments
 
 * Local: Windows 11, R 4.6.1
-* win-builder: R-devel and R-release
-* GitHub Actions: ubuntu-latest, macOS, Windows (R release)
+* win-builder: R-devel and R-release (to be run before submission)
+* GitHub Actions: ubuntu-latest, macOS, Windows (R release) (to be run before submission)
 
 ## R CMD check results
 

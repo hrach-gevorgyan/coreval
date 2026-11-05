@@ -206,5 +206,12 @@ None of them is reached by the rules' own examples.
 - **CORE 1.0 and a blank computed value.** `not_equal_to` against a scalar
   Operations value that came out missing is TRUE for a populated target in
   1.0 (`_is_empty_sql_operation_variable`); coreval leaves it unknown.
+- **`is_unique_set` with a regex, on blank text (CDISC's engine).** The engine
+  leaves a blank `""` as it is and puts an unmatched value with the missing
+  ones (`apply_regex()`, helpers.py), and skips the column when its first
+  non-missing value is blank. coreval holds every blank as `""` and groups
+  blank, missing and unmatched together. The two agree where the engine reads
+  blanks as missing (CSV and Dataset-JSON, as the rules' examples are) and
+  could differ on XPT input. Affects CORE-001034.
 - **A set of one shown as text.** A computed set holding one value is reported
   as `ARMCD`; CDISC's sheets write `['ARMCD']`. Display only.
