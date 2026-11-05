@@ -183,37 +183,28 @@ domain. Deliberate: a finding has to point at a file you can open.
 
 ## Still open
 
-**SDTMIG has no published CORE rule for general date format.** With
-`standard = "SDTMIG"`, `AESTDTC = "2024-13-01"` is reported by nothing.
-Unfiltered it is caught by `CORE-000547`, which is published for SENDIG,
-SENDIG-DART, SENDIG-GENETOX and TIG, but not SDTMIG.
+Differences from the reference that are known, traced, and not yet fixed.
+None of them is reached by the rules' own examples.
 
-Every SDTMIG rule mentioning ISO 8601 is either scoped to one variable or
-withdrawn:
-
-| rule | legacy | covers | |
-|---|---|---|---|
-| CORE-000294, CORE-000504, CORE-000506 | CG0171, CG0283, CG0286 | `TSVAL` only | published |
-| CORE-000730, CORE-000731 | CG0438, CG0439 | `TSVAL` only | deprecated |
-| CORE-000779 | CG0376 | `TDSTOFF` only | deprecated |
-
-The other SDTMIG date rules are about relationships ("falls after `RFPENDTC`")
-or variable presence, never format. A relationship rule cannot rescue this:
-comparing against an unparseable date yields FALSE, so a malformed value slips
-through those too.
-
-This is a gap in CORE's metadata, not a position that SDTM dates need no format
-check. FDA requires ISO 8601 with at minimum year, month and day, and a valid
-ISO 8601 study start date under the Technical Rejection Criteria. SDTMIG itself
-requires ISO 8601 for `--DTC`.
-
-coreval changes nothing about the rules. Inventing an SDTMIG applicability for
-CORE-000547 would be the fabrication this package refuses everywhere else: that
-rule's own metadata says it is not an SDTMIG rule. Instead the report prints how
-many rules the standard filter set aside, and the documentation warns that
-narrowing can stop a real problem being reported.
-
-**Worth raising upstream:** is CORE-000547's omission of SDTMIG deliberate, or
-an oversight left when CG0438/CG0439 were deprecated without an SDTMIG
-successor? If the latter, the fix belongs upstream and coreval picks it up on
-the next rules rebuild.
+- **`target_is_not_sorted_by` (CDISC's engine).** coreval checks neighbouring
+  pairs in target order and flags both rows of a bad pair. The engine compares
+  each row's target with the one that would sit at its position once sorted by
+  the date (`check_target_ascending_in_sorted_group_with_regex`,
+  dataframe_operators.py), flags only the blank row when a blank is out of
+  place, and tests dates of different precision for overlap across all pairs.
+  The two flag different records on out-of-order data. Affects CORE-000386 and
+  CDISC's version of CORE-000535.
+- **A length test on a number.** `longer_than` and its kin answer for a
+  numeric target where CDISC's engine fails (`.str.len()`). Every bundled use
+  targets text.
+- **Prefix and suffix regex operators and blanks.** They are not exempt for a
+  blank value, where matches_regex is; on CSV and Dataset-JSON input the
+  engine exempts it. Reached only through DOMAIN and dataset names.
+- **CORE 1.0 column names.** 1.0 finds a column whatever its case
+  (table_schema.py); coreval matches the case written. XPT and Dataset-JSON
+  names are upper case; a CSV written in lower case is not.
+- **CORE 1.0 and a blank computed value.** `not_equal_to` against a scalar
+  Operations value that came out missing is TRUE for a populated target in
+  1.0 (`_is_empty_sql_operation_variable`); coreval leaves it unknown.
+- **A set of one shown as text.** A computed set holding one value is reported
+  as `ARMCD`; CDISC's sheets write `['ARMCD']`. Display only.

@@ -353,3 +353,19 @@ test_that("a date-time column can be tested for blanks", {
   hit <- evaluate_rule(fixture_rule("CORE-000690"), study, "ADVS")
   expect_equal(which(hit), 2:3)
 })
+
+test_that("is_not_unique_set with a regex puts values it does not match with the blanks, as CDISC's engine does", {
+  # apply_regex() gives None for a value the pattern does not match, and
+  # fillna() groups those with the blanks, so two partial dates on one
+  # subject and test are duplicates of each other (CORE-001034).
+  study <- one_dataset(list(
+    USUBJID = c("1", "1", "1"), LBTESTCD = "ALB",
+    LBDTC = c("2022-01-14T07:00", "2022-01", "2022-02")
+  ), "LB")
+  rule <- list(check = list(name = "LBDTC", operator = "is_not_unique_set",
+                            value = c("USUBJID", "LBTESTCD"), regex = "^\\d{4}-\\d{2}-\\d{2}"))
+  expect_equal(evaluate_rule(rule, study, "LB"), c(FALSE, TRUE, TRUE))
+  # The column is sampled at its first non-blank value, not at a blank.
+  study$datasets$LB$data$LBDTC <- c("", "2022-01-14T07:00", "2022-01-14T09:00")
+  expect_equal(evaluate_rule(rule, study, "LB"), c(FALSE, TRUE, TRUE))
+})

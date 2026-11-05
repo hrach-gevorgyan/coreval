@@ -84,6 +84,47 @@ apply_grouping_regex <- function(dt, cols, regex) {
   out
 }
 
+#' Reduce grouping columns by a regex, as CDISC's is_unique_set reduces them
+#'
+#' Unlike the Operations grouping (apply_grouping_regex(), which follows
+#' RecordCount), CDISC's is_unique_set (dataframe_operators.py) keeps a value
+#' the pattern does not match as no value at all (`apply_regex()` in
+#' helpers.py returns None, and fillna puts it with the blanks), and keeps the
+#' first match found anywhere in the value, or its first group. A column is
+#' reduced only when its first non-blank value matches from the start. Kept
+#' whole instead, partial dates such as "2022-01" and "2022-02" never joined
+#' the blank group they share there, and their duplicates went unreported
+#' (CORE-001034).
+#'
+#' @param dt A data.table of grouping columns.
+#' @param cols Column names to consider.
+#' @param regex The rule's regex, or `NULL`.
+#' @return `dt`, with matching columns reduced.
+#' @noRd
+unique_set_regex <- function(dt, cols, regex) {
+  if (is.null(regex) || !nzchar(regex)) {
+    return(dt)
+  }
+  out <- data.table::copy(dt)
+  for (col in intersect(cols, names(out))) {
+    v <- out[[col]]
+    if (!is.character(v)) {
+      next
+    }
+    present <- v[!is.na(v) & nzchar(v)]
+    if (length(present) == 0 || regexpr(regex, present[1], perl = TRUE) != 1L) {
+      next
+    }
+    filled <- which(!is.na(v) & nzchar(v))
+    hits <- regmatches(v[filled], regexec(regex, v[filled], perl = TRUE))
+    v[filled] <- vapply(hits, function(h) {
+      if (length(h) == 0) "" else if (length(h) > 1) paste(h[-1], collapse = "\x1f") else h[[1]]
+    }, character(1))
+    out[[col]] <- v
+  }
+  out
+}
+
 # TRUE where a record's combination of values across [name, value...] columns
 # duplicates another record's combination anywhere in the dataset. Blanks
 # count as a real, matching value for grouping purposes (two blank rows in
@@ -135,7 +176,11 @@ register_operator("is_not_unique_set", function(ctx) {
       use.names = TRUE, fill = TRUE
     )
   }
-  dt <- apply_grouping_regex(dt, names(dt), ctx$condition$regex)
+  dt <- if (engine_is_core1()) {
+    apply_grouping_regex(dt, names(dt), ctx$condition$regex)
+  } else {
+    unique_set_regex(dt, names(dt), ctx$condition$regex)
+  }
   # The blank sentinel and the between-column separator both use the ASCII
   # Unit Separator (0x1F), which can't appear in ordinary clinical text -
   # a plain "NA" sentinel would collide with a genuine data value of "NA",
