@@ -30,7 +30,9 @@
 #' @param domain The domain being checked, used to expand templates.
 #' @param dataset Optional dataset entry, needed only to resolve a `Child`
 #'   spec's parent domains from `RDOMAIN`.
-#' @param child Whether to include a `Child` spec's parent domains.
+#' @param child Whether to include a `Child` spec's parent domains. `TRUE`
+#'   when checking one dataset, where every other domain is unsupplied rather
+#'   than absent, so a CORE 1.0 `distinct` over one is needed too.
 #' @return An upper-case character vector of other domains, possibly empty.
 #' @noRd
 rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
@@ -81,10 +83,13 @@ rule_external_domains <- function(rule, domain, dataset = NULL, child = TRUE) {
       next
     }
     # One of 1.0's own reference tables, bundled or refused at evaluation
-    # with its own reason; and a 1.0 `distinct` over a missing domain is an
-    # empty set, not a missing input (see compute_operation()).
+    # with its own reason; and, in a whole study, a 1.0 `distinct` over a
+    # missing domain is an empty set, not a missing input (see
+    # compute_operation()). Checking one dataset, the domain was not
+    # supplied rather than absent: answered with an empty set, CORE-000172
+    # reported every record of a lone AE for a STUDYID "not in DM".
     if (tolower(op_domain) %in% c(names(.coreval_env$core1_reference), core1_static_tables) ||
-        (core1 && identical(op$operator, "distinct"))) {
+        (core1 && identical(op$operator, "distinct") && !child)) {
       next
     }
     named <- c(named, resolve_template(as.character(op_domain)))

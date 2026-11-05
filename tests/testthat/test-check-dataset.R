@@ -150,6 +150,22 @@ test_that("rule_external_domains expands templates, reads Child parents, and dro
   expect_length(rule_external_domains(fixture_rule("CORE-000547"), "AE"), 0)
 })
 
+test_that("a CORE 1.0 distinct over an unsupplied domain is needed, not empty (CORE-000172)", {
+  r <- core1_rule(NULL, operations = list(list(domain = "DM", id = "$dm_studyid",
+                                               name = "STUDYID", operator = "distinct")))
+  # One dataset: DM was not supplied, so the rule cannot be answered.
+  expect_equal(rule_external_domains(r, "AE"), "DM")
+  # A whole study without DM: 1.0's engine answers with an empty set.
+  expect_length(rule_external_domains(r, "AE", child = FALSE), 0)
+
+  ae <- data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = c("01", "02"),
+                   AESEQ = c(1, 1), AETERM = c("Headache", "Rash"))
+  result <- check_dataset(ae)
+  expect_false("CORE-000172" %in% result$findings$rule_id)
+  expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-000172"],
+               "needs DM, which was not supplied")
+})
+
 test_that("check_dataset reads a csv, and a data.table, as well as a data frame", {
   dir <- tempfile("coreval_csv_")
   dir.create(dir)
