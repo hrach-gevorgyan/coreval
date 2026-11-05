@@ -366,6 +366,36 @@ pilot submission, finding by finding, and explains every difference.
 Those examples are small and tidy, and real submissions are neither, so the
 agreement rate is a floor on correctness rather than a score.
 
+## coreval and the CORE engines
+
+Three programs run these rules:
+
+* **CDISC's engine** (`cdisc-org/cdisc-rules-engine`), written in Python. Since
+  CORE 1.0 it is the reference for SEND, TIG and USDM.
+* **Verisian's engine** (`verisianHQ/cdisc-rules-engine`), the CORE 1.0 engine,
+  written in Python on a PostgreSQL database. It is the reference for SDTMIG
+  and the FDA Business Rules.
+* **coreval**, an independent implementation in R of both rule sets, following
+  each engine's behaviour for the rules written for it.
+
+The engines are the official reference: when coreval and an engine disagree
+and nothing else settles it, the engine is right. They also check terms
+against the licensed dictionaries (MedDRA, WHODrug and others) when you supply
+them, which coreval cannot do.
+
+coreval is built for a different moment. It runs inside R, on a data frame you
+have open as well as on a folder of files. It needs no Python, database,
+network or API key, and it reports every rule it could not run, with the
+reason, next to the findings.
+
+A sensible split is coreval while you build the datasets, the engines before
+submission, and your organisation's qualified tool for the submission itself.
+
+`docs/COMPARISON.md` in the repository compares the three in detail, with
+measured speed and memory and every difference found on CDISC's pilot study.
+It lives in the repository rather than here because those details change with
+each release of the engines.
+
 ## What it does not do
 
 * **ADaM.** No worked examples are published for the ADaM rules, so there is
