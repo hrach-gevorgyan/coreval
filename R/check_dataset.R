@@ -363,6 +363,11 @@ infer_domain <- function(dataset, path = NULL) {
 #'   written only for another one is not run. The report says how many rules
 #'   were set aside; leave `standard` unset to see everything.
 #' @param version The standard's version, e.g. `"3-4"`.
+#' @param substandard For `standard = "TIG"` only, and required there:
+#'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
+#'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
+#'   CDISC's engine will not check a TIG study without it, and neither will
+#'   coreval.
 #' @param use_case Optional use case (e.g. `"INDH"`), as in [list_rules()].
 #' @param max_records Most records to keep per rule, default 1000. A rule that
 #'   flags every row of a large dataset would otherwise produce more findings
@@ -409,7 +414,12 @@ infer_domain <- function(dataset, path = NULL) {
 #' @export
 check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
                           use_case = NULL, max_records = 1000,
-                          include_deprecated = FALSE, ct_package = NULL) {
+                          include_deprecated = FALSE, ct_package = NULL,
+                          substandard = NULL) {
+  substandard <- validate_substandard(standard, substandard)
+  old_sub <- .coreval_env$substandard
+  .coreval_env$substandard <- substandard
+  on.exit(.coreval_env$substandard <- old_sub, add = TRUE)
   validate_check_args(standard, version, domain, max_records,
                       use_case = use_case, include_deprecated = include_deprecated)
   path <- NULL

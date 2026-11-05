@@ -72,14 +72,15 @@ needs another dataset is skipped and says which one, rather than treating the
 missing dataset as empty. The engines always treat the files they are given
 as the whole study.
 
-### Known gaps in coreval
+### Where the engines disagree with themselves
 
-[REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) lists, under "Still open",
-the differences from the engines that are traced and not yet fixed. None of
-them is reached by the rules' own examples. The main ones are an ordering
-operator that flags different records on out-of-order data (CORE-000386), and
-CORE 1.0's case-insensitive column names, which matter only for a CSV with
-lower-case headers.
+CDISC's engine reads a blank text value as missing from CSV or Dataset-JSON
+and as an empty string from a transport file, and a few of its operators
+answer the two differently, so one study can get different findings as CSV
+and as XPT. coreval answers as the engine does for CSV, the form of every
+rule's worked example. [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) lists
+the operators, and the one CORE 1.0 behaviour coreval does not follow on
+purpose.
 
 ## Where each one is ahead
 

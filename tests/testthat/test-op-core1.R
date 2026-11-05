@@ -19,8 +19,15 @@ test_that("the case-insensitive pattern checks ignore case on the value only", {
 
 test_that("shorter_than_or_equal_to compares lengths and never reports a blank", {
   d <- list(X = c("ABCD", "ABCDE", ""))
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "core1"
   expect_equal(leaf(d, list(name = "X", operator = "shorter_than_or_equal_to", value = 4)),
                c(TRUE, FALSE, FALSE))
+  # CDISC's engine measures a blank as 0, so it is shorter.
+  .coreval_env$engine <- "cdisc"
+  expect_equal(leaf(d, list(name = "X", operator = "shorter_than_or_equal_to", value = 4)),
+               c(TRUE, FALSE, TRUE))
 })
 
 test_that("suffix_equal_to compares without case, against any of a list", {
@@ -548,4 +555,44 @@ test_that("CDISC's is_inconsistent_across_dataset with none of its columns is re
   chk <- list(name = "PCORRES", operator = "is_inconsistent_across_dataset", value = "PCTESTCD")
   expect_error(evaluate_check(chk, ds$datasets$PC, "PC"), "none of which")
   expect_equal(in_core1(evaluate_check(chk, ds$datasets$PC, "PC")), c(FALSE, FALSE))
+})
+
+test_that("CORE 1.0 finds a column whatever the case of its name", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  ae <- data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = c("1", "2"), AESEQ = 1:2,
+                   aeterm = c("Rash", ""))
+  study <- as_study(list(data = data.table::as.data.table(ae), meta = NULL), "AE")
+  rule <- core1_rule(list(all = list(list(name = "AETERM", operator = "empty"))))
+  expect_equal(evaluate_rule(rule, study, "AE"), c(FALSE, TRUE))
+  # The original table keeps its names.
+  expect_true("aeterm" %in% names(study$datasets$AE$data))
+})
+
+test_that("CORE 1.0 compares with an empty computed value as with a blank", {
+  # equal_to_operator.py: not_equal_to is TRUE for a filled target and FALSE for
+  # a blank one; equal_to is FALSE.
+  ds <- list(data = data.table::data.table(X = c("A", "")), meta = NULL)
+  for (v in list(NA_character_, NULL, character(0))) {
+    b <- list(`$v` = scalar_binding(v))
+    expect_equal(in_core1(evaluate_check(list(name = "X", operator = "not_equal_to", value = "$v"),
+                                         ds, "XX", bindings = b)), c(TRUE, FALSE))
+    expect_equal(in_core1(evaluate_check(list(name = "X", operator = "equal_to", value = "$v"),
+                                         ds, "XX", bindings = b)), c(FALSE, FALSE))
+  }
+})
+
+test_that("CORE 1.0 pairs blank text join keys, as `l.key = r.key` does", {
+  dir <- tempfile("study_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", ""),
+                              RFSTDTC = c("2024-01-01", "2024-02-01")), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = c("1", ""), AESEQ = 1),
+                   file.path(dir, "ae.xpt"))
+  study <- read_study(dir)
+  spec <- list(Name = "DM", Keys = list("USUBJID"))
+  joined <- in_core1(apply_match_dataset(study$datasets$AE, spec, study, "AE"))
+  expect_equal(joined$data$RFSTDTC, c("2024-01-01", "2024-02-01"))
 })

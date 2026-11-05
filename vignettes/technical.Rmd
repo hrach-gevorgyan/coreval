@@ -174,7 +174,10 @@ evaluates each one. Selection uses, in order:
    classes it applies to. A domain's class (Events, Findings, ...) is looked up
    from the bundled SDTMIG metadata. For a CORE 1.0 rule, the declared SDTMIG
    version also decides whether the IG defines the domain at all.
-5. **Use case**, if you pass `use_case` (for example `"INDH"`).
+5. **Use case**, if you pass `use_case` (for example `"INDH"`). A TIG check
+   needs `substandard` too, `"SDTM"` or `"SEND"` (or `"ADaM"`): a TIG rule's
+   use case covers different datasets in each, and CDISC's engine will not
+   check a TIG study without it.
 
 A study folder does not declare its standard, so for a folder of datasets
 `standard` is whatever you pass. A CORE test case or a USDM file declares its

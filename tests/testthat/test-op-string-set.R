@@ -377,3 +377,32 @@ test_that("a pattern is matched against a large whole number written out in full
   check <- list(name = "LBDY", operator = "not_matches_regex", value = "^-?[1-9]{1}\\d*$")
   expect_equal(evaluate_check(check, dataset, "LB"), c(FALSE, FALSE, FALSE, FALSE))
 })
+
+test_that("length checks follow each engine (CDISC: numbers fail, columns by length)", {
+  # Answers taken from CDISC's engine (DataframeType, dataframe_operators.py).
+  ds <- list(data = data.table::data.table(N = c(1, 123), C = c("AB", ""), D = c("ABC", "XY")),
+             meta = NULL)
+  chk <- function(op, name, value) list(name = name, operator = op, value = value)
+  expect_error(evaluate_check(chk("longer_than", "N", 2), ds, "XX"), "numeric")
+  expect_equal(evaluate_check(chk("longer_than", "C", "D"), ds, "XX"), c(FALSE, FALSE))
+  expect_equal(evaluate_check(chk("shorter_than_or_equal_to", "C", 3), ds, "XX"), c(TRUE, TRUE))
+  # CORE 1.0 measures a number as text and answers FALSE for a blank.
+  core1 <- function(code) {
+    old <- .coreval_env$engine
+    on.exit(.coreval_env$engine <- old)
+    .coreval_env$engine <- "core1"
+    force(code)
+  }
+  expect_equal(core1(evaluate_check(chk("longer_than", "N", 2), ds, "XX")), c(FALSE, TRUE))
+  expect_equal(core1(evaluate_check(chk("shorter_than_or_equal_to", "C", 3), ds, "XX")), c(TRUE, FALSE))
+})
+
+test_that("a blank is never reported by a negated prefix or suffix pattern check", {
+  # As not_matches_regex. CDISC's engine gives the same answer for a blank read
+  # from CSV or Dataset-JSON, the form of the rules' worked examples.
+  ds <- list(data = data.table::data.table(C = c("AEX", "", "LBX")), meta = NULL)
+  expect_equal(evaluate_check(list(name = "C", operator = "not_prefix_matches_regex", value = "AE",
+                                   prefix = 2), ds, "XX"), c(FALSE, FALSE, TRUE))
+  expect_equal(evaluate_check(list(name = "C", operator = "not_suffix_matches_regex", value = "X",
+                                   suffix = 1), ds, "XX"), c(FALSE, FALSE, FALSE))
+})

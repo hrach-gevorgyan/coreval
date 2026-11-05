@@ -12,7 +12,8 @@ check_dataset(
   use_case = NULL,
   max_records = 1000,
   include_deprecated = FALSE,
-  ct_package = NULL
+  ct_package = NULL,
+  substandard = NULL
 )
 }
 \arguments{
@@ -53,6 +54,12 @@ will not pick a version for you, because terminology changes between
 releases and judging a study against one it never declared would both
 invent violations and hide real ones. Every published package is bundled;
 \code{list_ct_packages()} shows them.}
+
+\item{substandard}{For \code{standard = "TIG"} only, and required there:
+whether the tobacco study is \code{"SDTM"} (clinical), \code{"SEND"} (nonclinical)
+or \code{"ADaM"}. A TIG rule's use case covers different datasets in each, so
+CDISC's engine will not check a TIG study without it, and neither will
+coreval.}
 }
 \value{
 An object of class \code{coreval_result}: a list of the three tables

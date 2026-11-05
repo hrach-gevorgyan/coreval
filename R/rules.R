@@ -176,6 +176,11 @@ build_rules_table <- function() {
 #' @param version The standard's version, e.g. `"3.4"` (or `"3-4"`). Only
 #'   narrows alongside `standard`, since a bare version is ambiguous across
 #'   standards.
+#' @param substandard For `standard = "TIG"` only, and required there:
+#'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
+#'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
+#'   CDISC's engine will not check a TIG study without it, and neither will
+#'   coreval. Optional here: left out, the use cases of all three apply.
 #' @param use_case Optional use case (e.g. `"INDH"`). Rules with no Use Case
 #'   constraint always pass.
 #' @param include_deprecated Include superseded rules. `TRUE` here, unlike
@@ -210,7 +215,21 @@ build_rules_table <- function() {
 #' @export
 list_rules <- function(id = NULL, domain = NULL, standard = NULL,
                        version = NULL, use_case = NULL,
-                       include_deprecated = TRUE) {
+                       include_deprecated = TRUE, substandard = NULL) {
+  # Optional here: listing is not checking, and without it the TIG lists are
+  # merged, as with no standard.
+  substandard <- validate_substandard(standard, substandard, required = FALSE)
+  with_substandard(substandard, list_rules_impl(
+    id = id, domain = domain, standard = standard, version = version,
+    use_case = use_case, include_deprecated = include_deprecated
+  ))
+}
+
+#' The body of [list_rules()], run with the TIG sub-standard in force
+#' @noRd
+list_rules_impl <- function(id = NULL, domain = NULL, standard = NULL,
+                            version = NULL, use_case = NULL,
+                            include_deprecated = TRUE) {
   # Same guard the check entry points use, so an unrecognised standard or a
   # bare version is refused here too rather than quietly returning a
   # plausible-looking number. A version with no standard used to be discarded
@@ -221,7 +240,7 @@ list_rules <- function(id = NULL, domain = NULL, standard = NULL,
   # from the CORE 1.0 one, as check_study() would run them. See rule_family().
   family <- rule_family(standard)
   if (!identical(family, .coreval_env$rule_family)) {
-    return(with_rule_family(family, list_rules(
+    return(with_rule_family(family, list_rules_impl(
       id = id, domain = domain, standard = standard, version = version,
       use_case = use_case, include_deprecated = include_deprecated
     )))
@@ -358,6 +377,46 @@ validate_ct_package <- function(ct_package) {
 #' @param standard,version,domain,max_records The user-supplied arguments.
 #' @return `invisible(NULL)`; raises an error naming the offending argument.
 #' @noRd
+#' Check `substandard` against `standard`, as CDISC's engine does for TIG
+#'
+#' The engine stops on a TIG check without `--substandard` (core.py), because
+#' its use-case lists are kept per sub-standard.
+#'
+#' @param standard,substandard As passed by the caller.
+#' @param required Whether TIG needs one; `list_rules()` does not.
+#' @return The sub-standard, upper case, or `NULL`.
+#' @noRd
+validate_substandard <- function(standard, substandard, required = TRUE) {
+  tig <- identical(toupper(standard %||% ""), "TIG")
+  if (is.null(substandard)) {
+    if (tig && required) {
+      stop("standard = \"TIG\" needs substandard = \"SDTM\" or \"SEND\" (or \"ADaM\"): ",
+           "a TIG rule's use case covers different datasets in each.", call. = FALSE)
+    }
+    return(NULL)
+  }
+  if (!is.character(substandard) || length(substandard) != 1L || is.na(substandard) ||
+        !toupper(substandard) %in% c("SDTM", "SEND", "ADAM")) {
+    stop("`substandard` must be \"SDTM\", \"SEND\" or \"ADaM\".", call. = FALSE)
+  }
+  if (!tig) {
+    stop("`substandard` applies to standard = \"TIG\" only.", call. = FALSE)
+  }
+  toupper(substandard)
+}
+
+#' Make a TIG sub-standard the one in force for the duration of `code`
+#' @param substandard A validated sub-standard, or `NULL`.
+#' @param code Code to run.
+#' @return The value of `code`.
+#' @noRd
+with_substandard <- function(substandard, code) {
+  old <- .coreval_env$substandard
+  .coreval_env$substandard <- substandard
+  on.exit(.coreval_env$substandard <- old, add = TRUE)
+  force(code)
+}
+
 validate_check_args <- function(standard = NULL, version = NULL, domain = NULL,
                                 max_records = NULL, use_case = NULL,
                                 include_deprecated = FALSE) {

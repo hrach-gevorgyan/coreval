@@ -650,7 +650,12 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # USUBJID would fabricate a match. Rows with a blank key are excluded
   # from the merge and get NA for every joined-in column instead, matching
   # what a left join against a genuinely missing key should produce.
-  is_key_blank <- Reduce(`|`, lapply(keys, function(k) is_blank(left[[k]])))
+  #
+  # CORE 1.0 joins on `l.key = r.key` (merges/join.py), and a blank text value
+  # read from a transport file is "" there, so two blank text keys pair; a
+  # missing number is NULL and pairs with nothing.
+  key_unpaired <- if (engine_is_core1()) function(x) is.na(x) else is_blank
+  is_key_blank <- Reduce(`|`, lapply(keys, function(k) key_unpaired(left[[k]])))
   valid <- which(!is_key_blank)
 
   # The join works out WHICH rows pair up, as two integer vectors, and builds

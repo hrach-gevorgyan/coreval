@@ -76,15 +76,40 @@ core1_blank_false <- function(ctx, out) {
   out
 }
 
+#' A length comparison, as each engine makes it
+#'
+#' Both engines compare the target's length with a number, or with the length
+#' of a text comparator (a column's values, row by row). CDISC's engine reads
+#' the length through pandas' `.str`, which fails on a numeric column
+#' (dataframe_operators.py, `longer_than` and its kin), so the rule is skipped
+#' there; CORE 1.0 casts the target to text (`LENGTH(CAST(... AS TEXT))`) and
+#' answers FALSE for a blank one. CDISC's engine measures a blank as 0.
+#'
+#' @param cmp The comparison, e.g. `>`.
+#' @return An operator function.
+#' @noRd
+length_op <- function(cmp) {
+  guarded_op(function(ctx) {
+    if (is.numeric(ctx$target) && !engine_is_core1()) {
+      stop("compares the length of ", ctx$condition$name, ", which is numeric", call. = FALSE)
+    }
+    against <- ctx$value
+    if (!is.numeric(against)) {
+      num <- suppressWarnings(as.numeric(as.character(against)))
+      against <- if (!anyNA(num)) num else nchar(as.character(against))
+    }
+    out <- cmp(nchar(target_text(ctx$target)), against)
+    core1_blank_false(ctx, out)
+  })
+}
+
 # Operator: longer_than - target's character length exceeds value
-register_operator("longer_than", guarded_op(function(ctx) {
-  core1_blank_false(ctx, nchar(ctx$target) > ctx$value)
-}))
+register_operator("longer_than", length_op(`>`))
 
 # Operator: shorter_than - target's character length is less than value
-register_operator("shorter_than", guarded_op(function(ctx) {
-  core1_blank_false(ctx, nchar(ctx$target) < ctx$value)
-}))
+register_operator("shorter_than", length_op(`<`))
+register_operator("shorter_than_or_equal_to", length_op(`<=`))
+register_operator("longer_than_or_equal_to", length_op(`>=`))
 
 #' OR a match function across every element of a (possibly multi-value) comparator
 #' @param target Target vector.
@@ -176,15 +201,10 @@ register_operator("ends_with", guarded_op(function(ctx) {
 }))
 
 # Operator: has_equal_length - target's length equals value (a number or reference string)
-register_operator("has_equal_length", guarded_op(function(ctx) {
-  core1_blank_false(ctx, if (is.numeric(ctx$value)) nchar(ctx$target) == ctx$value else
-    nchar(ctx$target) == nchar(ctx$value))
-}))
+register_operator("has_equal_length", length_op(`==`))
 
 # Operator: has_not_equal_length - negation of has_equal_length
-register_operator("has_not_equal_length", function(ctx) {
-  core1_blank_false(ctx, !get_operator("has_equal_length")(ctx))
-})
+register_operator("has_not_equal_length", length_op(`!=`))
 
 # Operator: is_contained_by_case_insensitive - target matches value set, ignoring case
 register_operator("is_contained_by_case_insensitive", guarded_op(function(ctx) {
@@ -206,9 +226,14 @@ register_operator("prefix_matches_regex", guarded_op(function(ctx) {
 
 # Operator: not_prefix_matches_regex - negation of prefix_matches_regex
 register_operator("not_prefix_matches_regex", function(ctx) {
-  # prefix_matches_regex_operator.py: the inverted operator, not a NOT, and a
-  # blank target is FALSE either way.
-  core1_blank_false(ctx, !get_operator("prefix_matches_regex")(ctx))
+  # A blank is never reported, as not_matches_regex never reports one. CORE
+  # 1.0 answers FALSE for it (prefix_matches_regex_operator.py). CDISC's
+  # engine answers by how the blank was read: missing from CSV or
+  # Dataset-JSON, never reported; an empty string from a transport file,
+  # reported. The rules' worked examples are CSV.
+  out <- !get_operator("prefix_matches_regex")(ctx)
+  out[is_blank(ctx$target)] <- FALSE
+  out
 })
 
 # Operator: suffix_matches_regex - regex matches within the last N characters of target
@@ -221,7 +246,10 @@ register_operator("suffix_matches_regex", guarded_op(function(ctx) {
 
 # Operator: not_suffix_matches_regex - negation of suffix_matches_regex
 register_operator("not_suffix_matches_regex", function(ctx) {
-  core1_blank_false(ctx, !get_operator("suffix_matches_regex")(ctx))
+  # As not_prefix_matches_regex.
+  out <- !get_operator("suffix_matches_regex")(ctx)
+  out[is_blank(ctx$target)] <- FALSE
+  out
 })
 
 # Operator: prefix_equal_to - target's first N characters (condition's `prefix`) literally equal value

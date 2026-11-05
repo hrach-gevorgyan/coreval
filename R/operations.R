@@ -1923,8 +1923,23 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     dy = compute_dy(op, study, current_dataset, current_domain),
     NULL
   )
+  # A set is reported as the engines print one, `['ARMCD']`, even when it holds
+  # one value; a single number or name is printed as it is. The binding cannot
+  # tell the two apart by its value, so the operations that make sets say so.
+  if (!is.null(binding) && op$operator %in% set_operations) {
+    binding$set <- TRUE
+  }
   apply_group_aliases(binding, op)
 }
+
+# The Operations whose result is a set of values. See compute_operation().
+set_operations <- c(
+  "distinct", "minus", "intersect", "standard_domains", "referenced_domain_variable_names",
+  "get_column_order_from_dataset", "get_column_order_from_library", "codelist_terms",
+  "get_dataset_filtered_variables", "get_parent_model_column_order",
+  "get_model_filtered_variables", "study_domains", "dataset_names", "required_variables",
+  "expected_variables", "get_model_column_order"
+)
 
 #' Compute all Operations bindings for a rule, keyed by operation id
 #' @param rule A rule record.

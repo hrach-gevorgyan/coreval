@@ -301,3 +301,16 @@ test_that("CT follows the declared standard, and TS may cite CDISC CT", {
   skip_if_not("sendct-2026-03-27" %in% list_ct_packages())
   expect_equal(ct_package_from_ts(study), "sendct-2026-03-27")
 })
+
+test_that("a TIG check needs its sub-standard, and uses that sub-standard's use cases", {
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("01", "02"))
+  expect_error(check_dataset(dm, standard = "TIG", version = "1.0"), "needs substandard")
+  expect_error(check_dataset(dm, standard = "SDTMIG", substandard = "SDTM"), "applies to standard")
+  expect_error(check_dataset(dm, standard = "TIG", substandard = "CDASH"), "must be")
+  sdtm <- list_rules(domain = "DM", standard = "TIG", version = "1.0", substandard = "SDTM")
+  send <- list_rules(domain = "DM", standard = "TIG", version = "1.0", substandard = "SEND")
+  # CDISC's engine: under SDTM, NONCLIN covers no dataset; under SEND, INDH none.
+  use_case <- function(ids) vapply(.coreval_env$rule_sets$cdisc[ids], function(r) r$scope[["Use Case"]] %||% "", "")
+  expect_false(any(use_case(sdtm$id) == "NONCLIN"))
+  expect_false(any(use_case(send$id) == "INDH"))
+})

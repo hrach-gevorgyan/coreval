@@ -394,7 +394,25 @@ tig_use_case_applies <- function(rule, domain, dataset = NULL, standard = NULL) 
 use_case_covers_dataset <- function(allowed, domain, dataset = NULL) {
   code <- if (is.null(dataset)) toupper(domain) else dataset_unsplit_name(dataset, domain)
   code <- sub("^(SUPP|SQ)", "", code)
-  covered <- unique(unlist(use_case_domains[intersect(allowed, names(use_case_domains))]))
+  # The reference keeps a list per sub-standard (USE_CASE_DOMAINS[substandard]):
+  # INDH and PROD for SDTM, NONCLIN for SEND, and for ADaM only an AD dataset
+  # under ANALYSIS. Merged, a TIG dataset was given the rules of both kinds of
+  # study. With no sub-standard stated (no standard declared), the lists stay
+  # merged, since nothing says which applies.
+  sub <- .coreval_env$substandard
+  lists <- if (is.null(sub)) {
+    use_case_domains
+  } else if (identical(sub, "SDTM")) {
+    use_case_domains[c("INDH", "PROD")]
+  } else if (identical(sub, "SEND")) {
+    use_case_domains["NONCLIN"]
+  } else {
+    list()
+  }
+  if (identical(sub, "ADAM") && startsWith(code, "AD")) {
+    return("ANALYSIS" %in% allowed)
+  }
+  covered <- unique(unlist(lists[intersect(allowed, names(lists))]))
   if (code %in% covered) {
     return(TRUE)
   }

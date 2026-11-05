@@ -187,46 +187,62 @@ alongside CE, CM, FA, LB, SE and SV.
 problem is in and that file's own row numbers, where CDISC names the merged
 domain. Deliberate: a finding has to point at a file you can open.
 
-## Still open
+## Settled by running the engines
 
-Differences from the reference that are known, traced, and not yet fixed.
-None of them is reached by the rules' own examples.
+Each of these was a known difference, now resolved by running the engine on
+the same data as coreval.
 
-- **`target_is_not_sorted_by` (CDISC's engine).** coreval checks neighbouring
-  pairs in target order and flags both rows of a bad pair. The engine compares
-  each row's target with the one that would sit at its position once sorted by
-  the date (`check_target_ascending_in_sorted_group_with_regex`,
-  dataframe_operators.py), flags only the blank row when a blank is out of
-  place, and tests dates of different precision for overlap across all pairs.
-  The two flag different records on out-of-order data. Affects CORE-000386 and
-  CDISC's version of CORE-000535.
-- **A length test on a number.** `longer_than` and its kin answer for a
-  numeric target where CDISC's engine fails (`.str.len()`). Every bundled use
-  targets text.
-- **Prefix and suffix regex operators and blanks.** They are not exempt for a
-  blank value, where matches_regex is; on CSV and Dataset-JSON input the
-  engine exempts it. Reached only through DOMAIN and dataset names.
-- **CORE 1.0 column names.** 1.0 finds a column whatever its case
-  (table_schema.py); coreval matches the case written. XPT and Dataset-JSON
-  names are upper case; a CSV written in lower case is not.
-- **CORE 1.0 and a blank computed value.** `not_equal_to` against a scalar
-  Operations value that came out missing is TRUE for a populated target in
-  1.0 (`_is_empty_sql_operation_variable`); coreval leaves it unknown.
-- **`is_unique_set` with a regex, on blank text (CDISC's engine).** The engine
-  leaves a blank `""` as it is and puts an unmatched value with the missing
-  ones (`apply_regex()`, helpers.py), and skips the column when its first
-  non-missing value is blank. coreval holds every blank as `""` and groups
-  blank, missing and unmatched together. The two agree where the engine reads
-  blanks as missing (CSV and Dataset-JSON, as the rules' examples are) and
-  could differ on XPT input. Affects CORE-001034.
-- **TIG use cases need the sub-standard (CDISC's engine).** The engine keys
-  its use-case domain lists by whether a TIG study is SDTM or SEND
-  (constants/use_cases.py, `USE_CASE_DOMAINS[substandard]`); coreval has no
-  way to state the sub-standard and merges the lists, so a TIG dataset gets
-  rules for both. Pass `use_case` to narrow it.
-- **CORE 1.0 and blank join keys.** 1.0 joins `l.key = r.key`, so a blank key
-  can pair with another blank one; coreval never pairs blank keys.
-- **CORE 1.0 numeric comparison of text.** 1.0 casts to a number and fails
-  the whole rule on a value that is not one; coreval answers row by row.
-- **A set of one shown as text.** A computed set holding one value is reported
-  as `ARMCD`; CDISC's sheets write `['ARMCD']`. Display only.
+- **CDISC's `target_is_sorted_by`.** coreval ports
+  `check_target_ascending_in_sorted_group_with_regex` and the checks around it
+  (dataframe_operators.py): misplaced blanks, dates of different precision
+  that contain each other, each row's target against the one at its place once
+  sorted by the date, and each date against its neighbours, for every sort
+  specification. On 300 generated groups of shuffled, partial and blank dates,
+  under all four sort orders and blank positions, 4,912 rows out of 4,912
+  agree with the engine; the neighbouring-pair test used before disagreed on
+  839. Affects CORE-000386 and CDISC's CORE-000535.
+- **CDISC's length operators.** `longer_than` and its kin read the length
+  through pandas' `.str`, which fails on a numeric column, so the rule is
+  skipped; against a column they compare the two values' lengths; and a blank
+  has length 0. All 18 combinations of operator and input agree with the
+  engine. CORE 1.0 measures a number as text and answers FALSE for a blank.
+- **CORE 1.0 column names** are matched whatever their case
+  (models/sql/table_schema.py lower-cases every name), so a CSV header written
+  `aeterm` answers a rule naming AETERM.
+- **CORE 1.0 and an empty computed value.** `equal_to` and `not_equal_to`
+  treat it as a blank (equal_to_operator.py): not equal for a filled target,
+  equal to nothing.
+- **TIG use cases** are kept per sub-standard (constants/use_cases.py), and
+  the engine will not check a TIG study without `--substandard` (core.py).
+  Nor will coreval: `standard = "TIG"` needs `substandard`.
+- **CORE 1.0 joins** on `l.key = r.key` (merges/join.py): two blank text keys,
+  read as "" from a transport file, pair; a missing number pairs with nothing.
+- **A set is printed as a list**, `['ARMCD']`, even when it holds one value.
+
+## The engine answers by file format
+
+CDISC's engine holds a blank text value as missing when it reads CSV or
+Dataset-JSON, and as an empty string when it reads a transport file
+(`pd.read_sas`). Some operators answer the two differently, so the same study
+can get different findings from the engine as CSV and as XPT. coreval holds
+every blank as "" but answers as the engine does for a missing value, which is
+how every rule's worked example is written:
+
+- `not_matches_regex`, `not_prefix_matches_regex` and
+  `not_suffix_matches_regex` never report a blank. From a transport file the
+  engine reports one.
+- `is_unique_set` with a regex reduces a column whose first value is blank.
+  From a transport file the engine leaves that column whole, and on a subject
+  with a blank date, then `2022-01-05`, then `2022-01-05T10:00` it misses the
+  duplicate both other readings report.
+
+## Not followed, on purpose
+
+- **CORE 1.0 numeric comparison of text.** 1.0 casts with `CAST(... AS
+  NUMERIC)` (numeric_comparison_operator.py), which fails the query on text
+  such as "LOW". Whether it fails depends on the order PostgreSQL evaluates the
+  conditions in: CORE-000889 guards its comparison with a pattern and runs
+  through the engine on "LOW" and "<5". Every other bundled 1.0 rule compares
+  a variable SDTM defines as numeric, or a count, which a transport file or
+  Dataset-JSON holds as a number. coreval answers row by row rather than guess
+  the evaluation order.

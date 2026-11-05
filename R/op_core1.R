@@ -62,22 +62,8 @@ register_operator("prefix_is_not_contained_by_case_insensitive", case_insensitiv
 register_operator("suffix_is_contained_by_case_insensitive", case_insensitive_op("suffix_is_contained_by"))
 register_operator("suffix_is_not_contained_by_case_insensitive", case_insensitive_op("suffix_is_not_contained_by"))
 
-# string_length_comparison_operator.py: a blank target is FALSE, a number is a
-# length, and anything else is compared by its own length.
-length_compare <- function(cmp) {
-  guarded_op(function(ctx) {
-    against <- ctx$value
-    if (!is.numeric(against)) {
-      num <- suppressWarnings(as.numeric(against))
-      against <- if (!anyNA(num)) num else nchar(as.character(against))
-    }
-    out <- cmp(nchar(target_text(ctx$target)), against)
-    out[is_blank(ctx$target)] <- FALSE
-    out
-  })
-}
-register_operator("shorter_than_or_equal_to", length_compare(`<=`))
-register_operator("longer_than_or_equal_to", length_compare(`>=`))
+# shorter_than_or_equal_to and longer_than_or_equal_to are registered with
+# the other length comparisons, in op_string.R (length_op()).
 
 # prefix_suffix_equal_to_operator.py for the suffix: compared lower-cased on
 # both sides, any of a list matching, and a blank target never equal.

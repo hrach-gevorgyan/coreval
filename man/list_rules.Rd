@@ -10,7 +10,8 @@ list_rules(
   standard = NULL,
   version = NULL,
   use_case = NULL,
-  include_deprecated = TRUE
+  include_deprecated = TRUE,
+  substandard = NULL
 )
 }
 \arguments{
@@ -38,6 +39,12 @@ catalog of what is bundled, so hiding the retired rules would make
 is right here to filter on. Checking is a different question, and there a
 superseded rule would report the same defect twice.
 Pass \code{FALSE} to see exactly what would run.}
+
+\item{substandard}{For \code{standard = "TIG"} only, and required there:
+whether the tobacco study is \code{"SDTM"} (clinical), \code{"SEND"} (nonclinical)
+or \code{"ADaM"}. A TIG rule's use case covers different datasets in each, so
+CDISC's engine will not check a TIG study without it, and neither will
+coreval. Optional here: left out, the use cases of all three apply.}
 }
 \value{
 A \code{\link[data.table:data.table]{data.table::data.table()}}, one row per rule: \code{id}, the one-line

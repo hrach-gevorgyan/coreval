@@ -94,3 +94,21 @@ test_that("empty_within_except_last_row allows a blank target only on the group'
   check <- list(name = "SEENDTC", operator = "empty_within_except_last_row", ordering = "SESTDTC", value = "USUBJID")
   expect_equal(evaluate_check(check, dataset, "SE"), c(TRUE, FALSE, FALSE))
 })
+
+test_that("CDISC's sort check flags the rows CDISC's engine flags (CORE-000386)", {
+  # Answers taken from the engine itself (DataframeType.target_is_not_sorted_by).
+  # Comparing neighbouring pairs flagged both rows of a bad pair, and all three
+  # rows around a blank date.
+  sorted_check <- function(dates) {
+    ds <- list(data = data.table::data.table(USUBJID = "1", SESEQ = seq_along(dates), SESTDTC = dates),
+               meta = NULL)
+    chk <- list(name = "SESEQ", operator = "target_is_not_sorted_by", within = "USUBJID",
+                value = list(list(name = "SESTDTC", sort_order = "asc", null_position = "last")))
+    evaluate_check(chk, ds, "SE")
+  }
+  expect_equal(sorted_check(c("2020-01-01", "", "2020-01-03")), c(FALSE, TRUE, FALSE))
+  expect_equal(sorted_check(c("2020-01-01", "2020-01-05", "2020-01-03", "2020-01-04")),
+               c(FALSE, TRUE, TRUE, TRUE))
+  # Dates of different precision where one contains the other overlap.
+  expect_equal(sorted_check(c("2020", "2020-01-10")), c(TRUE, TRUE))
+})

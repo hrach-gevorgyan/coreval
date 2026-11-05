@@ -241,6 +241,15 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
         return(NULL)
       }
       resolved <- resolve_binding(binding, dataset)
+      # CORE 1.0 compares with a computed value that came out empty as with a
+      # blank: equal_to is FALSE, and not_equal_to is TRUE for a filled target
+      # (equal_to_operator.py truth table; _is_empty_sql_operation_variable).
+      # Left missing, the comparison was unknown and decided nothing.
+      if (engine_is_core1() && identical(binding$kind, "scalar") &&
+            condition$operator %in% c("equal_to", "not_equal_to") &&
+            (length(resolved) == 0 || all(is.na(resolved)))) {
+        return("")
+      }
       # A grouped binding this dataset cannot be joined to: it lacks a group
       # column. The comparison is then unknown, and where the unknown decides
       # a row the rule is refused (run_rule_on_domain()) rather than read as
@@ -563,6 +572,9 @@ run_rule_on_domain <- function(rule, study, domain) {
   .coreval_env$engine <- rule_engine(rule)
   on.exit(.coreval_env$engine <- previous_engine, add = TRUE)
   study <- study_standard_from_rule(study, rule)
+  if (identical(.coreval_env$engine, "core1")) {
+    study <- core1_case_blind_study(study)
+  }
   assert_rule_inputs_available(rule, study)
   assert_labels_available(rule, study, domain)
   dataset <- prepare_dataset_for_rule(rule, study, domain)
@@ -579,6 +591,34 @@ run_rule_on_domain <- function(rule, study, domain) {
   }
   violations[is.na(violations)] <- FALSE
   list(dataset = dataset, violations = violations, bindings = bindings)
+}
+
+#' The study as CORE 1.0 sees its columns, whatever their case
+#'
+#' CORE 1.0 keys every column by its lower-cased name (models/sql/table_schema.py,
+#' `add_column()` and `get_column()`), so a CSV whose header reads `aeterm`
+#' answers a rule naming AETERM. coreval matched the case written, and every
+#' CORE 1.0 rule reading such a column found it missing. The rules name
+#' columns in upper case, so a dataset's lower- or mixed-case column names are
+#' upper-cased for a 1.0 rule. Nothing is copied: the new table holds the same
+#' column vectors. The variable metadata keeps the names as written, for the
+#' rules about the names themselves. Two names differing only in case are
+#' left as they are.
+#'
+#' @param study A study object.
+#' @return The study, with such datasets' column names upper-cased.
+#' @noRd
+core1_case_blind_study <- function(study) {
+  for (k in names(study$datasets)) {
+    dt <- study$datasets[[k]]$data
+    if (!data.table::is.data.table(dt)) next
+    cols <- names(dt)
+    upper <- ifelse(startsWith(cols, "."), cols, toupper(cols))
+    if (identical(upper, cols) || anyDuplicated(upper)) next
+    view <- data.table::setDT(stats::setNames(as.list(dt), upper))
+    study$datasets[[k]]$data <- view
+  }
+  study
 }
 
 #' Does a condition name a column the dataset does not have, as CORE 1.0 reads it?

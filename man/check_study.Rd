@@ -12,7 +12,8 @@ check_study(
   max_records = 1000,
   include_deprecated = FALSE,
   ct_package = NULL,
-  usdm = FALSE
+  usdm = FALSE,
+  substandard = NULL
 )
 }
 \arguments{
@@ -53,6 +54,12 @@ invent violations and hide real ones. Every published package is bundled;
 
 \item{usdm}{Check a USDM study design document. \code{FALSE} by default, and
 only used when \code{study} is a folder path; see \code{\link[=read_study]{read_study()}}.}
+
+\item{substandard}{For \code{standard = "TIG"} only, and required there:
+whether the tobacco study is \code{"SDTM"} (clinical), \code{"SEND"} (nonclinical)
+or \code{"ADaM"}. A TIG rule's use case covers different datasets in each, so
+CDISC's engine will not check a TIG study without it, and neither will
+coreval.}
 }
 \value{
 An object of class \code{coreval_result}, holding three tables. Because

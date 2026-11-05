@@ -79,79 +79,6 @@ register_operator("empty_within_except_last_row", function(ctx) {
   result
 })
 
-# Within each `within`-group, sorted by the TARGET column's own value (its
-# declared row-sequence number, e.g. --SEQ): is the sort key named in
-# `value[[1]]$name` (e.g. --STDTC) monotonically ordered per `sort_order`
-# ("asc"/"desc")? Confirmed against CORE-000386's real fixtures: a subject
-# whose target order gives dates 03-01 -> 03-03 -> 03-02 has BOTH rows of
-# the inverted pair (03-03, 03-02) flagged, not just one; the row before
-# the inversion (03-01) is never flagged.
-#
-# Each consecutive pair is compared at their OWN common (coarser) date
-# precision - the same "truncate both to common precision" rule op_date.R's
-# compare_dates_one() already uses - not a naive default-missing-components-
-# to-1 comparison. Confirmed necessary against CORE-000535's real fixtures:
-# a subject with dates "2005-10" (month precision), "2005-10-08" (day),
-# "2005-10-06" (day), "2005-11" (month) in --SEQ order flags records 1, 2,
-# AND 3 - not just the day-precision pair (2,3) that's a plain decrease.
-# Truncating pair (1,2) to their common month precision makes them EQUAL
-# ("2005-10" == "2005-10" truncated from "2005-10-08") - and equal (not
-# strictly increasing) at truncated precision counts as "not sorted" too,
-# exactly like op_date.R's date_equal_to treats differing-precision values
-# as never truly equal. Only a single sort key has been observed in bundled
-# rules (a list of length 1) - a real multi-key sort spec isn't implemented.
-#' Does the pair (a then b) violate the requested sort order, truncating both to their common date precision?
-#' @param a,b Single (possibly partial) date strings, or `NA`/`""` for blank.
-#' @param descending If `TRUE`, checks for a non-increasing pair instead of non-decreasing.
-#' @param null_first If `TRUE`, a blank/invalid value sorts before everything; otherwise after.
-#' @return A single logical.
-#' @noRd
-sequence_date_pair_violates <- function(a, b, descending, null_first) {
-  valid_a <- is_valid_date_str(a)
-  valid_b <- is_valid_date_str(b)
-  # A genuinely BLANK value sorts per null_position (a real, meaningful
-  # absence). A PRESENT but unparseable value (e.g. a non-ISO "YYYY-MM-DD
-  # HH:MM:SS" datetime using a space instead of "T", confirmed to appear in
-  # some real SE fixtures) is a different situation entirely - there's no
-  # sound value to sort it by, so the pair is left unflagged rather than
-  # guessing via the same sentinel, which would otherwise make every such
-  # value falsely "equal" to every other and flag the whole sequence.
-  if (!valid_a && !is_blank(a)) {
-    return(FALSE)
-  }
-  if (!valid_b && !is_blank(b)) {
-    return(FALSE)
-  }
-  if (!valid_a || !valid_b) {
-    sentinel <- if (null_first) -Inf else Inf
-    if (descending) {
-      sentinel <- -sentinel
-    }
-    va <- if (valid_a) as.numeric(parse_date_one(a)) else sentinel
-    vb <- if (valid_b) as.numeric(parse_date_one(b)) else sentinel
-    if (descending) vb >= va else vb <= va
-  } else {
-    # Precisions EQUAL (no truncation needed): only a genuine decrease is a
-    # violation - a same-precision tie is fine (confirmed against
-    # CORE-000386's own positive fixture: two same-day, same-precision
-    # entries are NOT flagged). Precisions DIFFERENT: truncating to the
-    # common (coarser) one can make the pair artificially equal, which
-    # counts as a violation too (nothing proves it's actually non-
-    # decreasing) - confirmed against CORE-000535's own fixture (a month-
-    # precision date "equal" to a truncated day-precision one IS flagged).
-    pa <- detect_precision_one(a)
-    pb <- detect_precision_one(b)
-    common <- min(pa, pb)
-    va <- as.numeric(parse_date_one(a, common))
-    vb <- as.numeric(parse_date_one(b, common))
-    if (pa == pb) {
-      if (descending) vb > va else vb < va
-    } else {
-      if (descending) vb >= va else vb <= va
-    }
-  }
-}
-
 # Operator: target_is_not_sorted_by - within a group, the target's own order doesn't sort a value column as specified
 register_operator("target_is_not_sorted_by", function(ctx) {
   if (!ctx$exists) {
@@ -166,11 +93,14 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   sort_col <- resolve_var_name(spec$name, ctx$wildcard)
   dt <- ctx$dataset$data
   if (!all(c(within_col, sort_col) %in% names(dt))) {
-    return(rep(FALSE, ctx$n))
+    # A condition on a missing column is FALSE in CORE 1.0; CDISC's engine
+    # fails on it (KeyError) and skips the rule.
+    if (engine_is_core1()) {
+      return(rep(FALSE, ctx$n))
+    }
+    stop("sorts within ", paste(setdiff(c(within_col, sort_col), names(dt)), collapse = ", "),
+         ", which this dataset does not have", call. = FALSE)
   }
-  descending <- identical(spec$sort_order, "desc")
-  null_first <- identical(spec$null_position, "first")
-  raw <- dt[[sort_col]]
   group <- if (length(within_col) == 1) {
     dt[[within_col]]
   } else {
@@ -224,26 +154,134 @@ register_operator("target_is_not_sorted_by", function(ctx) {
   if (engine_is_core1()) {
     return(!core1_sorted_by(target, dt, group, ctx))
   }
-  target_ord <- sequence_sort_key(target)
-
-  result <- rep(FALSE, ctx$n)
-  for (g in unique(group)) {
-    idx <- which(group == g)
-    ord_idx <- idx[order(target_ord[idx])]
-    if (length(ord_idx) < 2) {
-      next
+  # Every sort specification must hold, as the engine ANDs them; the first
+  # alone was read before.
+  sorted <- rep(TRUE, ctx$n)
+  for (sp in ctx$condition$value) {
+    col <- resolve_var_name(sp$name, ctx$wildcard)
+    if (!col %in% names(dt)) {
+      stop("sorts by ", col, ", which this dataset does not have", call. = FALSE)
     }
-    for (i in seq_len(length(ord_idx) - 1)) {
-      a <- ord_idx[i]
-      b <- ord_idx[i + 1]
-      if (sequence_date_pair_violates(raw[a], raw[b], descending, null_first)) {
-        result[a] <- TRUE
-        result[b] <- TRUE
+    sorted <- sorted & cdisc_sorted_by(
+      target, dt[[col]], group,
+      descending = identical(tolower(sp$sort_order %||% "asc"), "desc"),
+      null_first = identical(tolower(sp$null_position %||% "last"), "first")
+    )
+  }
+  !sorted
+})
+
+#' target_is_sorted_by as CDISC's engine answers it
+#'
+#' A port of `target_is_sorted_by()` and
+#' `check_target_ascending_in_sorted_group_with_regex()` (dataframe_operators.py).
+#' Within each group, rows taken in target order:
+#'
+#' * blank sort values are all out of place when any sits on the wrong side
+#'   of a filled one (`_mark_invalid_null_positions`);
+#' * two dates of different precision where one contains the other (`2020`
+#'   and `2020-01`) are both out of place (`check_date_overlaps`);
+#' * of the rest, a row is out of place when its target differs from the one
+#'   at its position once the rows are sorted by the date;
+#' * and a row still in place is out of place if its date is earlier than the
+#'   previous filled date or later than the next one, in target order
+#'   (`_verify_neighbor_consistency`).
+#'
+#' Pairs of neighbours were compared before, and both rows of a bad pair
+#' flagged, where the engine flags the rows that are actually misplaced.
+#'
+#' @param target The target values, already reduced by any `regex`.
+#' @param sort_values The sort column.
+#' @param group The group key for each row.
+#' @param descending,null_first The sort specification.
+#' @return A logical vector, TRUE where the row is in place.
+#' @noRd
+cdisc_sorted_by <- function(target, sort_values, group, descending, null_first) {
+  n <- length(target)
+  valid <- rep(TRUE, n)
+  numeric_sort <- is.numeric(sort_values)
+  numeric_target <- is.numeric(target)
+  text <- as.character(sort_values)
+  blank <- is.na(sort_values) | (!numeric_sort & !nzchar(trimws(text)))
+  is_date <- !numeric_sort & !blank & is_valid_date_str(ifelse(blank, "", text))
+  # parse_date(): the date part before any "--" interval, and how many of its
+  # components are filled.
+  date_part <- sub("--.*$", "", text)
+  precision <- lengths(regmatches(date_part, gregexpr("[^-T:]+", date_part)))
+  # Python compares strings by code point; so does a radix order in R.
+  less <- function(a, b) {
+    if (numeric_sort) return(a < b)
+    o <- order(c(a, b), method = "radix")
+    a != b && o[1] == 1L
+  }
+  # pandas drops a missing group key, and a dropped row reads as in place.
+  for (g in unique(group[!is.na(group)])) {
+    idx <- which(group == g)
+    # Rows in target order, missing targets last; ties keep row order.
+    idx <- idx[order(is.na(target[idx]), target[idx], method = "radix")]
+    b <- blank[idx]
+    if (any(b) && any(!b)) {
+      pos_b <- which(b)
+      pos_f <- which(!b)
+      misplaced <- if (null_first) max(pos_b) > min(pos_f) else min(pos_b) < max(pos_f)
+      if (misplaced) valid[idx[b]] <- FALSE
+    }
+    # check_date_overlaps(): numeric sort values never overlap.
+    overlap <- rep(FALSE, length(idx))
+    if (!numeric_sort) {
+      d <- which(!b & is_date[idx])
+      for (i in d) {
+        for (j in d) {
+          if (i != j && precision[idx[i]] != precision[idx[j]]) {
+            short <- if (precision[idx[i]] < precision[idx[j]]) i else j
+            long <- if (short == i) j else i
+            if (startsWith(date_part[idx[long]], date_part[idx[short]])) {
+              overlap[c(i, j)] <- TRUE
+            }
+          }
+        }
       }
     }
+    checked <- idx[!b & !overlap]
+    if (length(checked) > 0) {
+      by_value <- checked[order(if (numeric_sort) sort_values[checked] else text[checked],
+                                decreasing = descending, method = "radix")]
+      actual <- target[checked]
+      expected <- target[by_value]
+      for (i in seq_along(checked)) {
+        a <- actual[i]
+        e <- expected[i]
+        if (is.na(a) && is.na(e)) next
+        same <- if (is.na(a) || is.na(e)) {
+          FALSE
+        } else if (!numeric_target && is_valid_date_str(a) && is_valid_date_str(e)) {
+          sub("--.*$", "", a) == sub("--.*$", "", e)
+        } else {
+          a == e
+        }
+        if (!same) valid[checked[i]] <- FALSE
+      }
+    }
+    # _verify_neighbor_consistency(): filled rows in target order.
+    filled <- idx[!b]
+    vals <- if (numeric_sort) sort_values[filled] else text[filled]
+    for (i in seq_along(filled)) {
+      r <- filled[i]
+      if (!valid[r] || (!numeric_sort && !is_date[r])) next
+      prev <- if (i > 1) vals[i - 1] else NULL
+      nxt <- if (i < length(filled)) vals[i + 1] else NULL
+      cur <- vals[i]
+      bad <- if (!descending) {
+        (!is.null(prev) && less(cur, prev)) || (!is.null(nxt) && less(nxt, cur))
+      } else {
+        (!is.null(prev) && less(prev, cur)) || (!is.null(nxt) && less(cur, nxt))
+      }
+      if (bad) valid[r] <- FALSE
+    }
+    valid[idx[overlap]] <- FALSE
   }
-  result
-})
+  valid
+}
 
 #' target_is_sorted_by as CORE 1.0 answers it, without strict ordering
 #'

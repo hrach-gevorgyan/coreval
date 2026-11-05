@@ -189,9 +189,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   # set iteration order is Python's, which is not alphabetical and not
   # reproducible from R - so this can format correctly (right elements)
   # without matching the reference's exact element ORDER byte-for-byte.
-  format_binding_value <- function(x) {
+  format_binding_value <- function(x, set = FALSE) {
     if (is.list(x)) x <- x[[1]]
-    if (length(x) != 1) {
+    if (length(x) != 1 || isTRUE(set)) {
       return(paste0("[", paste(sprintf("'%s'", x), collapse = ", "), "]"))
     }
     if (is.na(x)) "" else as.character(x)
@@ -224,7 +224,8 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       # first of seventeen expected variables, and the ones actually missing
       # were never named at all.
       if (is.list(resolved)) {
-        return(vapply(rows, function(r) format_binding_value(resolved[r]), character(1)))
+        set <- isTRUE(bindings[[v]]$set)
+        return(vapply(rows, function(r) format_binding_value(resolved[r], set), character(1)))
       }
       # A grouped or per-row binding is aligned to the rows whatever its type:
       # a numeric aggregate (CORE-002062's maximum value length) is one number
@@ -236,7 +237,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
         out[is.na(x)] <- ""
         return(out)
       }
-      return(rep(format_binding_value(resolved), n))
+      return(rep(format_binding_value(resolved, isTRUE(bindings[[v]]$set)), n))
     }
     x <- if (is_relrec_wildcard(v)) {
       resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[rows]
@@ -373,6 +374,11 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 #'   unset to run every standard's rules and see everything.
 #' @param version The standard's version, e.g. `"3.4"`. Needs `standard`
 #'   too, since a bare version is ambiguous across standards.
+#' @param substandard For `standard = "TIG"` only, and required there:
+#'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
+#'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
+#'   CDISC's engine will not check a TIG study without it, and neither will
+#'   coreval.
 #' @param use_case Optional use case (e.g. `"INDH"`) to further filter
 #'   which rules apply, as in [list_rules()].
 #' @section Progress:
@@ -442,7 +448,11 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
 check_study <- function(study, standard = NULL, version = NULL,
                         use_case = NULL, max_records = 1000,
                         include_deprecated = FALSE, ct_package = NULL,
-                        usdm = FALSE) {
+                        usdm = FALSE, substandard = NULL) {
+  substandard <- validate_substandard(standard, substandard)
+  old_sub <- .coreval_env$substandard
+  .coreval_env$substandard <- substandard
+  on.exit(.coreval_env$substandard <- old_sub, add = TRUE)
   validate_check_args(standard = standard, version = version,
                       max_records = max_records, use_case = use_case,
                       include_deprecated = include_deprecated)

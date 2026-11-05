@@ -88,7 +88,25 @@
     `is_not_unique_relationship` against a missing column depended on row
     order.
 
+* **TIG studies say which kind they are.** `check_study()` and
+  `check_dataset()` take `substandard = "SDTM"`, `"SEND"` or `"ADaM"`, required
+  with `standard = "TIG"`, as CDISC's engine requires it. A TIG rule's use case
+  covers different datasets in each, and without it a TIG dataset was given
+  the rules for both. `list_rules()` takes it too, optionally.
+
 * **Problems that were never looked for.**
+  - CDISC's sort-order check flags the records CDISC's engine flags, which a
+    test on 4,912 generated records confirms; comparing neighbouring pairs
+    flagged both rows of a bad pair, and every row around a blank date. It
+    also checks every sort column the rule names, not only the first.
+  - CDISC's length checks skip a rule that measures a number, as CDISC's
+    engine does, compare the lengths of two columns' values, and count a blank
+    as length 0.
+  - A CORE 1.0 rule finds a column whatever the case of its name, so a CSV
+    with lower-case headers is checked.
+  - A CORE 1.0 comparison with a computed value that came out empty is decided,
+    as 1.0 decides it, rather than left unknown.
+  - CORE 1.0 pairs blank text join keys, as its engine does.
   - A SEND study checked with `standard = "SENDIG"` was judged against SDTM
     terminology. The terminology now follows the standard.
   - A TS citing `TSVCDREF = "CDISC CT"`, which both engines accept, named no
@@ -206,6 +224,10 @@
     with a message suggesting CSV, rather than an error from the Excel
     writer.
   - `print()` refuses a negative or missing `n` or `rows`.
+  - A computed set holding one value is shown as a list, `['ARMCD']`, as the
+    engines show it.
+  - The negated prefix and suffix pattern checks no longer report a blank,
+    as the plain pattern check does not.
 
 * **Faster.** CDISC's pilot submission, checked with CORE 1.0's rules, takes
   about 27 seconds, where the first build running those rules took 288. A
