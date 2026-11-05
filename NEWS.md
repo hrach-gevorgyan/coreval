@@ -207,10 +207,11 @@
     writer.
   - `print()` refuses a negative or missing `n` or `rows`.
 
-* **Faster, and lighter.** CDISC's pilot submission is checked in about 19
-  seconds against 26 before, with the same findings. A study ten times its
-  size, about three million records, takes 156 seconds against 184 and a
-  little less memory. USDM study documents are read in half the time.
+* **Faster.** CDISC's pilot submission, checked with CORE 1.0's rules, takes
+  about 27 seconds, where the first build running those rules took 288. A
+  study ten times its size, about three million records, takes 190 seconds
+  and 4.4 GB at most. USDM study documents are read in half the time.
+  docs/BENCHMARKS.md has the measurements.
 
 * **Two guides.** `vignette("coreval")` is now a short getting-started page:
   four steps, then answers to the tasks and questions that come up most.

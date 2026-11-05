@@ -259,16 +259,21 @@ Time is `system.time()` around `check_study()` only. Peak is the operating
 system's peak working set for the whole R process, study included. Same
 machine as above, one process.
 
-Since CORE 1.0 an SDTM study is checked with 1.0's rules, which ask more: 4,081
-checks run at every scale, against 4,001 with CDISC's rules, and several of the
-new ones look at every value of a dataset rather than every record. Measured at
-commit `e987c78`:
+Since CORE 1.0 an SDTM study is checked with 1.0's rules, which ask more, and
+several of the new ones look at every value of a dataset rather than every
+record. Measured at commit `2f963fe`, 3,809 checks running at every scale:
 
 | k | rows | time | peak | findings |
 |---|---|---|---|---|
-| 1 | 294,677 | 62 s | 636 MB | 72,546 |
-| 10 | 2,945,870 | 393 s | 4,070 MB | 122,170 |
-| 20 | 5,891,640 | 794 s | 8,024 MB | 142,560 |
+| 1 | 294,677 | 27 s | 720 MB | 72,546 |
+| 10 | 2,945,870 | 190 s | 4,363 MB | 122,170 |
+
+At commit `e987c78` the same study took 62 s at k = 1, 393 s at k = 10 and
+794 s at k = 20 (5,891,640 rows, peak 8,024 MB, 142,560 findings), with the
+same findings at k = 1 and 10. 4,081 checks ran then. The 272 that no longer
+run are CDISC rules reading a column the dataset lacks, which CDISC's engine
+skips too (docs/REFERENCE-BEHAVIOUR.md, item 13); they reported nothing on
+this study. k = 20 has not been measured since.
 
 With CDISC's rules, before CORE 1.0, the same study took 32 s, 226 s and
 451 s (table below). The first build running 1.0's rules took 288 s at k = 1
