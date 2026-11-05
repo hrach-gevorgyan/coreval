@@ -66,7 +66,13 @@ if (depth >= 3) {
 
 if (depth >= 4) {
   step("test suite", 4)
-  devtools::test()
+  # test() prints its failures and returns; it does not stop. Left at that, a
+  # failing test scrolled past and the run still ended in exit status 0.
+  tests <- as.data.frame(devtools::test())
+  broken <- sum(tests$failed) + sum(tests$error)
+  if (broken > 0) {
+    stop(broken, " test(s) failed; see above.", call. = FALSE)
+  }
 }
 
 if (depth >= 5) {
