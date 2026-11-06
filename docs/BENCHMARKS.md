@@ -5,8 +5,8 @@ commit `cdisc-open-rules` pinned at the time (`8740d201`, engine version 0.17.1)
 it against the same data as coreval. Nothing is estimated.
 
 The engine was installed into a throwaway virtualenv. coreval itself still
-has no Python at build or run time; the scripts under `data-raw/` are
-maintainer tooling and never ship.
+has no Python at run time; the scripts under `data-raw/`, some of them Python,
+build the bundled data and never ship.
 
 ## Rule coverage
 
@@ -379,7 +379,7 @@ needs in the order of 17 GB of free memory.
 | | engine | coreval |
 |---|---|---|
 | Runtime dependencies | 26 packages (dask, fastparquet, pyreadstat, redis, ...) | 2 (`data.table`, `haven`) |
-| Installed size | 328 MB of packages + 463 MB metadata cache | under 2 MB of bundled data |
+| Installed size | 328 MB of packages + a metadata cache of about 480 MB | under 2 MB of bundled data |
 | Network needed to refresh rules | yes (`update-cache`, CDISC Library API key) | no - rules ship as data |
 
 ## Agreement across every non-passing rule

@@ -380,3 +380,29 @@ test_that("an empty result gives an empty summary, not an error", {
                               rule_id = character(0))
   expect_equal(nrow(problem_summary(f)), 0L)
 })
+
+test_that("a saved file says what was used and whether it is complete", {
+  skip_if_not_installed("writexl")
+  skip_if_not_installed("xml2")
+  n <- 30
+  big <- data.frame(STUDYID = "S", DOMAIN = "LB", USUBJID = sprintf("S-%03d", seq_len(n)),
+                    LBSEQ = seq_len(n), LBTESTCD = "ALT", LBDTC = "2024-01-10")
+  r <- check_dataset(big, standard = "SDTMIG", version = "3.4", max_records = 10)
+  expect_gt(nrow(r$truncated), 0)
+  path <- tempfile(fileext = ".xlsx")
+  on.exit(unlink(path), add = TRUE)
+  write_findings(r, path)
+  sheet <- read_xlsx_text(path)[["Not checked"]]
+  facts <- stats::setNames(sheet[[2]], tolower(sheet[[1]]))
+  expect_equal(facts[["version"]], "3.4")
+  expect_equal(facts[["terminology"]], "none named")
+  expect_match(facts[["is this the whole result?"]], "^No")
+  expect_equal(as.integer(facts[["problems with more records than listed"]]), nrow(r$truncated))
+})
+
+test_that("a problem about several variables names them", {
+  sub <- data.frame(Record = c(1L, 1L, 2L, 2L),
+                    Variable = c("variable_name", "$max", "variable_name", "$max"),
+                    Value = c("AETERM", "46", "AEDECOD", "20"), stringsAsFactors = FALSE)
+  expect_equal(problem_details(sub), "AETERM, AEDECOD")
+})

@@ -233,7 +233,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       # SUPPLB's numbers into each of its findings.
       if (!identical(bindings[[v]]$kind, "scalar")) {
         x <- resolved[rows]
-        out <- as.character(x)
+        out <- json_text(x)
         out[is.na(x)] <- ""
         return(out)
       }
@@ -251,8 +251,9 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     # `NA` internally but must report as `""`, matching how a missing
     # character column already reports (its blank is already `""`, never
     # `NA`). Left uncorrected, a violation on a row with a missing numeric
-    # Output Variable would emit the literal text "NA".
-    out <- as.character(x)
+    # Output Variable would emit the literal text "NA". Numbers go through
+    # number_text(): as.character() writes 200000 as "2e+05".
+    out <- json_text(x)
     out[is.na(x)] <- ""
     out
   }
@@ -369,13 +370,12 @@ add_record_keys <- function(findings, dataset, domain, rule) {
   usubjid <- rep(NA_character_, n)
   seq_no <- rep(NA_real_, n)
   data <- dataset$data
-  is_metadata <- grepl("Metadata Check|Global Value Check|Domain Presence|Define Item",
-                       rule$rule_type %||% "")
+  is_metadata <- grepl(METADATA_RULE_TYPES, rule$rule_type %||% "") || rule_groups_by_variable(rule)
   if (n > 0 && !is.null(data) && !is_metadata) {
     rec <- findings$Record
     ok <- !is.na(rec) & rec >= 1L & rec <= nrow(data)
     if ("USUBJID" %in% names(data)) {
-      usubjid[ok] <- as.character(data$USUBJID[rec[ok]])
+      usubjid[ok] <- json_text(data$USUBJID[rec[ok]])
     }
     seq_var <- resolve_var_name("--SEQ", dataset_wildcard(dataset, domain))
     if (seq_var %in% names(data)) {
@@ -502,10 +502,10 @@ fold_value_rows <- function(findings) {
 #'   (`TRUE` when the folder held a define.xml and no datasets, so only the
 #'   rules comparing the define with the study ran).
 #'
-#'   * `findings` - what is wrong. One row per affected record, with `Dataset`,
+#'   * `findings` - what is wrong. One row per affected record and variable, with `Dataset`,
 #'     `Record` (its row in the file), `USUBJID` and `SEQ` (its subject and
 #'     `--SEQ`, blank where the dataset has none or the row is not a record),
-#'     `Variable`, `Value`, the `issue` in words, and its `triage`.
+#'     `Variable`, `Value`, the `issue` in words, its `triage` and `rule_id`.
 #'     `Not in dataset` under `Value` means the rule wanted a variable you do
 #'     not have, which is usually the finding itself.
 #'   * `skipped` - what could not be checked, with a `reason` for each. Read
@@ -587,9 +587,12 @@ check_study <- function(study, standard = NULL, version = NULL,
   # check_study()'s own report told the reader to pass `standard = "SDTMIG"`
   # and there was no such argument to pass it to.
   if (!is.null(standard)) {
+    # The version a study declares stays when `standard` names the same
+    # product: dropping it ran the rules of every version of that standard.
+    same <- identical(toupper(standard), toupper(study$standard$product %||% ""))
     study$standard <- list(
       product = toupper(standard),
-      version = if (is.null(version)) NA_character_ else version
+      version = version %||% (if (same) study$standard$version) %||% NA_character_
     )
   } else if (!is.null(version)) {
     study$standard$version <- version
@@ -928,6 +931,11 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
           findings$Record <- NA_integer_
         }
         findings <- fold_value_rows(findings)
+        if (rule_groups_by_variable(rule)) {
+          # Each variable's first row is record 1, so all of them looked like
+          # one record. Numbered like the variable table the other rules use.
+          findings$Record <- cumsum(findings$Variable == "variable_name")
+        }
         findings <- add_record_keys(findings, study$datasets[[domain]], domain, rule)
         findings$rule_id <- rule_id
         # The rule's own one-line statement of what is wrong. It is the single
@@ -1077,6 +1085,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     list(findings = findings, skipped = skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = n_ran,
+    version = study$standard$version,
+    ct_package = study$ct_package,
     version_note = study$version_note,
     ran = data.table::data.table(rule_id = ran_rule, domain = ran_domain),
     domains = domains,

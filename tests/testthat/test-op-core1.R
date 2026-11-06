@@ -696,3 +696,42 @@ test_that("a study start that is not a full date stops the MedDRA check, as 1.0'
   none <- list(data = data.table::data.table(TSPARMCD = "AGEMIN", TSVAL = "Y"), meta = NULL)
   expect_false(evaluate_check(chk("is_not_latest_available_external_dictionary_version"), none, "TS"))
 })
+
+test_that("the strict sort check fails what is not its position, and passes only a blank", {
+  ds <- function(seq, sort = c("2024-01-01", "2024-01-02")) {
+    list(data = data.table::data.table(USUBJID = "1", LBSEQ = seq, LBDTC = sort), meta = NULL)
+  }
+  chk <- list(name = "LBSEQ", operator = "target_is_not_sorted_by", within = "USUBJID",
+              strict_incremental_ordering = TRUE,
+              value = list(list(name = "LBDTC", sort_order = "asc", null_position = "last")))
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  # CDISC's engine, _strict_incremental_check: as.integer() truncated 1.5 to 1,
+  # and "abc" became a missing value that passed.
+  .coreval_env$engine <- "cdisc"
+  expect_equal(evaluate_check(chk, ds(c(1.5, 2)), "LB"), c(TRUE, FALSE))
+  expect_equal(evaluate_check(chk, ds(c("abc", "2")), "LB"), c(TRUE, FALSE))
+  expect_equal(evaluate_check(chk, ds(c("", "2")), "LB"), c(FALSE, FALSE))
+  expect_equal(evaluate_check(chk, ds(c("01", "2")), "LB"), c(FALSE, FALSE))
+  # A numeric sort column sorts as numbers: as text 12 comes before 9.
+  num <- list(data = data.table::data.table(USUBJID = "1", LBSEQ = c(3, 2, 1), LBDTC = c(12, 9, 1)),
+              meta = NULL)
+  expect_equal(evaluate_check(chk, num, "LB"), c(FALSE, FALSE, FALSE))
+  # 1.0 casts to an integer, which stops on text.
+  .coreval_env$engine <- "core1"
+  expect_error(evaluate_check(chk, ds(c("abc", "2")), "LB"), "not a whole number")
+  expect_equal(evaluate_check(chk, ds(c(1, 2)), "LB"), c(FALSE, FALSE))
+})
+
+test_that("a date with a missing month does not overlap its neighbour", {
+  # dates_overlap() is given the raw text: 2020---05 is not a prefix of 2020-03-07.
+  expect_equal(cdisc_sorted_by(c(1, 2), c("2020---05", "2020-03-07"), c(1, 1), FALSE, FALSE),
+               c(TRUE, TRUE))
+})
+
+test_that("a variable too long is counted as a variable, with no subject (CORE-002062)", {
+  rule <- .coreval_env$data$rules[["CORE-002062"]]
+  expect_true(rule_groups_by_variable(rule))
+  expect_true(rule_rows_are_variables("CORE-002062"))
+  expect_false(rule_groups_by_variable(.coreval_env$data$rules[["CORE-000351"]]))
+})

@@ -473,3 +473,40 @@ test_that("variable-metadata rows are not counted as records", {
                               triage = "wrong value", rule_id = "CORE-002061")
   expect_equal(count_records(f), 0L)
 })
+
+test_that("a rule about an identifier is a wrong value, not often legitimate", {
+  # Reported only through identifiers, these fell through to "missing optional",
+  # so filtering to what matters lost a duplicate subject.
+  sub <- function(variable, value) {
+    data.frame(Variable = variable, Value = value, issue = "x", stringsAsFactors = FALSE)
+  }
+  expect_equal(finding_triage(sub("USUBJID", "01-701")), "wrong value")
+  expect_equal(finding_triage(sub(c("USUBJID", "AESEQ"), c("01-701", "1"))), "wrong value")
+  expect_equal(finding_triage(sub(c("variable_name", "$max_length"), c("AETERM", "46"))), "wrong value")
+  expect_equal(finding_triage(sub("USUBJID", "")), "missing required")
+  # Nothing here says what is wrong but a count, and nothing is missing.
+  expect_equal(finding_triage(sub(c("$trt_count", "$randqt_count"), c("1", "0"))), "wrong value")
+  # An absent column keeps its answer.
+  expect_equal(finding_triage(sub("EPOCH", "Not in dataset")), "missing optional")
+  miss <- sub("$count", "0")
+  miss$issue <- "SSTDTC is missing in the TS dataset."
+  expect_equal(finding_triage(miss), "missing optional")
+})
+
+test_that("a run where no check ran does not read as clean", {
+  r <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1"), standard = "ADaMIG")
+  expect_equal(attr(r, "checks_run"), 0)
+  text <- capture.output(print(r))
+  expect_false(any(grepl("Nothing to fix", text)))
+  expect_true(any(grepl("No check ran", text)))
+  expect_true(any(grepl("^1 check could not run", text)))
+})
+
+test_that("a round number is written out, in findings and in the report", {
+  lb <- data.frame(STUDYID = "S", DOMAIN = "LB", USUBJID = "1", LBSEQ = c(1, 100000),
+                   LBTESTCD = "X", LBSTRESC = "100000", LBSTRESN = 200000)
+  r <- check_dataset(lb, domain = "LB", standard = "SDTMIG", version = "3.4")
+  expect_false(any(grepl("e\\+", r$findings$Value)))
+  expect_true("200000" %in% r$findings$Value)
+  expect_false(any(grepl("seq 1e", capture.output(print(r)))))
+})

@@ -14,12 +14,12 @@ Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor
 Rscript tests/conformance/run_conformance.R data-raw/upstream/cdisc-open-rules
 ```
 
-At the sweep of 5 November 2026 (commit `ed09da7`):
+At the sweep of 6 November 2026:
 
 | rule set | pass | disagree | cannot be measured |
 |---|---|---|---|
 | CORE 1.0 (`scoreboard_core1.csv`) | 589 | 5 | 27 |
-| CDISC's (`scoreboard.csv`) | 957 | 56 | 41 |
+| CDISC's (`scoreboard.csv`) | 956 | 57 | 41 |
 
 A rule counts as passing only if a case that expects findings was graded. A rule
 whose clean cases pass while the case built to catch something could not be run
@@ -117,14 +117,14 @@ A rule with no published expected output cannot pass or fail. Counting these as
 failures understates the package; hiding them overstates it. They are reported
 as skipped, by name, with the reason, every time you run.
 
-### The 56 that disagree
+### The 57 that disagree
 
 coreval flags different rows than the answer sheet says it should.
 
 | source | rules | reaches users? |
 |---|---|---|
 | `deprecated_dir` | 26 | no, deprecated rules are off by default |
-| `published` | 17 | **yes** |
+| `published` | 18 | **yes** |
 | FDA business rules, draft | 7 | four, on a SEND study only (FB0801, FB0802, FB3211, FB6505) |
 | SENDIG draft | 5 | yes, marked draft |
 | SDTMIG draft | 1 | no, CORE 1.0 replaced it |

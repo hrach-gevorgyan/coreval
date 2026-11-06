@@ -466,19 +466,24 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
     # An operator that cannot read a value only stops the rule if the other
     # conditions select that row: the database behind CORE 1.0 tests the cheap
     # conditions first, so TS's other TSVAL rows are never cast to a date.
-    unreadable <- NULL
+    # Only a condition directly under this `all`: inside an `any` or a `not`,
+    # its answer is not the branch's, so the rule stops.
+    unreadable <- list()
     parts <- lapply(check$all, function(part) {
+      if (is.null(part$name)) {
+        return(evaluate_check(part, dataset = dataset, domain = domain, bindings = bindings, study = study))
+      }
       tryCatch(
         evaluate_check(part, dataset = dataset, domain = domain, bindings = bindings, study = study),
         coreval_unreadable_rows = function(e) {
-          unreadable <<- e
+          unreadable[[length(unreadable) + 1L]] <<- e
           e$result
         }
       )
     })
     result <- Reduce(`&`, parts)
-    if (!is.null(unreadable) && any(result[unreadable$rows] %in% TRUE)) {
-      stop(unreadable)
+    for (e in unreadable) {
+      if (any(result[e$rows] %in% TRUE)) stop(e)
     }
     return(result)
   }
@@ -964,8 +969,10 @@ assert_rule_inputs_available <- function(rule, study) {
     if (any(needs_ct)) {
       stop(
         "needs controlled terminology, and this study does not say which ",
-        "version it follows: TS has no TSVCDVER naming a CDISC package that ",
-        "is bundled. Pass ct_package (e.g. ct_package = \"sdtmct-2026-03-27\"; ",
+        "version it follows: ",
+        if (is.null(study$datasets[["TS"]])) "no TS was given" else
+          "TS has no TSVCDVER naming a CDISC package that is bundled",
+        ". Pass ct_package (e.g. ct_package = \"sdtmct-2026-03-27\"; ",
         "see list_ct_packages())",
         call. = FALSE
       )

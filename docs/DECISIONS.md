@@ -30,7 +30,7 @@ report (a warning is read less often than the findings under it).
 CORE 1.0 (3 November 2026) moved the SDTMIG and FDA Business Rules to
 Verisian's repository and engine, and left SEND, TIG and USDM with CDISC. Both
 rule sets are bundled. An SDTM study is checked with
-CORE 1.0's rules plus CDISC's for the other standards; a SEND or TIG study
+CORE 1.0's rules, a SEND or TIG study
 with CDISC's (`rule_family()`, `build_rule_sets()`). A rule in both
 repositories keeps both versions, the 1.0 one for SDTM and CDISC's for SEND
 and TIG. CDISC's SDTM rules that 1.0 dropped run only with
@@ -147,7 +147,7 @@ on a number that was wrong: CDISC's terminology caches are 438 MB, so bundling
 looked impossible. Almost all of that is definitions, synonyms and preferred
 terms no rule asks for. What conformance needs is the codelist and term
 submission values, their C-codes, and the extensible flag. For **every one of
-the 206 published packages** that is 0.54 MB, because consecutive releases are
+the published packages** that is 0.54 MB, because consecutive releases are
 nearly identical and xz collapses the repetition.
 
 The lesson is worth more than the megabytes: the blocker was never measured,
@@ -173,7 +173,7 @@ that is true: there is no native pipe and no lambda shorthand anywhere in
 `R/` (checked mechanically), `data.table` needs only R >= 3.4 and `haven`
 R >= 3.6.
 
-It stays at 4.1 anyway. The only R available here is 4.6, so lowering the
+It stays at 4.1 anyway. coreval has only been run on R 4.6, so lowering the
 floor would claim compatibility that has never been executed - and a subtle
 base-R behaviour difference would then fail in a user's session rather than in
 a check. R 4.1 is from May 2021; the users this excludes are vanishingly few,
@@ -185,7 +185,7 @@ reasoning about it.
 ## Tracking state between runs is deferred, not forgotten
 
 Two requested features both need something coreval has never had, state
-carried from one run to the next, and both were deferred by the user:
+carried from one run to the next, and both are deferred:
 
 * **The Excel round trip is one-way.** `write_findings()` writes `Status`
   and `Notes`; nothing reads them back. A finding marked

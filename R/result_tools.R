@@ -24,6 +24,8 @@ respin_result <- function(result, findings) {
     list(findings = findings, skipped = result$skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = attr(result, "checks_run"),
+    version = attr(result, "version"),
+    ct_package = attr(result, "ct_package"),
     ran = attr(result, "ran"),
     version_note = attr(result, "version_note"),
     domains = attr(result, "domains"),

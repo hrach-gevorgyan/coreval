@@ -495,3 +495,25 @@ test_that("a check with no standard is refused, not run against every standard",
   study$standard <- list(product = "SDTMIG", version = NA_character_)
   expect_s3_class(check_study(study), "coreval_result")
 })
+
+test_that("the note for a version older than the rules names a real version", {
+  expect_match(older_version("SENDIG", "2.0")$note, "checked against 3.0, the oldest")
+})
+
+test_that("a non-standard domain is judged by the study's own version", {
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  custom <- function(code, product, version, core1) {
+    .coreval_env$engine <- if (core1) "core1" else "cdisc"
+    code %in% ig_domains(list(standard = list(product = product, version = version)))
+  }
+  # GF joined in 3.4, MO left. Both engines read the version.
+  expect_false(custom("GF", "SDTMIG", "3.2", TRUE))
+  expect_true(custom("GF", "SDTMIG", "3.4", TRUE))
+  expect_true(custom("MO", "SDTMIG", "3.2", TRUE))
+  expect_false(custom("MO", "SDTMIG", "3.4", TRUE))
+  expect_false(custom("GF", "SDTMIG", "3.2", FALSE))
+  expect_false(custom("XX", "SDTMIG", "3.4", FALSE))
+  # SUPPQUAL is what CDISC's engine asks about for a SUPP dataset.
+  expect_true(custom("SUPPQUAL", "SDTMIG", "3.2", FALSE))
+})

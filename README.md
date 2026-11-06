@@ -133,8 +133,9 @@ To see only the definite errors: `filter_findings(result, triage = "wrong value"
 A short report can mean your data is fine, or that many rules couldn't run.
 coreval never lets those look the same. Every result lists what it skipped and
 why, in plain words: a dataset you didn't supply, no define.xml, no
-Controlled Terminology version. If nothing could be checked at all, it stops
-with an error rather than printing a clean report.
+Controlled Terminology version. If nothing applies, it stops with an error
+rather than printing a clean report, and if every check had to be skipped, it
+says that no check ran.
 
 So before you celebrate, look at `result$skipped`.
 
@@ -177,8 +178,8 @@ tells you when something was skipped because one is missing:
 install.packages(c("xml2", "writexl", "jsonlite", "QuickJSR"))
 ```
 
-`xml2` reads define.xml, `writexl` saves to Excel, and `jsonlite` and
-`QuickJSR` read USDM study files.
+`xml2` reads define.xml, `writexl` saves to Excel, `jsonlite` reads Dataset-JSON
+and USDM study files, and `QuickJSR` runs USDM's JSONata rules.
 
 ## What it covers
 
@@ -199,8 +200,8 @@ explains each of the rest.
 
 **Not yet:**
 
-- **ADaM.** CDISC publishes no worked examples for its ADaM rules, so there's
-  no way to show they'd be right.
+- **ADaM.** CDISC publishes expected results for one ADaM rule only, so there's
+  no way to show the rest would be right.
 - **Medical dictionaries.** It can't check terms against your licensed MedDRA
   or WHODrug.
 

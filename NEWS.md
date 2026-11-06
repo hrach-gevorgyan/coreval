@@ -53,6 +53,12 @@ repository.
 * A rule that cannot be evaluated now says why, rather than answering "no problem".
 * CORE-002041, the MedDRA release check, failed on any real TS and now runs.
 * Terminology is current to CDISC's September 2026 packages.
+* A duplicate subject and an over-long variable now count as wrong values, not as
+  often legitimate.
+* A run where every check was skipped says so, rather than "Nothing to fix".
+* Large round numbers are written out in full, not as `2e+05`.
+* A saved file names the version and terminology used, and says when records were
+  capped.
 
 ## Speed
 

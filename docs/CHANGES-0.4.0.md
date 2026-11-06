@@ -194,8 +194,6 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     terminology, so every terminology rule was skipped.
   - CORE 1.0's `contains_all` gave its answer on the first record only, so
     CORE-002058 missed a TS whose CTAUG row was not the first.
-  - CDISC's `is_inconsistent_across_dataset` with none of its grouping columns
-    passed the dataset; CDISC's engine fails there, and the rule is skipped.
   - A CORE 1.0 SUPP merge with a blank IDVAR, or a qualifier named like a
     parent variable, was answered; 1.0's engine stops there, and the rule is
     now skipped with the reason.
@@ -323,8 +321,8 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
 
 * **Faster.** CDISC's pilot submission, checked with CORE 1.0's rules, takes
   about 27 seconds, where the first build running those rules took 288. A
-  study ten times its size, about three million records, takes 190 seconds
-  and 4.4 GB at most. USDM study documents are read in half the time.
+  study ten times its size, about three million records, takes 184 seconds
+  and 5 GB at most. USDM study documents are read in half the time.
   docs/BENCHMARKS.md has the measurements.
 
 * **Two guides.** `vignette("coreval")` is now a short getting-started page:
@@ -354,7 +352,7 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   - The sort check's `strict_incremental_ordering` treats any blank as null.
   - Terminology adds the packages of 25 September 2026.
 
-* **A Dataset-JSON copy of an `.xpt` is no longer parsed.** Only the name it declares
+* **A `.json` copy of an `.xpt` is no longer parsed.** Only the name it declares
   is read, so a package holding both formats reads as fast as the `.xpt` files
   alone. A copy damaged past its header used to stop the run, and is now set aside
   and named in the warning like any other.
@@ -363,3 +361,24 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   CORE-002041 reported a blank, partial or mistyped SSTDTC as "not the latest
   version". It now shows as a check that could not run, naming the value, which is
   what CORE 1.0's engine does.
+
+* **Findings of a pre-release audit, each reproduced before it was fixed.**
+  - A rule that reports only identifiers is about those identifiers. A duplicate
+    USUBJID, a subject not in DM and an over-long variable were filed as "missing
+    optional", printed as often legitimate, and left out of a filter on wrong values.
+  - An all-skipped run printed "Nothing to fix". It now says that no check ran.
+  - 200000 was reported as `2e+05`, and a sequence of 100000 as `1e+05`.
+  - `standard =` naming the study's own standard dropped the version it declares,
+    so rules of every version ran.
+  - `domain_is_custom` read one list for every version and standard. It reads the
+    study's own guide, as both engines do: GF is custom in SDTMIG 3.2.
+  - The strict sort check passed a sequence of 1.5 or `abc`, and sorted numbers as
+    text.
+  - CORE-000386 reported an overlap for a date with a missing month.
+  - CORE-002062 counted all of a dataset's variables as one record of one subject,
+    and the Excel Details column showed one variable's numbers without its name.
+  - An `.xpt` of 2 GB or more could not be read.
+  - `check_dataset()` on a TS now reads the terminology it names, and no longer
+    blames TS when none was given.
+  - A saved file names the version and terminology used, and no longer says it is
+    the whole result when records were capped.

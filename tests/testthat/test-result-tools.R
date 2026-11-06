@@ -189,7 +189,7 @@ test_that("an exported file carries its own provenance", {
 
   about <- data.table::fread(grep("_about", paths, value = TRUE), colClasses = "character")
   val <- function(item) about$value[about$item == item]
-  expect_equal(val("is this the whole result?"), "Yes")
+  expect_match(val("is this the whole result?"), "^No: some problems")
   expect_equal(as.integer(val("problems with more records than listed")), nrow(capped$truncated))
   # The real count must be in the file, not just the kept one.
   cut <- data.table::fread(grep("_truncated", paths, value = TRUE))

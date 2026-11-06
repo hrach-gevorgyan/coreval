@@ -18,7 +18,7 @@ new code.
 
 | Where | What |
 |---|---|
-| `R/read*.R` | reading `.xpt`, `.sas7bdat`, Dataset-JSON, CSV, USDM, define.xml |
+| `R/read*.R`, `R/define.R`, `R/check_dataset.R` | reading `.xpt`, `.sas7bdat`, Dataset-JSON and USDM; define.xml; CSV |
 | `R/rules.R`, `R/scope.R` | which rules apply to which dataset |
 | `R/evaluate.R`, `R/match_datasets.R`, `R/operations.R` | preparing a dataset for a rule |
 | `R/op_*.R` | the operators |
@@ -59,10 +59,11 @@ is ignored by git.
    rules that kept their status while their reported records moved.
 4. Read every change. A moved rule is either a real change upstream or something
    coreval got wrong, and `docs/COVERAGE.md` records which.
-5. Update `inst/COPYRIGHTS`, which names the commit each bundled file came from.
+5. Update `inst/COPYRIGHTS` and the `data-raw/UPSTREAM_SHA*` files it points to,
+   which name the commit each bundled file came from.
 
-`data-raw/weekly.R` does the watching on a schedule and writes a report. It
-changes nothing unless given `--adopt`, and never pushes.
+`data-raw/weekly.R` does the watching and writes a report. It clears build
+leftovers, touches the rules only when given `--adopt`, and never pushes.
 
 ## Changing the code
 
@@ -83,8 +84,8 @@ cannot see it. So:
 - Wrong input is refused, not answered.
 - A fix that moves the pass rate by zero is not evidence it did nothing. Work out the
   right answer by hand on real data.
-- A verdict of "not our bug" needs a mechanical proof.
-  `tests/conformance/audit_fixtures.py` exists because argued verdicts were wrong.
+- A verdict of "not our bug" needs a mechanical proof: argued verdicts have been
+  wrong.
 - Excluding something to make a check pass is not a pass. A rule that cannot be
   evaluated is skipped with a reason, never faked.
 
@@ -112,7 +113,8 @@ data. To chase one rule:
 Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor CORE-000123
 ```
 
-The two scoreboards in `tests/conformance/` hold the current pass counts. The pass
+`tests/conformance/scoreboard_core1.csv` holds the current pass counts for SDTM, and
+the `scoreboard.csv` a sweep writes beside it holds CDISC's. The pass
 rate is a lower bound on defects, not a readiness signal: the test cases barely
 exercise split datasets or define.xml. `docs/REAL-STUDY.md` compares every finding on
 CDISC's pilot study with Verisian's engine, and is re-run before a release.

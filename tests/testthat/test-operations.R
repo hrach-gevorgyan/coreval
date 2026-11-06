@@ -1076,3 +1076,14 @@ test_that("target_is_not_sorted_by takes several within columns, a regex and str
   # Subject 2 jumps from 1 to 3; subject 1's T rows are 1, 2 in date order.
   expect_equal(evaluate_check(check, ds, "SM"), c(FALSE, FALSE, FALSE, FALSE, TRUE))
 })
+
+test_that("check_dataset reads the terminology a TS names, and says when no TS was given", {
+  ts <- data.frame(STUDYID = "S", DOMAIN = "TS", TSSEQ = 1, TSPARMCD = "X", TSVAL = "Y",
+                   TSVCDREF = "CDISC CT", TSVCDVER = "2026-09-25")
+  r <- check_dataset(ts, domain = "TS", standard = "SDTMIG", version = "3.4")
+  expect_equal(attr(r, "ct_package"), "sdtmct-2026-09-25")
+  expect_false(any(grepl("TS has no TSVCDVER", r$skipped$reason)))
+  ae <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1"),
+                      domain = "AE", standard = "SDTMIG", version = "3.4")
+  expect_false(any(grepl("TS has no TSVCDVER", ae$skipped$reason)))
+})

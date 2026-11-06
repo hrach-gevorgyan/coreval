@@ -129,6 +129,10 @@ register_operator("target_is_not_sorted_by", function(ctx) {
       # transport file (xpt_data_reader.py only trims), so it sorts first
       # ascending; null_position applies to a missing number only. CDISC's
       # engine takes any blank as null (_strict_incremental_check).
+      # A numeric column stays numeric: as text, 10 sorts before 9.
+      if (is.numeric(col)) {
+        return(col)
+      }
       x <- as.character(col)
       if (!is.character(col) || !engine_is_core1()) x[is_blank(col)] <- NA_character_
       x
@@ -149,8 +153,20 @@ register_operator("target_is_not_sorted_by", function(ctx) {
       parts <- c(parts, list(seq_along(idx)))
       position[idx[do.call(order, c(parts, list(method = "radix", na.last = TRUE)))]] <- seq_along(idx)
     }
-    tv <- suppressWarnings(as.integer(target))
-    return(!(is.na(tv) | tv == position))
+    # A blank passes, and only a blank. CDISC's engine compares the number, so
+    # 1.5 and "abc" fail the row (target_null | target_num == position). 1.0
+    # casts to an integer: a number rounds, and text that is no whole number
+    # ends the rule.
+    blank <- is_blank(target)
+    tv <- suppressWarnings(as.numeric(as.character(target)))
+    if (engine_is_core1()) {
+      bad <- if (is.numeric(target)) FALSE else !blank & (is.na(tv) | tv != round(tv))
+      if (any(bad)) {
+        stop(ctx$name, " is not a whole number: \"", as.character(target)[which(bad)[1]], "\"", call. = FALSE)
+      }
+      tv <- round(tv)
+    }
+    return(!(blank | (!is.na(tv) & tv == position)))
   }
   if (engine_is_core1()) {
     return(!core1_sorted_by(target, dt, group, ctx))
@@ -236,7 +252,9 @@ cdisc_sorted_by <- function(target, sort_values, group, descending, null_first) 
           if (i != j && precision[idx[i]] != precision[idx[j]]) {
             short <- if (precision[idx[i]] < precision[idx[j]]) i else j
             long <- if (short == i) j else i
-            if (startsWith(date_part[idx[long]], date_part[idx[short]])) {
+            # dates_overlap() is given the raw strings; parse_date() only
+            # counts the precision.
+            if (startsWith(text[idx[long]], text[idx[short]])) {
               overlap[c(i, j)] <- TRUE
             }
           }

@@ -70,10 +70,10 @@ coreval knows of, with the engine source that settles each one.
 
 ```{r}
 attr(list_rules(), "rules_version")
-#> "cdisc-org/cdisc-open-rules bc4c2f30...; verisianHQ/core-contributor a3b4d0b0..."
+#> "cdisc-org/cdisc-open-rules af05dfd2...; verisianHQ/core-contributor a3b4d0b0..."
 ```
 
-Both commits are recorded in the `about` sheet of every file
+Both commits are recorded with every file
 `write_findings()` saves, so a saved report always says which rules produced
 it.
 
@@ -112,7 +112,7 @@ the folder:
 |---|---|---|
 | SAS transport | `.xpt` | A file holding more than one dataset is refused. |
 | SAS dataset | `.sas7bdat` | |
-| Dataset-JSON | `.json`, `.ndjson` | The name the file declares is used over the file name. |
+| Dataset-JSON | `.json`, `.ndjson` | Needs the `jsonlite` package. The name the file declares is used over the file name. |
 | Define-XML | any `.xml` named like a define | Needs the `xml2` package. |
 | USDM | `.json` | Only with `usdm = TRUE`, in a folder of its own. |
 
@@ -257,7 +257,8 @@ findings table means either clean data or rules that never ran**, and the
 skipped table is the only way to tell which.
 
 A check that cannot run at all, because nothing applies or the input is
-unusable, stops with an error rather than printing a clean report.
+unusable, stops with an error rather than printing a clean report. If every
+check that applied had to be skipped, the report says that no check ran.
 
 ## The result
 
@@ -272,6 +273,8 @@ One row per affected (dataset, record, variable).
 |---|---|
 | `Dataset` | dataset name, or `STUDY` for study-level rules |
 | `Record` | row number in the dataset, counting from 1; blank for dataset-level rules |
+| `USUBJID` | the record's subject, blank where the dataset has none or the row is not a record |
+| `SEQ` | the record's `--SEQ`, blank in the same way |
 | `Variable` | the variable the rule reports |
 | `Value` | the value it found; `Not in dataset` when the variable does not exist |
 | `issue` | the rule's message, in words |
@@ -335,11 +338,12 @@ before blank ones.
   narrowed result that still prints, summarises and saves. A saved file records
   that it was filtered.
 * `write_findings(result, "issues.xlsx")` writes one workbook with sheets
-  `findings`, `skipped`, `about` and, when anything was capped, `truncated`.
-  A `.csv` path writes one file per table (`issues.csv`, `issues_skipped.csv`,
-  `issues_about.csv`). The `about` sheet records the coreval version, the rules
-  commit, the standard, the number of checks run and skipped, and whether the
-  file is a filtered subset. In CSV output a text value starting with `=`, `+`,
+  `Problems`, `Records`, `Not checked` and `Rules`. A `.csv` path writes one
+  file per table (`issues.csv`, `issues_summary.csv`, `issues_skipped.csv`,
+  `issues_about.csv`). The foot of `Not checked`, like `issues_about.csv`,
+  records the coreval version, the rules commit, the standard, version and
+  terminology used, the number of checks run, and whether the file is the whole
+  result. In CSV output a text value starting with `=`, `+`,
   `-` or `@` is prefixed with `'`, so a spreadsheet does not run it as a
   formula.
 
@@ -366,7 +370,8 @@ Some practical points:
 | Package | Needed for |
 |---|---|
 | `xml2` | reading define.xml and the study tagging file |
-| `jsonlite`, `QuickJSR` | USDM study files and their JSONata rules |
+| `jsonlite` | Dataset-JSON and USDM study files |
+| `QuickJSR` | USDM's JSONata rules |
 | `writexl` | saving to Excel |
 
 Without one, the rules or output that need it are skipped or refused with a
@@ -418,15 +423,15 @@ each release of the engines.
 
 ## What it does not do
 
-* **ADaM.** No worked examples are published for the ADaM rules, so there is
-  no way to show they would be right.
+* **ADaM.** Expected results are published for one ADaM rule only, so there is
+  no way to show the rest would be right.
 * **Licensed dictionaries** (MedDRA, WHODrug), as above.
 * **Severity.** CDISC's rules do not carry one. The `legacy_ids` column of
   `list_rules()` gives the CDISC Conformance Rules and FDA Business Rules ids,
   which is how
   to match a finding to a severity in another tool.
-* **Tracking between runs.** Each check stands alone. The `Status`, `Owner`
-  and `Notes` columns of a saved file are for tracking by hand.
+* **Tracking between runs.** Each check stands alone. The `Status` and `Notes`
+  columns of a saved file, and `Owner` in a CSV, are for tracking by hand.
 
 coreval is not validated software and is not a certified CORE engine. Treat
 its findings as a fast first check, and run your qualified tool before

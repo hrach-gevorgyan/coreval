@@ -197,7 +197,7 @@ each rule to the report.
 
 ```{r all, eval = FALSE}
 print(result, n = Inf)   # every problem in the report
-result$findings          # every affected record, as a table
+result$findings          # every finding, as a table
 ```
 
 A rule that flags a very large number of records keeps the first 1,000 and

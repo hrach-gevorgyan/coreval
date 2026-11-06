@@ -484,6 +484,9 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     ),
     version_note = older$note
   )
+  if (is.null(study$ct_package) && identical(domain, "TS")) {
+    study$ct_package <- ct_package_from_ts(study)
+  }
   run_checks(
     study,
     use_case = use_case, require_referenced_domains = TRUE,

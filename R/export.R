@@ -112,9 +112,13 @@ write_findings <- function(result, path, tracking = TRUE) {
   # million records and only a thousand were kept, or that the result was
   # filtered to one triage level before export. Without this the file reads as
   # the complete picture, which is the same trap `skipped` exists to prevent.
+  version_used <- attr(result, "version")
+  if (is.null(version_used) || is.na(version_used) || !nzchar(version_used)) {
+    version_used <- "none given"
+  }
   about <- data.table::data.table(
     item = c(
-      "checked on", "checked with", "rules", "standard", "version",
+      "checked on", "checked with", "rules", "standard", "version", "terminology",
       "checks that ran", "checks that could not run",
       "problems", "records affected",
       "is this the whole result?",
@@ -125,12 +129,19 @@ write_findings <- function(result, path, tracking = TRUE) {
       paste("coreval", utils::packageVersion("coreval")),
       rules_version(),
       attr(result, "standard") %||% "not declared",
-      attr(result, "version_note") %||% "as given",
+      attr(result, "version_note") %||% version_used,
+      attr(result, "ct_package") %||% "none named",
       attr(result, "checks_run") %||% NA_integer_,
       nrow(skipped),
       nrow(summary_sheet),
       count_records(complete_findings(findings)),
-      if (isTRUE(attr(result, "filtered"))) "No: it was filtered before it was saved" else "Yes",
+      if (isTRUE(attr(result, "filtered"))) {
+        "No: it was filtered before it was saved"
+      } else if (nrow(truncated) > 0) {
+        "No: some problems have more records than are listed"
+      } else {
+        "Yes"
+      },
       nrow(truncated)
     ))
   )

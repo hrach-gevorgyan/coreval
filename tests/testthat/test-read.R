@@ -613,3 +613,25 @@ test_that("CSV files beside a define are named as not read", {
   warnings <- testthat::capture_warnings(read_study(dir))
   expect_true(any(grepl("not read: dm.csv", warnings, fixed = TRUE)))
 })
+
+test_that("members of a transport file are counted across chunks", {
+  skip_if_not_installed("haven")
+  path <- tempfile(fileext = ".xpt")
+  on.exit(unlink(path), add = TRUE)
+  haven::write_xpt(data.frame(A = 1:3), path)
+  expect_equal(xpt_member_count(path), 1L)
+})
+
+test_that("a declared version stays when standard names the same product", {
+  dir <- tempfile("coreval_env_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(data.frame(STUDYID = "S", DOMAIN = "AE", USUBJID = "1"), file.path(dir, "ae.xpt"))
+  study <- read_study(dir)
+  study$standard <- list(product = "SDTMIG", version = "3.3")
+  r <- suppressWarnings(check_study(study, standard = "SDTMIG"))
+  expect_equal(attr(r, "version"), "3.3")
+  study$standard$product <- "SENDIG"
+  r <- suppressWarnings(check_study(study, standard = "SDTMIG"))
+  expect_true(is.na(attr(r, "version")))
+})

@@ -141,9 +141,9 @@ an inconvenient result was set aside.
     fixed in `0be94c38`. On CORE-001080's own fixture it raised "The operator can't be used with non-string values",
     because `TSVCDREF` is empty on 23 of 51 rows.
 
-22. **Some rules error on their own fixtures.** The engine reports
-    `EXECUTION ERROR` for CORE-000929 and CORE-001081 on the data CDISC ships
-    with them.
+22. **Some rules errored on their own fixtures.** At commit `8740d201` the engine
+    reported `EXECUTION ERROR` for CORE-000929 and CORE-001081 on the data CDISC
+    ships with them. At 1.0.0 CORE-000929 runs all its cases.
 
 **`does_not_have_next_corresponding_record` mislines its answers.** It
 sorts by `ordering` alone, groups by `within`, and assigns the exploded

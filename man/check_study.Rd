@@ -74,10 +74,10 @@ than dumping the list, and provenance rides along as attributes:
 (\code{TRUE} when the folder held a define.xml and no datasets, so only the
 rules comparing the define with the study ran).
 \itemize{
-\item \code{findings} - what is wrong. One row per affected record, with \code{Dataset},
+\item \code{findings} - what is wrong. One row per affected record and variable, with \code{Dataset},
 \code{Record} (its row in the file), \code{USUBJID} and \code{SEQ} (its subject and
 \code{--SEQ}, blank where the dataset has none or the row is not a record),
-\code{Variable}, \code{Value}, the \code{issue} in words, and its \code{triage}.
+\code{Variable}, \code{Value}, the \code{issue} in words, its \code{triage} and \code{rule_id}.
 \verb{Not in dataset} under \code{Value} means the rule wanted a variable you do
 not have, which is usually the finding itself.
 \item \code{skipped} - what could not be checked, with a \code{reason} for each. Read

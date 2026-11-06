@@ -22,5 +22,3 @@ comes from running `tests/conformance/run_conformance.R`.
 **No session narrative.** "Found this today", "fixed in this pass", a list of
 audits each superseding the last. A finding belongs here stated as durable
 fact with its evidence. Progress belongs in `NEWS.md`.
-
-`archive/` holds documents that are no longer true. Nothing there is maintained.

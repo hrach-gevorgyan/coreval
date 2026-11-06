@@ -100,16 +100,22 @@ complete_findings <- function(findings) {
 #' @return A single string.
 #' @noRd
 problem_details <- function(sub) {
-  binds <- sub[startsWith(sub$Variable, "$"), ]
-  if (nrow(binds) > 0) {
-    first <- binds[is.na(binds$Record) | binds$Record == binds$Record[1], ]
-    gap <- binding_gap_of(first)
-    return(if (is.null(gap)) binding_text(first) else paste(gap$missing, collapse = ", "))
-  }
   # A rule over variable metadata reports the variable as a value of its own
   # table, under that table's column name, which means nothing to a reader.
   named <- sub$Value[sub$Variable %in% c("variable_name", "define_variable_name") &
                        nzchar(sub$Value) & sub$Value != "Not in dataset"]
+  binds <- sub[startsWith(sub$Variable, "$"), ]
+  if (nrow(binds) > 0) {
+    first <- binds[is.na(binds$Record) | binds$Record == binds$Record[1], ]
+    gap <- binding_gap_of(first)
+    if (!is.null(gap)) {
+      return(paste(gap$missing, collapse = ", "))
+    }
+    # One variable's numbers would read as the whole problem's.
+    if (length(named) == 0) {
+      return(binding_text(first))
+    }
+  }
   if (length(named) > 0) {
     return(paste(unique(named), collapse = ", "))
   }
@@ -268,8 +274,9 @@ not_checked_sheet <- function(skipped, about) {
     top <- data.table::data.table(a = paste0(text$what, named), b = as.character(n), c = text$todo)
     top <- top[order(-n)]
   }
-  shown <- c("checked on", "checked with", "rules", "standard", "version", "checks that ran",
-             "is this the whole result?")
+  shown <- c("checked on", "checked with", "rules", "standard", "version", "terminology",
+             "checks that ran", "is this the whole result?",
+             "problems with more records than listed")
   facts <- about[about$item %in% shown]
   facts <- data.table::data.table(
     a = paste0(toupper(substr(facts$item, 1, 1)), substring(facts$item, 2)),

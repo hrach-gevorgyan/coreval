@@ -1870,7 +1870,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
           code
         }
       }
-      !(code %in% .coreval_env$domain_classes$domain)
+      !(code %in% ig_domains(study))
     }),
     domain_label = scalar_binding(standard_domain_label(study, current_domain, ds)),
     required_variables = {
@@ -2038,6 +2038,28 @@ resolve_binding <- function(binding, dataset) {
     out[is.na(idx)] <- binding$fill
   }
   out
+}
+
+#' The domains a study's Implementation Guide defines
+#'
+#' Both engines ask the study's own version: GF is standard in SDTMIG 3.4 and
+#' custom in 3.2. CDISC's engine also accepts what the Model defines
+#' (`is_custom_domain()`); 1.0 reads the guide alone. A product with no bundled
+#' domains falls back on the table of every domain known.
+#'
+#' @param study The study.
+#' @return A character vector.
+#' @noRd
+ig_domains <- function(study) {
+  tbl <- .coreval_env$library_variables
+  product <- tolower(study$standard$product %||% NA_character_)
+  rows <- tbl[tbl$standard == product & product %in% c("sdtmig", "sendig"), ]
+  if (nrow(rows) == 0) {
+    return(.coreval_env$domain_classes$domain)
+  }
+  use <- pick_library_version(study$standard$version %||% NA_character_, rows$version)
+  doms <- unique(rows$domain[rows$version == use])
+  if (engine_is_core1()) doms else union(doms, .coreval_env$model_dataset_variables$domain)
 }
 
 #' The controlled terminology version a study declares in TS

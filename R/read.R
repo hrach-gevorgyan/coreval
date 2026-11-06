@@ -454,9 +454,19 @@ read_sas_file <- function(path) {
 #' @return An integer.
 #' @noRd
 xpt_member_count <- function(path) {
-  raw <- readBin(path, "raw", n = file.size(path))
-  at <- grepRaw("HEADER RECORD*******MEMB", raw, fixed = TRUE, all = TRUE)
-  sum((at - 1) %% 80 == 0)
+  # In chunks: grepRaw() stops at 2 GB, and a whole file need not be in memory.
+  # A chunk is a whole number of records, so a header is never split.
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  count <- 0L
+  repeat {
+    raw <- readBin(con, "raw", n = 80L * 1048576L)
+    if (length(raw) == 0L) {
+      return(count)
+    }
+    at <- grepRaw("HEADER RECORD*******MEMB", raw, fixed = TRUE, all = TRUE)
+    count <- count + sum((at - 1) %% 80 == 0)
+  }
 }
 
 #' The declared length of each variable of a SAS transport file

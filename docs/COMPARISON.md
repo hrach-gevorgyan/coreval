@@ -7,7 +7,7 @@ is ahead. Each difference links to the document with the evidence.
 | | CDISC's engine | Verisian's engine (CORE 1.0) | coreval |
 |---|---|---|---|
 | Repository | `cdisc-org/cdisc-rules-engine` | `verisianHQ/cdisc-rules-engine` | `hrach-gevorgyan/coreval` |
-| Version compared | 0.17.1 | 1.0.0 | development version after 0.3.0 |
+| Version compared | 0.17.1 for speed and rules; coreval follows 1.0.0 | 1.0.0 | development version after 0.3.0 |
 | Language | Python, pandas and dask | Python, with a PostgreSQL database it starts itself | R, `data.table` |
 | Standards | SENDIG, TIG, USDM (SDTMIG before CORE 1.0) | SDTMIG 3.2 to 3.4, FDA Business Rules | all of these |
 | Rules from | `cdisc-org/cdisc-open-rules` | `verisianHQ/core-contributor` | both, pinned at a commit |
@@ -79,7 +79,7 @@ and as an empty string from a transport file, and a few of its operators
 answer the two differently, so one study can get different findings as CSV
 and as XPT. coreval answers as the engine does for CSV, the form of every
 rule's worked example. [REFERENCE-BEHAVIOUR.md](REFERENCE-BEHAVIOUR.md) lists
-the operators, and the one CORE 1.0 behaviour coreval does not follow on
+the operators, and the CORE 1.0 behaviours coreval does not follow on
 purpose.
 
 ## Where each one is ahead
@@ -114,7 +114,7 @@ purpose.
   about 5 GB. With the CORE 1.0 rules, CDISC's pilot study peaks at about
   810 MB.
 - **Install.** Two R packages and under 2 MB of bundled data. Each engine needs
-  26 Python packages, and CDISC's needs a 463 MB metadata cache as well.
+  26 Python packages, and CDISC's needs a metadata cache of about 480 MB as well.
 - **Offline.** No API key, no download, no cache to fill. Everything is
   bundled, including every Controlled Terminology release.
 - **It says what it could not check.** Every skipped rule comes back with a
@@ -152,7 +152,7 @@ The comparisons on this page were made with:
 
 | | |
 |---|---|
-| CDISC's engine | 0.17.1, commit `8740d201` for the speed and rule comparisons |
+| CDISC's engine | 0.17.1, commit `8740d201` for the speed and rule comparisons; coreval's behaviour follows 1.0.0 (`data-raw/UPSTREAM_SHA_ENGINE`) |
 | Verisian's engine | 1.0.0, commit `4a734105540a83f1df80d061df5049bd4b6bda4d` |
 | core-contributor rules | `a3b4d0b08e45f44bcd1aafe16687aa76fe9680e3` |
 | coreval | commit `e987c78` for the pilot study |

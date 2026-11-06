@@ -554,9 +554,11 @@ older_version <- function(standard, version) {
   if (numeric_version(wanted) >= numeric_version(oldest)) {
     return(NULL)
   }
+  # normalise_version() leaves "3.0" as "3".
+  said <- if (grepl(".", oldest, fixed = TRUE)) oldest else paste0(oldest, ".0")
   list(version = oldest, note = paste0(
     toupper(standard), " ", version, " has no rules of its own, so this was checked against ",
-    oldest, ", the oldest version with rules. A rule added in ", oldest,
+    said, ", the oldest version with rules. A rule added in ", said,
     " or later may not apply to this study."
   ))
 }

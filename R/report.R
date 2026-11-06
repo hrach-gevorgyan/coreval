@@ -271,6 +271,17 @@ finding_triage <- function(sub, rule = NULL) {
   if (nrow(evidence) > 0 && any(evidence$Value != "Not in dataset")) {
     return("missing required")
   }
+  # Only identifiers were reported, so the identifier is what the rule is
+  # about: a duplicate USUBJID, a subject not in DM, a variable too long.
+  # Nothing is absent here, so "often legitimate" cannot be the answer.
+  if (nrow(evidence) == 0 && any(real$Value != "Not in dataset")) {
+    return(if (any(nzchar(real$Value) & real$Value != "Not in dataset")) "wrong value" else "missing required")
+  }
+  # Only computed values, and a message that speaks of nothing missing: a count
+  # that disagrees with another (CORE-000733).
+  if (nrow(real) == 0 && !isTRUE(grepl("missing|absent|not present", msg, ignore.case = TRUE))) {
+    return("wrong value")
+  }
   "missing optional"
 }
 
@@ -334,7 +345,7 @@ skip_group <- function(reason) {
 #'   blank where there is nothing to do.
 #' @noRd
 skip_group_text <- function() {
-  ct <- "pass ct_package = \"sdtmct-...\" (see list_ct_packages()), or fill TSVCDREF and TSVCDVER in TS"
+  ct <- "pass ct_package = \"sdtmct-...\" (see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS"
   data.table::data.table(
     group = c("supplied", "absent", "study", "define", "ct", "labels", "dictionary",
               "stf", "bundled", "variables", "other"),
@@ -589,7 +600,7 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
         if ("SEQ" %in% names(first)) {
           has <- !is.na(first$SEQ)
           who[has] <- paste0(who[has], ifelse(nzchar(who[has]), " ", ""),
-                             "seq ", format(first$SEQ[has], trim = TRUE))
+                             "seq ", number_text(first$SEQ[has]))
         }
         labels <- sprintf("row %-5s", shown)
         if (any(nzchar(who))) {
@@ -652,7 +663,7 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
 #' @noRd
 describe_skipped <- function(skipped, width, g) {
   cat("\n", strrep(g$bar, width), "\n", sep = "")
-  cat(nrow(skipped), " checks could not run.\n", sep = "")
+  cat(nrow(skipped), if (nrow(skipped) == 1) " check" else " checks", " could not run.\n", sep = "")
 
   group <- skip_group(skipped$reason)
   text <- skip_group_text()
@@ -736,6 +747,9 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     # "Nothing to fix" would be a lie here: findings were filtered away, not
     # absent. The data is no cleaner than it was before the filter.
     cat("\nNo findings match this filter.\n")
+  } else if (nrow(f) == 0 && ran == 0) {
+    # Every check was skipped. "Nothing to fix" would read as a clean result.
+    cat("\nNo check ran, so this says nothing about the data.\n")
   } else if (nrow(f) == 0) {
     cat("\nNothing to fix in the ", ran, " checks that ran.\n", sep = "")
   } else {
@@ -746,7 +760,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
     } else {
       paste0(" across ", n_records, floor_text(f$Dataset), if (n_records == 1) " record" else " records")
     }
-    n_sets <- length(unique(f$Dataset))
+    n_sets <- length(setdiff(unique(f$Dataset), "STUDY"))
     cat(
       "\n", n_problems, if (n_problems == 1) " problem" else " problems", where,
       if (one_dataset || all(f$Dataset == "STUDY")) "" else
@@ -881,13 +895,30 @@ rule_type_of <- function(ids) {
   }, character(1), USE.NAMES = FALSE)
 }
 
+# Rule types whose Record numbers a row of a table about the data, not a record.
+METADATA_RULE_TYPES <- "Metadata Check|Global Value Check|Domain Presence|Define Item"
+
+#' Is each finding of a rule about a variable rather than a record?
+#'
+#' CORE-002062 is a value check, but grouped by `variable_name`: its first row
+#' for each variable is record 1, which says nothing about that record.
+#'
+#' @param rule A rule record.
+#' @return A single logical.
+#' @noRd
+rule_groups_by_variable <- function(rule) {
+  "variable_name" %in% unlist(rule$grouping_variables)
+}
+
 #' Does a rule's Record number a row of a metadata table rather than a record?
 #' @param ids Rule ids.
 #' @return A logical vector.
 #' @noRd
 rule_rows_are_metadata <- function(ids) {
   u <- unique(ids)
-  hit <- grepl("Metadata Check|Global Value Check|Domain Presence|Define Item", rule_type_of(u))
+  hit <- grepl(METADATA_RULE_TYPES, rule_type_of(u)) |
+    vapply(u, function(id) rule_groups_by_variable(.coreval_env$data$rules[[id]]), logical(1),
+           USE.NAMES = FALSE)
   hit[match(ids, u)]
 }
 
