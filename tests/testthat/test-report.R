@@ -427,6 +427,40 @@ test_that("a blank required value in CORE 1.0's long output is missing required 
   expect_equal(finding_triage(sub), "wrong value")
 })
 
+test_that("an absent column the rule is about is not a wrong value, a real error stays one", {
+  rule <- function(id) .coreval_env$rule_sets$sdtm[[id]]
+  sub <- function(present, absent) {
+    data.table::data.table(
+      Dataset = "AE", Record = 1L, Variable = c(present, absent),
+      Value = c(rep("x", length(present)), rep("Not in dataset", length(absent))),
+      issue = "x", triage = NA_character_, rule_id = "x"
+    )
+  }
+  # The column is the problem: the neighbour is only context.
+  expect_equal(finding_triage(sub("AEDTC", "AEDY"), rule("CORE-000321")), "missing required")
+  # "--STAT = NOT DONE" selects the records; the reason is what is absent.
+  expect_equal(finding_triage(sub(c("VSTESTCD", "VSSTAT"), "VSREASND"), rule("CORE-000774")),
+               "missing required")
+  # A split dataset's prefix is its domain's.
+  expect_equal(finding_triage(sub("QSDTC", "QSDY"), rule("CORE-000321")), "missing required")
+
+  # Absent, but only one of the things the rule lists: AESER is the error.
+  expect_equal(finding_triage(sub(c("AESER", "AESOD"), "AESMIE"), rule("CORE-000022")), "wrong value")
+  # Tested for absence, but only as a precondition: VISIT not in TV is the error.
+  expect_equal(finding_triage(sub("VISIT", "SVUPDES"), rule("CORE-000333")), "wrong value")
+  expect_equal(finding_triage(sub("VISITNUM", "SVUPDES"), rule("CORE-000842")), "wrong value")
+
+  # With no rule to read, or a condition not recognised, it stays high.
+  expect_equal(finding_triage(sub("AEDTC", "AEDY")), "wrong value")
+  negated <- list(check = list(not = list(all = list(list(name = "AEDY", operator = "empty")))))
+  expect_equal(finding_triage(sub("AEDTC", "AEDY"), negated), "wrong value")
+  # Equal to another column judges a value; equal to text only selects.
+  expect_false(is_literal_equality(list(operator = "equal_to", value = "--STDTC")))
+  expect_false(is_literal_equality(list(operator = "equal_to", value = "$visits")))
+  expect_true(is_literal_equality(list(operator = "equal_to", value = "NOT DONE")))
+  expect_true(is_literal_equality(list(operator = "equal_to", value = "Y")))
+})
+
 test_that("print refuses a negative n", {
   result <- check_dataset(data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1"), standard = "SDTMIG")
   expect_error(print(result, n = -1), "`n` must be")

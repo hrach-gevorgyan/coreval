@@ -25,6 +25,12 @@
   The CSV files keep the raw tables for reading back into a program, plus a
   new `_summary.csv`.
 
+* **A missing column is no longer a "wrong value".** Rules report neighbouring
+  columns as context, so "AEDY is missing when AEDTC is present" came out as a
+  wrong value and sat among the definite errors. A problem now counts as
+  missing when the rule tests the absent column and judges no other value,
+  read from the rule's own conditions. On CDISC's pilot study 14 of 103 moved.
+
 * **Only the study's own rule numbers.** A rule serving several standards
   carries each one's number. The report and the file now show only those for
   the declared standard, so an SDTM study no longer lists SEND and TIG

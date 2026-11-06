@@ -141,11 +141,87 @@ binding_gap <- function(sets) {
 #' @noRd
 TRIAGE_LEVELS <- c("wrong value", "missing required", "missing optional")
 
+#' Is an absent column what this rule is reporting, not a wrong value?
+#'
+#' Rules report neighbouring columns as context: "AEDY is missing when AEDTC is
+#' present" reports AEDTC's value, which read as a wrong value when the only
+#' thing wrong is the absent column. It is decided from the rule's own
+#' conditions. The rule must test the absent column for being absent or empty,
+#' and nothing else in it may judge a value, because SVUPDES being absent is a
+#' precondition of "VISIT is not in TV", where VISIT is the real error. Equal to
+#' a literal only selects records, as `--STAT = NOT DONE` does. Anything not
+#' recognised keeps "wrong value": left too high costs less than buried.
+#'
+#' @param real Findings for one rule in one dataset, without `$` bindings.
+#' @param rule The rule record.
+#' @return A single logical.
+#' @noRd
+absent_column_is_the_problem <- function(real, rule) {
+  absent <- unique(real$Variable[real$Value == "Not in dataset"])
+  if (length(absent) == 0 || is.null(rule$check) || has_negation(rule$check)) {
+    return(FALSE)
+  }
+  conditions <- check_conditions(rule$check)
+  name <- vapply(conditions, function(x) as.character(x$name)[1], character(1))
+  op <- vapply(conditions, function(x) as.character(x$operator)[1], character(1))
+  presence <- op %in% c("exists", "not_exists", "empty", "non_empty")
+  literal <- vapply(conditions, is_literal_equality, logical(1))
+  if (!all((presence | literal) & !startsWith(name, "$"))) {
+    return(FALSE)
+  }
+  tested <- name[op %in% c("not_exists", "empty")]
+  # "--DY" is AEDY in AE, and DY's prefix in a split or AP dataset too.
+  pattern <- paste0("^", sub("^--", "[A-Z0-9]{2}", tested), "$")
+  any(vapply(pattern, function(p) any(grepl(p, absent)), logical(1)))
+}
+
+#' Does a rule's check contain a `not`?
+#' @param x A check, or part of one.
+#' @return A single logical.
+#' @noRd
+has_negation <- function(x) {
+  is.list(x) && ("not" %in% names(x) || any(vapply(x, has_negation, logical(1))))
+}
+
+#' Every condition in a rule's check, however nested
+#' @param x A check, or part of one.
+#' @return A list of conditions, each with `name` and `operator`.
+#' @noRd
+check_conditions <- function(x) {
+  if (!is.list(x)) {
+    return(list())
+  }
+  if (!is.null(x$operator)) {
+    return(list(x))
+  }
+  unlist(lapply(x, check_conditions), recursive = FALSE)
+}
+
+#' Is a condition "equal to this text", rather than to another column?
+#'
+#' A value shaped like a variable name may be one, so it does not count unless
+#' the rule says it is literal.
+#'
+#' @param condition One condition.
+#' @return A single logical.
+#' @noRd
+is_literal_equality <- function(condition) {
+  if (!identical(as.character(condition$operator)[1], "equal_to")) {
+    return(FALSE)
+  }
+  value <- as.character(condition$value)
+  if (length(value) != 1 || is.na(value) || startsWith(value, "$")) {
+    return(FALSE)
+  }
+  isTRUE(condition$value_is_literal) || !grepl("^(--)?[A-Z][A-Z0-9]{1,7}$", value)
+}
+
 #' Work out which triage level a rule's findings belong to
 #'
 #' @param sub Findings for one rule in one dataset.
-#' @param rule The rule record, used only to tell Required from Expected when
-#'   the finding is about a set of variables rather than a value.
+#' @param rule The rule record, used to tell Required from Expected when the
+#'   finding is about a set of variables rather than a value, and an absent
+#'   column from a wrong value.
 #' @return One of `TRIAGE_LEVELS`.
 #' @noRd
 finding_triage <- function(sub, rule = NULL) {
@@ -164,7 +240,8 @@ finding_triage <- function(sub, rule = NULL) {
 
   # Something is present and breaks the rule. This is the only class where
   # the data itself is the evidence, so it comes first.
-  if (nrow(evidence) > 0 && any(evidence$Value != "Not in dataset" & nzchar(evidence$Value))) {
+  if (nrow(evidence) > 0 && any(evidence$Value != "Not in dataset" & nzchar(evidence$Value)) &&
+      !absent_column_is_the_problem(real, rule)) {
     return("wrong value")
   }
 
