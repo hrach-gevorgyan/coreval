@@ -475,7 +475,7 @@ other - which is the point: the fixtures do not exercise these shapes.
 * **Runs on a data frame you already have open**, not only a folder of files.
 * **Deprecated rules off by default**, so one defect is not reported three
   times by a rule, its replacement and its predecessor.
-* **Tracking columns** (`Status`, `Owner`, `Notes`) written into the export.
+* **Tracking columns** (`Status`, `Notes`) written into the export.
 
 ### Where they are level
 

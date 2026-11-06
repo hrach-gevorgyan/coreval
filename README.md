@@ -54,7 +54,7 @@ You get a report like this:
 AGEU must be populated when AGE is populated.
   1 record · AGE, AGEU
     row 3  STUDY1-003  AGE = "47", AGEU = (empty)
-    CORE-000189  · also CG0665, TIG0699
+    CORE-000189  · also CG0665
 
 [wrong value]
 Value must be a valid ISO 8601 datetime or interval.
@@ -73,7 +73,9 @@ Value must be a valid ISO 8601 datetime or interval.
      → put it in the study folder (reading it needs the xml2 package)
   2 need to know the controlled terminology version
      → pass ct_package = "sdtmct-..." (see list_ct_packages()), or fill TSVCDREF and TSVCDVER in TS
-  4 for other reasons, see result$skipped
+  2 compare variable labels, and the data has none
+     → give the variables labels: a data frame made in R has none until they are added
+  2 for other reasons, see result$skipped
 
 Scoped to SDTMIG: 109 rules written for other standards, or other versions of this one, were not run.
 
@@ -108,9 +110,9 @@ used automatically.
 result <- check_study("path/to/sdtm", standard = "SDTMIG", version = "3.4")
 ```
 
-**To share with your team**, save an Excel workbook. It has the problems, what
-couldn't be checked, and empty `Status`, `Owner` and `Notes` columns for
-tracking who's fixing what.
+**To share with your team**, save an Excel workbook. It lists the problems, the
+records behind them, what couldn't be checked and every rule's result, with
+empty `Status` and `Notes` columns for tracking what's being fixed.
 
 ```r
 write_findings(result, "issues.xlsx")

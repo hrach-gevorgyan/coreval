@@ -127,7 +127,7 @@ purpose.
   significant digits, so conversion noise is not reported as a mismatch.
 - **Both rule sets in one tool**, chosen for you by the standard.
 - **Built for review.** Problems are sorted so definite errors come first, and
-  the Excel export has `Status`, `Owner` and `Notes` columns for tracking.
+  the Excel export has `Status` and `Notes` columns for tracking.
 
 ### Level
 

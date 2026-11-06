@@ -89,8 +89,9 @@ installed).
 write_findings(result, "issues.xlsx")
 ```
 
-The workbook has the problems, the checks that could not run, and a sheet
-saying which rules and settings produced it. Empty `Status`, `Owner` and
+The workbook has four sheets: the problems, one row each; the affected
+records, by subject and sequence number; the checks that could not run, with
+what to do about them; and every rule with what happened to it. `Status` and
 `Notes` columns are there for you to fill in.
 
 ## Reading the report

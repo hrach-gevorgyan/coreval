@@ -12,13 +12,13 @@ write_findings(result, path, tracking = TRUE)
 \item{path}{Output file path. The extension decides the format: \code{.xlsx}
 for Excel, \code{.csv} (or anything else) for CSV.}
 
-\item{tracking}{Add the empty \code{Status}/\code{Owner}/\code{Notes} columns. \code{TRUE} by
+\item{tracking}{Add the empty tracking columns. \code{TRUE} by
 default; set \code{FALSE} for a file you intend to read back into R.}
 }
 \value{
 The paths actually written, invisibly. One element for Excel (a
 single workbook). For CSV, one path per file written: the findings, plus
-siblings for \code{skipped} and \code{about}, plus one for \code{truncated} when any rule
+siblings for \code{skipped}, \code{about} and \code{summary}, plus one for \code{truncated} when any rule
 flagged more records than were kept.
 }
 \description{
@@ -31,13 +31,26 @@ Both tables are always written, never just the findings. A short findings
 table can mean clean data, or it can mean many rules were skipped, and
 those two situations look identical if the skipped table is dropped:
 \itemize{
-\item \strong{Excel} (\code{.xlsx}) - one workbook with a sheet per table: \code{findings},
-\code{skipped}, \code{about}, and \code{truncated} when any rule matched more records
-than were kept.
-\item \strong{CSV} (\code{.csv}) - one file per table, since CSV has no notion of sheets.
-Findings go to \code{path}; the others go to sibling files with a suffix
-before the extension, so \code{issues.csv} gives \code{issues_skipped.csv} and
-\code{issues_about.csv}.
+\item \strong{Excel} (\code{.xlsx}) - four sheets laid out for a person to read:
+\itemize{
+\item \code{Problems}: one row per problem, definite errors first, then the ones
+touching most records. What is wrong and the rule's number, the
+variables it names (or the missing ones), and how many records it
+affects, or \verb{whole dataset}.
+\item \code{Records}: one row per affected record and problem, in the order of
+\code{Problems}, with \code{USUBJID}, \code{SEQ} and the values, such as
+\code{AESTDTC = "2024-02-30"}. A dataset with no subject gives the row
+instead.
+\item \verb{Not checked}: the checks that could not run, grouped by reason, with
+what to do about each, then when and how the check was run.
+\item \code{Rules}: every rule, and whether it found problems, found none or could
+not run. A rule that found nothing appears nowhere else.
+}
+\item \strong{CSV} (\code{.csv}) - the tables as they are in R, for reading back into a
+program. Findings go to \code{path}; the others go to sibling files with a
+suffix before the extension, so \code{issues.csv} gives
+\code{issues_skipped.csv}, \code{issues_about.csv} and \code{issues_summary.csv} (one
+row per problem).
 }
 
 An existing file at \code{path}, or at a sibling path, is replaced.
@@ -55,8 +68,9 @@ isn't installed you get a clear message telling you to install it or use
 }
 \section{Columns for tracking}{
 
-Three empty columns are added to the findings - \code{Status}, \code{Owner} and
-\code{Notes} - for you to fill in by hand once the file is open. They exist so a
+Empty columns are added for you to fill in by hand once the file is open:
+\code{Status} and \code{Notes} on \code{Problems} and \code{Notes} on \code{Records} in Excel,
+\code{Status}, \code{Owner} and \code{Notes} in CSV. They exist so a
 finding you have looked at and decided not to act on ("expected, see
 protocol deviation log") can be recorded next to the finding itself, rather
 than in a separate document nobody reads.

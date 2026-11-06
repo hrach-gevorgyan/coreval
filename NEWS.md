@@ -7,6 +7,34 @@
   has no such variable, for a finding about the dataset as a whole, and for a
   rule about variable or dataset metadata, whose rows are not records.
 
+* **The Excel file is laid out for a person.** It used to hold the raw
+  tables. It now has four sheets:
+  - `Problems`: one row per problem, definite errors first, with what is
+    wrong, the variables it names (the missing ones for a "required variable
+    is missing" rule) and how many records it affects. On CDISC's pilot study
+    that is 142 rows.
+  - `Records`: one row per affected record and problem, found by `USUBJID` and
+    `SEQ`, reading `AETERM = "Nausea"; AESTDTC = "2024-02-30"`, with blanks
+    shown as `(empty)` and absent variables as `(not in dataset)`.
+  - `Not checked`: the checks that could not run, grouped by reason, with
+    what to do about each, then when and how the check was run.
+  - `Rules`: every rule, and whether it found problems, found none or could
+    not run. A rule that ran and found nothing was listed nowhere before,
+    which left "clean" and "never checked" looking alike. The result carries
+    the list in `attr(result, "ran")`.
+  The CSV files keep the raw tables for reading back into a program, plus a
+  new `_summary.csv`.
+
+* **Only the study's own rule numbers.** A rule serving several standards
+  carries each one's number. The report and the file now show only those for
+  the declared standard, so an SDTM study no longer lists SEND and TIG
+  numbers beside CG ones.
+
+* **More of "could not run" is explained.** The report groups three more
+  reasons: variables the data does not have, reference data coreval does not
+  include, and the study tagging file. On the pilot study "other reasons" fell
+  from 170 checks to 22.
+
 * **A CORE 1.0 finding names its variable.** Rules that check many variables
   at once reported `variable_name = "RFSTDTC", variable_value = "2024-13-01"`,
   with `Variable` set to `variable_value`, so a filter on the `Variable`

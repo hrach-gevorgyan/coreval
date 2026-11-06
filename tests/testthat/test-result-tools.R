@@ -189,21 +189,19 @@ test_that("an exported file carries its own provenance", {
 
   about <- data.table::fread(grep("_about", paths, value = TRUE), colClasses = "character")
   val <- function(item) about$value[about$item == item]
-  expect_equal(val("is this a subset of the full result?"), "no")
-  expect_equal(as.integer(val("rules whose records were capped")), nrow(capped$truncated))
-  expect_equal(
-    as.integer(val("most records a capped rule really found")),
-    max(capped$truncated$records_found)
-  )
+  expect_equal(val("is this the whole result?"), "Yes")
+  expect_equal(as.integer(val("problems with more records than listed")), nrow(capped$truncated))
   # The real count must be in the file, not just the kept one.
-  expect_gt(as.integer(val("most records a capped rule really found")), 10)
+  cut <- data.table::fread(grep("_truncated", paths, value = TRUE))
+  expect_equal(max(cut$records_found), max(capped$truncated$records_found))
+  expect_gt(max(cut$records_found), 10)
 
   # A filtered export says so, since the rows alone cannot show it.
   filtered <- filter_findings(capped, triage = "wrong value")
   p2 <- write_findings(filtered, file.path(dir, "filt.csv"))
   about2 <- data.table::fread(grep("_about", p2, value = TRUE), colClasses = "character")
   expect_match(
-    about2$value[about2$item == "is this a subset of the full result?"], "YES"
+    about2$value[about2$item == "is this the whole result?"], "^No: it was filtered"
   )
 })
 

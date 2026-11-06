@@ -237,8 +237,8 @@ test_that("write_findings works on a check_dataset() result unchanged", {
   dir.create(dir)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   written <- write_findings(result, file.path(dir, "issues.csv"))
-  # findings + skipped + about; nothing was capped here, so no `truncated`.
-  expect_length(written, 3)
+  # findings, skipped, about and summary; nothing was capped, so no `truncated`.
+  expect_length(written, 4)
   expect_true(all(file.exists(written)))
 })
 

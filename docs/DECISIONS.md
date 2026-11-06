@@ -187,8 +187,8 @@ reasoning about it.
 Two requested features both need something coreval has never had, state
 carried from one run to the next, and both were deferred by the user:
 
-* **The Excel round trip is one-way.** `write_findings()` writes `Status`,
-  `Owner` and `Notes`; nothing reads them back. A finding marked
+* **The Excel round trip is one-way.** `write_findings()` writes `Status`
+  and `Notes`; nothing reads them back. A finding marked
   "expected, screen failure" therefore reappears at full volume on every
   run, so the noise never decreases for the one user who has already done
   the triage work.
@@ -201,3 +201,22 @@ identified stably enough to match against the current one, which means a
 finding needs an identity beyond its row position. That is the hard part, and
 it is why neither is a small addition. Recorded so the gap is visible when
 the next release is scoped; not scheduled.
+
+## The Excel file is for people, the CSV files for programs (decided 2026-11-06)
+
+The workbook's reader is often a reviewer who never saw the console, so it
+holds four sheets in plain words: problems, records, what was not checked, and
+every rule's result. The raw tables, which it held before, read like program
+output: three rows per record, `$missing_expected_variables`, and 71 near
+identical skip reasons. They stay in the CSV files, where a script expects
+them, and in the result itself.
+
+A six-sheet version was built first and was rejected as too much. The row
+number was dropped from `Records` because subject and sequence find a record;
+a dataset with no subject gives its row inside `Values`, since it has nothing
+else. `Rules` was added because a rule that ran and found nothing appeared
+nowhere, and "clean" could not be told from "never checked". A filtered file
+says `ran, filtered out of this file`, never `no problems`.
+
+Column widths and a frozen header need `openxlsx`, which `writexl` cannot do.
+Not adopted: it would be a new `Suggests` for appearance alone.

@@ -207,9 +207,118 @@ finding_triage <- function(sub, rule = NULL) {
 #' @param id A rule id.
 #' @return A character vector, possibly empty.
 #' @noRd
-rule_legacy_ids <- function(id) {
+rule_legacy_ids <- function(id, standard = NULL) {
   r <- .coreval_env$data$rules[[id]]
-  if (is.null(r) || is.null(r$legacy_ids)) character(0) else r$legacy_ids
+  ids <- if (is.null(r) || is.null(r$legacy_ids)) character(0) else r$legacy_ids
+  # One rule often serves several standards and carries each one's number:
+  # CORE-000355 is CG0014, SEND12, TIG0299 and TIG0057. On an SDTM study the
+  # SEND and TIG numbers point a reader at rules for data they do not have.
+  # CG is SDTM's Conformance Rules; FB (FDA Business Rules) and TRC (FDA
+  # Technical Rejection Criteria) cover every standard and always stay.
+  s <- toupper(standard %||% "")
+  drop <- if (startsWith(s, "SDTM")) "^(SEND|TIG)" else
+    if (startsWith(s, "SEND")) "^(CG|TIG)" else
+      if (identical(s, "TIG")) "^(CG|SEND)" else NULL
+  if (is.null(drop)) ids else ids[!grepl(drop, ids)]
+}
+
+#' Sort the reasons rules could not run into groups a person can act on
+#'
+#' Shared by the printed report and the Excel file, so the two count the same
+#' groups. Each reason lands in one group, the first in this order that
+#' matches.
+#'
+#' @param reason The `reason` column of a result's `skipped` table.
+#' @return A character vector of group keys, one per reason.
+#' @noRd
+skip_group <- function(reason) {
+  has <- function(x) grepl(x, reason, fixed = TRUE)
+  tests <- list(
+    supplied = has("was not supplied"),
+    absent = has("which is not in this study"),
+    study = has("which datasets the whole study contains") | has("asks about the whole study"),
+    define = has("define.xml"),
+    ct = has("needs controlled terminology"),
+    labels = has("compares variable labels"),
+    dictionary = has("dictionary"),
+    stf = has("study tagging file"),
+    bundled = has("which coreval does not bundle"),
+    variables = has("which one of the datasets does not have") |
+      has("which the dataset does not have")
+  )
+  out <- rep("other", length(reason))
+  for (key in rev(names(tests))) out[tests[[key]]] <- key
+  out
+}
+
+#' The words for each group of [skip_group()]
+#' @return A data.table: `group`, `what` (why those checks did not run),
+#'   `hint` (the printed report's advice) and `todo` (the file's), either
+#'   blank where there is nothing to do.
+#' @noRd
+skip_group_text <- function() {
+  ct <- "pass ct_package = \"sdtmct-...\" (see list_ct_packages()), or fill TSVCDREF and TSVCDVER in TS"
+  data.table::data.table(
+    group = c("supplied", "absent", "study", "define", "ct", "labels", "dictionary",
+              "stf", "bundled", "variables", "other"),
+    what = c(
+      "need other datasets",
+      "need datasets this study does not have",
+      "ask what the whole study contains",
+      "need a define.xml",
+      "need to know the controlled terminology version",
+      "compare variable labels, and the data has none",
+      "need a licensed dictionary (MedDRA, WHODrug, ...), which coreval does not read",
+      "need the study tagging file (stf.xml)",
+      "need reference data coreval does not include",
+      "need variables the data does not have",
+      "for other reasons, see result$skipped"
+    ),
+    hint = c(
+      "run check_study() on the whole folder to cover these",
+      "",
+      "run check_study() on the whole folder to cover these",
+      "put it in the study folder (reading it needs the xml2 package)",
+      ct,
+      "give the variables labels: a data frame made in R has none until they are added",
+      "",
+      "put it in the study folder",
+      "",
+      "",
+      ""
+    ),
+    todo = c(
+      "Check the whole study folder with check_study().",
+      "Nothing, if the study is not meant to have them.",
+      "Check the whole study folder with check_study().",
+      "Put the define.xml in the study folder. Reading it needs the xml2 package.",
+      paste0(toupper(substr(ct, 1, 1)), substring(ct, 2), "."),
+      "Give the variables labels. A data frame made in R has none until they are added.",
+      "",
+      "Put the stf.xml in the study folder.",
+      "",
+      "Nothing, if the study is not meant to have them. The Rules sheet names them.",
+      "See the Rules sheet."
+    )
+  )
+}
+
+#' The datasets a group of "needs X" reasons name
+#' @param reason Skip reasons.
+#' @param max How many to name before "...". `Inf` for all.
+#' @param before,after Put around the list; nothing is returned when no
+#'   dataset is named.
+#' @return A single string.
+#' @noRd
+skip_datasets_named <- function(reason, max = Inf, before = "", after = "") {
+  wanted <- unlist(regmatches(reason, regexpr("(?<=needs )[A-Z0-9, ]+(?=,| was| which)", reason, perl = TRUE)))
+  wanted <- unique(trimws(unlist(strsplit(wanted, ","))))
+  wanted <- sort(wanted[nzchar(wanted) & grepl("^[A-Z][A-Z0-9]+$", wanted)])
+  if (length(wanted) == 0) {
+    return("")
+  }
+  paste0(before, paste(utils::head(wanted, max), collapse = ", "),
+         if (length(wanted) > max) ", ..." else "", after)
 }
 
 #' The Implementation Guide sentence a rule enforces
@@ -294,10 +403,11 @@ describe_cells <- function(cell) {
 #' @param truncated The result's `truncated` table, so a capped count can be
 #'   reported as the true one.
 #' @param guidance Print the Implementation Guide sentence each rule enforces.
+#' @param standard The declared standard, so only its rule numbers are named.
 #' @return `invisible(NULL)`.
 #' @noRd
 describe_problems <- function(f, n, rows, width, g, truncated = NULL,
-                              guidance = FALSE) {
+                              guidance = FALSE, standard = NULL) {
   key <- paste(f$Dataset, f$rule_id)
   groups <- unique(key)
   # Triage first, record count second. Ordering purely by "how many records"
@@ -429,7 +539,7 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
     # spreadsheets use, so they are how a finding here is matched to a finding
     # there - including to a severity CDISC itself does not publish.
     rid <- sub$rule_id[1]
-    legacy <- rule_legacy_ids(rid)
+    legacy <- rule_legacy_ids(rid, standard)
     cat("    ", rid,
       if (length(legacy)) {
         paste0(
@@ -467,52 +577,18 @@ describe_skipped <- function(skipped, width, g) {
   cat("\n", strrep(g$bar, width), "\n", sep = "")
   cat(nrow(skipped), " checks could not run.\n", sep = "")
 
-  need_data <- grepl("was not supplied", skipped$reason)
-  if (any(need_data)) {
-    wanted <- unique(unlist(regmatches(
-      skipped$reason[need_data],
-      regexpr("(?<=needs )[A-Z0-9, ]+", skipped$reason[need_data], perl = TRUE)
-    )))
-    wanted <- unique(trimws(unlist(strsplit(wanted, ","))))
-    wanted <- wanted[nzchar(wanted)]
-    cat("  ", sum(need_data), " need other datasets (",
-      paste(utils::head(sort(wanted), 6), collapse = ", "),
-      if (length(wanted) > 6) ", ..." else "", ")\n",
-      sep = ""
-    )
-    cat("     ", g$arrow, " run check_study() on the whole folder to cover these\n", sep = "")
-  }
-  need_study <- grepl("which datasets the whole study contains", skipped$reason, fixed = TRUE) |
-    grepl("asks about the whole study", skipped$reason, fixed = TRUE)
-  if (any(need_study)) {
-    cat("  ", sum(need_study), " ask what the whole study contains\n", sep = "")
-    if (!any(need_data)) {
-      cat("     ", g$arrow, " run check_study() on the whole folder to cover these\n", sep = "")
+  group <- skip_group(skipped$reason)
+  text <- skip_group_text()
+  for (k in seq_len(nrow(text))) {
+    hit <- group == text$group[k]
+    if (!any(hit)) next
+    cat("  ", sum(hit), " ", text$what[k], skip_datasets_named(skipped$reason[hit], 6, " (", ")"),
+        "\n", sep = "")
+    hint <- text$hint[k]
+    # Said once: both "whole folder" groups take the same advice.
+    if (nzchar(hint) && !(text$group[k] == "study" && any(group == "supplied"))) {
+      cat("     ", g$arrow, " ", hint, "\n", sep = "")
     }
-  }
-  need_define <- grepl("define.xml", skipped$reason, fixed = TRUE)
-  if (any(need_define)) {
-    cat("  ", sum(need_define), " need a define.xml\n", sep = "")
-    cat("     ", g$arrow, " put it in the study folder (reading it needs the xml2 package)\n", sep = "")
-  }
-  # The one most people can switch on themselves, so it gets its own line and
-  # says how. Lumped into "other reasons" it went unseen.
-  need_ct <- !need_data & !need_study & !need_define &
-    grepl("needs controlled terminology", skipped$reason, fixed = TRUE)
-  if (any(need_ct)) {
-    cat("  ", sum(need_ct), " need to know the controlled terminology version\n", sep = "")
-    cat("     ", g$arrow, " pass ct_package = \"sdtmct-...\" (see list_ct_packages()),",
-        " or fill TSVCDREF and TSVCDVER in TS\n", sep = "")
-  }
-  need_dict <- !need_data & !need_study & !need_define & !need_ct &
-    grepl("dictionary", skipped$reason, fixed = TRUE)
-  if (any(need_dict)) {
-    cat("  ", sum(need_dict), " need a licensed dictionary (MedDRA, WHODrug, ...), which coreval does not read\n",
-        sep = "")
-  }
-  other <- !need_data & !need_study & !need_define & !need_ct & !need_dict
-  if (any(other)) {
-    cat("  ", sum(other), " for other reasons, see result$skipped\n", sep = "")
   }
   invisible(NULL)
 }
@@ -621,7 +697,7 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   }
 
   if (nrow(f) > 0 && one_dataset) {
-    describe_problems(f, n, rows, width, g, x$truncated, guidance)
+    describe_problems(f, n, rows, width, g, x$truncated, guidance, attr(x, "standard"))
   } else if (nrow(f) > 0) {
     # A study produces far too many findings to read as one flat list, and
     # "which dataset is worst" is the first thing anyone wants to know. So:
@@ -649,7 +725,8 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
 
     for (d in by_dataset) {
       report_banner(d, width, g)
-      describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated, guidance)
+      describe_problems(f[f$Dataset == d, ], n, rows, width, g, x$truncated, guidance,
+                        attr(x, "standard"))
     }
   }
 

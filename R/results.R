@@ -495,7 +495,8 @@ fold_value_rows <- function(findings) {
 #' @return An object of class `coreval_result`, holding three tables. Because
 #'   it has a class, typing the result's name prints a readable report rather
 #'   than dumping the list, and provenance rides along as attributes:
-#'   `checks_run`, `domains`, `excluded_by_standard`, and `define_only`
+#'   `checks_run`, `ran` (each rule and dataset checked, one row per check),
+#'   `domains`, `excluded_by_standard`, and `define_only`
 #'   (`TRUE` when the folder held a define.xml and no datasets, so only the
 #'   rules comparing the define with the study ran).
 #'
@@ -687,6 +688,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
   .coreval_env$prep_cache <- new.env(parent = emptyenv())
   on.exit(.coreval_env$prep_cache <- NULL, add = TRUE)
   n_ran <- 0L
+  ran_rule <- character(0)
+  ran_domain <- character(0)
   all_findings <- list()
   all_skipped <- list()
   all_truncated <- list()
@@ -897,6 +900,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         next
       }
       n_ran <- n_ran + 1
+      ran_rule <- c(ran_rule, rule_id)
+      ran_domain <- c(ran_domain, domain)
       findings <- assemble_findings(
         rule, outcome$dataset, domain, outcome$violations, outcome$bindings,
         max_records = max_records
@@ -953,6 +958,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         next
       }
       n_ran <- n_ran + 1
+      ran_rule <- c(ran_rule, rule_id)
+      ran_domain <- c(ran_domain, "STUDY")
       findings <- assemble_findings(rule, outcome$dataset, "STUDY", outcome$violations,
                                     outcome$bindings, max_records = max_records)
       if (nrow(findings) > 0) {
@@ -993,6 +1000,8 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       next
     }
     n_ran <- n_ran + 1
+    ran_rule <- c(ran_rule, rule_id)
+    ran_domain <- c(ran_domain, "STUDY")
     found <- attr(findings, "records_found")
     kept <- nrow(unique(findings[, c("Dataset", "Record")]))
     if (!is.null(found) && found > kept) {
@@ -1063,6 +1072,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     list(findings = findings, skipped = skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = n_ran,
+    ran = data.table::data.table(rule_id = ran_rule, domain = ran_domain),
     domains = domains,
     standard = declared,
     excluded_by_standard = excluded,
