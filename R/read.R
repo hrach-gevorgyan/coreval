@@ -110,10 +110,23 @@ read_study_folder <- function(path, skip = character(0)) {
   files <- files[!normalizePath(files, mustWork = FALSE) %in%
                    normalizePath(skip, mustWork = FALSE)]
   ext <- tolower(tools::file_ext(files))
+  # A submission package holds every dataset as .xpt and as .json. The JSON copy
+  # loses to the other file below, so only the name it declares is read: parsing
+  # all of them took longer than reading the study. An empty entry carrying that
+  # name is enough, since it is always dropped or refused.
+  ranked_higher <- toupper(tools::file_path_sans_ext(
+    basename(files[ext %in% c("xpt", "sas7bdat")])))
   datasets <- lapply(seq_along(files), function(i) {
     switch(ext[[i]],
       xpt = , sas7bdat = build_dataset_from_data_frame(read_sas_file(files[[i]])),
-      json = read_dataset_json(files[[i]]),
+      json = {
+        declared <- dataset_json_declared_name(files[[i]])
+        if (declared %in% ranked_higher) {
+          structure(list(), dataset_name = declared)
+        } else {
+          read_dataset_json(files[[i]])
+        }
+      },
       ndjson = read_dataset_ndjson(files[[i]])
     )
   })

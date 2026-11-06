@@ -223,6 +223,71 @@ test_that("read_study prefers XPT when a folder holds both formats", {
   expect_equal(nrow(study$datasets$DM$data), 2)
 })
 
+test_that("a JSON copy that loses to another file is set aside on its name alone", {
+  skip_if_not_installed("jsonlite")
+  skip_if_not_installed("haven")
+  dir <- tempfile("coreval_copy_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(sample_dm()[1:2, ], file.path(dir, "dm.xpt"))
+  # Cut off inside its rows. Parsed whole, this file stops the read with "not
+  # valid JSON", so getting past it proves the rows were not read.
+  writeLines('{"name":"DM","records":3,"columns":[{"name":"USUBJID"}],"rows":[["1"],[',
+             file.path(dir, "dm.json"))
+  expect_warning(study <- read_study(dir), "checked dm.xpt and left out dm.json")
+  expect_equal(nrow(study$datasets$DM$data), 2)
+
+  # With nothing to lose to, the same file is read and refused.
+  unlink(file.path(dir, "dm.xpt"))
+  expect_error(read_study(dir), "not valid JSON")
+})
+
+test_that("a JSON file is judged by the name it declares, not its file name", {
+  skip_if_not_installed("jsonlite")
+  skip_if_not_installed("haven")
+  dir <- tempfile("coreval_declared_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-001"),
+                   file.path(dir, "ae.xpt"))
+  # Named like the transport file, declaring another dataset: skipping it by
+  # file name would lose DM without a word.
+  write_dataset_json(sample_dm(), file.path(dir, "ae.json"), name = "DM")
+  study <- read_study(dir)
+  expect_setequal(names(study$datasets), c("AE", "DM"))
+  expect_equal(nrow(study$datasets$DM$data), nrow(sample_dm()))
+})
+
+test_that("the declared name is the dataset's, wherever the file puts it", {
+  skip_if_not_installed("jsonlite")
+  path <- tempfile(fileext = ".json")
+  on.exit(unlink(path), add = TRUE)
+  declared <- function(text) {
+    writeLines(text, path)
+    dataset_json_declared_name(path)
+  }
+  columns <- '"columns":[{"name":"AGE","label":"Age"}]'
+  expect_equal(declared(paste0('{"name":"dm","label":"D",', columns, ',"rows":[]}')), "DM")
+  # A column's name is not the dataset's.
+  expect_equal(declared(paste0('{', columns, ',"name":"DM","rows":[]}')), "DM")
+  # Not answerable from the head, so the file goes to the full read.
+  expect_true(is.na(declared(paste0('{', columns, ',"rows":[],"name":"DM"}'))))
+  expect_true(is.na(declared(paste0('{', columns, ',"rows":[]}'))))
+  expect_true(is.na(declared('{"name":"DM"}')))
+  expect_true(is.na(declared('not json "rows": []')))
+})
+
+test_that("the USDM test reads the head of a one-line file, and survives where it ends", {
+  path <- tempfile(fileext = ".json")
+  on.exit(unlink(path), add = TRUE)
+  # Two-byte characters across the 64 KB edge, so the head ends inside one.
+  body <- strrep("\u00e9", 40000L)
+  writeLines(paste0('{"study":{"id":"S","x":"', body, '"}}'), path, useBytes = TRUE)
+  expect_true(is_usdm_document(path))
+  writeLines(paste0('{"datasetJSONVersion":"1.1","x":"', body, '"}'), path, useBytes = TRUE)
+  expect_false(is_usdm_document(path))
+})
+
 test_that("a study folder reads every dataset format, not only the transport files", {
   skip_if_not_installed("jsonlite")
   dir <- tempfile("coreval_mixed_")

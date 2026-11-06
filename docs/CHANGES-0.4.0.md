@@ -353,3 +353,8 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     reference from RELREC to CO.
   - The sort check's `strict_incremental_ordering` treats any blank as null.
   - Terminology adds the packages of 25 September 2026.
+
+* **A Dataset-JSON copy of an `.xpt` is no longer parsed.** Only the name it declares
+  is read, so a package holding both formats reads as fast as the `.xpt` files
+  alone. A copy damaged past its header used to stop the run, and is now set aside
+  and named in the warning like any other.

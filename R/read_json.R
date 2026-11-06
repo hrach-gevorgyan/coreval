@@ -188,6 +188,48 @@ read_dataset_json <- function(path) {
   build_dataset_from_dataset_json(parsed, parsed$rows, path)
 }
 
+#' The first bytes of a file
+#'
+#' `readLines(n = )` is no use for this: Dataset-JSON is usually one line, so
+#' it reads the whole file.
+#'
+#' @param path Path to the file.
+#' @return A raw vector of at most 64 KB, with any embedded nul removed.
+#' @noRd
+file_head <- function(path) {
+  bytes <- readBin(path, "raw", 65536L)
+  bytes[bytes != as.raw(0L)]
+}
+
+#' The dataset name a Dataset-JSON file declares, without reading its rows
+#'
+#' What comes before `"rows"` is parsed as JSON, rather than matching a pattern
+#' for `"name"`, because a column has a `name` too: in a file with `columns`
+#' ahead of `name`, the pattern finds a variable and calls it the dataset.
+#'
+#' Anything this cannot answer gives `NA`, which sends the file to the full read:
+#' rows ahead of the name, a header past 64 KB, or text that does not parse.
+#'
+#' @param path Path to a `.json` file.
+#' @return The name in upper case, or `NA`.
+#' @noRd
+dataset_json_declared_name <- function(path) {
+  if (!dataset_json_available()) {
+    return(NA_character_)
+  }
+  bytes <- file_head(path)
+  at <- regexpr("\"rows\"[[:space:]]*:", rawToChar(bytes), useBytes = TRUE)
+  if (at < 2L) {
+    return(NA_character_)
+  }
+  header <- sub(",[[:space:]]*$", "", rawToChar(bytes[seq_len(at - 1L)]), useBytes = TRUE)
+  name <- tryCatch(
+    jsonlite::fromJSON(paste0(header, "}"), simplifyVector = FALSE)$name,
+    error = function(e) NULL
+  )
+  if (is.character(name) && length(name) == 1L && nzchar(name)) toupper(name) else NA_character_
+}
+
 #' Read one Dataset-NDJSON (`.ndjson`) file
 #'
 #' The metadata object is the first line and every line after it is one row.
@@ -247,20 +289,18 @@ read_dataset_ndjson <- function(path) {
 #' @return `TRUE` for a USDM study document.
 #' @noRd
 is_usdm_document <- function(path) {
-  head_text <- tryCatch(
-    paste(readLines(path, n = 40L, warn = FALSE, encoding = "UTF-8"), collapse = ""),
-    error = function(e) ""
-  )
+  head_text <- tryCatch(rawToChar(file_head(path)), error = function(e) "")
   # `usdmVersion` usually sits below the study object, past the lines read, so
   # the `study` object itself is the usual sign. It is matched as a KEY opening
   # an object: matched as the bare word, one cell holding the text "study" in a
   # Dataset-JSON file turned the whole folder into a USDM study that checked
   # clean.
-  if (grepl("\"datasetJSONVersion\"", head_text, fixed = TRUE)) {
+  # useBytes, because the 64 KB can end halfway through a character.
+  if (grepl("\"datasetJSONVersion\"", head_text, fixed = TRUE, useBytes = TRUE)) {
     return(FALSE)
   }
-  grepl("\"usdmVersion\"", head_text, fixed = TRUE) ||
-    grepl("\"study\"[[:space:]]*:[[:space:]]*[{]", head_text)
+  grepl("\"usdmVersion\"", head_text, fixed = TRUE, useBytes = TRUE) ||
+    grepl("\"study\"[[:space:]]*:[[:space:]]*[{]", head_text, useBytes = TRUE)
 }
 
 #' Read a folder holding a USDM study document
