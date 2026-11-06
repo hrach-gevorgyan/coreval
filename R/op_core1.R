@@ -286,7 +286,9 @@ latest_exdict <- function(ctx) {
   } else {
     as.character(ref)
   }
-  when <- suppressWarnings(as.Date(substr(as.character(ctx$target), 1, 10)))
+  # With a format, text that is not a date is NA. Without one, as.Date() stops
+  # at the first such value, and TS's TSVAL holds all sorts beside SSTDTC.
+  when <- as.Date(substr(as.character(ctx$target), 1, 10), format = "%Y-%m-%d")
   dates <- as.Date(meddra_release_dates)
   current <- vapply(when, function(d) {
     if (is.na(d)) return(NA_character_)

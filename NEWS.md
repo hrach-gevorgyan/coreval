@@ -31,6 +31,10 @@
   missing when the rule tests the absent column and judges no other value,
   read from the rule's own conditions. On CDISC's pilot study 14 of 103 moved.
 
+* **The MedDRA release check no longer fails on ordinary data.** CORE-002041
+  stopped with an error on any TS holding text in `TSVAL`, which is every TS,
+  and was reported as a check that could not run.
+
 * **Only the study's own rule numbers.** A rule serving several standards
   carries each one's number. The report and the file now show only those for
   the declared standard, so an SDTM study no longer lists SEND and TIG

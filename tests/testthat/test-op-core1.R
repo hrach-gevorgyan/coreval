@@ -642,3 +642,21 @@ test_that("a TIG study uses its sub-standard's Library and terminology", {
   r <- check_dataset(dm, standard = "TIG", version = "1.0", substandard = "SEND")
   expect_false(any(grepl("RACE", r$findings$Value[r$findings$rule_id == "CORE-000334"])))
 })
+
+test_that("the MedDRA release check reads a column holding more than dates (CORE-002041)", {
+  # The rule picks out TS's SSTDTC row, but the operator sees all of TSVAL.
+  # as.Date() stops at the first text it cannot read, so "Y" ended the rule
+  # with an error on any study, whatever its SSTDTC.
+  ds <- list(data = data.table::data.table(
+    TSVAL = c("Y", "ADULT (18-65)", "2025-11-02", "2026-03-01")
+  ), meta = NULL)
+  chk <- function(op) {
+    list(name = "TSVAL", operator = op, external_dictionary_type = "meddra", version = "28.1")
+  }
+  # Verisian's own test case: 28.1 was current on 2025-11-02, and not on
+  # 2026-03-01, when 29.0 came out.
+  expect_equal(evaluate_check(chk("is_latest_available_external_dictionary_version"), ds, "TS"),
+               c(FALSE, FALSE, TRUE, FALSE))
+  expect_equal(evaluate_check(chk("is_not_latest_available_external_dictionary_version"), ds, "TS"),
+               c(TRUE, TRUE, FALSE, TRUE))
+})
