@@ -358,3 +358,8 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   is read, so a package holding both formats reads as fast as the `.xpt` files
   alone. A copy damaged past its header used to stop the run, and is now set aside
   and named in the warning like any other.
+
+* **An unreadable study start date no longer counts as an old MedDRA version.**
+  CORE-002041 reported a blank, partial or mistyped SSTDTC as "not the latest
+  version". It now shows as a check that could not run, naming the value, which is
+  what CORE 1.0's engine does.

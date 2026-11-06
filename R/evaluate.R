@@ -463,8 +463,24 @@ evaluate_check <- function(check, dataset, domain, bindings = list(), study = NU
     return(evaluate_condition(check, dataset, domain, bindings, study))
   }
   if (!is.null(check$all)) {
-    parts <- lapply(check$all, evaluate_check, dataset = dataset, domain = domain, bindings = bindings, study = study)
-    return(Reduce(`&`, parts))
+    # An operator that cannot read a value only stops the rule if the other
+    # conditions select that row: the database behind CORE 1.0 tests the cheap
+    # conditions first, so TS's other TSVAL rows are never cast to a date.
+    unreadable <- NULL
+    parts <- lapply(check$all, function(part) {
+      tryCatch(
+        evaluate_check(part, dataset = dataset, domain = domain, bindings = bindings, study = study),
+        coreval_unreadable_rows = function(e) {
+          unreadable <<- e
+          e$result
+        }
+      )
+    })
+    result <- Reduce(`&`, parts)
+    if (!is.null(unreadable) && any(result[unreadable$rows] %in% TRUE)) {
+      stop(unreadable)
+    }
+    return(result)
   }
   if (!is.null(check$any)) {
     # CDISC's engine (business_rules engine.py) lets one branch of an `any`

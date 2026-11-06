@@ -649,15 +649,50 @@ test_that("the MedDRA release check reads a column holding more than dates (CORE
   # as.Date() stops at the first text it cannot read, so "Y" ended the rule
   # with an error on any study, whatever its SSTDTC.
   ds <- list(data = data.table::data.table(
+    TSPARMCD = c("AGEMIN", "POP", "SSTDTC", "SSTDTC"),
     TSVAL = c("Y", "ADULT (18-65)", "2025-11-02", "2026-03-01")
   ), meta = NULL)
   chk <- function(op) {
-    list(name = "TSVAL", operator = op, external_dictionary_type = "meddra", version = "28.1")
+    list(all = list(
+      list(name = "TSPARMCD", operator = "equal_to", value = "SSTDTC", value_is_literal = TRUE),
+      list(name = "TSVAL", operator = op, external_dictionary_type = "meddra", version = "28.1")
+    ))
   }
   # Verisian's own test case: 28.1 was current on 2025-11-02, and not on
   # 2026-03-01, when 29.0 came out.
   expect_equal(evaluate_check(chk("is_latest_available_external_dictionary_version"), ds, "TS"),
                c(FALSE, FALSE, TRUE, FALSE))
   expect_equal(evaluate_check(chk("is_not_latest_available_external_dictionary_version"), ds, "TS"),
-               c(TRUE, TRUE, FALSE, TRUE))
+               c(FALSE, FALSE, FALSE, TRUE))
+})
+
+test_that("a study start that is not a full date stops the MedDRA check, as 1.0's engine does", {
+  # Run through 1.0's engine: each of these ended in an execution error with no
+  # finding. Here they were reported as "not the latest version".
+  ds <- function(value) {
+    list(data = data.table::data.table(TSPARMCD = c("AGEMIN", "SSTDTC"), TSVAL = c("Y", value)),
+         meta = NULL)
+  }
+  chk <- function(op) {
+    list(all = list(
+      list(name = "TSPARMCD", operator = "equal_to", value = "SSTDTC", value_is_literal = TRUE),
+      list(name = "TSVAL", operator = op, external_dictionary_type = "meddra", version = "28.1")
+    ))
+  }
+  for (value in c("2025-11", "2025", "", "UNKNOWN", "2025-13-01", "2025-02-30",
+                  "2025-11-02/2025-12-01", NA)) {
+    for (op in c("is_latest_available_external_dictionary_version",
+                 "is_not_latest_available_external_dictionary_version")) {
+      expect_error(evaluate_check(chk(op), ds(value), "TS"), "TSVAL is not a full date",
+                   info = paste(value, op))
+    }
+  }
+  # A time, or a date older than every release known, is still an answer.
+  expect_equal(evaluate_check(chk("is_latest_available_external_dictionary_version"),
+                              ds("2025-11-02T10:30"), "TS"), c(FALSE, TRUE))
+  expect_equal(evaluate_check(chk("is_not_latest_available_external_dictionary_version"),
+                              ds("2012-01-01"), "TS"), c(FALSE, TRUE))
+  # Nothing selected, nothing to stop for: a study with no SSTDTC row has no finding.
+  none <- list(data = data.table::data.table(TSPARMCD = "AGEMIN", TSVAL = "Y"), meta = NULL)
+  expect_false(evaluate_check(chk("is_not_latest_available_external_dictionary_version"), none, "TS"))
 })

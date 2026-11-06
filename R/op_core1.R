@@ -265,7 +265,9 @@ local({
 # current on the target date (the newest released on or before it) is the
 # version given. 1.0 knows MedDRA's release dates and no other dictionary's,
 # and refuses the rest; a date before the earliest release it knows has no
-# current release, so it is never the latest.
+# current release, so it is never the latest. A value that is not a full date
+# stops the rule rather than counting as out of date: 1.0's cast to a timestamp
+# fails on it, and no one can say which release was current on "2025-11".
 meddra_release_dates <- c(
   "29.0" = "2026-03-01", "28.1" = "2025-09-01", "28.0" = "2025-03-01", "27.1" = "2024-09-01",
   "27.0" = "2024-03-01", "26.1" = "2023-09-01", "26.0" = "2023-03-01", "25.1" = "2022-09-01",
@@ -288,22 +290,40 @@ latest_exdict <- function(ctx) {
   }
   # With a format, text that is not a date is NA. Without one, as.Date() stops
   # at the first such value, and TS's TSVAL holds all sorts beside SSTDTC.
-  when <- as.Date(substr(as.character(ctx$target), 1, 10), format = "%Y-%m-%d")
+  text <- trimws(as.character(ctx$target))
+  full_date <- grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}($|[T ][0-9:.]+$)", text)
+  when <- as.Date(ifelse(full_date, substr(text, 1, 10), NA_character_), format = "%Y-%m-%d")
   dates <- as.Date(meddra_release_dates)
   current <- vapply(when, function(d) {
     if (is.na(d)) return(NA_character_)
     ok <- names(meddra_release_dates)[dates <= d]
     if (length(ok)) ok[which.max(dates[dates <= d])] else NA_character_
   }, character(1))
-  current == rep_len(version, length(current))
+  list(latest = current == rep_len(version, length(current)), unreadable = which(is.na(when)))
+}
+# `result` holds TRUE on the unreadable rows, so that evaluate_check() can see
+# whether the rule's other conditions select them.
+exdict_answer <- function(ctx, result, unreadable) {
+  if (length(unreadable) == 0L) {
+    return(result)
+  }
+  result[unreadable] <- TRUE
+  stop(structure(
+    class = c("coreval_unreadable_rows", "error", "condition"),
+    list(message = paste0(ctx$name, " is not a full date: \"",
+                          trimws(as.character(ctx$target))[[unreadable[[1]]]], "\""),
+         call = NULL, rows = unreadable, result = result)
+  ))
 }
 register_operator("is_latest_available_external_dictionary_version", function(ctx) {
   if (!ctx$exists) return(rep(FALSE, ctx$n))
-  latest_exdict(ctx) %in% TRUE
+  answer <- latest_exdict(ctx)
+  exdict_answer(ctx, answer$latest %in% TRUE, answer$unreadable)
 })
 register_operator("is_not_latest_available_external_dictionary_version", function(ctx) {
   if (!ctx$exists) return(rep(FALSE, ctx$n))
-  !(latest_exdict(ctx) %in% TRUE)
+  answer <- latest_exdict(ctx)
+  exdict_answer(ctx, !(answer$latest %in% TRUE), answer$unreadable)
 })
 
 #' Is each value an invalid date, by CORE 1.0's test?

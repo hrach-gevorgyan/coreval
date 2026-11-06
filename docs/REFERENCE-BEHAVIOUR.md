@@ -225,6 +225,13 @@ the same data as coreval.
 - **CORE 1.0 joins** on `l.key = r.key` (merges/join.py): two blank text keys,
   read as "" from a transport file, pair; a missing number pairs with nothing.
 - **A set is printed as a list**, `['ARMCD']`, even when it holds one value.
+- **CORE 1.0 and an SSTDTC that is not a date (CORE-002041).** The operator casts
+  TSVAL to a timestamp (is_latest_available_exdict_version.py), so a blank, partial,
+  impossible or interval value ends the rule with `execution_error` and no finding.
+  TS's other rows, "Y" among them, do no harm: the TSPARMCD condition selects first.
+  A date older than every release known is a finding, and no SSTDTC row is none. The
+  rule was run through 1.0's own runner on 13 altered copies of its negative case,
+  and coreval agrees on all 13; a value that stops the engine is a skip with a reason.
 
 ## The engine answers by file format
 
@@ -253,3 +260,6 @@ how every rule's worked example is written:
   a variable SDTM defines as numeric, or a count, which a transport file or
   Dataset-JSON holds as a number. coreval answers row by row rather than guess
   the evaluation order.
+- **CORE 1.0 reading dates PostgreSQL's way.** The same cast accepts `20251102`,
+  `Nov 2 2025` and `11/02/2025`. TSVAL for SSTDTC is ISO 8601, so CORE-002041 skips on
+  these rather than compare a date in a form the standard does not allow.
