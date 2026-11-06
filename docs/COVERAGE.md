@@ -201,6 +201,22 @@ CORE-000652 (`SENDIG-GENETOX 1.0`) ships a `.env`, so the standard is never
 declared and the run never starts. CORE-000554's sheet is stale on signature
 anyway. CORE-000652 is the one published rule in the unadjudicated set.
 
+#### Rules CDISC changed without updating the answer sheet
+
+CDISC's rule updates of late October 2026 changed three rules and left their
+sheets behind. CDISC's engine, at the pinned 1.0.0 commit, and coreval report the
+same records for each; `tests/conformance/engine_comparison.json` holds the run.
+
+| rule | what changed | coreval and the engine agree on | the sheet says |
+|---|---|---|---|
+| CORE-000132 | now scoped to SE too | 18 SE records as well as TA and TE | no SE records |
+| CORE-000305 | `contains` became `matches_regex` | nothing in AE, CM 1, FA 1-4, RP 1, SE 1, TE 1, 3, 4, 5 | AE 1, CM 1-2, FA 1-5, RP 1, SE 1, TE 1-5 |
+| CORE-000699 | `is_inconsistent_across_dataset` now flags a whole group | FA 1, 2, 7, 8, 11, 12 and 8 LB records | every FA and LB record |
+
+CDISC.SENDIG.190.1B, an unpublished rule that already failed, reports records 5, 6
+and 7 where it reported 5, for the same whole-group change. It ships no `.env`, so
+the engine cannot settle it.
+
 #### The 8 nobody can currently settle
 
 For these the engine cannot run the fixture and the sheet does not contradict

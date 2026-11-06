@@ -184,11 +184,19 @@ sheet_is_silent <- function(results_csv) {
   nrow(results[nzchar(trimws(results$Dataset))]) == 0
 }
 
+# A case's answer sheet. CDISC's CORE-000616 sheets are named results(1).csv,
+# which read as no sheet at all and skipped a rule that has one.
+results_sheet <- function(case_dir) {
+  path <- file.path(case_dir, "results", "results.csv")
+  other <- file.path(case_dir, "results", "results(1).csv")
+  if (!file.exists(path) && file.exists(other)) other else path
+}
+
 # Runs one rule against one test case (a positive/NN or negative/NN dir).
 # Returns list(status, reason).
 run_case <- function(rule, case_dir) {
   out <- run_case_graded(rule, case_dir)
-  results_csv <- file.path(case_dir, "results", "results.csv")
+  results_csv <- results_sheet(case_dir)
   # A sheet expects findings when it names one. Placeholder rows (`LB,,,`, a
   # dataset looked at that had nothing, which is also how CDISC's engine
   # records a dataset it skipped) do not; expected_records() already drops
@@ -235,7 +243,7 @@ split_expected <- function(results_csv, study, domain) {
 run_case_graded <- function(rule, case_dir) {
   case_label <- paste(basename(dirname(case_dir)), basename(case_dir), sep = "/")
   data_dir <- file.path(case_dir, "data")
-  results_csv <- file.path(case_dir, "results", "results.csv")
+  results_csv <- results_sheet(case_dir)
   if (!dir.exists(data_dir) || !file.exists(results_csv)) {
     return(list(status = "SKIPPED", reason = "missing data/ or results.csv"))
   }
@@ -448,7 +456,7 @@ implemented_operations <- coreval:::implemented_operation_types
 # is a different kind of answer.
 jsonata_case <- function(rule, case_dir) {
   data_dir <- file.path(case_dir, "data")
-  results_csv <- file.path(case_dir, "results", "results.csv")
+  results_csv <- results_sheet(case_dir)
   if (!dir.exists(data_dir) || !file.exists(results_csv)) {
     return(list(status = "SKIPPED", reason = "missing data/ or results.csv"))
   }

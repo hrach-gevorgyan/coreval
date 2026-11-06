@@ -109,7 +109,10 @@ normalize_flags <- function(x) {
     }
     key <- if (!is.null(nm)) nm[i] else NA
     if (!is.na(key) && key %in% FLAG_KEYS) {
-      x[[i]] <- isTRUE(as.logical(x[[i]]))
+      # `type_insensitive: numeric` is a third setting, not a yes or no. Read
+      # as a logical it became FALSE, and CORE-000542 reported 200.00 against
+      # 200 as different.
+      x[[i]] <- if (identical(x[[i]], "numeric")) "numeric" else isTRUE(as.logical(x[[i]]))
     } else {
       normalised <- normalize_flags(x[[i]])
       if (!is.null(normalised)) {

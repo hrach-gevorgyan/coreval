@@ -323,6 +323,10 @@ apply_child_match <- function(dataset, study, keys) {
   if (core1 && all(c("IDVAR", "IDVARVAL") %in% names(child))) {
     standard_keys <- c("STUDYID", "USUBJID")
   }
+  # Unless the rule lists IDVAR as a key, CDISC's child keeps its own columns
+  # (_child_merge_datasets): CO's IDVAR replacing RELREC's hid CORE-000916's
+  # second finding.
+  idvar_keyed <- core1 || any(c("IDVAR", "IDVARVAL") %in% keys)
   rdomain <- child[["RDOMAIN"]]
   if (is.null(rdomain)) {
     return(dataset)
@@ -423,14 +427,16 @@ apply_child_match <- function(dataset, study, keys) {
     # the empty parent row there blanked the child's USUBJID on exactly the
     # rows reported as orphans, so the finding named no subject.
     p_part <- p_data[pick_idx]
-    if (core1) {
+    if (core1 || !idvar_keyed) {
       # 1.0's join keeps every column of the child as it is and gives the
       # parent's same-named columns a prefix, CO.RDOMAIN (join.py,
-      # _join_schemas). CDISC's engine lets the parent win, below.
+      # _join_schemas). CDISC's plain join does the same with a suffix,
+      # RDOMAIN.CO. Joined on IDVAR, CDISC's engine lets the parent win, below.
       shared <- setdiff(intersect(names(sub), names(p_data)), k)
       p_part <- p_part[, setdiff(names(p_part), k), with = FALSE]
       if (length(shared) > 0) {
-        data.table::setnames(p_part, shared, paste0(rd[idx[1]], ".", shared))
+        data.table::setnames(p_part, shared, if (core1) paste0(rd[idx[1]], ".", shared) else
+          paste0(shared, ".", rd[idx[1]]))
       }
       pieces[[gi]] <- cbind(sub, p_part)
       next

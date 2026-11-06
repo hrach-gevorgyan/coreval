@@ -337,3 +337,19 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   passing when the only cases it could grade were the ones expecting nothing,
   and split fixtures are graded. See docs/COVERAGE.md for the current counts
   and every rule that moved.
+
+* **CDISC's engine 1.0.0.** SEND, TIG and USDM follow CDISC's rules of 30 October
+  2026 and its engine of 3 November, which took on much of what CORE 1.0 does.
+  - `is_inconsistent_across_dataset` flags a whole group, not its minority, and
+    honours `where_populated` and `where_populated_columns`.
+  - `is_not_unique_relationship` finds nothing against a missing column, and a blank
+    within a list of columns is a value of its own.
+  - `type_insensitive: numeric` compares as numbers. It was read as "no" when the
+    rules were bundled, for both rule sets.
+  - `referenced_domain_variable_names` joins the variables of a split domain.
+  - `domain_is_custom` asks about the associated domain of an AP dataset, and about
+    SUPPQUAL for a SUPP dataset.
+  - A child joined on plain keys keeps its own columns, so CORE-000916 reports a bad
+    reference from RELREC to CO.
+  - The sort check's `strict_incremental_ordering` treats any blank as null.
+  - Terminology adds the packages of 25 September 2026.

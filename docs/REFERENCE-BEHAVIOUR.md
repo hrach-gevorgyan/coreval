@@ -50,10 +50,11 @@ an inconvenient result was set aside.
 
 ## Operators that surprise people
 
-7. **`is_inconsistent_across_dataset` flags the minority.** Within an
-   inconsistent group it reports only the rows holding the less common value,
-   and every row when the counts tie (`_check_inconsistency`). Answer sheets
-   that flag the whole group predate this and are stale.
+7. **`is_inconsistent_across_dataset` flags the whole group.** Since CDISC's
+   engine 1.0.0, as in Verisian's, every row of a group holding more than one
+   value is flagged, and `where_populated` and `where_populated_columns` keep rows
+   out of the comparison first. Before that it flagged only the minority. With no
+   grouping column it now answers FALSE, where it used to fail.
 
 8. **Date comparison truncates to the coarser precision.**
    `get_common_precision()` returns `min(p1, p2)`, so `2018-11-06T12:00`
@@ -71,7 +72,13 @@ an inconvenient result was set aside.
 11. **`is_not_unique_relationship` flags both directions.** A non-null value in
     either column that maps to more than one distinct value in the other, or to
     one value plus a null, is a violation; rows matching either side are
-    reported.
+    reported. Since CDISC's engine 1.0.0 a missing comparator answers FALSE where
+    it used to fail, and a list of comparators counts as blank only when all of
+    them are blank.
+
+11a. **`type_insensitive` has three settings.** `false` compares as stored, `true`
+    casts both sides to text, and `numeric` compares as numbers where both sides are
+    numbers and as stored otherwise. Reading it as a yes or no loses the third.
 
 12. **A negation is not always a plain negation.** The reference negates
     `contains_all` *before* index alignment, so the dataset-level

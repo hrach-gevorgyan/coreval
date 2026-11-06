@@ -117,14 +117,14 @@ test_that("1.0's one-to-one check counts a blank as a value (CORE-000141)", {
   expect_equal(in_core1(leaf(d, check)), c(TRUE, TRUE, FALSE))
 })
 
-test_that("1.0's inconsistency check marks the whole group and honours where_populated_columns", {
+test_that("the inconsistency check marks the whole group and honours where_populated_columns", {
   d <- list(VISITNUM = c(1, 1, 1, 2, 2), ELTM = c("PT1H", "PT1H", "PT2H", "PT1H", "PT2H"),
             TPT = c("A", "A", "A", "A", ""))
   check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM",
                 where_populated_columns = "TPT")
   expect_equal(in_core1(leaf(d, check)), c(TRUE, TRUE, TRUE, FALSE, FALSE))
-  # CDISC's engine marks only the minority, and has no where_populated_columns.
-  expect_equal(leaf(d, check), c(FALSE, FALSE, TRUE, TRUE, TRUE))
+  # CDISC's engine has done the same since its 1.0.0.
+  expect_equal(leaf(d, check), c(TRUE, TRUE, TRUE, FALSE, FALSE))
 })
 
 test_that("1.0 compares dates cut to the shorter length, and never against a blank", {
@@ -550,10 +550,11 @@ test_that("CORE 1.0 refuses a SUPP merge with a blank IDVAR outside SUPPDM (CORE
   expect_s3_class(apply_supp_match(parent, supp)$data, "data.table")
 })
 
-test_that("CDISC's is_inconsistent_across_dataset with none of its columns is refused (CORE-000612)", {
+test_that("is_inconsistent_across_dataset with none of its columns finds nothing (CORE-000612)", {
   ds <- one_dataset(list(PCORRES = c("1", "2")), "PC")
   chk <- list(name = "PCORRES", operator = "is_inconsistent_across_dataset", value = "PCTESTCD")
-  expect_error(evaluate_check(chk, ds$datasets$PC, "PC"), "none of which")
+  # Both engines answer FALSE; CDISC's used to fail here, until its 1.0.0.
+  expect_equal(evaluate_check(chk, ds$datasets$PC, "PC"), c(FALSE, FALSE))
   expect_equal(in_core1(evaluate_check(chk, ds$datasets$PC, "PC")), c(FALSE, FALSE))
 })
 

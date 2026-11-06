@@ -95,6 +95,8 @@ compare_op <- function(fn, set_fn = NULL) {
     # casts both sides to numbers, but `true` casts both to TEXT. So for a 1.0
     # rule an IDVARVAL of "01" or "   2" differs from the parent's AESEQ of 1
     # or 2 (CORE-000206), where comparing by value called them equal.
+    # CDISC's engine has taken `numeric` too, since its 1.0.0
+    # (_check_equality): numbers where both sides are, as-is otherwise.
     core1 <- engine_is_core1()
     type_insensitive <- ctx$condition$type_insensitive
     mixed <- core1 && xor(is.numeric(target), is.numeric(value))
@@ -102,7 +104,7 @@ compare_op <- function(fn, set_fn = NULL) {
       as_text <- function(x) if (is.numeric(x)) target_text(x) else as.character(x)
       target <- as_text(target)
       value <- as_text(value)
-    } else if (isTRUE(type_insensitive) || mixed || (core1 && identical(type_insensitive, "numeric"))) {
+    } else if (isTRUE(type_insensitive) || mixed || identical(type_insensitive, "numeric")) {
       target <- canonicalize_numeric_string(target)
       value <- canonicalize_numeric_string(value)
     }

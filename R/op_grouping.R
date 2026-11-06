@@ -267,13 +267,9 @@ register_operator("is_not_unique_relationship", function(ctx) {
                    character(1), USE.NAMES = FALSE)
   present <- wanted[wanted %in% names(ctx$dataset$data)]
   if (length(present) == 0) {
-    # CORE 1.0 answers FALSE here (is_not_unique_relationship_operator.py).
-    if (engine_is_core1()) {
-      return(rep(FALSE, ctx$n))
-    }
-    stop("is_not_unique_relationship compares with ", paste(wanted, collapse = ", "),
-         ", which ", if (length(wanted) > 1) "are not columns" else "is not a column",
-         " of this dataset", call. = FALSE)
+    # Both engines answer FALSE here: is_not_unique_relationship_operator.py,
+    # and CDISC's own since its 1.0.0, which used to fail on the missing column.
+    return(rep(FALSE, ctx$n))
   }
   if (length(wanted) > 1) {
     as_key <- function(x) {
@@ -281,7 +277,13 @@ register_operator("is_not_unique_relationship", function(ctx) {
       x[is.na(x)] <- ""
       x
     }
-    c_col <- do.call(paste, c(lapply(present, function(v) as_key(ctx$dataset$data[[v]])), sep = "|"))
+    keys <- lapply(present, function(v) as_key(ctx$dataset$data[[v]]))
+    c_col <- do.call(paste, c(keys, sep = "|"))
+    # CDISC's engine counts a combination as blank only when every column of
+    # it is blank; a blank within one is a value of its own.
+    if (!engine_is_core1()) {
+      c_col[Reduce(`&`, lapply(keys, function(k) !nzchar(k)))] <- ""
+    }
   }
 
   # CORE 1.0 compares `COALESCE(x::text, '')` on both sides: a blank is one
@@ -393,57 +395,7 @@ register_operator("not_present_on_multiple_rows_within", function(ctx) {
   !present_on_multiple_rows_within_check(ctx)
 })
 
-# Flags a row whose target value is inconsistent with other rows sharing the
-# same grouping-key tuple (e.g. every record for a given VISITNUM/DOMAIN/
-# --TPTREF/--TPTNUM combination must report the same --ELTM). Unlike
-# is_not_unique_relationship (a bidirectional 1:1 pairing between exactly two
-# columns), this is one-directional and supports an arbitrary-arity grouping
-# key: it only checks the target's consistency *within* each group, not
-# whether the key tuple is itself unique per target value. Grouping-column
-# names come from the condition's raw `value` (like is_not_unique_set) and
-# need `resolve_var_name()` since they can be "--"-prefixed templates.
-#
-# An earlier version flagged EVERY row in an inconsistent group. The
-# reference engine's own `_check_inconsistency()` is more targeted: within a
-# group with >1 distinct target value, it finds the MAJORITY value and flags
-# only the MINORITY rows (the ones that differ from it) - unless there's a
-# TIE for most-common value, in which case every row in the group is
-# flagged. Confirmed against CORE-000142's real fixtures: a group of 4 rows
-# with target values PT1H/PT1H/PT2H/PT1H is NOT a violation for the 3
-# PT1H rows (the majority) - only the single PT2H row would be, and even
-# that one is excluded from THIS rule's overall Check by a sibling
-# `non_empty` condition on a different variable. Blank target values are
-# NOT excluded from this comparison either - a blank is just another
-# distinct value that can be the majority or the minority, matching the
-# reference's `fillna("_NaN_")` (blanks become their own bucket, not
-# dropped).
-#' Flag minority-value rows in each group (or all rows, on a tie for majority)
-#' @param key A vector of group keys, same length as `target`.
-#' @param target A vector of values to check for per-group consistency.
-#' @return A logical vector, same length as `target`.
-#' @noRd
-flag_inconsistent_minority <- function(key, target) {
-  target_key <- ifelse(is_blank(target), "\x1fBLANK_TARGET\x1f", as.character(target))
-  result <- rep(FALSE, length(target))
-  for (k in unique(key)) {
-    idx <- which(key == k)
-    vals <- target_key[idx]
-    counts <- table(vals)
-    if (length(counts) <= 1) {
-      next
-    }
-    max_count <- max(counts)
-    most_common <- names(counts)[counts == max_count]
-    if (length(most_common) > 1) {
-      result[idx] <- TRUE
-    } else {
-      result[idx[vals != most_common]] <- TRUE
-    }
-  }
-  result
-}
-
-# Operator: is_inconsistent_across_dataset - flags the minority-value rows within each group (all, if tied)
+# Operator: is_inconsistent_across_dataset - flags every row of a group holding more than one value
 register_operator("is_inconsistent_across_dataset", function(ctx) {
   if (!ctx$exists) {
     return(rep(FALSE, ctx$n))
@@ -451,40 +403,27 @@ register_operator("is_inconsistent_across_dataset", function(ctx) {
   cols <- resolve_var_name(ctx$condition$value, ctx$wildcard)
   cols <- cols[cols %in% names(ctx$dataset$data)]
   if (length(cols) == 0) {
-    # CORE 1.0 answers FALSE (is_inconsistent_across_dataset_operator.py).
-    # CDISC's engine groups by no columns and fails ("No group keys
-    # passed!"), so the rule is skipped there; answered FALSE, CORE-000612 on
-    # a PC with no PCTESTCD reported a clean pass.
-    if (engine_is_core1()) {
-      return(rep(FALSE, ctx$n))
-    }
-    stop("groups by ", paste(resolve_var_name(ctx$condition$value, ctx$wildcard), collapse = ", "),
-         ", none of which this dataset has", call. = FALSE)
+    # Both engines answer FALSE, CDISC's since its 1.0.0. It used to fail on
+    # no grouping columns, and the rule was skipped.
+    return(rep(FALSE, ctx$n))
   }
-  if (engine_is_core1()) {
-    return(core1_inconsistent_across_dataset(ctx, cols))
-  }
-  dt <- ctx$dataset$data[, cols, with = FALSE]
-  normalized <- lapply(dt, function(col) ifelse(is_blank(col), "\x1fBLANK\x1f", as.character(col)))
-  key <- do.call(paste, c(normalized, sep = "\x1f"))
-
-  flag_inconsistent_minority(key, ctx$target)
+  inconsistent_across_dataset(ctx, cols)
 })
 
-#' is_inconsistent_across_dataset as CORE 1.0 answers it
+#' is_inconsistent_across_dataset as both engines answer it
 #'
-#' From is_inconsistent_across_dataset_operator.py. Only rows where every
-#' `where_populated_columns` column (and, with `where_populated`, the target
-#' and grouping columns) is populated take part. Within each group, more than
-#' one distinct target value marks EVERY row of the group, not just the
-#' minority, as CDISC's engine does. A missing number and an empty string are
-#' different values, as NULL and '' are there.
+#' From is_inconsistent_across_dataset_operator.py, and CDISC's engine since
+#' its 1.0.0, which until then flagged the minority of a group. Only rows where
+#' every `where_populated_columns` column (and, with `where_populated`, the
+#' target and grouping columns) is populated take part. Within each group, more
+#' than one distinct target value marks EVERY row of the group. A missing number
+#' and an empty string are different values, as NULL and '' are there.
 #'
 #' @param ctx Operator context.
 #' @param cols The grouping columns present in the dataset.
 #' @return A logical vector.
 #' @noRd
-core1_inconsistent_across_dataset <- function(ctx, cols) {
+inconsistent_across_dataset <- function(ctx, cols) {
   dt <- ctx$dataset$data
   populated <- character(0)
   if (isTRUE(ctx$condition$where_populated)) {

@@ -21,7 +21,8 @@ repository.
 
 * **CORE 1.0.** An SDTM study is checked with the 1.0 rules, 130 of them new, and
   each runs the way 1.0's engine runs it. SEND, TIG and USDM stay on CDISC's rules,
-  updated to the October 2026 release. `rules_version` names both repositories.
+  updated to the October 2026 release and matched to CDISC's engine 1.0.0.
+  `rules_version` names both repositories.
 * **A new Excel file.** Four sheets written for a reviewer: `Problems`, one row per
   problem with the most serious first; `Records`, the affected records by subject and
   sequence number; `Not checked`, what could not run and what to do about it; and
@@ -51,6 +52,7 @@ repository.
   terminology.
 * A rule that cannot be evaluated now says why, rather than answering "no problem".
 * CORE-002041, the MedDRA release check, failed on any real TS and now runs.
+* Terminology is current to CDISC's September 2026 packages.
 
 ## Speed
 

@@ -127,9 +127,10 @@ register_operator("target_is_not_sorted_by", function(ctx) {
       col <- dt[[resolve_var_name(sp$name, ctx$wildcard)]]
       # A blank text value is "", not missing, in CORE 1.0 as read from a
       # transport file (xpt_data_reader.py only trims), so it sorts first
-      # ascending; null_position applies to a missing number only.
+      # ascending; null_position applies to a missing number only. CDISC's
+      # engine takes any blank as null (_strict_incremental_check).
       x <- as.character(col)
-      if (!is.character(col)) x[is_blank(col)] <- NA_character_
+      if (!is.character(col) || !engine_is_core1()) x[is_blank(col)] <- NA_character_
       x
     })
     decreasing <- vapply(ctx$condition$value, function(sp) identical(tolower(sp$sort_order %||% "asc"), "desc"),

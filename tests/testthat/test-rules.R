@@ -427,6 +427,18 @@ test_that("a standard given where check_dataset() takes the domain is named as s
   expect_s3_class(check_dataset(dm, "DM", standard = "SDTMIG"), "coreval_result")
 })
 
+test_that("the bundled data keeps what CDISC's latest release says", {
+  # `type_insensitive: numeric` is a setting of its own. Read as a yes or no it
+  # became FALSE, so 200.00 was reported as different from 200.
+  flags <- function(x) {
+    if (!is.list(x)) return(NULL)
+    c(x$type_insensitive, unlist(lapply(x, flags), use.names = FALSE))
+  }
+  expect_true("numeric" %in% flags(.coreval_env$data$cdisc_originals[["CORE-000542"]]$check))
+  # Terminology CDISC published in September 2026 is known, not "not a release".
+  expect_true(all(c("sdtmct-2026-09-25", "sendct-2026-09-25") %in% list_ct_packages()))
+})
+
 test_that("a version older than the rules is checked against the oldest, with a note", {
   dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2"), AGE = c(30, 40), AGEU = c("YEARS", ""))
   old <- check_dataset(dm, standard = "SDTMIG", version = "3.1.2")

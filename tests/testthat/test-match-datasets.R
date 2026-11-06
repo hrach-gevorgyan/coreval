@@ -756,3 +756,24 @@ test_that("a SUPP mixing record-level and subject-level rows joins both", {
   expect_equal(joined$AEXSUBJ, c("subj", "subj"))
   expect_equal(joined$AESEQ, c(1, 2))
 })
+
+test_that("a CDISC child join on plain keys keeps the child's own columns (CORE-000916)", {
+  # CO has an IDVAR of its own. Replacing RELREC's with it turned COSEK into
+  # LBSEQ, and the bad reference was not reported.
+  rule <- fixture_rule("CORE-000916")
+  study <- list(
+    datasets = list(
+      CO = list(data = data.table::data.table(
+        STUDYID = "S", DOMAIN = "CO", RDOMAIN = "LB", USUBJID = "2", COSEQ = 1,
+        IDVAR = "LBSEQ", IDVARVAL = "1"
+      ), meta = NULL),
+      RELREC = list(data = data.table::data.table(
+        STUDYID = "S", RDOMAIN = "CO", USUBJID = "2", IDVAR = "COSEK", IDVARVAL = "1"
+      ), meta = NULL)
+    ),
+    standard = list(product = "SENDIG", version = NA_character_)
+  )
+  expect_true(evaluate_rule(rule, study, "RELREC"))
+  study$datasets$RELREC$data$IDVAR <- "COSEQ"
+  expect_false(evaluate_rule(rule, study, "RELREC"))
+})

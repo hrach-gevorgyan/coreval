@@ -55,60 +55,40 @@ test_that("is_inconsistent_across_dataset's positive (compliant) CDISC fixture s
   )
 })
 
-test_that("is_inconsistent_across_dataset's minority-flagging matches CDISC's reference results.csv (CORE-000142)", {
-  # --ELTM is_inconsistent_across_dataset [DOMAIN, VISITNUM, --TPTREF,
-  # --TPTNUM], combined with sibling non_empty conditions on --TPT/--TPTNUM/
-  # --ELTM. positive/01's FT data has a 3-PT1H-vs-1-PT2H group - the
-  # single PT2H row is the minority, but it's excluded from the overall
-  # Check anyway by a sibling non_empty(--TPT) condition, so NEITHER the
-  # 3 majority rows nor the 1 (already-excluded) minority row end up
-  # violating - the whole case is compliant, unlike what a
-  # flag-everyone-in-an-inconsistent-group algorithm would wrongly report.
+test_that("is_inconsistent_across_dataset matches CDISC's reference results.csv (CORE-000142)", {
+  # A group with two values is marked whole, and Sensitivity: Group reports its
+  # first row. where_populated_columns keeps out a row with no --TPT.
   rule <- fixture_rule("CORE-000142")
   for (case in c("negative/01", "positive/01", "positive/03")) {
     dir <- test_path("fixtures", "core_rules", "CORE-000142", case)
     study <- read_study(file.path(dir, "data"))
     actual <- evaluate_rule(rule, study, domain = "FT")
-    expect_equal(
-      actual,
-      expected_violations_for(file.path(dir, "results", "results.csv"), "FT", nrow(study$datasets$FT$data)),
-      info = case
-    )
+    reported <- group_first_violations(study$datasets$FT, actual, rule$grouping_variables, "FT")
+    expected <- which(expected_violations_for(file.path(dir, "results", "results.csv"), "FT",
+                                              nrow(study$datasets$FT$data)))
+    expect_equal(reported, expected, info = case)
   }
 })
 
-test_that("is_inconsistent_across_dataset flags only the minority value's rows within a group", {
-  # 3 "PT1H" vs 1 "PT2H" in the VISITNUM=1 group - PT1H is the majority, so
-  # only the single PT2H row (the minority) is flagged, not every row.
+test_that("is_inconsistent_across_dataset flags every row of a group with two values", {
+  # CDISC's engine flagged the minority until its 1.0.0.
   data <- data.table::data.table(
     VISITNUM = c(1, 1, 1, 2),
     ELTM = c("PT1H", "PT2H", "PT1H", "PT1H")
   )
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
-  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, TRUE, FALSE, FALSE))
-})
-
-test_that("is_inconsistent_across_dataset flags every row in a group on a tie for the majority value", {
-  data <- data.table::data.table(
-    VISITNUM = c(1, 1, 1, 1),
-    ELTM = c("PT1H", "PT1H", "PT2H", "PT2H")
-  )
-  dataset <- list(data = data, meta = NULL)
-  check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
-  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE, TRUE))
+  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE, FALSE))
 })
 
 test_that("is_inconsistent_across_dataset treats a blank target as its own value, not an exclusion", {
-  # A blank ELTM is a distinct value like any other - here it's the
-  # minority (1 blank vs 2 "PT1H"), so only the blank row is flagged.
   data <- data.table::data.table(
     VISITNUM = c(1, 1, 1),
     ELTM = c("PT1H", "PT1H", "")
   )
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "ELTM", operator = "is_inconsistent_across_dataset", value = "VISITNUM")
-  expect_equal(evaluate_check(check, dataset, "FT"), c(FALSE, FALSE, TRUE))
+  expect_equal(evaluate_check(check, dataset, "FT"), c(TRUE, TRUE, TRUE))
 })
 
 test_that("has_same_values matches CDISC's reference results.csv (CORE-000365)", {
@@ -142,13 +122,14 @@ test_that("has_same_values is dataset-level: FALSE for every row once >1 distinc
   expect_equal(evaluate_check(check, dataset3, "MH"), c(FALSE, FALSE, FALSE))
 })
 
-test_that("is_not_unique_relationship refuses a comparator column the dataset lacks", {
+test_that("is_not_unique_relationship finds nothing against a column the dataset lacks", {
   # EGTPTNUM is absent. It was compared as the text "EGTPTNUM", and whether a
-  # row was reported depended on the order of the rows.
+  # row was reported depended on the order of the rows. Both engines answer
+  # FALSE; CDISC's used to fail here, until its 1.0.0.
   data <- data.table::data.table(EGTPT = c("PRE-DOSE", "PRE-DOSE", "1H POST"))
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "EGTPT", operator = "is_not_unique_relationship", value = "EGTPTNUM")
-  expect_error(evaluate_check(check, dataset, "EG"), "not a column of this dataset")
+  expect_equal(evaluate_check(check, dataset, "EG"), c(FALSE, FALSE, FALSE))
 })
 
 test_that("present_on_multiple_rows_within matches CDISC's reference results.csv (CORE-000363)", {

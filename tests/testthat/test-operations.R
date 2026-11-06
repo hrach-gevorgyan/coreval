@@ -939,11 +939,16 @@ test_that("is_not_unique_relationship takes a list of columns as one key (CORE-0
   expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(TRUE, TRUE, TRUE, TRUE))
   study$datasets$XX$data$Y <- c("p", "p", "r", "s")
   expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(FALSE, FALSE, FALSE, FALSE))
-  # Comparison columns the dataset lacks: 1.0 answers FALSE, CDISC's engine
-  # fails and coreval refuses.
+  # Comparison columns the dataset lacks: both engines answer FALSE.
   check$value <- c("NOPE", "ALSO_NOPE")
   expect_equal(evaluate_rule(core1_rule(check), study, "XX"), rep(FALSE, 4))
-  expect_error(evaluate_rule(list(check = check), study, "XX"), "are not columns")
+  expect_equal(evaluate_rule(list(check = check), study, "XX"), rep(FALSE, 4))
+
+  # A blank within a list of columns: CDISC's engine counts the combination as
+  # blank only when all of it is, so A with (1, blank) and (1, q) has two values.
+  study <- one_dataset(list(ETCD = c("A", "A"), X = c("1", "1"), Y = c("", "q")))
+  check$value <- c("X", "Y")
+  expect_equal(evaluate_rule(list(check = check), study, "XX"), c(TRUE, TRUE))
 })
 
 test_that("a Value Check with Dataset Metadata rule can see the dataset's name (CORE-000598)", {

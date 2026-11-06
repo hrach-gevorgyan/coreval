@@ -1555,15 +1555,28 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # of a domain answers for it, and a domain the study lacks gives an empty
     # set, as do rows when the column itself is absent. Domains are derived
     # from dataset names, as 1.0 does.
+    #
+    # CDISC's engine (referenced_domain_variable_names.py) takes a dataset's
+    # domain from its DOMAIN column and joins the variables of every dataset
+    # of that domain, so a split domain answers with all of them.
     referenced_domain_variable_names = {
       column <- current_dataset$data[[op$name]]
       n <- nrow(current_dataset$data)
-      domains <- core1_derive_domain(names(study$datasets))
+      core1 <- engine_is_core1()
+      domains <- if (core1) {
+        core1_derive_domain(names(study$datasets))
+      } else {
+        vapply(study$datasets, function(d) {
+          x <- d$data[["DOMAIN"]]
+          if (is.null(x) || length(x) == 0) "" else toupper(trimws(as.character(x[[1]])))
+        }, character(1), USE.NAMES = FALSE)
+      }
+      if (!core1) column <- toupper(trimws(as.character(column)))
       by_domain <- list()
       for (i in seq_along(domains)) {
-        if (nzchar(domains[i]) && is.null(by_domain[[domains[i]]])) {
+        if (nzchar(domains[i]) && (!core1 || is.null(by_domain[[domains[i]]]))) {
           vars <- toupper(names(study$datasets[[i]]$data))
-          by_domain[[domains[i]]] <- unique(vars[!startsWith(vars, ".")])
+          by_domain[[domains[i]]] <- unique(c(by_domain[[domains[i]]], vars[!startsWith(vars, ".")]))
         }
       }
       per_row_binding(lapply(seq_len(n), function(i) {
@@ -1844,9 +1857,21 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # prefix_is_not_contained_by comparing an uppercase dataset_name
     # against a lowercase list never matches).
     dataset_names = scalar_binding(sort(toupper(names(study$datasets)))),
-    domain_is_custom = scalar_binding(
-      !(domain_code_of(study, current_domain) %in% .coreval_env$domain_classes$domain)
-    ),
+    domain_is_custom = scalar_binding({
+      code <- domain_code_of(study, current_domain)
+      # CDISC's engine, since its 1.0.0, asks about the domain an AP dataset is
+      # associated with, and about SUPPQUAL for a SUPP dataset.
+      if (!engine_is_core1()) {
+        code <- if (grepl("^(SUPP|SQ)", toupper(current_domain))) {
+          "SUPPQUAL"
+        } else if (grepl("^AP.{2,}", toupper(current_domain))) {
+          substring(toupper(current_domain), 3)
+        } else {
+          code
+        }
+      }
+      !(code %in% .coreval_env$domain_classes$domain)
+    }),
     domain_label = scalar_binding(standard_domain_label(study, current_domain, ds)),
     required_variables = {
       vars <- sdtmig_variables_for(study, domain, "Req")

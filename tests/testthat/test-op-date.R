@@ -68,17 +68,21 @@ test_that("invalid_duration matches CDISC's reference results.csv", {
   }
 })
 
-test_that("contains matches CDISC's reference results.csv", {
+test_that("a negative duration is found as CDISC's engine finds it (CORE-000305)", {
+  # The rule moved from `contains` to `matches_regex`, which reads from the start
+  # of the value, and its sheet did not move with it. These records are what
+  # CDISC's engine at the pinned commit reports for negative/01.
   rule <- fixture_rule("CORE-000305")
-  for (case in c("negative", "positive")) {
-    dir <- test_path("fixtures", "core_rules", "CORE-000305", case, "01")
-    study <- read_study(file.path(dir, "data"))
-    actual <- evaluate_rule(rule, study$datasets$AE, domain = "AE")
-    expect_equal(
-      actual,
-      expected_violations_for(file.path(dir, "results", "results.csv"), "AE", nrow(study$datasets$AE$data))
-    )
-  }
+  dir <- test_path("fixtures", "core_rules", "CORE-000305", "negative", "01")
+  study <- read_study(file.path(dir, "data"))
+  found <- function(domain) which(evaluate_rule(rule, study$datasets[[domain]], domain = domain))
+  expect_equal(unname(found("AE")), integer(0))
+  expect_equal(unname(found("CM")), 1L)
+  expect_equal(unname(found("FA")), 1:4)
+  expect_equal(unname(found("TE")), c(1L, 3L, 4L, 5L))
+  dir <- test_path("fixtures", "core_rules", "CORE-000305", "positive", "01")
+  study <- read_study(file.path(dir, "data"))
+  expect_false(any(evaluate_rule(rule, study$datasets$AE, domain = "AE")))
 })
 
 test_that("detect_precision_one handles the '2024---15' placeholder-dash convention", {
