@@ -309,6 +309,33 @@ in. What the profile showed there:
   per rule had been tried before and turned down, because the copies raised
   the peak by 1.5 GB.
 
+### Against coreval 0.3.0 on the pilot study
+
+Measured 2026-11-06, on `standard = "SDTMIG"`, in three alternating runs on one
+machine. Both versions were loaded from source, so only the difference between them
+means anything.
+
+| | 0.3.0 | now, `.xpt` only | now, the folder as CDISC ships it |
+|---|---|---|---|
+| reading | 2 s | 2 s | 7 s |
+| checking | 19 s | 27 s | 27 s |
+| **total** | **21 s** | **29 s** | **34 s** |
+| checks run | 2,499 | 3,200 | 3,200 |
+| finding rows | 12,158 | 46,984 | 46,984 |
+| problems | 52 | 142 | 142 |
+| peak memory while checking | 378 MB | 653 MB | 653 MB |
+
+Reading is slower only for that folder. It holds every dataset twice, as `.xpt` and
+as Dataset-JSON, and 0.3.0 could not read JSON. coreval now parses all 22 JSON files
+to learn the name each declares, then sets them aside. The declared name is
+why it cannot skip them by file name: `ae.json` might declare a dataset with no
+`.xpt`, and leaving it out would drop that dataset without a word.
+
+Checking is 8 s slower. Rules added since 0.3.0 account for 5 s of it, timed
+rule by rule. The other 3 s were not split further; four times as many finding rows
+are built in it. Time per check barely moved, 7.6 ms against 8.4 ms. The extra time buys more checks and more problems
+found, not slower ones.
+
 ### With CDISC's rules, before CORE 1.0
 
 All 4,001 checks run at every scale.
