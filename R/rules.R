@@ -513,15 +513,33 @@ require_standard <- function(standard, declared = NA_character_) {
   if (!is.null(standard) || (length(declared) == 1 && !is.na(declared) && nzchar(declared))) {
     return(invisible(NULL))
   }
-  pairs <- unlist(lapply(.coreval_env$data$rules, function(r) r$standard_versions))
-  products <- sort(unique(sub("[[:space:]].*$", "", pairs)))
   stop(
     "say which standard the data follows, e.g. standard = \"SDTMIG\".\n",
-    "Available: ", paste(products, collapse = ", "), ".\n",
+    "Available: ", paste(standard_products(), collapse = ", "), ".\n",
     "Rules are written per standard, and running all of them reports SEND and ",
     "TIG problems on an SDTM study.",
     call. = FALSE
   )
+}
+
+#' The standards the bundled rules are written for
+#' @return A sorted character vector, such as `"SDTMIG"`.
+#' @noRd
+standard_products <- function() {
+  pairs <- unlist(lapply(.coreval_env$data$rules, function(r) r$standard_versions))
+  sort(unique(sub("[[:space:]].*$", "", pairs)))
+}
+
+# check_study(x, "SDTMIG") takes the standard second and check_dataset() takes
+# the domain second, so check_dataset(dm, "SDTMIG") looks right and is not. It
+# was told to say which standard, by someone who just had.
+refuse_standard_as_domain <- function(domain) {
+  if (is.character(domain) && length(domain) == 1 && !is.na(domain) &&
+      toupper(domain) %in% toupper(standard_products())) {
+    stop("\"", domain, "\" is a standard, not a domain. Write standard = \"", domain, "\".",
+         call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' Controlled Terminology packages coreval bundles

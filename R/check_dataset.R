@@ -416,6 +416,7 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
                           use_case = NULL, max_records = 1000,
                           include_deprecated = FALSE, ct_package = NULL,
                           substandard = NULL) {
+  refuse_standard_as_domain(domain)
   substandard <- validate_substandard(standard, substandard)
   old_sub <- .coreval_env$substandard
   .coreval_env$substandard <- substandard

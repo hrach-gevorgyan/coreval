@@ -416,6 +416,17 @@ test_that("every operator and Operations type a bundled rule uses is implemented
   expect_identical(setdiff(op_types, implemented_operation_types), character(0))
 })
 
+test_that("a standard given where check_dataset() takes the domain is named as such", {
+  dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = "1")
+  msg <- "\"SDTMIG\" is a standard, not a domain. Write standard = \"SDTMIG\"."
+  expect_error(check_dataset(dm, "SDTMIG"), msg, fixed = TRUE)
+  expect_error(check_dataset(dm, "sendig"), "is a standard, not a domain")
+  # Even with a standard beside it, since the domain would be wrong.
+  expect_error(check_dataset(dm, "SDTMIG", standard = "SDTMIG"), "is a standard, not a domain")
+  # A real domain is untouched.
+  expect_s3_class(check_dataset(dm, "DM", standard = "SDTMIG"), "coreval_result")
+})
+
 test_that("a check with no standard is refused, not run against every standard", {
   # Without one, every standard's rules ran: SEND and TIG rules reported
   # 26,678 problems on CDISC's pilot SDTM study.

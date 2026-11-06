@@ -47,6 +47,8 @@
   added 26,678 problems, a third of the report. Add `standard = "SDTMIG"` (or
   `"SENDIG"`, `"TIG"`, ...) to existing calls. A USDM document, and a CORE
   test case with a `.env` file, declare their own and need nothing.
+  `check_dataset(dm, "SDTMIG")`, where the second argument is the domain, says
+  so and shows the fix.
 
 * **CORE 1.0.** CDISC's CORE 1.0 (3 November 2026) moved the SDTMIG and FDA
   Business Rules to Verisian's repository, verisianHQ/core-contributor, and
