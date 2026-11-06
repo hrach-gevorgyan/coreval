@@ -225,6 +225,11 @@ is_literal_equality <- function(condition) {
 #' @return One of `TRIAGE_LEVELS`.
 #' @noRd
 finding_triage <- function(sub, rule = NULL) {
+  # A dataset the study should hold and does not. It was filed by what the
+  # rule happened to report: SE as a wrong value, TS as often legitimate.
+  if (isTRUE(grepl("Domain Presence", rule$rule_type, fixed = TRUE))) {
+    return("missing required")
+  }
   real <- sub[!startsWith(sub$Variable, "$"), ]
   # The identifiers a rule reports to say WHICH record it means are not
   # evidence about the record. Counted as evidence, one rule reporting a blank
@@ -413,8 +418,9 @@ skip_datasets_named <- function(reason, max = Inf, before = "", after = "") {
 #' @param id A rule id.
 #' @return A character vector of citations, possibly empty.
 #' @noRd
-rule_guidance <- function(id) {
-  r <- .coreval_env$data$rules[[id]]
+rule_guidance <- function(id, standard = NULL) {
+  # The result's own rule set: a rule in both has different text in each.
+  r <- .coreval_env$rule_sets[[rule_family(standard)]][[id]] %||% .coreval_env$data$rules[[id]]
   if (is.null(r) || is.null(r$citations)) character(0) else r$citations
 }
 
@@ -544,10 +550,14 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
         truncated$domain %in% c(sub$Dataset[1], "STUDY")
       if (any(hit)) total_rec <- truncated$records_found[which(hit)[1]]
     }
+    # A rule about variables counts variables, capped or not.
+    total_vars <- if (n_vars > 0) max(n_vars, total_rec) else 0L
+    if (n_vars > 0) total_rec <- 0L
     cat(
       "  ", if (total_rec > 0) paste(total_rec, if (total_rec == 1) "record" else "records") else
-        if (n_vars > 0) paste(n_vars, if (n_vars == 1) "variable" else "variables") else whole,
-      if (total_rec > n_rec) paste0(" (first ", n_rec, " kept)") else "",
+        if (n_vars > 0) paste(total_vars, if (total_vars == 1) "variable" else "variables") else whole,
+      if (total_rec > n_rec) paste0(" (first ", n_rec, " kept)") else
+        if (total_vars > n_vars) paste0(" (first ", n_vars, " kept)") else "",
       if (length(vars)) paste0(" ", g$dot, " ", paste(utils::head(vars, 4), collapse = ", ")) else "",
       "\n",
       sep = ""
@@ -639,7 +649,7 @@ describe_problems <- function(f, n, rows, width, g, truncated = NULL,
       sep = ""
     )
     if (isTRUE(guidance)) {
-      cited <- rule_guidance(rid)
+      cited <- rule_guidance(rid, standard)
       if (length(cited)) {
         for (ln in wrap_lines(cited[1], width - 6, 6)) cat("    ", ln, "\n", sep = "")
       }

@@ -122,7 +122,9 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
     # RFSTDTC found neither.
     key <- paste(f$Dataset, f$rule_id, f$Record)
     named <- f$Variable == "variable_name" & toupper(f$Value) %in% variable
-    keep <- keep & (f$Variable %in% variable | names_missing(f, variable) | key %in% key[named])
+    # `variable` is upper case by now, and USDM's names and the variable tables'
+    # own (`variable_length`) are not.
+    keep <- keep & (toupper(f$Variable) %in% variable | names_missing(f, variable) | key %in% key[named])
   }
 
   respin_result(result, f[keep, ])

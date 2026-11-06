@@ -183,7 +183,7 @@ and USDM study files, and `QuickJSR` runs USDM's JSONata rules.
 
 ## What it covers
 
-- **1,184 rules**: 621 CORE 1.0 rules for SDTMIG 3.2 to 3.4 and the FDA
+- **The published rules**, which `list_rules()` lists: CORE 1.0's for SDTMIG 3.2 to 3.4 and the FDA
   Business Rules, maintained by Verisian in
   [core-contributor](https://github.com/verisianHQ/core-contributor), and
   CDISC's rules for SEND, TIG and USDM from

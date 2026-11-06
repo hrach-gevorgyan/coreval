@@ -28,10 +28,13 @@ test_that("an ordinal comparison with a text literal is refused, not made as tex
   expect_error(evaluate_check(check, dataset, "TS"), "neither a number nor a column")
 })
 
-test_that("equal_to/not_equal_to are unaffected by numeric/character type mismatch", {
+test_that("text is not equal to a number unless the rule says to compare them", {
+  # CDISC's engine, as Python: "65" == 65.0 is False.
   data <- data.table::data.table(AGE = c(65, 9))
   dataset <- list(data = data, meta = NULL)
   check <- list(name = "AGE", operator = "equal_to", value = "65", value_is_literal = TRUE)
+  expect_equal(evaluate_check(check, dataset, "DM"), c(FALSE, FALSE))
+  check$type_insensitive <- "numeric"
   expect_equal(evaluate_check(check, dataset, "DM"), c(TRUE, FALSE))
 })
 

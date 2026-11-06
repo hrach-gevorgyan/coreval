@@ -333,11 +333,10 @@ register_operator("is_not_unique_relationship", function(ctx) {
 
 # Operator: is_unique_relationship - negation of is_not_unique_relationship
 register_operator("is_unique_relationship", function(ctx) {
-  # Not a plain negation: is_not_unique_relationship() answers FALSE for a
-  # column that is not there, so negating it claimed uniqueness of a column
-  # the dataset does not have. Nothing can be asserted about absent data.
+  # 1.0 asserts nothing about a column that is not there. CDISC's engine is a
+  # plain negation (`~self.is_not_unique_relationship`), so it answers TRUE.
   if (!ctx$exists) {
-    return(rep(FALSE, ctx$n))
+    return(rep(!engine_is_core1(), ctx$n))
   }
   !get_operator("is_not_unique_relationship")(ctx)
 })

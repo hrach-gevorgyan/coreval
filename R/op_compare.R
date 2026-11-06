@@ -61,6 +61,30 @@ set_compare <- function(eq) {
   }
 }
 
+#' Does a condition compare with a column rather than a literal?
+#' @param ctx The operator context.
+#' @return A single logical.
+#' @noRd
+value_is_column <- function(ctx) {
+  raw <- ctx$condition$value
+  is.character(raw) && length(raw) == 1 && !isTRUE(ctx$condition$value_is_literal) &&
+    resolve_var_name(raw, ctx$wildcard) %in% names(ctx$dataset$data)
+}
+
+#' Text to compare as 1.0's `type_insensitive: numeric` does
+#'
+#' `_safe_numeric_cast_sql()` turns what is no number into NULL and compares with
+#' `IS DISTINCT FROM`, so two such values are the same: "NEG" equals "POS".
+#'
+#' @param x An operand.
+#' @return A character vector; a blank stays blank.
+#' @noRd
+numeric_or_null <- function(x) {
+  out <- canonicalize_numeric_string(x)
+  out[is.na(suppressWarnings(as.numeric(out))) & !is_blank(x)] <- "not a number"
+  out
+}
+
 #' Build a scalar/vector comparison operator from a two-argument comparator
 #' @param fn Function of `(target, value)` returning a logical vector.
 #' @param set_fn Row-wise comparator used when either operand is set-valued.
@@ -99,16 +123,32 @@ compare_op <- function(fn, set_fn = NULL) {
     # (_check_equality): numbers where both sides are, as-is otherwise.
     core1 <- engine_is_core1()
     type_insensitive <- ctx$condition$type_insensitive
-    mixed <- core1 && xor(is.numeric(target), is.numeric(value))
+    types_differ <- xor(is.numeric(target), is.numeric(value))
+    mixed <- core1 && types_differ
+    equality <- ctx$condition$operator %in% c("equal_to", "not_equal_to", "equal_to_case_insensitive",
+                                              "not_equal_to_case_insensitive")
+    no_flag <- !isTRUE(type_insensitive) && !identical(type_insensitive, "numeric")
+    # PostgreSQL has no `=` between text and a number, so 1.0 fails on two
+    # columns of different types. A literal it coerces, and that compares by value.
+    if (mixed && equality && no_flag && value_is_column(ctx)) {
+      stop("compares a text column with a numeric one, which CORE 1.0 cannot do", call. = FALSE)
+    }
     if (core1 && isTRUE(type_insensitive)) {
       as_text <- function(x) if (is.numeric(x)) target_text(x) else as.character(x)
       target <- as_text(target)
       value <- as_text(value)
+    } else if (core1 && identical(type_insensitive, "numeric")) {
+      target <- numeric_or_null(target)
+      value <- numeric_or_null(value)
     } else if (isTRUE(type_insensitive) || mixed || identical(type_insensitive, "numeric")) {
       target <- canonicalize_numeric_string(target)
       value <- canonicalize_numeric_string(value)
     }
     result <- fn(target, value)
+    # In Python "200" == 200.0 is False, whatever the text says.
+    if (!core1 && types_differ && equality && no_flag) {
+      result[!is.na(result)] <- fn(0, 1)
+    }
     # Clinical-data equality convention, straight from the reference
     # engine's `_check_equality`/`_check_inequality`
     # (check_operators/dataframe_operators.py). Both compute

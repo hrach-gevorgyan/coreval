@@ -306,3 +306,21 @@ test_that("summary does not describe study-level findings as across 0 records", 
     checks_run = 1L)
   expect_output(summary(result), "about the study as a whole")
 })
+
+test_that("a variable is found whatever its case", {
+  f <- data.table::data.table(Dataset = "D", Record = 1:2, USUBJID = NA_character_, SEQ = NA_real_,
+                              Variable = c("variable_length", "text"), Value = c("8", "x"),
+                              issue = "i", triage = "wrong value", rule_id = "R")
+  r <- structure(list(findings = f, skipped = data.table::data.table(), truncated = data.table::data.table()),
+                 class = "coreval_result")
+  expect_equal(nrow(filter_findings(r, variable = "variable_length")$findings), 1L)
+  expect_equal(nrow(filter_findings(r, variable = "text")$findings), 1L)
+})
+
+test_that("guidance comes from the result's own rule set", {
+  id <- intersect(names(.coreval_env$rule_sets$sdtm), names(.coreval_env$rule_sets$cdisc))
+  differs <- Filter(function(i) !identical(.coreval_env$rule_sets$sdtm[[i]]$citations,
+                                           .coreval_env$rule_sets$cdisc[[i]]$citations), id)[1]
+  expect_identical(rule_guidance(differs, "SENDIG"), .coreval_env$rule_sets$cdisc[[differs]]$citations)
+  expect_identical(rule_guidance(differs, "SDTMIG"), .coreval_env$rule_sets$sdtm[[differs]]$citations)
+})

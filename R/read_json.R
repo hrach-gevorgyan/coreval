@@ -164,7 +164,7 @@ build_dataset_from_dataset_json <- function(meta_obj, rows, source) {
   # has to know where it came from.
   declared_name <- meta_obj$name
   if (!is.null(declared_name) && nzchar(declared_name)) {
-    attr(out, "dataset_name") <- toupper(as.character(declared_name)[[1]])
+    attr(out, "dataset_name") <- toupper(trimws(as.character(declared_name)[[1]]))
   }
   out
 }
@@ -227,7 +227,20 @@ dataset_json_declared_name <- function(path) {
     jsonlite::fromJSON(paste0(header, "}"), simplifyVector = FALSE)$name,
     error = function(e) NULL
   )
-  if (is.character(name) && length(name) == 1L && nzchar(name)) toupper(name) else NA_character_
+  if (is.character(name) && length(name) == 1L && nzchar(trimws(name))) toupper(trimws(name)) else NA_character_
+}
+
+#' Does a `.json` file claim to be a dataset at all?
+#'
+#' A `manifest.json` beside the datasets stopped the whole read with "declares
+#' no columns", as if a dataset were broken.
+#'
+#' @param path Path to a `.json` file.
+#' @return `FALSE` when none of the marks of Dataset-JSON is in its head.
+#' @noRd
+looks_like_dataset_json <- function(path) {
+  head_text <- tryCatch(rawToChar(file_head(path)), error = function(e) "")
+  grepl("\"(columns|rows|datasetJSONVersion)\"", head_text, useBytes = TRUE)
 }
 
 #' Read one Dataset-NDJSON (`.ndjson`) file

@@ -777,3 +777,29 @@ test_that("a CDISC child join on plain keys keeps the child's own columns (CORE-
   study$datasets$RELREC$data$IDVAR <- "COSEQ"
   expect_false(evaluate_rule(rule, study, "RELREC"))
 })
+
+test_that("a 1.0 SUPP merge links as supp.py does", {
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "core1"
+  ae <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "AE", USUBJID = "1",
+                                           AESPID = c("01", "02"), APID = "A"), meta = NULL)
+  supp <- function(rdomain, val = "1") {
+    list(data = data.table::data.table(STUDYID = "S", RDOMAIN = rdomain, USUBJID = "1", IDVAR = "AESPID",
+                                       IDVARVAL = val, QNAM = "X", QVAL = "v", APID = "B"), meta = NULL)
+  }
+  # Text keys compare as numbers where both are, and APID is no key of 1.0's.
+  expect_equal(apply_supp_match(ae, supp("AE"))$data$X, c("v", NA))
+  # DOMAIN to RDOMAIN is one.
+  expect_true(all(is.na(apply_supp_match(ae, supp("CM"))$data$X)))
+})
+
+test_that("a 1.0 rule stops when its left-joined dataset is absent", {
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  ds <- list(data = data.table::data.table(USUBJID = "1"), meta = NULL)
+  study <- list(datasets = list(AE = ds))
+  spec <- list(Name = "DM", Keys = list("USUBJID"), "Join Type" = "left")
+  .coreval_env$engine <- "core1"
+  expect_error(apply_match_dataset(ds, spec, study), "needs DM")
+})

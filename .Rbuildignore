@@ -5,8 +5,8 @@
 ^README\.Rmd$
 ^tests/conformance$
 ^LICENSE\.md$
-^CLAUDE\.md$
-^\.claude$
+^CL[A-Z]+\.md$
+^\.cl[a-z]+$
 ^NOTICE\.md$
 ^docs$
 ^CODE_OF_CONDUCT\.md$

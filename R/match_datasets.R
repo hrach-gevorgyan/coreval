@@ -189,7 +189,10 @@ apply_supp_match <- function(dataset, supp_dataset) {
   if (!(".coreval_row_id" %in% names(left))) {
     left$.coreval_row_id <- seq_len(nrow(left))
   }
-  static_keys <- c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
+  # CORE 1.0 links on these two, DOMAIN to RDOMAIN, and IDVAR (supp.py,
+  # _get_linking_clauses).
+  core1 <- engine_is_core1()
+  static_keys <- if (core1) c("STUDYID", "USUBJID") else c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
   idvar_of <- if ("IDVAR" %in% names(supp)) trimws(as.character(supp$IDVAR)) else rep("", nrow(supp))
   idvar_of[is.na(idvar_of)] <- ""
 
@@ -216,6 +219,10 @@ apply_supp_match <- function(dataset, supp_dataset) {
     keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
     left_key <- lapply(keys, function(k) key_text(left[[k]]))
     right_key <- lapply(keys, function(k) key_text(pivoted[[k]]))
+    if (core1 && all(c("DOMAIN", "RDOMAIN") %in% c(names(left), names(pivoted)))) {
+      left_key <- c(left_key, list(key_text(left$DOMAIN)))
+      right_key <- c(right_key, list(key_text(pivoted$RDOMAIN)))
+    }
     if (nzchar(iv)) {
       # Refused rather than joined on the subject alone: a looser key attaches
       # one record's qualifiers to every record of the subject.
@@ -224,8 +231,9 @@ apply_supp_match <- function(dataset, supp_dataset) {
              ", which the parent dataset does not have", call. = FALSE)
       }
       if ("IDVARVAL" %in% names(pivoted)) {
-        numeric_key <- is.numeric(left[[iv]])
-        left_key <- c(left_key, list(key_text(left[[iv]])))
+        # 1.0 compares as numbers whenever both sides are, text columns too.
+        numeric_key <- is.numeric(left[[iv]]) || core1
+        left_key <- c(left_key, list(key_text(left[[iv]], numeric = numeric_key)))
         right_key <- c(right_key, list(key_text(pivoted$IDVARVAL, numeric = numeric_key)))
       }
     }
@@ -526,10 +534,11 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   #
   # A `Join Type: left` spec keeps every row whether or not it has a partner,
   # and its rules say what an absent partner means (CORE-000816 asks for
-  # `epochId not_exists`), so an absent dataset is an input it answers.
+  # `epochId not_exists`), so an absent dataset is an input it answers. CORE 1.0
+  # refuses whatever the join type (_do_join_merge), and the rule is skipped.
   match_dataset <- domain_dataset(study, match_name)
   if (is.null(match_dataset)) {
-    if (is_left_join(spec)) {
+    if (is_left_join(spec) && !engine_is_core1()) {
       return(dataset)
     }
     stop("Match Datasets: needs ", toupper(match_name), ", which is not in this study",

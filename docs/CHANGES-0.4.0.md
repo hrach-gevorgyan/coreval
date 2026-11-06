@@ -382,3 +382,16 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     blames TS when none was given.
   - A saved file names the version and terminology used, and no longer says it is
     the whole result when records were capped.
+  - A text column compared with a numeric one follows each engine: 1.0 stops, and
+    in CDISC's engine text never equals a number without `type_insensitive`.
+  - 1.0's SUPP merge links on DOMAIN and RDOMAIN, compares text keys as numbers where
+    both are, and no longer adds APID, POOLID or SPDEVID to the keys.
+  - A 1.0 rule whose left-joined dataset is absent is skipped.
+  - A missing target no longer skips CDISC's `is_unique_relationship`,
+    `is_not_unique_relationship` or `is_inconsistent_across_dataset`.
+  - A dataset that should exist is "missing required", whatever the rule reports.
+  - `filter_findings(variable = )` finds lower-case names, the Rules sheet lists where
+    a rule found something, the Records sheet numbers rows that read the same, and a
+    capped rule about variables counts variables.
+  - A `.json` file that is no dataset is named and left out, rather than stopping the
+    read, and a data frame with no columns is refused.

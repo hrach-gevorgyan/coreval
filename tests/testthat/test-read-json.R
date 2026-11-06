@@ -369,3 +369,23 @@ test_that("a Dataset-JSON file with no rows and no record count is refused", {
   writeLines('{"datasetJSONVersion": "1.1.0", "name": "AE", "columns": [{"itemOID": "IT.AE.STUDYID", "name": "STUDYID", "label": "Study", "dataType": "string"}]}', path)
   expect_error(read_dataset_json(path), "has no rows")
 })
+
+test_that("a JSON file that is no dataset is named and left out", {
+  skip_if_not_installed("jsonlite")
+  skip_if_not_installed("haven")
+  dir <- tempfile("coreval_stray_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(sample_dm(), file.path(dir, "dm.xpt"))
+  writeLines('{"package":"submission","files":3}', file.path(dir, "manifest.json"))
+  expect_warning(study <- read_study(dir), "not a dataset, so left out: manifest.json")
+  expect_equal(names(study$datasets), "DM")
+})
+
+test_that("a declared name is trimmed like a file name", {
+  skip_if_not_installed("jsonlite")
+  path <- tempfile(fileext = ".json")
+  on.exit(unlink(path), add = TRUE)
+  writeLines('{"name":"DM  ","columns":[],"rows":[]}', path)
+  expect_equal(dataset_json_declared_name(path), "DM")
+})

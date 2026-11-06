@@ -920,12 +920,32 @@ test_that("a codelist operation can answer from the study's own terminology vers
 # rule that passed on its CDISC definition and failed on its 1.0 one.
 
 
-test_that("a 1.0 rule compares a text column with a numeric one by value (CORE-000542)", {
+test_that("a text column against a numeric one follows each engine (CORE-000542)", {
   study <- one_dataset(list(C = c("1.00", "-1.234", "-1.234"), N = c(1, -1.234, 1)))
   check <- list(name = "C", operator = "not_equal_to", value = "N", type_insensitive = FALSE)
+  # Run through 1.0's engine: PostgreSQL has no = between text and a number.
+  expect_error(evaluate_rule(core1_rule(check), study, "XX"), "text column with a numeric one")
+  check$type_insensitive <- "numeric"
   expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(FALSE, FALSE, TRUE))
-  # CDISC's engine is unchanged: type_insensitive false compares as written.
-  expect_equal(evaluate_rule(list(check = check), study, "XX"), c(TRUE, FALSE, TRUE))
+  # In CDISC's engine text is never equal to a number, without the flag.
+  check$type_insensitive <- FALSE
+  expect_equal(evaluate_rule(list(check = check), study, "XX"), c(TRUE, TRUE, TRUE))
+})
+
+test_that("1.0's numeric comparison treats two non-numbers as the same", {
+  study <- one_dataset(list(A = c("NEG", "NEG", "1", "2.0"), B = c("POS", "NEG", "x", "2")))
+  check <- list(name = "A", operator = "equal_to", value = "B", type_insensitive = "numeric")
+  expect_equal(evaluate_rule(core1_rule(check), study, "XX"), c(TRUE, TRUE, FALSE, TRUE))
+})
+
+test_that("a missing target leaves the relationship operators to answer for themselves", {
+  study <- one_dataset(list(A = c("1", "1"), B = c("x", "y")))
+  answer <- function(op) {
+    evaluate_rule(list(check = list(name = "NOPE", operator = op, value = "B")), study, "XX")
+  }
+  expect_equal(answer("is_not_unique_relationship"), c(FALSE, FALSE))
+  expect_equal(answer("is_unique_relationship"), c(TRUE, TRUE))
+  expect_equal(answer("is_inconsistent_across_dataset"), c(FALSE, FALSE))
 })
 
 test_that("is_not_unique_relationship takes a list of columns as one key (CORE-000580)", {

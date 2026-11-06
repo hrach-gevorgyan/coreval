@@ -239,6 +239,10 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
       }
       return(rep(format_binding_value(resolved, isTRUE(bindings[[v]]$set)), n))
     }
+    # The dataset's name is no column of it, and never "not in dataset".
+    if (identical(v, "dataset_name") && !(v %in% names(dataset$data))) {
+      return(rep(domain, n))
+    }
     x <- if (is_relrec_wildcard(v)) {
       resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[rows]
     } else if (!(v %in% names(dataset$data))) {

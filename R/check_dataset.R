@@ -447,6 +447,10 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     path <- x
     dataset <- read_one_dataset_file(x)
   } else if (is.data.frame(x)) {
+    # With no columns every check "ran" on nothing, and it looked checked.
+    if (ncol(x) == 0) {
+      stop("x has no columns, so there is nothing to check", call. = FALSE)
+    }
     dataset <- build_dataset_from_data_frame(x)
   } else {
     stop("x must be a data frame, or a path to one dataset file", call. = FALSE)

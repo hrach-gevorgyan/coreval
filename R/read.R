@@ -110,6 +110,12 @@ read_study_folder <- function(path, skip = character(0)) {
   files <- files[!normalizePath(files, mustWork = FALSE) %in%
                    normalizePath(skip, mustWork = FALSE)]
   ext <- tolower(tools::file_ext(files))
+  stray <- ext == "json" & !vapply(files, looks_like_dataset_json, logical(1), USE.NAMES = FALSE)
+  if (any(stray)) {
+    warning("not a dataset, so left out: ", paste(basename(files[stray]), collapse = ", "), call. = FALSE)
+    files <- files[!stray]
+    ext <- ext[!stray]
+  }
   # A submission package holds every dataset as .xpt and as .json. The JSON copy
   # loses to the other file below, so only the name it declares is read: parsing
   # all of them took longer than reading the study. An empty entry carrying that

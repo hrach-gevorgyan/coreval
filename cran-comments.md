@@ -40,9 +40,9 @@ Some behaviour changes on purpose, each listed in NEWS.md:
 Nothing is deprecated and nothing is removed, though a call with no
 `standard` now has to name one. Input that was never valid and
 used to be accepted silently is now refused with an error that says what is
-wrong: a transport file holding more than one dataset, a single CSV with a row
-of the wrong length, and a Dataset-JSON file with neither rows nor a record
-count.
+wrong: a transport file holding more than one dataset, a Dataset-JSON file with
+neither rows nor a record count, and some CSV files with a row of the wrong
+length.
 
 ## Test environments
 
@@ -81,7 +81,7 @@ describes the terms of each:
   carrying them, `xhtml-copyright-1.xsd`, ships with them, and the notice is
   reproduced in `inst/COPYRIGHTS` as well.
 * `inst/extdata/js/jsonata.min.js` is the JSONata reference implementation,
-  (c) IBM Corp., MIT. 96 of the bundled rules are written in that query
+  (c) IBM Corp., MIT. Many of the bundled USDM rules are written in that query
   language and there is no R implementation of it, so it is evaluated in
   QuickJSR's embedded JavaScript engine. The upstream minified build carries
   no copyright banner and the packaged LICENSE omits the copyright line its

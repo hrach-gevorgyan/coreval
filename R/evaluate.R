@@ -420,8 +420,11 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
       !is_relrec_wildcard(condition$name) &&
       # is_unique_set keeps whichever of its columns exist, the target too
       # (CORE-000580's negative/02 has no TEDUR and still expects findings).
+      # The relationship operators answer for themselves (dataframe_operators.py).
       !(condition$operator %in% c("exists", "not_exists", "inconsistent_enumerated_columns",
-                                  "is_unique_set", "is_not_unique_set"))) {
+                                  "is_unique_set", "is_not_unique_set",
+                                  "is_unique_relationship", "is_not_unique_relationship",
+                                  "is_inconsistent_across_dataset"))) {
     stop(structure(
       class = c("coreval_missing_column", "error", "condition"),
       list(message = paste0("needs ", name, ", which this dataset does not have"),

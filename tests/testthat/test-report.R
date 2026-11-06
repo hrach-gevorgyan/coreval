@@ -510,3 +510,22 @@ test_that("a round number is written out, in findings and in the report", {
   expect_true("200000" %in% r$findings$Value)
   expect_false(any(grepl("seq 1e", capture.output(print(r)))))
 })
+
+test_that("a dataset that should exist is required, whatever the rule reports", {
+  sub <- data.frame(Variable = "define_dataset_name", Value = "SE", issue = "Missing SE dataset",
+                    stringsAsFactors = FALSE)
+  expect_equal(finding_triage(sub, list(rule_type = "Domain Presence Check against Define XML")),
+               "missing required")
+})
+
+test_that("a data frame with no columns is refused", {
+  expect_error(check_dataset(data.frame(), domain = "AE", standard = "SDTMIG"), "no columns")
+})
+
+test_that("a capped rule about variables counts variables", {
+  f <- data.table::data.table(Dataset = "AE", Record = 1L, USUBJID = NA_character_, SEQ = NA_real_,
+                              Variable = "variable_name", Value = "AETERM", issue = "too long",
+                              triage = "wrong value", rule_id = "CORE-002061")
+  cap <- data.table::data.table(rule_id = "CORE-002061", domain = "AE", records_found = 2L, records_kept = 1L)
+  expect_equal(problem_summary(f, cap)$affects, "2 variables (first 1 listed)")
+})

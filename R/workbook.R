@@ -34,19 +34,23 @@ problem_summary <- function(findings, truncated = NULL, standard = NULL) {
     id <- sub$rule_id[1]
     n_rec <- count_records(sub)
     kept <- n_rec
+    found <- 0L
     if (!is.null(truncated) && nrow(truncated) > 0) {
       hit <- truncated$rule_id == id & truncated$domain %in% c(sub$Dataset[1], "STUDY")
-      if (any(hit)) n_rec <- max(n_rec, truncated$records_found[which(hit)[1]])
+      if (any(hit)) found <- truncated$records_found[which(hit)[1]]
     }
     n_vars <- if (n_rec == 0 && rule_rows_are_variables(id)) {
       length(unique(sub$Record[!is.na(sub$Record)]))
     } else {
       0L
     }
+    if (n_rec > 0) n_rec <- max(n_rec, found)
+    all_vars <- max(n_vars, found)
     affects <- if (n_rec > 0) {
       paste0(n_rec, if (n_rec > kept) paste0(" (first ", kept, " listed)") else "")
     } else if (n_vars > 0) {
-      paste(n_vars, if (n_vars == 1) "variable" else "variables")
+      paste0(all_vars, if (all_vars == 1) " variable" else " variables",
+             if (all_vars > n_vars) paste0(" (first ", n_vars, " listed)") else "")
     } else if (identical(sub$Dataset[1], "STUDY")) {
       "whole study"
     } else {
@@ -244,8 +248,10 @@ record_rows <- function(findings, problems) {
     out$values[k] <- cells_text(findings[grp == k, c("Variable", "Value")], where[k])
   }
   # The sheet has no row-number column, because subject and sequence find a
-  # record. A dataset with no subject (TS, TA) has nothing else to find it by.
-  nobody <- is.na(out$USUBJID) | !nzchar(out$USUBJID)
+  # record. A dataset with no subject (TS, TA) has nothing else to find it by,
+  # and neither have two rows that read the same (SUPPLB, RELREC, SV).
+  same <- paste(out$Dataset, out$rule_id, out$USUBJID, out$SEQ, sep = "\x1f")
+  nobody <- is.na(out$USUBJID) | !nzchar(out$USUBJID) | same %in% same[duplicated(same)]
   out$values[nobody] <- paste0("row ", out$Record[nobody], ": ", out$values[nobody])
   problem <- match(paste(out$Dataset, out$rule_id), paste(problems$Dataset, problems$rule_id))
   out <- out[order(problem, out$Record, first)]
@@ -318,9 +324,13 @@ rules_sheet <- function(findings, skipped, ran, filtered) {
     } else {
       "could not run"
     }
-    datasets <- if (length(sets) > 0) sets else skips$domain
-    if (length(datasets) == 0 && id %in% found) {
-      datasets <- findings$Dataset[findings$rule_id == id]
+    # Where it found something, not everywhere it ran.
+    datasets <- if (id %in% found) {
+      findings$Dataset[findings$rule_id == id]
+    } else if (length(sets) > 0) {
+      sets
+    } else {
+      skips$domain
     }
     # Where it ran on some datasets only, say which the reason belongs to.
     why <- if (length(sets) > 0 && nrow(skips) > 0) {

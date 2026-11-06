@@ -298,11 +298,14 @@ test_that("split_domain_siblings only groups files sharing a DOMAIN, current fil
 })
 
 test_that("uniqueness is not asserted about a column that is absent", {
-  # is_unique_set and is_unique_relationship were plain negations of their
-  # is_not_* counterparts, which answer FALSE for a column that is not there -
-  # so negating them claimed a missing column's values were unique.
+  # 1.0 asserts nothing about a missing column. CDISC's engine negates, and says TRUE.
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
   ctx <- list(exists = FALSE, n = 3L, target = rep(NA_character_, 3))
+  .coreval_env$engine <- "core1"
   expect_equal(get_operator("is_unique_relationship")(ctx), rep(FALSE, 3))
+  .coreval_env$engine <- "cdisc"
+  expect_equal(get_operator("is_unique_relationship")(ctx), rep(TRUE, 3))
   # is_unique_set follows CDISC's engine, which keeps whichever of its columns
   # exist and fails when none does; CORE 1.0 answers FALSE.
   study <- one_dataset(list(A = c("x", "y", "x")), "XX")

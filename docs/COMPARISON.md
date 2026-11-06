@@ -88,7 +88,7 @@ purpose.
 
 - **Dictionaries.** Both engines take MedDRA, WHODrug, LOINC, SNOMED CT, UNII
   and MED-RT when you supply them. coreval cannot read them and skips those
-  rules (26 of CORE 1.0's).
+  rules.
 - **They are the reference.** When coreval and an engine disagree and nothing
   else settles it, the engine is right by definition.
 - **Excel input.** CDISC's engine also reads Excel workbooks. Verisian's reads
