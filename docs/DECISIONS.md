@@ -220,3 +220,13 @@ says `ran, filtered out of this file`, never `no problems`.
 
 Column widths and a frozen header need `openxlsx`, which `writexl` cannot do.
 Not adopted: it would be a new `Suggests` for appearance alone.
+
+## A version older than the rules is checked, with a note (decided 2026-11-06)
+
+CORE has no rules for SDTMIG before 3.2, and CDISC's own pilot study is 3.1.2. Refused,
+such a study could only be checked by leaving `version` out or by naming a version it
+does not follow. It is checked against the oldest version with rules, and the report
+and the file say so, since a rule added later may not apply. Only older versions: one
+newer than the rules, or between two of them, is more likely a typo or a release
+coreval has not caught up with, and stays refused. `list_rules()` answers what exists,
+so it still refuses.

@@ -448,7 +448,9 @@ fold_value_rows <- function(findings) {
 #'   CDISC's and Verisian's engines will not. A CORE test case that declares
 #'   its standard in a `.env` file needs no argument.
 #' @param version The standard's version, e.g. `"3.4"`. Needs `standard`
-#'   too, since a bare version is ambiguous across standards.
+#'   too, since a bare version is ambiguous across standards. A version older
+#'   than any the rules are written for, such as SDTMIG 3.1.2, is checked
+#'   against the oldest that has rules, and the report says so.
 #' @param substandard For `standard = "TIG"` only, and required there:
 #'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
 #'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
@@ -531,6 +533,8 @@ check_study <- function(study, standard = NULL, version = NULL,
   old_sub <- .coreval_env$substandard
   .coreval_env$substandard <- substandard
   on.exit(.coreval_env$substandard <- old_sub, add = TRUE)
+  older <- older_version(standard, version)
+  if (!is.null(older)) version <- older$version
   validate_check_args(standard = standard, version = version,
                       max_records = max_records, use_case = use_case,
                       include_deprecated = include_deprecated)
@@ -590,6 +594,7 @@ check_study <- function(study, standard = NULL, version = NULL,
   } else if (!is.null(version)) {
     study$standard$version <- version
   }
+  study$version_note <- older$note
   # Carried on the study so every operation can reach it without threading an
   # argument through each layer. Checked here rather than at first use, so a
   # typo is reported once and immediately instead of as a skip reason on every
@@ -1072,6 +1077,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
     list(findings = findings, skipped = skipped, truncated = truncated),
     class = "coreval_result",
     checks_run = n_ran,
+    version_note = study$version_note,
     ran = data.table::data.table(rule_id = ran_rule, domain = ran_domain),
     domains = domains,
     standard = declared,

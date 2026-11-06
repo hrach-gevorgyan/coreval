@@ -30,7 +30,9 @@ For one file of a split dataset with no \code{DOMAIN} column, such as
 nothing to say about an SDTM study. The report says how many rules were
 set aside.}
 
-\item{version}{The standard's version, e.g. \code{"3-4"}.}
+\item{version}{The standard's version, e.g. \code{"3-4"}. A version older than
+any the rules are written for is checked against the oldest that has
+rules, and the report says so.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}), as in \code{\link[=list_rules]{list_rules()}}.}
 

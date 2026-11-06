@@ -268,7 +268,7 @@ not_checked_sheet <- function(skipped, about) {
     top <- data.table::data.table(a = paste0(text$what, named), b = as.character(n), c = text$todo)
     top <- top[order(-n)]
   }
-  shown <- c("checked on", "checked with", "rules", "standard", "checks that ran",
+  shown <- c("checked on", "checked with", "rules", "standard", "version", "checks that ran",
              "is this the whole result?")
   facts <- about[about$item %in% shown]
   facts <- data.table::data.table(

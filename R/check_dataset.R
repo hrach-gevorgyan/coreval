@@ -362,7 +362,9 @@ infer_domain <- function(dataset, path = NULL) {
 #'   `"SENDIG"` or `"TIG"`. Only that standard's rules run: a SENDIG rule has
 #'   nothing to say about an SDTM study. The report says how many rules were
 #'   set aside.
-#' @param version The standard's version, e.g. `"3-4"`.
+#' @param version The standard's version, e.g. `"3-4"`. A version older than
+#'   any the rules are written for is checked against the oldest that has
+#'   rules, and the report says so.
 #' @param substandard For `standard = "TIG"` only, and required there:
 #'   whether the tobacco study is `"SDTM"` (clinical), `"SEND"` (nonclinical)
 #'   or `"ADaM"`. A TIG rule's use case covers different datasets in each, so
@@ -421,6 +423,8 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
   old_sub <- .coreval_env$substandard
   .coreval_env$substandard <- substandard
   on.exit(.coreval_env$substandard <- old_sub, add = TRUE)
+  older <- older_version(standard, version)
+  if (!is.null(older)) version <- older$version
   validate_check_args(standard, version, domain, max_records,
                       use_case = use_case, include_deprecated = include_deprecated)
   require_standard(standard)
@@ -477,7 +481,8 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     standard = list(
       product = if (is.null(standard)) NA_character_ else toupper(standard),
       version = if (is.null(version)) NA_character_ else version
-    )
+    ),
+    version_note = older$note
   )
   run_checks(
     study,

@@ -427,6 +427,42 @@ test_that("a standard given where check_dataset() takes the domain is named as s
   expect_s3_class(check_dataset(dm, "DM", standard = "SDTMIG"), "coreval_result")
 })
 
+test_that("a version older than the rules is checked against the oldest, with a note", {
+  dm <- data.frame(STUDYID = "S", DOMAIN = "DM", USUBJID = c("1", "2"), AGE = c(30, 40), AGEU = c("YEARS", ""))
+  old <- check_dataset(dm, standard = "SDTMIG", version = "3.1.2")
+  same <- check_dataset(dm, standard = "SDTMIG", version = "3.2")
+  # The same check as 3.2, nothing dropped and nothing added.
+  expect_equal(old$findings, same$findings)
+  expect_equal(attr(old, "checks_run"), attr(same, "checks_run"))
+  expect_match(attr(old, "version_note"), "SDTMIG 3.1.2 has no rules of its own")
+  expect_match(attr(old, "version_note"), "against 3.2")
+  expect_null(attr(same, "version_note"))
+
+  # Said on screen, in a filtered result, and in the file.
+  expect_match(paste(utils::capture.output(print(old)), collapse = " "), "has no rules of its own")
+  expect_match(attr(filter_findings(old, triage = "wrong value"), "version_note"), "no rules of its own")
+  dir <- tempfile("coreval_old_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  written <- write_findings(old, file.path(dir, "x.csv"))
+  about <- data.table::fread(written[3], colClasses = "character")
+  expect_match(about$value[about$item == "version"], "no rules of its own")
+
+  # Also a whole study, and spelled with dashes.
+  study <- file.path(dir, "study")
+  dir.create(study)
+  haven::write_xpt(dm, file.path(study, "dm.xpt"))
+  expect_match(attr(check_study(study, standard = "SDTMIG", version = "3-1-2"), "version_note"),
+               "against 3.2")
+
+  # Newer than the rules, between them, or not a version: still refused.
+  expect_error(check_dataset(dm, standard = "SDTMIG", version = "9.9"), "version '9.9'")
+  expect_error(check_dataset(dm, standard = "SDTMIG", version = "3.3.1"), "version '3.3.1'")
+  expect_error(check_dataset(dm, standard = "SDTMIG", version = "old"), "version 'old'")
+  # list_rules() answers what exists, so it does not stand one version in for another.
+  expect_error(list_rules(standard = "SDTMIG", version = "3.1.2"), "version '3.1.2'")
+})
+
 test_that("a check with no standard is refused, not run against every standard", {
   # Without one, every standard's rules ran: SEND and TIG rules reported
   # 26,678 problems on CDISC's pilot SDTM study.

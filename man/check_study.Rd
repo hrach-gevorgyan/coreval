@@ -30,7 +30,9 @@ CDISC's and Verisian's engines will not. A CORE test case that declares
 its standard in a \code{.env} file needs no argument.}
 
 \item{version}{The standard's version, e.g. \code{"3.4"}. Needs \code{standard}
-too, since a bare version is ambiguous across standards.}
+too, since a bare version is ambiguous across standards. A version older
+than any the rules are written for, such as SDTMIG 3.1.2, is checked
+against the oldest that has rules, and the report says so.}
 
 \item{use_case}{Optional use case (e.g. \code{"INDH"}) to further filter
 which rules apply, as in \code{\link[=list_rules]{list_rules()}}.}

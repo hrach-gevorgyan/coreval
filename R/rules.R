@@ -522,6 +522,45 @@ require_standard <- function(standard, declared = NA_character_) {
   )
 }
 
+# CORE has no rules for the older versions of a standard: SDTMIG starts at 3.2,
+# and CDISC's own pilot study is 3.1.2. Refused, such a study could only be
+# checked by leaving `version` out or naming a version it does not follow. It is
+# checked against the oldest version with rules instead, and says so. Only older:
+# a version newer than the rules, or between two of them, is more likely a typo
+# or a release coreval has not caught up with, and stays refused.
+#' The version to check a too-old one against
+#' @param standard,version The user's arguments.
+#' @return `NULL` when the version needs no change, or is not one to be judged
+#'   here. Otherwise a list: `version`, the oldest with rules, and `note`, the
+#'   sentence the report and the file carry.
+#' @noRd
+older_version <- function(standard, version) {
+  text <- function(x) is.character(x) && length(x) == 1 && !is.na(x) && nzchar(x)
+  if (!text(standard) || !text(version)) {
+    return(NULL)
+  }
+  pairs <- unlist(lapply(.coreval_env$data$rules, function(r) r$standard_versions))
+  if (targets_standard_version(pairs, standard, version)) {
+    return(NULL)
+  }
+  names_ <- toupper(sub("[[:space:]].*$", "", trimws(pairs)))
+  have <- normalise_version(sub("^[^[:space:]]+[[:space:]]*", "", trimws(pairs[names_ == toupper(standard)])))
+  have <- unique(have[grepl("^[0-9]+([.][0-9]+)*$", have)])
+  wanted <- normalise_version(version)
+  if (length(have) == 0 || !grepl("^[0-9]+([.][0-9]+)*$", wanted)) {
+    return(NULL)
+  }
+  oldest <- as.character(min(numeric_version(have)))
+  if (numeric_version(wanted) >= numeric_version(oldest)) {
+    return(NULL)
+  }
+  list(version = oldest, note = paste0(
+    toupper(standard), " ", version, " has no rules of its own, so this was checked against ",
+    oldest, ", the oldest version with rules. A rule added in ", oldest,
+    " or later may not apply to this study."
+  ))
+}
+
 #' The standards the bundled rules are written for
 #' @return A sorted character vector, such as `"SDTMIG"`.
 #' @noRd

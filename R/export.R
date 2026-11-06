@@ -114,7 +114,7 @@ write_findings <- function(result, path, tracking = TRUE) {
   # the complete picture, which is the same trap `skipped` exists to prevent.
   about <- data.table::data.table(
     item = c(
-      "checked on", "checked with", "rules", "standard",
+      "checked on", "checked with", "rules", "standard", "version",
       "checks that ran", "checks that could not run",
       "problems", "records affected",
       "is this the whole result?",
@@ -125,6 +125,7 @@ write_findings <- function(result, path, tracking = TRUE) {
       paste("coreval", utils::packageVersion("coreval")),
       rules_version(),
       attr(result, "standard") %||% "not declared",
+      attr(result, "version_note") %||% "as given",
       attr(result, "checks_run") %||% NA_integer_,
       nrow(skipped),
       nrow(summary_sheet),

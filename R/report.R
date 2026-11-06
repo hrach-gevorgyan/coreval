@@ -821,6 +821,11 @@ print.coreval_result <- function(x, n = 10, rows = 3, guidance = FALSE, ...) {
   # so narrowing can stop a defect being reported. The reader has to be able
   # to see that happened. (A check always has a standard now; see
   # require_standard().)
+  note <- attr(x, "version_note")
+  if (!is.null(note)) {
+    cat("\n")
+    for (ln in wrap_lines(note, width, 0)) cat(ln, "\n", sep = "")
+  }
   dropped <- attr(x, "excluded_by_standard")
   if (!is.null(dropped) && dropped > 0) {
     cat("\nScoped to ", attr(x, "standard"), ": ", dropped,
