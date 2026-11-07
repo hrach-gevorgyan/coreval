@@ -283,3 +283,25 @@ test_that("a 1.0 custom domain with a class is judged against the Model (CORE-00
   hits <- found(result, "CORE-001082")
   expect_true(any(hits$Dataset == "XZ"))
 })
+
+test_that("a 1.0 rule reads the SDTM Model its guide links to (CORE-000550)", {
+  with_core1({
+    events <- function() {
+      mv <- .coreval_env$model_variables
+      mv$variable[mv$class == "Events"]
+    }
+    default <- events()
+    restore <- use_sdtm_model(list(standard = list(product = "SDTMIG", version = "3.2")))
+    expect_false("--RLPRC" %in% events())
+    expect_false("SPTOBID" %in% events())
+    restore()
+    expect_identical(events(), default)
+    restore <- use_sdtm_model(list(standard = list(product = "SDTMIG", version = "3-4")))
+    expect_true("--RLPRC" %in% events())
+    restore()
+  })
+  # CDISC's rules keep the bundled default.
+  restore <- use_sdtm_model(list(standard = list(product = "SDTMIG", version = "3.2")))
+  expect_true("SPTOBID" %in% .coreval_env$model_variables$variable)
+  restore()
+})

@@ -450,3 +450,6 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     its custom dataset was not graded.
   - A 1.0 rule scopes, splits and expands `--` by the file name throughout, and a TS
     row with no terminology version is read with the study's own (CORE-001080).
+  - A 1.0 rule reads the SDTM Model its study's guide links to (1.4 for SDTMIG 3.2,
+    1.7 for 3.3, 2.0 for 3.4), bundled in `sdtm_model_versions.rds`, not the newest
+    Model for every version. CORE-000550 now passes all its cases.

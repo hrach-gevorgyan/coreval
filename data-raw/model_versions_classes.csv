@@ -1,0 +1,648 @@
+model_version,class,variable,label,role,type,ordinal
+1-4,General Observations,STUDYID,Study Identifier,Identifier,Char,1
+1-4,General Observations,DOMAIN,Domain Abbreviation,Identifier,Char,2
+1-4,General Observations,USUBJID,Unique Subject Identifier,Identifier,Char,3
+1-4,General Observations,POOLID,Pool Identifier,Identifier,Char,4
+1-4,General Observations,SPDEVID,Sponsor Device Identifier,Identifier,Char,5
+1-4,General Observations,--SEQ,Sequence Number,Identifier,Num,6
+1-4,General Observations,--GRPID,Group ID,Identifier,Char,7
+1-4,General Observations,--REFID,Reference ID,Identifier,Char,8
+1-4,General Observations,--SPID,Sponsor-Defined Identifier,Identifier,Char,9
+1-4,General Observations,--LNKID,Link ID,Identifier,Char,10
+1-4,General Observations,--LNKGRP,Link Group ID,Identifier,Char,11
+1-4,General Observations,VISITNUM,Visit Number,Timing,Num,12
+1-4,General Observations,VISIT,Visit Name,Timing,Char,13
+1-4,General Observations,VISITDY,Planned Study Day of Visit,Timing,Num,14
+1-4,General Observations,TAETORD,Planned Order of Element within Arm,Timing,Num,15
+1-4,General Observations,EPOCH,Epoch,Timing,Char,16
+1-4,General Observations,--DTC,Date/Time of Collection,Timing,Char,17
+1-4,General Observations,--STDTC,Start Date/Time of Observation,Timing,Char,18
+1-4,General Observations,--ENDTC,End Date/Time of Observation,Timing,Char,19
+1-4,General Observations,--DY,Study Day of Visit/Collection/Exam,Timing,Num,20
+1-4,General Observations,--STDY,Study Day of Start of Observation,Timing,Num,21
+1-4,General Observations,--ENDY,Study Day of End of Observation,Timing,Num,22
+1-4,General Observations,--DUR,Duration,Timing,Char,23
+1-4,General Observations,--TPT,Planned Time Point Name,Timing,Char,24
+1-4,General Observations,--TPTNUM,Planned Time Point Number,Timing,Num,25
+1-4,General Observations,--ELTM,Planned Elapsed Time from Time Point Ref,Timing,Char,26
+1-4,General Observations,--TPTREF,Time Point Reference,Timing,Char,27
+1-4,General Observations,--RFTDTC,Date/Time of Reference Time Point,Timing,Char,28
+1-4,General Observations,--STRF,Start Relative to Reference Period,Timing,Char,29
+1-4,General Observations,--ENRF,End Relative to Reference Period,Timing,Char,30
+1-4,General Observations,--EVLINT,Evaluation Interval,Timing,Char,31
+1-4,General Observations,--EVINTX,Evaluation Interval Text,Timing,Char,32
+1-4,General Observations,--STRTPT,Start Relative to Reference Time Point,Timing,Char,33
+1-4,General Observations,--STTPT,Start Reference Time Point,Timing,Char,34
+1-4,General Observations,--ENRTPT,End Relative to Reference Time Point,Timing,Char,35
+1-4,General Observations,--ENTPT,End Reference Time Point,Timing,Char,36
+1-4,General Observations,--STINT,Planned Start of Assessment Interval,Timing,Char,37
+1-4,General Observations,--ENINT,Planned End of Assessment Interval,Timing,Char,38
+1-4,General Observations,--DETECT,Time in Days to Detection,Timing,Num,39
+1-4,Interventions,--TRT,Name of Treatment,Topic,Char,1
+1-4,Interventions,--MODIFY,Modified Treatment Name,Synonym Qualifier,Char,2
+1-4,Interventions,--DECOD,Standardized Treatment Name,Synonym Qualifier,Char,3
+1-4,Interventions,--MOOD,Mood,Record Qualifier,Char,4
+1-4,Interventions,--CAT,Category,Grouping Qualifier,Char,5
+1-4,Interventions,--SCAT,Subcategory,Grouping Qualifier,Char,6
+1-4,Interventions,--PRESP,Pre-specified,Variable Qualifier,Char,7
+1-4,Interventions,--OCCUR,Occurrence,Record Qualifier,Char,8
+1-4,Interventions,--STAT,Completion Status,Record Qualifier,Char,9
+1-4,Interventions,--REASND,Reason Not Done,Record Qualifier,Char,10
+1-4,Interventions,--INDC,Indication,Record Qualifier,Char,11
+1-4,Interventions,--CLAS,Class,Variable Qualifier,Char,12
+1-4,Interventions,--CLASCD,Class Code,Variable Qualifier,Char,13
+1-4,Interventions,--DOSE,Dose,Record Qualifier,Num,14
+1-4,Interventions,--DOSTXT,Dose Description,Record Qualifier,Char,15
+1-4,Interventions,--DOSU,Dose Units,Variable Qualifier,Char,16
+1-4,Interventions,--DOSFRM,Dose Form,Variable Qualifier,Char,17
+1-4,Interventions,--DOSFRQ,Dosing Frequency per Interval,Variable Qualifier,Char,18
+1-4,Interventions,--DOSTOT,Total Daily Dose,Record Qualifier,Num,19
+1-4,Interventions,--DOSRGM,Intended Dose Regimen,Variable Qualifier,Char,20
+1-4,Interventions,--ROUTE,Route of Administration,Variable Qualifier,Char,21
+1-4,Interventions,--LOT,Lot Number,Record Qualifier,Char,22
+1-4,Interventions,--LOC,Location of Dose Administration,Record Qualifier,Char,23
+1-4,Interventions,--LAT,Laterality,Variable Qualifier,Char,24
+1-4,Interventions,--DIR,Directionality,Variable Qualifier,Char,25
+1-4,Interventions,--PORTOT,Portion or Totality,Variable Qualifier,Char,26
+1-4,Interventions,--FAST,Fasting Status,Record Qualifier,Char,27
+1-4,Interventions,--PSTRG,Pharmaceutical Strength,Variable Qualifier,Num,28
+1-4,Interventions,--PSTRGU,Pharmaceutical Strength Units,Variable Qualifier,Char,29
+1-4,Interventions,--TRTV,Treatment Vehicle,Record Qualifier,Char,30
+1-4,Interventions,--VAMT,Treatment Vehicle Amount,Record Qualifier,Num,31
+1-4,Interventions,--VAMTU,Treatment Vehicle Amount Units,Variable Qualifier,Char,32
+1-4,Interventions,--ADJ,Reason for Dose Adjustment,Record Qualifier,Char,33
+1-4,Events,--TERM,Reported Term,Topic,Char,1
+1-4,Events,--MODIFY,Modified Reported Term,Synonym Qualifier,Char,2
+1-4,Events,--LLT,Lowest Level Term,Variable Qualifier,Char,3
+1-4,Events,--LLTCD,Lowest Level Term Code,Variable Qualifier,Num,4
+1-4,Events,--DECOD,Dictionary-Derived Term,Synonym Qualifier,Char,5
+1-4,Events,--PTCD,Preferred Term Code,Variable Qualifier,Num,6
+1-4,Events,--HLT,High Level Term,Variable Qualifier,Char,7
+1-4,Events,--HLTCD,High Level Term Code,Variable Qualifier,Num,8
+1-4,Events,--HLGT,High Level Group Term,Variable Qualifier,Char,9
+1-4,Events,--HLGTCD,High Level Group Term Code,Variable Qualifier,Num,10
+1-4,Events,--CAT,Category,Grouping Qualifier,Char,11
+1-4,Events,--SCAT,Subcategory,Grouping Qualifier,Char,12
+1-4,Events,--PRESP,Pre-specified,Variable Qualifier,Char,13
+1-4,Events,--OCCUR,Occurrence,Record Qualifier,Char,14
+1-4,Events,--STAT,Completion Status,Record Qualifier,Char,15
+1-4,Events,--REASND,Reason Not Done,Record Qualifier,Char,16
+1-4,Events,--BODSYS,Body System or Organ Class,Record Qualifier,Char,17
+1-4,Events,--BDSYCD,Body System or Organ Class Code,Variable Qualifier,Num,18
+1-4,Events,--SOC,Primary System Organ Class,Variable Qualifier,Char,19
+1-4,Events,--SOCCD,Primary System Organ Class Code,Variable Qualifier,Num,20
+1-4,Events,--LOC,Location of Event,Record Qualifier,Char,21
+1-4,Events,--LAT,Laterality,Variable Qualifier,Char,22
+1-4,Events,--DIR,Directionality,Variable Qualifier,Char,23
+1-4,Events,--PORTOT,Portion or Totality,Variable Qualifier,Char,24
+1-4,Events,--PARTY,Accountable Party,Record Qualifier,Char,25
+1-4,Events,--PRTYID,Identification of Accountable Party,Record Qualifier,Char,26
+1-4,Events,--SEV,Severity/Intensity,Record Qualifier,Char,27
+1-4,Events,--SER,Serious Event,Record Qualifier,Char,28
+1-4,Events,--ACN,Action Taken with Study Treatment,Record Qualifier,Char,29
+1-4,Events,--ACNOTH,Other Action Taken,Record Qualifier,Char,30
+1-4,Events,--ACNDEV,Action Taken with Device,Record Qualifier,Char,31
+1-4,Events,--REL,Causality,Record Qualifier,Char,32
+1-4,Events,--RELNST,Relationship to Non-Study Treatment,Record Qualifier,Char,33
+1-4,Events,--PATT,Pattern of Event,Record Qualifier,Char,34
+1-4,Events,--OUT,Outcome of Event,Record Qualifier,Char,35
+1-4,Events,--SCAN,Involves Cancer,Record Qualifier,Char,36
+1-4,Events,--SCONG,Congenital Anomaly or Birth Defect,Record Qualifier,Char,37
+1-4,Events,--SDISAB,Persist or Signif Disability/Incapacity,Record Qualifier,Char,38
+1-4,Events,--SDTH,Results in Death,Record Qualifier,Char,39
+1-4,Events,--SHOSP,Requires or Prolongs Hospitalization,Record Qualifier,Char,40
+1-4,Events,--SLIFE,Is Life Threatening,Record Qualifier,Char,41
+1-4,Events,--SOD,Occurred with Overdose,Record Qualifier,Char,42
+1-4,Events,--SMIE,Other Medically Important Serious Event,Record Qualifier,Char,43
+1-4,Events,--CONTRT,Concomitant or Additional Trtmnt Given,Record Qualifier,Char,44
+1-4,Events,--TOX,Toxicity,Variable Qualifier,Char,45
+1-4,Events,--TOXGR,Toxicity Grade,Record Qualifier,Char,46
+1-4,Findings,--TESTCD,"Short Name of Measurement, Test or Examination",Topic,Char,1
+1-4,Findings,--TEST,"Name of Measurement, Test or Examination",Synonym Qualifier,Char,2
+1-4,Findings,--MODIFY,Modified Term,Synonym Qualifier,Char,3
+1-4,Findings,--TSTDTL,"Measurement, Test or Examination Detail",Variable Qualifier,Char,4
+1-4,Findings,--CAT,Category,Grouping Qualifier,Char,5
+1-4,Findings,--SCAT,Subcategory,Grouping Qualifier,Char,6
+1-4,Findings,--POS,Position of Subject During Observation,Record Qualifier,Char,7
+1-4,Findings,--BODSYS,Body System or Organ Class,Record Qualifier,Char,8
+1-4,Findings,--ORRES,Result or Finding in Original Units,Result Qualifier,Char,9
+1-4,Findings,--ORRESU,Original Units,Variable Qualifier,Char,10
+1-4,Findings,--ORNRLO,Normal Range Lower Limit-Original Units,Variable Qualifier,Char,11
+1-4,Findings,--ORNRHI,Normal Range Upper Limit-Original Units,Variable Qualifier,Char,12
+1-4,Findings,--STRESC,Result or Finding in Standard Format,Result Qualifier,Char,13
+1-4,Findings,--STRESN,Numeric Result/Finding in Standard Units,Result Qualifier,Num,14
+1-4,Findings,--STRESU,Standard Units,Variable Qualifier,Char,15
+1-4,Findings,--STNRLO,Normal Range Lower Limit-Standard Units,Variable Qualifier,Num,16
+1-4,Findings,--STNRHI,Normal Range Upper Limit-Standard Units,Variable Qualifier,Num,17
+1-4,Findings,--STNRC,Normal Range for Character Results,Variable Qualifier,Char,18
+1-4,Findings,--NRIND,Normal/Reference Range Indicator,Variable Qualifier,Char,19
+1-4,Findings,--RESCAT,Result Category,Variable Qualifier,Char,20
+1-4,Findings,--STAT,Completion Status,Record Qualifier,Char,21
+1-4,Findings,--REASND,Reason Not Done,Record Qualifier,Char,22
+1-4,Findings,--XFN,External File Path,Record Qualifier,Char,23
+1-4,Findings,--NAM,Laboratory/Vendor Name,Record Qualifier,Char,24
+1-4,Findings,--LOINC,LOINC Code,Synonym Qualifier,Char,25
+1-4,Findings,--SPEC,Specimen Material Type,Record Qualifier,Char,26
+1-4,Findings,--ANTREG,Anatomical Region,Variable Qualifier,Char,27
+1-4,Findings,--SPCCND,Specimen Condition,Record Qualifier,Char,28
+1-4,Findings,--SPCUFL,Specimen Usability for the Test,Record Qualifier,Char,29
+1-4,Findings,--LOC,Location Used for the Measurement,Record Qualifier,Char,30
+1-4,Findings,--LAT,Laterality,Variable Qualifier,Char,31
+1-4,Findings,--DIR,Directionality,Variable Qualifier,Char,32
+1-4,Findings,--PORTOT,Portion or Totality,Variable Qualifier,Char,33
+1-4,Findings,--METHOD,Method of Test or Examination,Record Qualifier,Char,34
+1-4,Findings,--RUNID,Run ID,Record Qualifier,Char,35
+1-4,Findings,--ANMETH,Analysis Method,Record Qualifier,Char,36
+1-4,Findings,--LEAD,Lead Identified to Collect Measurements,Record Qualifier,Char,37
+1-4,Findings,--CSTATE,Consciousness State,Record Qualifier,Char,38
+1-4,Findings,--BLFL,Baseline Flag,Record Qualifier,Char,39
+1-4,Findings,--FAST,Fasting Status,Record Qualifier,Char,40
+1-4,Findings,--DRVFL,Derived Flag,Record Qualifier,Char,41
+1-4,Findings,--EVAL,Evaluator,Record Qualifier,Char,42
+1-4,Findings,--EVALID,Evaluator Identifier,Variable Qualifier,Char,43
+1-4,Findings,--ACPTFL,Accepted Record Flag,Record Qualifier,Char,44
+1-4,Findings,--TOX,Toxicity,Variable Qualifier,Char,45
+1-4,Findings,--TOXGR,Toxicity Grade,Record Qualifier,Char,46
+1-4,Findings,--SEV,Severity,Record Qualifier,Char,47
+1-4,Findings,--DTHREL,Relationship to Death,Record Qualifier,Char,48
+1-4,Findings,--LLOQ,Lower Limit of Quantitation,Variable Qualifier,Num,49
+1-4,Findings,--ULOQ,Upper Limit of Quantitation,Variable Qualifier,Num,50
+1-4,Findings,--EXCLFL,Exclude from Statistics,Record Qualifier,Char,51
+1-4,Findings,--REASEX,Reason for Exclusion from Statistics,Record Qualifier,Char,52
+1-4,Findings About,--OBJ,Object of the Observation,Record Qualifier,Char,1
+1-4,Associated Persons,APID,Associated Persons Identifier,Identifier,Char,1
+1-4,Associated Persons,RSUBJID,Related Subject,Identifier,Char,2
+1-4,Associated Persons,RDEVID,Related Device,Identifier,Char,3
+1-4,Associated Persons,SREL,"Subject, Device, or Study Relationship",Record Qualifier,Char,4
+1-7,General Observations,STUDYID,Study Identifier,Identifier,Char,1
+1-7,General Observations,DOMAIN,Domain Abbreviation,Identifier,Char,2
+1-7,General Observations,USUBJID,Unique Subject Identifier,Identifier,Char,3
+1-7,General Observations,APID,Associated Persons Identifier,Identifier,Char,4
+1-7,General Observations,POOLID,Pool Identifier,Identifier,Char,5
+1-7,General Observations,SPDEVID,Sponsor Device Identifier,Identifier,Char,6
+1-7,General Observations,NHOID,Non-Host Organism Identifier,Identifier,Char,7
+1-7,General Observations,FETUSID,Fetus Identifier,Identifier,Char,8
+1-7,General Observations,FOCID,Focus of Study-Specific Interest,Identifier,Char,9
+1-7,General Observations,--SEQ,Sequence Number,Identifier,Num,10
+1-7,General Observations,--GRPID,Group ID,Identifier,Char,11
+1-7,General Observations,--REFID,Reference ID,Identifier,Char,12
+1-7,General Observations,--RECID,Invariant Record Identifier,Identifier,Char,13
+1-7,General Observations,--SPID,Sponsor-Defined Identifier,Identifier,Char,14
+1-7,General Observations,--LNKID,Link ID,Identifier,Char,15
+1-7,General Observations,--LNKGRP,Link Group ID,Identifier,Char,16
+1-7,General Observations,VISITNUM,Visit Number,Timing,Num,17
+1-7,General Observations,VISIT,Visit Name,Timing,Char,18
+1-7,General Observations,VISITDY,Planned Study Day of Visit,Timing,Num,19
+1-7,General Observations,TAETORD,Planned Order of Element Within Arm,Timing,Num,20
+1-7,General Observations,EPOCH,Epoch,Timing,Char,21
+1-7,General Observations,RPHASE,Repro Phase,Timing,Char,22
+1-7,General Observations,RPPLDY,Planned Repro Phase Day of Observation,Timing,Num,23
+1-7,General Observations,RPPLSTDY,Planned Repro Phase Day of Obs Start,Timing,Num,24
+1-7,General Observations,RPPLENDY,Planned Repro Phase Day of Obs End,Timing,Num,25
+1-7,General Observations,--DTC,Date/Time of Collection,Timing,Char,26
+1-7,General Observations,--STDTC,Start Date/Time of Observation,Timing,Char,27
+1-7,General Observations,--ENDTC,End Date/Time of Observation,Timing,Char,28
+1-7,General Observations,--DY,Study Day of Visit/Collection/Exam,Timing,Num,29
+1-7,General Observations,--STDY,Study Day of Start of Observation,Timing,Num,30
+1-7,General Observations,--ENDY,Study Day of End of Observation,Timing,Num,31
+1-7,General Observations,--NOMDY,Nominal Study Day for Tabulations,Timing,Num,32
+1-7,General Observations,--NOMLBL,Label for Nominal Study Day,Timing,Char,33
+1-7,General Observations,--RPDY,Actual Repro Phase Day of Observation,Timing,Num,34
+1-7,General Observations,--RPSTDY,Actual Repro Phase Day of Obs Start,Timing,Num,35
+1-7,General Observations,--RPENDY,Actual Repro Phase Day of Obs End,Timing,Num,36
+1-7,General Observations,--DUR,Duration,Timing,Char,37
+1-7,General Observations,--TPT,Planned Time Point Name,Timing,Char,38
+1-7,General Observations,--TPTNUM,Planned Time Point Number,Timing,Num,39
+1-7,General Observations,--ELTM,Planned Elapsed Time from Time Point Ref,Timing,Char,40
+1-7,General Observations,--TPTREF,Time Point Reference,Timing,Char,41
+1-7,General Observations,--RFTDTC,Date/Time of Reference Time Point,Timing,Char,42
+1-7,General Observations,--STRF,Start Relative to Reference Period,Timing,Char,43
+1-7,General Observations,--ENRF,End Relative to Reference Period,Timing,Char,44
+1-7,General Observations,--EVLINT,Evaluation Interval,Timing,Char,45
+1-7,General Observations,--EVINTX,Evaluation Interval Text,Timing,Char,46
+1-7,General Observations,--STRTPT,Start Relative to Reference Time Point,Timing,Char,47
+1-7,General Observations,--STTPT,Start Reference Time Point,Timing,Char,48
+1-7,General Observations,--ENRTPT,End Relative to Reference Time Point,Timing,Char,49
+1-7,General Observations,--ENTPT,End Reference Time Point,Timing,Char,50
+1-7,General Observations,MIDS,Disease Milestone Instance Name,Timing,Char,51
+1-7,General Observations,RELMIDS,Temporal Relation to Milestone Instance,Timing,Char,52
+1-7,General Observations,MIDSDTC,Disease Milestone Instance Date/Time,Timing,Char,53
+1-7,General Observations,--STINT,Planned Start of Assessment Interval,Timing,Char,54
+1-7,General Observations,--ENINT,Planned End of Assessment Interval,Timing,Char,55
+1-7,General Observations,--DETECT,Time in Days to Detection,Timing,Num,56
+1-7,Interventions,--TRT,Name of Treatment,Topic,Char,1
+1-7,Interventions,--MODIFY,Modified Treatment Name,Synonym Qualifier,Char,2
+1-7,Interventions,--DECOD,Standardized Treatment Name,Synonym Qualifier,Char,3
+1-7,Interventions,--MOOD,Mood,Record Qualifier,Char,4
+1-7,Interventions,--CAT,Category,Grouping Qualifier,Char,5
+1-7,Interventions,--SCAT,Subcategory,Grouping Qualifier,Char,6
+1-7,Interventions,--PRESP,Pre-specified,Variable Qualifier,Char,7
+1-7,Interventions,--OCCUR,Occurrence Indicator,Record Qualifier,Char,8
+1-7,Interventions,--STAT,Completion Status,Record Qualifier,Char,9
+1-7,Interventions,--REASND,Reason Not Done,Record Qualifier,Char,10
+1-7,Interventions,--INDC,Indication,Record Qualifier,Char,11
+1-7,Interventions,--CLAS,Class,Variable Qualifier,Char,12
+1-7,Interventions,--CLASCD,Class Code,Variable Qualifier,Char,13
+1-7,Interventions,--DOSE,Dose,Record Qualifier,Num,14
+1-7,Interventions,--DOSTXT,Dose Description,Record Qualifier,Char,15
+1-7,Interventions,--DOSU,Dose Units,Variable Qualifier,Char,16
+1-7,Interventions,--DOSFRM,Dose Form,Variable Qualifier,Char,17
+1-7,Interventions,--DOSFRQ,Dosing Frequency per Interval,Variable Qualifier,Char,18
+1-7,Interventions,--DOSTOT,Total Daily Dose,Record Qualifier,Num,19
+1-7,Interventions,--DOSRGM,Intended Dose Regimen,Variable Qualifier,Char,20
+1-7,Interventions,--ROUTE,Route of Administration,Variable Qualifier,Char,21
+1-7,Interventions,--LOT,Lot Number,Record Qualifier,Char,22
+1-7,Interventions,--LOC,Location of Dose Administration,Record Qualifier,Char,23
+1-7,Interventions,--LAT,Laterality,Variable Qualifier,Char,24
+1-7,Interventions,--DIR,Directionality,Variable Qualifier,Char,25
+1-7,Interventions,--PORTOT,Portion or Totality,Variable Qualifier,Char,26
+1-7,Interventions,--FAST,Fasting Status,Record Qualifier,Char,27
+1-7,Interventions,--PSTRG,Pharmaceutical Strength,Record Qualifier,Num,28
+1-7,Interventions,--PSTRGU,Pharmaceutical Strength Units,Variable Qualifier,Char,29
+1-7,Interventions,--TRTV,Treatment Vehicle,Record Qualifier,Char,30
+1-7,Interventions,--VAMT,Treatment Vehicle Amount,Record Qualifier,Num,31
+1-7,Interventions,--VAMTU,Treatment Vehicle Amount Units,Variable Qualifier,Char,32
+1-7,Interventions,--ADJ,Reason for Dose Adjustment,Record Qualifier,Char,33
+1-7,Interventions,--RSDISC,Reason for Treatment Discontinuation,Record Qualifier,Char,34
+1-7,Interventions,--USCHFL,Unscheduled Flag,Record Qualifier,Char,35
+1-7,Events,--TERM,Reported Term,Topic,Char,1
+1-7,Events,--MODIFY,Modified Reported Term,Synonym Qualifier,Char,2
+1-7,Events,--LLT,Lowest Level Term,Variable Qualifier,Char,3
+1-7,Events,--LLTCD,Lowest Level Term Code,Variable Qualifier,Num,4
+1-7,Events,--DECOD,Dictionary-Derived Term,Synonym Qualifier,Char,5
+1-7,Events,--PTCD,Preferred Term Code,Variable Qualifier,Num,6
+1-7,Events,--HLT,High Level Term,Variable Qualifier,Char,7
+1-7,Events,--HLTCD,High Level Term Code,Variable Qualifier,Num,8
+1-7,Events,--HLGT,High Level Group Term,Variable Qualifier,Char,9
+1-7,Events,--HLGTCD,High Level Group Term Code,Variable Qualifier,Num,10
+1-7,Events,--CAT,Category,Grouping Qualifier,Char,11
+1-7,Events,--SCAT,Subcategory,Grouping Qualifier,Char,12
+1-7,Events,--PRESP,Pre-Specified,Variable Qualifier,Char,13
+1-7,Events,--OCCUR,Occurrence Indicator,Record Qualifier,Char,14
+1-7,Events,--STAT,Completion Status,Record Qualifier,Char,15
+1-7,Events,--REASND,Reason Not Done,Record Qualifier,Char,16
+1-7,Events,--BODSYS,Body System or Organ Class,Record Qualifier,Char,17
+1-7,Events,--BDSYCD,Body System or Organ Class Code,Variable Qualifier,Num,18
+1-7,Events,--SOC,Primary System Organ Class,Variable Qualifier,Char,19
+1-7,Events,--SOCCD,Primary System Organ Class Code,Variable Qualifier,Num,20
+1-7,Events,--LOC,Location of Event,Record Qualifier,Char,21
+1-7,Events,--LAT,Laterality,Variable Qualifier,Char,22
+1-7,Events,--DIR,Directionality,Variable Qualifier,Char,23
+1-7,Events,--PORTOT,Portion or Totality,Variable Qualifier,Char,24
+1-7,Events,--PARTY,Accountable Party,Record Qualifier,Char,25
+1-7,Events,--PRTYID,Identification of Accountable Party,Record Qualifier,Char,26
+1-7,Events,--SEV,Severity/Intensity,Record Qualifier,Char,27
+1-7,Events,--SER,Serious Event,Record Qualifier,Char,28
+1-7,Events,--ACN,Action Taken with Study Treatment,Record Qualifier,Char,29
+1-7,Events,--ACNOTH,Other Action Taken,Record Qualifier,Char,30
+1-7,Events,--ACNDEV,Action Taken with Device,Record Qualifier,Char,31
+1-7,Events,--REL,Causality,Record Qualifier,Char,32
+1-7,Events,--RELNST,Relationship to Non-Study Treatment,Record Qualifier,Char,33
+1-7,Events,--PATT,Pattern of Event,Record Qualifier,Char,34
+1-7,Events,--OUT,Outcome of Event,Record Qualifier,Char,35
+1-7,Events,--SCAN,Involves Cancer,Record Qualifier,Char,36
+1-7,Events,--SCONG,Congenital Anomaly or Birth Defect,Record Qualifier,Char,37
+1-7,Events,--SDISAB,Persist or Signif Disability/Incapacity,Record Qualifier,Char,38
+1-7,Events,--SDTH,Results in Death,Record Qualifier,Char,39
+1-7,Events,--SHOSP,Requires or Prolongs Hospitalization,Record Qualifier,Char,40
+1-7,Events,--SLIFE,Is Life Threatening,Record Qualifier,Char,41
+1-7,Events,--SOD,Occurred with Overdose,Record Qualifier,Char,42
+1-7,Events,--SMIE,Other Medically Important Serious Event,Record Qualifier,Char,43
+1-7,Events,--CONTRT,Concomitant or Additional Trtmnt Given,Record Qualifier,Char,44
+1-7,Events,--TOX,Toxicity,Variable Qualifier,Char,45
+1-7,Events,--TOXGR,Toxicity Grade,Record Qualifier,Char,46
+1-7,Events,--USCHFL,Unscheduled Flag,Record Qualifier,Char,47
+1-7,Findings,--TESTCD,"Short Name of Measurement, Test, or Exam",Topic,Char,1
+1-7,Findings,--TEST,"Name of Measurement, Test, or Exam",Synonym Qualifier,Char,2
+1-7,Findings,--MODIFY,Modified Term,Synonym Qualifier,Char,3
+1-7,Findings,--TSTDTL,"Measurement, Test, or Examination Detail",Variable Qualifier,Char,4
+1-7,Findings,--CAT,Category,Grouping Qualifier,Char,5
+1-7,Findings,--SCAT,Subcategory,Grouping Qualifier,Char,6
+1-7,Findings,--POS,Position of Subject During Observation,Record Qualifier,Char,7
+1-7,Findings,--BODSYS,Body System or Organ Class,Record Qualifier,Char,8
+1-7,Findings,--ORRES,Result or Finding in Original Units,Result Qualifier,Char,9
+1-7,Findings,--ORRESU,Original Units,Variable Qualifier,Char,10
+1-7,Findings,--ORNRLO,Normal Range Lower Limit-Original Units,Variable Qualifier,Char,11
+1-7,Findings,--ORNRHI,Normal Range Upper Limit-Original Units,Variable Qualifier,Char,12
+1-7,Findings,--ORREF,Reference Result in Original Units,Variable Qualifier,Char,13
+1-7,Findings,--STRESC,Result or Finding in Standard Format,Result Qualifier,Char,14
+1-7,Findings,--STRESN,Numeric Result/Finding in Standard Units,Result Qualifier,Num,15
+1-7,Findings,--STRESU,Standard Units,Variable Qualifier,Char,16
+1-7,Findings,--STNRLO,Normal Range Lower Limit-Standard Units,Variable Qualifier,Num,17
+1-7,Findings,--STNRHI,Normal Range Upper Limit-Standard Units,Variable Qualifier,Num,18
+1-7,Findings,--STNRC,Normal Range for Character Results,Variable Qualifier,Char,19
+1-7,Findings,--STREFC,Reference Result in Standard Format,Variable Qualifier,Char,20
+1-7,Findings,--STREFN,Numeric Reference Result in Std Units,Variable Qualifier,Num,21
+1-7,Findings,--NRIND,Normal/Reference Range Indicator,Variable Qualifier,Char,22
+1-7,Findings,--RESCAT,Result Category,Variable Qualifier,Char,23
+1-7,Findings,--CHRON,Chronicity of Finding,Variable Qualifier,Char,24
+1-7,Findings,--DISTR,Distribution Pattern of Finding,Variable Qualifier,Char,25
+1-7,Findings,--RESLOC,Result Location of Finding,Result Qualifier,Char,26
+1-7,Findings,--STAT,Completion Status,Record Qualifier,Char,27
+1-7,Findings,--REASND,Reason Not Done,Record Qualifier,Char,28
+1-7,Findings,--XFN,External File Path,Record Qualifier,Char,29
+1-7,Findings,--NAM,Laboratory/Vendor Name,Record Qualifier,Char,30
+1-7,Findings,--LOINC,LOINC Code,Synonym Qualifier,Char,31
+1-7,Findings,--SPEC,Specimen Material Type,Record Qualifier,Char,32
+1-7,Findings,--ANTREG,Anatomical Region,Variable Qualifier,Char,33
+1-7,Findings,--SPCCND,Specimen Condition,Record Qualifier,Char,34
+1-7,Findings,--SPCUFL,Specimen Usability for the Test,Record Qualifier,Char,35
+1-7,Findings,--LOC,Location Used for the Measurement,Record Qualifier,Char,36
+1-7,Findings,--LAT,Laterality,Variable Qualifier,Char,37
+1-7,Findings,--DIR,Directionality,Variable Qualifier,Char,38
+1-7,Findings,--PORTOT,Portion or Totality,Variable Qualifier,Char,39
+1-7,Findings,--METHOD,Method of Test or Examination,Record Qualifier,Char,40
+1-7,Findings,--RUNID,Run ID,Record Qualifier,Char,41
+1-7,Findings,--ANMETH,Analysis Method,Record Qualifier,Char,42
+1-7,Findings,--LEAD,Lead Identified to Collect Measurements,Record Qualifier,Char,43
+1-7,Findings,--CSTATE,Consciousness State,Record Qualifier,Char,44
+1-7,Findings,--LOBXFL,Last Observation Before Exposure Flag,Record Qualifier,Char,45
+1-7,Findings,--BLFL,Baseline Flag,Record Qualifier,Char,46
+1-7,Findings,--FAST,Fasting Status,Record Qualifier,Char,47
+1-7,Findings,--DRVFL,Derived Flag,Record Qualifier,Char,48
+1-7,Findings,--EVAL,Evaluator,Record Qualifier,Char,49
+1-7,Findings,--EVALID,Evaluator Identifier,Variable Qualifier,Char,50
+1-7,Findings,--ACPTFL,Accepted Record Flag,Record Qualifier,Char,51
+1-7,Findings,--TOX,Toxicity,Variable Qualifier,Char,52
+1-7,Findings,--TOXGR,Toxicity Grade,Record Qualifier,Char,53
+1-7,Findings,--SEV,Severity,Record Qualifier,Char,54
+1-7,Findings,--DTHREL,Relationship to Death,Record Qualifier,Char,55
+1-7,Findings,--LLOQ,Lower Limit of Quantitation,Variable Qualifier,Num,56
+1-7,Findings,--ULOQ,Upper Limit of Quantitation,Variable Qualifier,Num,57
+1-7,Findings,--EXCLFL,Exclude from Statistics,Record Qualifier,Char,58
+1-7,Findings,--REASEX,Reason for Exclusion from Statistics,Record Qualifier,Char,59
+1-7,Findings,--USCHFL,Unscheduled Flag,Record Qualifier,Char,60
+1-7,Findings,--REPNUM,Repetition Number,Record Qualifier,Num,61
+1-7,Findings About,--OBJ,Object of the Observation,Record Qualifier,Char,1
+1-7,Associated Persons,APID,Associated Persons Identifier,Identifier,Char,1
+1-7,Associated Persons,RSUBJID,Related Subject or Pool Identifier,Identifier,Char,2
+1-7,Associated Persons,RDEVID,Related Device Identifier,Identifier,Char,3
+1-7,Associated Persons,SREL,"Subject, Device, or Study Relationship",Identifier,Char,4
+2-0,General Observations,STUDYID,Study Identifier,Identifier,Char,1
+2-0,General Observations,DOMAIN,Domain Abbreviation,Identifier,Char,2
+2-0,General Observations,USUBJID,Unique Subject Identifier,Identifier,Char,3
+2-0,General Observations,POOLID,Pool Identifier,Identifier,Char,4
+2-0,General Observations,SPDEVID,Sponsor Device Identifier,Identifier,Char,5
+2-0,General Observations,NHOID,Non-Host Organism Identifier,Identifier,Char,6
+2-0,General Observations,FETUSID,Fetus Identifier,Identifier,Char,7
+2-0,General Observations,FOCID,Focus of Study-Specific Interest,Identifier,Char,8
+2-0,General Observations,--SEQ,Sequence Number,Identifier,Num,9
+2-0,General Observations,--GRPID,Group ID,Identifier,Char,10
+2-0,General Observations,--REFID,Reference ID,Identifier,Char,11
+2-0,General Observations,--RECID,Invariant Record Identifier,Identifier,Char,12
+2-0,General Observations,--SPID,Sponsor-Defined Identifier,Identifier,Char,13
+2-0,General Observations,--LNKID,Link ID,Identifier,Char,14
+2-0,General Observations,--LNKGRP,Link Group ID,Identifier,Char,15
+2-0,General Observations,--BEATNO,ECG Beat Number,Identifier,Num,16
+2-0,General Observations,VISITNUM,Visit Number,Timing,Num,17
+2-0,General Observations,VISIT,Visit Name,Timing,Char,18
+2-0,General Observations,VISITDY,Planned Study Day of Visit,Timing,Num,19
+2-0,General Observations,TAETORD,Planned Order of Element Within Arm,Timing,Num,20
+2-0,General Observations,EPOCH,Epoch,Timing,Char,21
+2-0,General Observations,RPHASE,Repro Phase,Timing,Char,22
+2-0,General Observations,RPPLDY,Planned Repro Phase Day of Observation,Timing,Num,23
+2-0,General Observations,RPPLSTDY,Planned Repro Phase Day of Obs Start,Timing,Num,24
+2-0,General Observations,RPPLENDY,Planned Repro Phase Day of Obs End,Timing,Num,25
+2-0,General Observations,--DTC,Date/Time of Collection,Timing,Char,26
+2-0,General Observations,--STDTC,Start Date/Time of Observation,Timing,Char,27
+2-0,General Observations,--ENDTC,End Date/Time of Observation,Timing,Char,28
+2-0,General Observations,--DY,Study Day of Visit/Collection/Exam,Timing,Num,29
+2-0,General Observations,--STDY,Study Day of Start of Observation,Timing,Num,30
+2-0,General Observations,--ENDY,Study Day of End of Observation,Timing,Num,31
+2-0,General Observations,--NOMDY,Nominal Study Day for Tabulations,Timing,Num,32
+2-0,General Observations,--NOMLBL,Label for Nominal Study Day,Timing,Char,33
+2-0,General Observations,--RPDY,Actual Repro Phase Day of Observation,Timing,Num,34
+2-0,General Observations,--RPSTDY,Actual Repro Phase Day of Obs Start,Timing,Num,35
+2-0,General Observations,--RPENDY,Actual Repro Phase Day of Obs End,Timing,Num,36
+2-0,General Observations,--XDY,Day of Obs Relative to Exposure,Timing,Num,37
+2-0,General Observations,--XSTDY,Start Day of Obs Relative to Exposure,Timing,Num,38
+2-0,General Observations,--XENDY,End Day of Obs Relative to Exposure,Timing,Num,39
+2-0,General Observations,--CHDY,Day of Obs Rel to Challenge Agent,Timing,Num,40
+2-0,General Observations,--CHSTDY,Start Day of Obs Rel to Challenge Agent,Timing,Num,41
+2-0,General Observations,--CHENDY,End Day of Obs Rel to Challenge Agent,Timing,Num,42
+2-0,General Observations,--DUR,Collected Duration,Timing,Char,43
+2-0,General Observations,--TPT,Planned Time Point Name,Timing,Char,44
+2-0,General Observations,--TPTNUM,Planned Time Point Number,Timing,Num,45
+2-0,General Observations,--ELTM,Planned Elapsed Time from Time Point Ref,Timing,Char,46
+2-0,General Observations,--TPTREF,Time Point Reference,Timing,Char,47
+2-0,General Observations,--RFTDTC,Date/Time of Reference Time Point,Timing,Char,48
+2-0,General Observations,--STRF,Start Relative to Reference Period,Timing,Char,49
+2-0,General Observations,--ENRF,End Relative to Reference Period,Timing,Char,50
+2-0,General Observations,--EVLINT,Evaluation Interval,Timing,Char,51
+2-0,General Observations,--EVINTX,Evaluation Interval Text,Timing,Char,52
+2-0,General Observations,--STRTPT,Start Relative to Reference Time Point,Timing,Char,53
+2-0,General Observations,--STTPT,Start Reference Time Point,Timing,Char,54
+2-0,General Observations,--ENRTPT,End Relative to Reference Time Point,Timing,Char,55
+2-0,General Observations,--ENTPT,End Reference Time Point,Timing,Char,56
+2-0,General Observations,MIDS,Disease Milestone Instance Name,Timing,Char,57
+2-0,General Observations,RELMIDS,Temporal Relation to Milestone Instance,Timing,Char,58
+2-0,General Observations,MIDSDTC,Disease Milestone Instance Date/Time,Timing,Char,59
+2-0,General Observations,--STINT,Planned Start of Assessment Interval,Timing,Char,60
+2-0,General Observations,--ENINT,Planned End of Assessment Interval,Timing,Char,61
+2-0,General Observations,--DETECT,Time in Days to Detection,Timing,Num,62
+2-0,General Observations,--PTFL,Point in Time Flag,Timing,Char,63
+2-0,General Observations,--PDUR,Planned Duration,Timing,Char,64
+2-0,Interventions,--TRT,Name of Treatment,Topic,Char,1
+2-0,Interventions,--MODIFY,Modified Treatment Name,Synonym Qualifier,Char,2
+2-0,Interventions,--DECOD,Standardized Treatment Name,Synonym Qualifier,Char,3
+2-0,Interventions,--MOOD,Mood,Record Qualifier,Char,4
+2-0,Interventions,--CAT,Category,Grouping Qualifier,Char,5
+2-0,Interventions,--SCAT,Subcategory,Grouping Qualifier,Char,6
+2-0,Interventions,--PRESP,Pre-Specified,Variable Qualifier,Char,7
+2-0,Interventions,--OCCUR,Occurrence Indicator,Record Qualifier,Char,8
+2-0,Interventions,--REASOC,Reason for Occur Value,Record Qualifier,Char,9
+2-0,Interventions,--STAT,Completion Status,Record Qualifier,Char,10
+2-0,Interventions,--REASND,Reason Not Done,Record Qualifier,Char,11
+2-0,Interventions,--CNTMOD,Contact Mode,Record Qualifier,Char,12
+2-0,Interventions,--EPCHGI,Epi/Pandemic Related Change Indicator,Record Qualifier,Char,13
+2-0,Interventions,--INDC,Indication,Record Qualifier,Char,14
+2-0,Interventions,--CLAS,Class,Variable Qualifier,Char,15
+2-0,Interventions,--CLASCD,Class Code,Variable Qualifier,Char,16
+2-0,Interventions,--DOSE,Dose,Record Qualifier,Num,17
+2-0,Interventions,--DOSTXT,Dose Description,Record Qualifier,Char,18
+2-0,Interventions,--DOSU,Dose Units,Variable Qualifier,Char,19
+2-0,Interventions,--TDOSD,Toxic/Physiologic Dose Descr,Record Qualifier,Char,20
+2-0,Interventions,--FTDOSD,Factor for Toxic/Physiologic Dose Descr,Variable Qualifier,Num,21
+2-0,Interventions,--DOSFRM,Dose Form,Variable Qualifier,Char,22
+2-0,Interventions,--DOSFRQ,Dosing Frequency per Interval,Record Qualifier,Char,23
+2-0,Interventions,--DOSTOT,Total Daily Dose,Record Qualifier,Num,24
+2-0,Interventions,--DOSRGM,Intended Dose Regimen,Record Qualifier,Char,25
+2-0,Interventions,--ROUTE,Route of Administration,Record Qualifier,Char,26
+2-0,Interventions,--LOT,Lot Number,Record Qualifier,Char,27
+2-0,Interventions,--LOC,Location of Administration,Record Qualifier,Char,28
+2-0,Interventions,--METHOD,Method of Administration,Record Qualifier,Char,29
+2-0,Interventions,--LAT,Laterality,Variable Qualifier,Char,30
+2-0,Interventions,--DIR,Directionality,Variable Qualifier,Char,31
+2-0,Interventions,--PORTOT,Portion or Totality,Variable Qualifier,Char,32
+2-0,Interventions,--FAST,Fasting Status,Record Qualifier,Char,33
+2-0,Interventions,--PSTRG,Pharmaceutical Strength,Record Qualifier,Num,34
+2-0,Interventions,--PSTRGU,Pharmaceutical Strength Units,Variable Qualifier,Char,35
+2-0,Interventions,--TRTV,Treatment Vehicle,Record Qualifier,Char,36
+2-0,Interventions,--VAMT,Treatment Vehicle Amount,Record Qualifier,Num,37
+2-0,Interventions,--VAMTU,Treatment Vehicle Amount Units,Variable Qualifier,Char,38
+2-0,Interventions,--ADJ,Reason for Dose Adjustment,Record Qualifier,Char,39
+2-0,Interventions,--RSDISC,Reason for Treatment Discontinuation,Record Qualifier,Char,40
+2-0,Interventions,--USCHFL,Unscheduled Flag,Record Qualifier,Char,41
+2-0,Interventions,--RSTIND,Restraint Indicator,Record Qualifier,Char,42
+2-0,Interventions,--RSTMOD,Restraint Mode,Record Qualifier,Char,43
+2-0,Events,--TERM,Reported Term,Topic,Char,1
+2-0,Events,--MODIFY,Modified Reported Term,Synonym Qualifier,Char,2
+2-0,Events,--LLT,Lowest Level Term,Variable Qualifier,Char,3
+2-0,Events,--LLTCD,Lowest Level Term Code,Variable Qualifier,Num,4
+2-0,Events,--DECOD,Dictionary-Derived Term,Synonym Qualifier,Char,5
+2-0,Events,--EVDTYP,Medical History Event Date Type,Variable Qualifier,Char,6
+2-0,Events,--PTCD,Preferred Term Code,Variable Qualifier,Num,7
+2-0,Events,--HLT,High Level Term,Variable Qualifier,Char,8
+2-0,Events,--HLTCD,High Level Term Code,Variable Qualifier,Num,9
+2-0,Events,--HLGT,High Level Group Term,Variable Qualifier,Char,10
+2-0,Events,--HLGTCD,High Level Group Term Code,Variable Qualifier,Num,11
+2-0,Events,--CAT,Category,Grouping Qualifier,Char,12
+2-0,Events,--SCAT,Subcategory,Grouping Qualifier,Char,13
+2-0,Events,--PRESP,Pre-Specified,Variable Qualifier,Char,14
+2-0,Events,--OCCUR,Occurrence Indicator,Record Qualifier,Char,15
+2-0,Events,--REASOC,Reason for Occur Value,Record Qualifier,Char,16
+2-0,Events,--STAT,Completion Status,Record Qualifier,Char,17
+2-0,Events,--REASND,Reason Not Done,Record Qualifier,Char,18
+2-0,Events,--BODSYS,Body System or Organ Class,Record Qualifier,Char,19
+2-0,Events,--BDSYCD,Body System or Organ Class Code,Variable Qualifier,Num,20
+2-0,Events,--SOC,Primary System Organ Class,Variable Qualifier,Char,21
+2-0,Events,--SOCCD,Primary System Organ Class Code,Variable Qualifier,Num,22
+2-0,Events,--CNTMOD,Contact Mode,Record Qualifier,Char,23
+2-0,Events,--EPCHGI,Epi/Pandemic Related Change Indicator,Record Qualifier,Char,24
+2-0,Events,--LOC,Location of Event,Record Qualifier,Char,25
+2-0,Events,--LAT,Laterality,Variable Qualifier,Char,26
+2-0,Events,--DIR,Directionality,Variable Qualifier,Char,27
+2-0,Events,--PORTOT,Portion or Totality,Variable Qualifier,Char,28
+2-0,Events,--PARTY,Accountable Party,Record Qualifier,Char,29
+2-0,Events,--PRTYID,Identification of Accountable Party,Variable Qualifier,Char,30
+2-0,Events,--SEV,Severity/Intensity,Record Qualifier,Char,31
+2-0,Events,--SER,Serious Event,Record Qualifier,Char,32
+2-0,Events,--ACN,Action Taken with Study Treatment,Record Qualifier,Char,33
+2-0,Events,--ACNOTH,Other Action Taken,Record Qualifier,Char,34
+2-0,Events,--ACNDEV,Action Taken with Device,Record Qualifier,Char,35
+2-0,Events,--REL,Causality,Record Qualifier,Char,36
+2-0,Events,--RLDEV,Relationship of Event to Device,Record Qualifier,Char,37
+2-0,Events,--RELNST,Relationship to Non-Study Treatment,Record Qualifier,Char,38
+2-0,Events,--PATT,Pattern of Event,Record Qualifier,Char,39
+2-0,Events,--OUT,Outcome of Event,Record Qualifier,Char,40
+2-0,Events,--SCAN,Involves Cancer,Record Qualifier,Char,41
+2-0,Events,--SCONG,Congenital Anomaly or Birth Defect,Record Qualifier,Char,42
+2-0,Events,--SDISAB,Persist or Signif Disability/Incapacity,Record Qualifier,Char,43
+2-0,Events,--SDTH,Results in Death,Record Qualifier,Char,44
+2-0,Events,--SHOSP,Requires or Prolongs Hospitalization,Record Qualifier,Char,45
+2-0,Events,--SLIFE,Is Life Threatening,Record Qualifier,Char,46
+2-0,Events,--SOD,Occurred with Overdose,Record Qualifier,Char,47
+2-0,Events,--SMIE,Other Medically Important Serious Event,Record Qualifier,Char,48
+2-0,Events,--SINTV,Needs Intervention to Prevent Impairment,Record Qualifier,Char,49
+2-0,Events,--UNANT,Unanticipated Adverse Device Effect,Record Qualifier,Char,50
+2-0,Events,--RLPRT,Rel of AE to Device-Related Procedure,Record Qualifier,Char,51
+2-0,Events,--RLPRC,Rel of AE to Non-Dev-Rel Study Activity,Record Qualifier,Char,52
+2-0,Events,--CONTRT,Concomitant or Additional Trtmnt Given,Record Qualifier,Char,53
+2-0,Events,--TOX,Toxicity,Variable Qualifier,Char,54
+2-0,Events,--TOXGR,Toxicity Grade,Record Qualifier,Char,55
+2-0,Events,--USCHFL,Unscheduled Flag,Record Qualifier,Char,56
+2-0,Findings,--TESTCD,"Short Name of Measurement, Test, or Exam",Topic,Char,1
+2-0,Findings,--TEST,"Name of Measurement, Test, or Exam",Synonym Qualifier,Char,2
+2-0,Findings,--SBMRKS,Sublineage Marker String,Variable Qualifier,Char,3
+2-0,Findings,--CELSTA,Cell State,Variable Qualifier,Char,4
+2-0,Findings,--CSMRKS,Cell State Marker String,Variable Qualifier,Char,5
+2-0,Findings,--CNTMOD,Contact Mode,Record Qualifier,Char,6
+2-0,Findings,--EPCHGI,Epi/Pandemic Related Change Indicator,Record Qualifier,Char,7
+2-0,Findings,--TSTCND,Test Condition,Variable Qualifier,Char,8
+2-0,Findings,--CNDAGT,Test Condition Agent,Record Qualifier,Char,9
+2-0,Findings,--BDAGNT,Binding Agent,Variable Qualifier,Char,10
+2-0,Findings,--ABCLID,Antibody Clone Identifier,Record Qualifier,Char,11
+2-0,Findings,--MRKSTR,Marker String,Record Qualifier,Char,12
+2-0,Findings,--GATE,Gate,Record Qualifier,Char,13
+2-0,Findings,--GATDEF,Gate Definition,Record Qualifier,Char,14
+2-0,Findings,--TSTOPO,Test Operational Objective,Variable Qualifier,Char,15
+2-0,Findings,--MSCBCE,Molecule Secreted by Cells,Variable Qualifier,Char,16
+2-0,Findings,--AGENT,Agent Name,Record Qualifier,Char,17
+2-0,Findings,--CONC,Agent Concentration,Variable Qualifier,Num,18
+2-0,Findings,--CONCU,Agent Concentration Units,Variable Qualifier,Char,19
+2-0,Findings,--MODIFY,Modified Result Term,Synonym Qualifier,Char,20
+2-0,Findings,--TSTDTL,"Measurement, Test, or Examination Detail",Variable Qualifier,Char,21
+2-0,Findings,--SPTSTD,Sponsor Test Description,Record Qualifier,Char,22
+2-0,Findings,--CAT,Category,Grouping Qualifier,Char,23
+2-0,Findings,--SCAT,Subcategory,Grouping Qualifier,Char,24
+2-0,Findings,--TSTPNL,Test Panel,Grouping Qualifier,Char,25
+2-0,Findings,--POS,Position of Subject During Observation,Record Qualifier,Char,26
+2-0,Findings,--BODSYS,Body System or Organ Class,Record Qualifier,Char,27
+2-0,Findings,--ORRES,Result or Finding in Original Units,Result Qualifier,Char,28
+2-0,Findings,--ORRESU,Original Units,Variable Qualifier,Char,29
+2-0,Findings,--RESSCL,Result Scale,Record Qualifier,Char,30
+2-0,Findings,--RESTYP,Result Type,Record Qualifier,Char,31
+2-0,Findings,--COLSRT,Collected Summary Result Type,Variable Qualifier,Char,32
+2-0,Findings,--ORNRLO,Normal Range Lower Limit-Original Units,Variable Qualifier,Char,33
+2-0,Findings,--ORNRHI,Normal Range Upper Limit-Original Units,Variable Qualifier,Char,34
+2-0,Findings,--ORREF,Reference Result in Original Units,Variable Qualifier,Char,35
+2-0,Findings,--LLOD,Lower Limit of Detection,Variable Qualifier,Char,36
+2-0,Findings,--STRESC,Result or Finding in Standard Format,Result Qualifier,Char,37
+2-0,Findings,--IMPLBL,Implantation Site Label,Record Qualifier,Char,38
+2-0,Findings,--STRESN,Numeric Result/Finding in Standard Units,Result Qualifier,Num,39
+2-0,Findings,--STRESU,Standard Units,Variable Qualifier,Char,40
+2-0,Findings,--STNRLO,Normal Range Lower Limit-Standard Units,Variable Qualifier,Num,41
+2-0,Findings,--STNRHI,Normal Range Upper Limit-Standard Units,Variable Qualifier,Num,42
+2-0,Findings,--STNRC,Normal Range for Character Results,Variable Qualifier,Char,43
+2-0,Findings,--STREFC,Reference Result in Standard Format,Variable Qualifier,Char,44
+2-0,Findings,--STREFN,Numeric Reference Result in Std Units,Variable Qualifier,Num,45
+2-0,Findings,--NRIND,Normal/Reference Range Indicator,Variable Qualifier,Char,46
+2-0,Findings,--RESCAT,Result Category,Variable Qualifier,Char,47
+2-0,Findings,--INHERT,Inheritability,Variable Qualifier,Char,48
+2-0,Findings,--GENREF,Genome Reference,Variable Qualifier,Char,49
+2-0,Findings,--CHROM,Chromosome Identifier,Variable Qualifier,Char,50
+2-0,Findings,--SYM,Genomic Symbol,Variable Qualifier,Char,51
+2-0,Findings,--SYMTYP,Genomic Symbol Type,Variable Qualifier,Char,52
+2-0,Findings,--GENLOC,Genetic Location,Variable Qualifier,Char,53
+2-0,Findings,--GENSR,Genetic Sub-Region,Variable Qualifier,Char,54
+2-0,Findings,--SEQID,Sequence Identifier,Variable Qualifier,Char,55
+2-0,Findings,--PVRID,Published Variant Identifier,Variable Qualifier,Char,56
+2-0,Findings,--COPYID,Copy Identifier,Variable Qualifier,Char,57
+2-0,Findings,--CHRON,Chronicity of Finding,Variable Qualifier,Char,58
+2-0,Findings,--DISTR,Distribution Pattern of Finding,Variable Qualifier,Char,59
+2-0,Findings,--RESLOC,Result Location of Finding,Record Qualifier,Char,60
+2-0,Findings,--STAT,Completion Status,Record Qualifier,Char,61
+2-0,Findings,--REASND,Reason Not Done,Record Qualifier,Char,62
+2-0,Findings,--XFN,External File Path,Record Qualifier,Char,63
+2-0,Findings,--NAM,Laboratory/Vendor Name,Record Qualifier,Char,64
+2-0,Findings,--LOINC,LOINC Code,Record Qualifier,Char,65
+2-0,Findings,--SPEC,Specimen Material Type,Record Qualifier,Char,66
+2-0,Findings,--ANTREG,Anatomical Region,Variable Qualifier,Char,67
+2-0,Findings,--SPCCND,Specimen Condition,Record Qualifier,Char,68
+2-0,Findings,--SPCUFL,Specimen Usability for the Test,Record Qualifier,Char,69
+2-0,Findings,--LOC,Location Used for the Measurement,Record Qualifier,Char,70
+2-0,Findings,--LAT,Laterality,Variable Qualifier,Char,71
+2-0,Findings,--DIR,Directionality,Variable Qualifier,Char,72
+2-0,Findings,--PORTOT,Portion or Totality,Variable Qualifier,Char,73
+2-0,Findings,--METHOD,Method of Test or Examination,Record Qualifier,Char,74
+2-0,Findings,--RUNID,Run ID,Record Qualifier,Char,75
+2-0,Findings,--ANMETH,Analysis Method,Record Qualifier,Char,76
+2-0,Findings,--TMTHSN,Test Method Sensitivity,Record Qualifier,Char,77
+2-0,Findings,--LEAD,Lead Identified to Collect Measurements,Record Qualifier,Char,78
+2-0,Findings,--CSTATE,Consciousness State,Record Qualifier,Char,79
+2-0,Findings,--LOBXFL,Last Observation Before Exposure Flag,Record Qualifier,Char,80
+2-0,Findings,--BLFL,Baseline Flag,Record Qualifier,Char,81
+2-0,Findings,--FAST,Fasting Status,Record Qualifier,Char,82
+2-0,Findings,--DRVFL,Derived Flag,Record Qualifier,Char,83
+2-0,Findings,--EVAL,Evaluator,Record Qualifier,Char,84
+2-0,Findings,--EVALID,Evaluator Identifier,Variable Qualifier,Char,85
+2-0,Findings,--ACPTFL,Accepted Record Flag,Record Qualifier,Char,86
+2-0,Findings,--TOX,Toxicity,Variable Qualifier,Char,87
+2-0,Findings,--TOXGR,Toxicity Grade,Record Qualifier,Char,88
+2-0,Findings,--SEV,Severity/Intensity,Record Qualifier,Char,89
+2-0,Findings,--CLSIG,"Clinically Significant, Collected",Record Qualifier,Char,90
+2-0,Findings,--DTHREL,Relationship to Death,Record Qualifier,Char,91
+2-0,Findings,--LLOQ,Lower Limit of Quantitation,Variable Qualifier,Num,92
+2-0,Findings,--ULOQ,Upper Limit of Quantitation,Variable Qualifier,Num,93
+2-0,Findings,--REASPF,Reason Test Performed,Record Qualifier,Char,94
+2-0,Findings,--EXCLFL,Exclude from Statistics,Record Qualifier,Char,95
+2-0,Findings,--REASEX,Reason for Exclusion from Statistics,Record Qualifier,Char,96
+2-0,Findings,--USCHFL,Unscheduled Flag,Record Qualifier,Char,97
+2-0,Findings,--REPNUM,Repetition Number,Record Qualifier,Num,98
+2-0,Findings,--RSTIND,Restraint Indicator,Record Qualifier,Char,99
+2-0,Findings,--RSTMOD,Restraint Mode,Record Qualifier,Char,100
+2-0,Findings About,--OBJ,Object of the Observation,Record Qualifier,Char,1
+2-0,Associated Persons,APID,Associated Persons Identifier,Identifier,Char,1
+2-0,Associated Persons,RSUBJID,Related Subject or Pool Identifier,Identifier,Char,2
+2-0,Associated Persons,RDEVID,Related Device Identifier,Identifier,Char,3
+2-0,Associated Persons,SREL,"Subject, Device, or Study Relationship",Identifier,Char,4

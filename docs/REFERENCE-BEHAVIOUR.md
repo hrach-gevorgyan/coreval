@@ -129,6 +129,13 @@ an inconvenient result was set aside.
     (`get_codelist_attributes`). Terminology moves between
     releases: `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`.
 
+    **The SDTM Model follows the guide.** CORE 1.0 reads the Model an
+    Implementation Guide links to (`_links.model`): SDTMIG 3.2 uses Model 1.4, 3.3
+    uses 1.7, 3.4 uses 2.0. coreval bundles those three for the 1.0 rules
+    (`sdtm_model_versions.rds`, `use_sdtm_model()`) and keeps 2.1 for the rest.
+    Read against 2.1, a 3.2 study's AERLPRC was allowed where its Model has no
+    --RLPRC (CORE-000550), and SPTOBID, new in 2.1, passed on a 3.4 study.
+
 ## Reference behaviour that is a defect, not a rule
 
 20. **Its operation cache rejects values it accepted.** `InMemoryCacheService.add()`

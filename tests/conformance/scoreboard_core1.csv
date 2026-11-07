@@ -270,7 +270,7 @@ CORE-000539,core_contributor,Dataset Metadata Check,Fully Executable,Record,FAIL
 CORE-000540,core_contributor,Dataset Metadata Check,Fully Executable,Dataset,PASS,
 CORE-000541,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000542,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000550,core_contributor,Variable Metadata Check,Partially Executable - Possible Underreporting,Record,FAIL,"[AE] record mismatch: expected {5,9,22}, got {5,22}"
+CORE-000550,core_contributor,Variable Metadata Check,Partially Executable - Possible Underreporting,Record,PASS,
 CORE-000552,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000553,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000571,core_contributor,Record Data,Fully Executable,Dataset,PASS,

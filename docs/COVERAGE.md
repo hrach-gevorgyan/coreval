@@ -43,18 +43,12 @@ skipped with that reason rather than answered:
 Dictionaries are licensed separately and supplied by the user to 1.0's engine
 too; its rules report "not applicable" without one.
 
-**The 5 that disagree:**
+**The 4 that disagree:**
 
 - **CORE-000539, CORE-000929, CORE-001081.** The same finding on a different
   record number. 1.0 numbers a record after its own joins and sorting, and
   the sheets carry that number; coreval reports the record's row in the file.
   CORE-001081 also needs the Model's variables for a sponsor-defined domain.
-- **CORE-000550.** Needs the SDTM Model for each IG version; only the newest
-  (2.1) is bundled, where SDTMIG 3.2 uses Model 1.4, 3.3 uses 1.7 and 3.4 uses
-  2.0. --RLPRC is in Events only from Model 2.0, so AERLPRC under 3.2 is the
-  expected record missed. The same gap lets SPTOBID, new in 2.1, pass on a 3.4
-  study, where 1.0 reports it (CORE-000852 and CORE-001082). On the pilot study
-  1.0's engine crashes on this rule (docs/REAL-STUDY.md).
 - **CORE-001080.** The sheet expects nothing; coreval reports TS record 16. 1.0's
   engine, run on this case converted to XPT, reports record 16 too: `C49563` is a
   term of sdtmct-2020-12-18 but not of sdtmct-2025-09-26, the package `TSVCDVER`

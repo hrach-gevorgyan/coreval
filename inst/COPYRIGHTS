@@ -27,7 +27,7 @@ Where CORE 1.0's engine, verisianHQ/cdisc-rules-engine, reads a rule
 differently from CDISC's, coreval follows it for the 1.0 rules. That engine is
 a fork of cdisc-org/cdisc-rules-engine under the same MIT notice reproduced
 below. No code from it is bundled; a few small reference tables are (see
-core1_reference.rds), at the commit recorded in
+core1_reference.rds and sdtm_model_versions.rds), at the commit recorded in
 data-raw/UPSTREAM_SHA_CORE1_ENGINE.
 
 
@@ -48,6 +48,14 @@ Data Standards Catalog (resources/helper_data/), and the ISO 3166-1 and GENC
 country names and codes (sql_operations/get_countries.py). They restate
 public FDA, ISO and GENC information as that repository publishes it, under
 its MIT notice reproduced below.
+
+inst/extdata/sdtm_model_versions.rds
+------------------------------------
+From verisianHQ/cdisc-rules-engine (resources/cache/). The SDTM Model 1.4, 1.7
+and 2.0 variable lists by class and by dataset, and which SDTMIG version links
+to which, as that engine's offline cache holds them under its MIT notice
+reproduced below. CDISC standards metadata, as the cdisc-rules-engine entry
+describes.
 
 inst/extdata/library_variables.rds
 inst/extdata/sdtm_model_variables.rds

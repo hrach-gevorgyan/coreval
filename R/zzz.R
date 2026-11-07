@@ -29,6 +29,10 @@ utils::globalVariables(c(".N", ".SD"))
   )
   .coreval_env$model_dataset_variables <- readRDS(model_dataset_variables_path)
 
+  # The Model each SDTMIG version links to, read by CORE 1.0 rules; see
+  # use_sdtm_model().
+  .coreval_env$sdtm_models <- readRDS(system.file("extdata", "sdtm_model_versions.rds", package = pkgname))
+
   library_variables_path <- system.file("extdata", "library_variables.rds", package = pkgname)
   .coreval_env$library_variables <- readRDS(library_variables_path)
 

@@ -597,6 +597,36 @@ evaluate_rule <- function(rule, dataset_or_study, domain) {
   collapse_exploded_violations(out$dataset, out$violations)
 }
 
+#' Read the SDTM Model the study's guide links to, for a CORE 1.0 rule
+#'
+#' CORE 1.0 takes the Model an Implementation Guide names: SDTMIG 3.2 reads
+#' Model 1.4, 3.3 reads 1.7, 3.4 reads 2.0. The bundled default is 2.1, which
+#' CDISC's rules keep. Read against 2.1, a 3.2 study's AERLPRC was allowed where
+#' its Model has no --RLPRC (CORE-000550), and a 3.4 study's SPTOBID, new in
+#' 2.1, passed where 1.0 reports it (CORE-000852, CORE-001082). Swapped for the
+#' rule rather than threaded through every lookup, the way the engine flag is.
+#'
+#' @param study The study object.
+#' @return A function that puts the default Model back.
+#' @noRd
+use_sdtm_model <- function(study) {
+  versions <- .coreval_env$sdtm_models
+  version <- gsub("-", ".", as.character(study$standard$version %||% "")[1])
+  product <- toupper(as.character(study$standard$product %||% "")[1])
+  pick <- if (!is.null(versions) && engine_is_core1() && identical(product, "SDTMIG") &&
+                !is.na(version)) versions$ig_model[version] else NA
+  if (is.null(pick) || length(pick) != 1L || is.na(pick)) {
+    return(function() invisible(NULL))
+  }
+  old <- list(.coreval_env$model_variables, .coreval_env$model_dataset_variables)
+  .coreval_env$model_variables <- versions$models[[pick]]$variables
+  .coreval_env$model_dataset_variables <- versions$models[[pick]]$dataset_variables
+  function() {
+    .coreval_env$model_variables <- old[[1]]
+    .coreval_env$model_dataset_variables <- old[[2]]
+  }
+}
+
 #' Run one rule against one domain: the single evaluation path
 #'
 #' Extracted so `evaluate_rule()` and `run_checks()` cannot drift. They had:
@@ -626,6 +656,8 @@ run_rule_on_domain <- function(rule, study, domain) {
   .coreval_env$engine <- rule_engine(rule)
   on.exit(.coreval_env$engine <- previous_engine, add = TRUE)
   study <- study_standard_from_rule(study, rule)
+  restore_model <- use_sdtm_model(study)
+  on.exit(restore_model(), add = TRUE)
   # A TIG test case declares its sub-standard itself; the use-case lists read
   # it from here (use_case_covers_dataset()).
   if (is.null(.coreval_env$substandard) && !is.null(study$standard$substandard) &&
