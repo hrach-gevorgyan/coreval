@@ -235,3 +235,51 @@ test_that("a hand-built study list is refused with a message", {
                                              skipped = data.frame()), class = "coreval_result"),
                               tempfile(fileext = ".csv"), tracking = NA), "TRUE or FALSE")
 })
+
+test_that("a 1.0 split is read from the file name, not DOMAIN", {
+  ae <- list(data = data.table::data.table(DOMAIN = "CE"), meta = NULL)
+  expect_false(dataset_is_split(ae, "AE", core1 = TRUE))
+  expect_true(dataset_is_split(ae, "LB1", core1 = TRUE))
+  expect_false(dataset_is_split(ae, "POOLDEF", core1 = TRUE))
+  expect_false(dataset_is_split(ae, "SUPPAE", core1 = TRUE))
+})
+
+test_that("a 1.0 Exclude matches the file's own domain, not its DOMAIN column (CORE-000701)", {
+  apmh <- list(data = data.table::data.table(DOMAIN = "MH"), meta = NULL)
+  expect_true(domains_match(list(Exclude = list("MH")), "APMH", apmh, core1 = TRUE))
+  expect_false(domains_match(list(Exclude = list("MH")), "APMH", apmh, core1 = FALSE))
+})
+
+test_that("a 1.0 SUPP qualifier name has no case", {
+  with_core1({
+    ae <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1),
+               meta = NULL)
+    supp <- list(data = data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "AESEQ",
+                                               IDVARVAL = "1", QNAM = "aetrtem", QVAL = "Y"), meta = NULL)
+    expect_equal(apply_supp_match(ae, supp)$data$AETRTEM, "Y")
+  })
+})
+
+test_that("a TS row with no terminology version is read with the study's own (CORE-001080)", {
+  ts <- data.frame(STUDYID = "S1", DOMAIN = "TS", TSSEQ = 1:2, TSPARMCD = c("SEXPOP", "SEXPOP"),
+                   TSPARM = "Sex of Participants", TSVAL = c("BOTH", "BOTH"),
+                   TSVALCD = c("C49636", "C00001"), TSVCDREF = "CDISC", TSVCDVER = "",
+                   stringsAsFactors = FALSE)
+  dir <- study_dir(list(DM = dm_rows, TS = ts))
+  on.exit(unlink(dir, recursive = TRUE))
+  result <- suppressWarnings(check_study(dir, standard = "SDTMIG", version = "3.4",
+                                         ct_package = "sdtmct-2024-03-29"))
+  hits <- found(result, "CORE-001080")
+  expect_true(2L %in% hits$Record)
+  expect_false(1L %in% hits$Record)
+})
+
+test_that("a 1.0 custom domain with a class is judged against the Model (CORE-001082)", {
+  xz <- data.frame(STUDYID = "S1", DOMAIN = "XZ", USUBJID = "S1-1", XZSEQ = "one", XZTERM = "X",
+                   stringsAsFactors = FALSE)
+  dir <- study_dir(list(DM = dm_rows, XZ = xz))
+  on.exit(unlink(dir, recursive = TRUE))
+  result <- suppressWarnings(check_study(dir, standard = "SDTMIG", version = "3.4"))
+  hits <- found(result, "CORE-001082")
+  expect_true(any(hits$Dataset == "XZ"))
+})
