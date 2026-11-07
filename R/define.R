@@ -33,6 +33,13 @@
 #' @return A single string.
 #' @noRd
 dataset_unsplit_name <- function(dataset, domain) {
+  # CORE 1.0 names every dataset's domain from its file name
+  # (transform_dataset_metadata(): `domain = derive_domain(name)`), never from
+  # DOMAIN. Read from the column, an ae.xpt whose first DOMAIN was mistyped
+  # took another domain's class and Library and was reported against them.
+  if (engine_is_core1() && length(domain) == 1L && !is.na(domain) && nzchar(domain)) {
+    return(unname(core1_derive_domain(toupper(domain))))
+  }
   if (!is.null(dataset$unsplit)) {
     return(dataset$unsplit)
   }

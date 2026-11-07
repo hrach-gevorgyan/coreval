@@ -51,6 +51,11 @@ problem_summary <- function(findings, truncated = NULL, standard = NULL) {
     } else if (n_vars > 0) {
       paste0(all_vars, if (all_vars == 1) " variable" else " variables",
              if (all_vars > n_vars) paste0(" (first ", n_vars, " listed)") else "")
+    } else if (found > 0) {
+      # A capped rule over a metadata table (CORE-001081's define items): the
+      # cap's count is all there is, and "whole dataset" hid it.
+      listed <- length(unique(sub$Record[!is.na(sub$Record)]))
+      paste0(found, " rows", if (found > listed) paste0(" (first ", listed, " listed)") else "")
     } else if (identical(sub$Dataset[1], "STUDY")) {
       "whole study"
     } else {

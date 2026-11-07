@@ -178,6 +178,9 @@ distinct_values <- function(x) {
 #' @return A single date string, or `NA_character_` if none are valid.
 #' @noRd
 pick_date <- function(x, want_max) {
+  if (engine_is_core1()) {
+    return(core1_pick_date(x, want_max))
+  }
   # One pass of the date regex, reused three times. Validating, detecting
   # precision and parsing each recomputed the components over the same vector.
   comp <- extract_date_components(ifelse(is.na(x), "", x))
@@ -191,6 +194,41 @@ pick_date <- function(x, want_max) {
   # once per element.
   values <- as.numeric(parse_date(x, detect_precision(x, comp), comp))
   x[if (want_max) which.max(values) else which.min(values)]
+}
+
+#' CORE 1.0's latest or earliest date
+#'
+#' A port of `SqlDateOperation` (date_operation.py). The values compare as
+#' ISO 8601 text in byte order, so a partial date sorts as the start of its
+#' period: "2014-02" is after "2014-01-05" and before "2014-02-01". A space
+#' before the time counts as "T" (2011-01-14 00:00:00 is a date there, and was
+#' not one here), the components after the first missing one are dropped, and
+#' a time zone is kept, not converted. Comparing as instants instead, a tie of
+#' "2014-02" and "2014-02-01" went the other way (CORE-000238, CORE-000239).
+#'
+#' @param x Date strings.
+#' @param want_max `TRUE` for the latest.
+#' @return One value as 1.0 returns it, or `NA_character_` when none is valid.
+#' @noRd
+core1_pick_date <- function(x, want_max) {
+  valid <- paste0(
+    "^(?!0000)(\\d{4}|-)(-(0[1-9]|1[0-2]|-)(-(0[1-9]|[12]\\d|3[01]|-)",
+    "(T([01]\\d|2[0-3]|-)(:([0-5]\\d|-)(:([0-5]\\d(\\.\\d+)?|-))?)?(Z|[+-]([01]\\d|2[0-3])(:?[0-5]\\d)?)?)?)?)?$"
+  )
+  known_pattern <- "^(\\d{4}(-\\d{2}(-\\d{2}(T\\d{2}(:\\d{2}(:\\d{2}(\\.\\d+)?)?)?(Z|[+-]\\d{2}(:?\\d{2})?)?)?)?)?)"
+  value <- gsub(" ", "T", sub("[[:space:]]+$", "", x[!is.na(x)]), fixed = TRUE)
+  value <- value[grepl(valid, value, perl = TRUE)]
+  at <- regexpr(known_pattern, value, perl = TRUE)
+  known <- ifelse(at > 0, substr(value, 1L, at + attr(at, "match.length") - 1L), "")
+  known <- known[nzchar(known)]
+  full <- nchar(known) >= 10L
+  real <- !full | !is.na(as.Date(substr(known, 1L, 10L), format = "%Y-%m-%d"))
+  known <- known[real]
+  if (length(known) == 0) {
+    return(NA_character_)
+  }
+  ordered <- sort(known, method = "radix")
+  if (want_max) ordered[length(ordered)] else ordered[1L]
 }
 
 #' Compute a per-group aggregate for a grouped Operations binding
@@ -269,6 +307,9 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
   # operation, which is what `[[` on a named atomic vector would do.
   rf <- dm$data$RFSTDTC[match(usubjid, dm$data$USUBJID)]
   rf <- as.character(rf)
+  if (engine_is_core1()) {
+    rf <- core1_dy_reference(current_dataset$data, target_vals)
+  }
 
   # Worked out once per distinct (date, reference date) pair and indexed back
   # out: 1.2 million QS rows hold a few thousand such pairs, and doing the
@@ -322,6 +363,39 @@ compute_dy <- function(op, study, current_dataset, current_domain) {
     }
   }
   per_row_binding(day[pos])
+}
+
+#' RFSTDTC for CORE 1.0's study day, refusing what its SQL refuses
+#'
+#' 1.0 reads both dates from the row being checked, which carries DM's RFSTDTC
+#' from the rule's merge (day_data_validator.py): with a subject twice in DM,
+#' each row has its own. Without the column it raises, and `TO_DATE()` raises
+#' on any value shaped like a date that is no date (2014-02-30), which ends the
+#' rule for the dataset. Answered instead, rows were reported for a rule 1.0
+#' never ran.
+#'
+#' @param dt The dataset being checked, after its Match Datasets merge.
+#' @param target The target dates, one per row.
+#' @return RFSTDTC as text, one per row.
+#' @noRd
+core1_dy_reference <- function(dt, target) {
+  if (!"RFSTDTC" %in% names(dt)) {
+    stop("needs RFSTDTC on each record, which CORE 1.0 takes from the DM merge", call. = FALSE)
+  }
+  rf <- as.character(dt$RFSTDTC)
+  iso <- "^\\d{4}(-\\d{2}(-\\d{2}([T ]\\d{2}(:\\d{2}(:\\d{2}(\\.\\d+)?)?)?(Z|[+-]\\d{2}:?\\d{2})?)?)?)?$"
+  for (x in list(target, rf)) {
+    x <- x[!is.na(x) & grepl(iso, x, perl = TRUE)]
+    day <- substr(x, 1L, 10L)
+    full <- nchar(day) == 10L
+    bad <- day[full][is.na(as.Date(day[full], format = "%Y-%m-%d"))]
+    month <- substr(x[nchar(day) >= 7L], 6L, 7L)
+    if (length(bad) > 0 || any(!month %in% sprintf("%02d", 1:12))) {
+      stop("a date is not a real date (", c(bad, x[nchar(day) >= 7L][!month %in% sprintf("%02d", 1:12)])[1],
+           "), and CORE 1.0 stops the rule on it", call. = FALSE)
+    }
+  }
+  rf
 }
 
 #' Compute a max_date/max or min_date Operations binding
@@ -1583,7 +1657,9 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       if (!core1) column <- toupper(trimws(as.character(column)))
       by_domain <- list()
       for (i in seq_along(domains)) {
-        if (nzchar(domains[i]) && (!core1 || is.null(by_domain[[domains[i]]]))) {
+        # Every file of a split domain: 1.0 reads the domain's merged table, so
+        # a column only LB2 has is LB's (CORE-000712 reported it as unknown).
+        if (nzchar(domains[i])) {
           vars <- toupper(names(study$datasets[[i]]$data))
           by_domain[[domains[i]]] <- unique(c(by_domain[[domains[i]]], vars[!startsWith(vars, ".")]))
         }
@@ -1659,6 +1735,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       # package it cites. Static otherwise, answering from the version the
       # study declares, which is how CORE-000929 now asks for the DOMAIN
       # codelist's term codes.
+      per_row <- NULL
       row_specific <- !is.null(op$version) &&
         isTRUE(as.character(op$version)[[1]] %in% names(current_dataset$data))
       if (row_specific) {
@@ -1674,13 +1751,15 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
             call. = FALSE
           )
         }
+        # Rows citing different versions answer each from its own, as the
+        # reference does row by row (CORE-001080 on a TS naming several). A row
+        # citing a package it does not hold (UNII, ISO 8601) gets nothing there
+        # either, and the rule's own condition leaves such rows out.
         if (length(bundled) > 1) {
-          stop(
-            "rows cite more than one controlled terminology version (",
-            paste(bundled, collapse = ", "), "), so there is no single set to ",
-            "check against",
-            call. = FALSE
-          )
+          sets <- lapply(stats::setNames(nm = bundled), function(p) {
+            ct_package_attribute(p, op$ct_attribute %||% "Term CCODE", op$ct_conditions)
+          })
+          per_row <- per_row_binding(lapply(pkgs, function(p) if (p %in% bundled) sets[[p]] else character(0)))
         }
       } else {
         bundled <- study$ct_package
@@ -1693,7 +1772,7 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
                call. = FALSE)
         }
       }
-      scalar_binding(ct_package_attribute(
+      per_row %||% scalar_binding(ct_package_attribute(
         bundled, op$ct_attribute %||% "Term CCODE", op$ct_conditions
       ))
     },
@@ -1922,6 +2001,12 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         # sdtm_domain_classes.rds's "SPECIAL PURPOSE") before comparing.
         model_class <- normalize_class(.coreval_env$model_variables$class)
         allowed <- .coreval_env$model_variables$variable[model_class == normalize_class(cls)]
+        # Findings About carries the Findings class's variables too, FATESTCD
+        # and FAORRES among them (get_allowed_class_variables()).
+        if (identical(normalize_class(cls), normalize_class("FINDINGS ABOUT"))) {
+          allowed <- unique(c(allowed, .coreval_env$model_variables$variable[
+            model_class == normalize_class("Findings")]))
+        }
         # Some classes (Special-Purpose, Relationship, Trial Design, Study
         # Reference) have NO generic class-level variable list in the Model
         # at all - each domain in them (DM, RELREC, TA, TI, ...) defines its

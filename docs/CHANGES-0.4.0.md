@@ -420,3 +420,24 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     dataset stops the read again; only valid JSON with no dataset keys is left out.
   - "must not be present" findings are wrong values and "must be present" ones
     missing required. An all-missing data frame column no longer stops CORE-000362.
+  - 1.0 rules take a dataset's domain from its file name, as 1.0 does everywhere:
+    an ae.xpt whose DOMAIN was mistyped was judged as another domain.
+  - 1.0's SUPP and child links follow its engine: RDOMAIN to DOMAIN as written,
+    IDVAR in any case, a parent with no rows, and every qualifier kept when two
+    rows describe one record.
+  - 1.0's study day reads RFSTDTC from the merged row and stops on a date that is
+    no date; its earliest and latest dates compare as ISO text, so a partial date
+    sorts as the start of its period.
+  - Trailing tabs and line breaks in transport text are dropped, as both engines
+    drop them.
+  - A transport file with every label blank is checked for labels (CORE-000398);
+    only a data frame made in R is excused.
+  - A 1.0 grouped value on a dataset without the group column is empty, as in 1.0
+    (CORE-000168), and a TS citing several terminology versions answers per row.
+  - Findings About takes the Findings class variables (CORE-000550); Special
+    Purpose, Trial Design and Relationship datasets take the guide's list alone
+    (CORE-001082).
+  - A sort check whose sort column is missing is skipped, and a strict sort check
+    in CDISC's engine passes a target of spaces.
+  - `check_study()` explains a hand-built study it cannot use, and
+    `write_findings(tracking =)` must be TRUE or FALSE.

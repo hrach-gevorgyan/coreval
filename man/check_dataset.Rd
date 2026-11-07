@@ -51,8 +51,8 @@ follows, e.g. \code{"sdtmct-2026-03-27"}. Rules that ask whether a value is a
 legal term need this, and are skipped with a reason without it - coreval
 will not pick a version for you, because terminology changes between
 releases and judging a study against one it never declared would both
-invent violations and hide real ones. Every published package is bundled;
-\code{list_ct_packages()} shows them.}
+invent violations and hide real ones. Every package CDISC's engine carries,
+from 2014 on, is bundled; \code{list_ct_packages()} shows them.}
 
 \item{substandard}{For \code{standard = "TIG"} only, and required there:
 whether the tobacco study is \code{"SDTM"} (clinical), \code{"SEND"} (nonclinical)

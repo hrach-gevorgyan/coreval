@@ -195,6 +195,15 @@ apply_supp_match <- function(dataset, supp_dataset) {
   static_keys <- if (core1) c("STUDYID", "USUBJID") else c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
   idvar_of <- if ("IDVAR" %in% names(supp)) trimws(as.character(supp$IDVAR)) else rep("", nrow(supp))
   idvar_of[is.na(idvar_of)] <- ""
+  if (core1 && "IDVAR" %in% names(supp)) {
+    # 1.0 names the parent column with IDVAR as PostgreSQL does, whatever its
+    # case ("aeseq" is AESEQ), and with a leading space as no column at all.
+    raw <- sub(" +$", "", as.character(supp$IDVAR))
+    raw[is.na(raw)] <- ""
+    upper_cols <- toupper(names(left))
+    found <- match(toupper(raw), upper_cols)
+    idvar_of <- ifelse(is.na(found), raw, names(left)[found])
+  }
 
   # CORE 1.0's SUPP merge (merges/supp.py) takes every distinct IDVAR as a
   # parent column it requires, so outside SUPPDM a blank IDVAR asks for a
@@ -208,6 +217,15 @@ apply_supp_match <- function(dataset, supp_dataset) {
     }
   }
   if (engine_is_core1()) {
+    # supp.py's _validate_merge: without these on each side the merge raises.
+    # Joined anyway, a SUPP without RDOMAIN linked on subject and IDVAR alone.
+    parent_dm <- identical(toupper(unique(left$DOMAIN)[1]), "DM")
+    need_supp <- c("STUDYID", "RDOMAIN", "USUBJID", if (!parent_dm) c("IDVAR", "IDVARVAL"))
+    absent <- c(setdiff(need_supp, names(supp)), setdiff(c("STUDYID", "DOMAIN", "USUBJID"), names(left)))
+    if (length(absent) > 0) {
+      stop("Match Datasets: the supplemental merge needs ", paste(unique(absent), collapse = ", "),
+           ", which is not there", call. = FALSE)
+    }
     clash <- intersect(unique(as.character(supp$QNAM)), setdiff(names(left), ".coreval_row_id"))
     if (length(clash) > 0) {
       stop("the supplemental qualifier ", paste(clash, collapse = ", "),
@@ -219,7 +237,7 @@ apply_supp_match <- function(dataset, supp_dataset) {
     keys <- intersect(intersect(static_keys, names(left)), names(pivoted))
     left_key <- lapply(keys, function(k) key_text(left[[k]]))
     right_key <- lapply(keys, function(k) key_text(pivoted[[k]]))
-    if (core1 && all(c("DOMAIN", "RDOMAIN") %in% c(names(left), names(pivoted)))) {
+    if (core1) {
       left_key <- c(left_key, list(key_text(left$DOMAIN)))
       right_key <- c(right_key, list(key_text(pivoted$RDOMAIN)))
     }
@@ -240,11 +258,18 @@ apply_supp_match <- function(dataset, supp_dataset) {
     if (length(left_key) == 0) {
       next
     }
-    at <- match(do.call(paste, c(left_key, sep = "\x1f")),
-                do.call(paste, c(right_key, sep = "\x1f")))
-    qnams <- setdiff(names(pivoted), c(static_keys, "RDOMAIN", "IDVAR", "IDVARVAL"))
+    left_str <- do.call(paste, c(left_key, sep = "\x1f"))
+    right_str <- do.call(paste, c(right_key, sep = "\x1f"))
+    # Never a qualifier: an identifier the pivot kept but the key does not use
+    # (POOLID beside a 1.0 key of STUDYID and USUBJID) became a parent column.
+    qnams <- setdiff(names(pivoted), c(static_keys, "STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID",
+                                       "RDOMAIN", "IDVAR", "IDVARVAL"))
     for (q in qnams) {
-      vals <- pivoted[[q]][at]
+      # Per qualifier, from the rows that hold it: two pivot rows for one
+      # record (differing in SPDEVID, or in how IDVARVAL is written) each carry
+      # some of its QNAMs, and taking the first row lost the other's.
+      holds <- which(!is.na(pivoted[[q]]))
+      vals <- pivoted[[q]][holds][match(left_str, right_str[holds])]
       if (q %in% names(left)) {
         vals <- ifelse(is.na(left[[q]]), vals, left[[q]])
       }
@@ -383,7 +408,9 @@ apply_child_match <- function(dataset, study, keys) {
     # reaches the caller's dataset.
     sub[[row_id]] <- idx
     parent <- domain_dataset(study, rd[idx[1]])
-    if (is.null(parent) || nrow(parent$data) == 0) {
+    # 1.0's LEFT join onto a parent with no rows still gives the child the
+    # parent's columns, empty, so CORE-000206 reports every record of it.
+    if (is.null(parent) || (nrow(parent$data) == 0 && !core1)) {
       # No parent to join: the row keeps only its own columns, exactly as
       # before. rbindlist(fill = TRUE) below pads the parent columns.
       pieces[[gi]] <- sub
@@ -399,6 +426,13 @@ apply_child_match <- function(dataset, study, keys) {
     if (use_iv) {
       right_cols <- c(right_cols, iv)
       left_cols <- c(left_cols, "IDVARVAL")
+    }
+    # And RDOMAIN to the parent's DOMAIN, as written (child.py,
+    # _perform_relational_join): an RDOMAIN of "ae", or a parent whose DOMAIN
+    # is not AE, links to nothing there and was linked here.
+    if (core1 && "RDOMAIN" %in% names(sub) && "DOMAIN" %in% names(p_data)) {
+      right_cols <- c(right_cols, "DOMAIN")
+      left_cols <- c(left_cols, "RDOMAIN")
     }
 
     if (length(right_cols) == 0) {

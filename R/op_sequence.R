@@ -25,8 +25,11 @@ register_operator("does_not_have_next_corresponding_record", function(ctx) {
   within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
   ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$wildcard)
   dt <- ctx$dataset$data
-  if (!all(c(within_col, ordering_col) %in% names(dt))) {
-    return(rep(FALSE, ctx$n))
+  # CDISC's engine sorts by these and fails on a column that is not there.
+  # FALSE here was a clean answer from a rule that never ran (CORE-000352).
+  absent <- setdiff(c(within_col, ordering_col), names(dt))
+  if (length(absent) > 0) {
+    stop("sorts by ", paste(absent, collapse = ", "), ", which the dataset does not have", call. = FALSE)
   }
   group <- dt[[within_col]]
   ord <- sequence_sort_key(dt[[ordering_col]])
@@ -63,7 +66,7 @@ register_operator("empty_within_except_last_row", function(ctx) {
   ordering_col <- resolve_var_name(ctx$condition$ordering, ctx$wildcard)
   dt <- ctx$dataset$data
   if (!(ordering_col %in% names(dt))) {
-    return(rep(FALSE, ctx$n))
+    stop("sorts by ", ordering_col, ", which the dataset does not have", call. = FALSE)
   }
   group <- ctx$value
   ord <- sequence_sort_key(dt[[ordering_col]])
@@ -157,7 +160,9 @@ register_operator("target_is_not_sorted_by", function(ctx) {
     # 1.5 and "abc" fail the row (target_null | target_num == position). 1.0
     # casts to an integer: a number rounds, and text that is no whole number
     # ends the rule.
-    blank <- is_blank(target)
+    # CDISC's _strict_incremental_check strips before testing for blank, so
+    # "  " passes there. 1.0 casts the text, and "  " is no whole number.
+    blank <- is_blank(if (is.character(target) && !engine_is_core1()) trimws(target) else target)
     tv <- suppressWarnings(as.numeric(as.character(target)))
     if (engine_is_core1()) {
       bad <- if (is.numeric(target)) FALSE else !blank & (is.na(tv) | tv != round(tv))

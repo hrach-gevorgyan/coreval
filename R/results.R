@@ -191,6 +191,8 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   # without matching the reference's exact element ORDER byte-for-byte.
   format_binding_value <- function(x, set = FALSE) {
     if (is.list(x)) x <- x[[1]]
+    # 200000, not 2e+05, in a single value and in a set alike.
+    if (is.numeric(x)) x <- ifelse(is.na(x), NA_character_, json_text(x))
     if (length(x) != 1 || isTRUE(set)) {
       return(paste0("[", paste(sprintf("'%s'", x), collapse = ", "), "]"))
     }
@@ -582,6 +584,16 @@ check_study <- function(study, standard = NULL, version = NULL,
       call. = FALSE
     )
   }
+  # A list of data frames is the natural thing to build by hand, and it died
+  # deep inside with "the condition has length > 1".
+  # Empty is allowed: a folder holding only a define.xml is checked in part.
+  shaped <- is.list(study$datasets) && (length(study$datasets) == 0 || (!is.null(names(study$datasets)) &&
+    all(vapply(study$datasets, function(d) is.list(d) && is.data.frame(d$data), logical(1)))))
+  if (!shaped) {
+    stop("`study$datasets` must be a named list of datasets, each list(data = <data frame>, ",
+         "meta = ...), as read_study() returns. Read a folder with read_study(), or check one ",
+         "data frame with check_dataset().", call. = FALSE)
+  }
   require_standard(standard, study$standard$product)
   # Applied before the terminology is resolved: the family (sdtmct or
   # sendct) follows the standard, and a SEND study checked with
@@ -937,7 +949,11 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
           findings$Record <- NA_integer_
         }
         findings <- fold_value_rows(findings)
-        if (rule_groups_by_variable(rule)) {
+        # Only where every variable came out as one record (CORE-002062).
+        # CORE-002061 numbers them by position already, as the other variable
+        # rules do, and renumbering moved AETERM from record 6 to 1.
+        if (rule_groups_by_variable(rule) && length(unique(findings$Record)) == 1L &&
+              sum(findings$Variable == "variable_name") > 1L) {
           # Each variable's first row is record 1, so all of them looked like
           # one record. Numbered like the variable table the other rules use.
           findings$Record <- cumsum(findings$Variable == "variable_name")

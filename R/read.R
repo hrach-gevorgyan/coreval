@@ -175,8 +175,11 @@ read_study_folder <- function(path, skip = character(0)) {
             ". Transport files win, then SAS datasets, then Dataset-JSON.", call. = FALSE)
   }
   # The file's size on disk, which CORE-000765 measures against 5 GB.
+  # A submission file's labels are what it holds, blank or not; see
+  # assert_labels_available().
   for (i in seq_along(datasets)) {
     datasets[[i]]$file_size <- unname(file.size(files[[i]]))
+    datasets[[i]]$submitted <- TRUE
   }
   datasets <- datasets[keep]
   names(datasets) <- keys[keep]
@@ -445,6 +448,19 @@ read_sas_file <- function(path) {
   if (xpt) {
     lengths <- xpt_declared_lengths(path)
     if (length(lengths) == ncol(out)) attr(out, "coreval_lengths") <- lengths
+    # Both engines strip all trailing whitespace from transport text (pandas'
+    # `rstrip()`, CORE 1.0's `_TRAILING_WHITESPACE`); haven strips spaces only.
+    # A datetime ending in a tab was not a date here and was one there.
+    for (j in seq_along(out)) {
+      col <- out[[j]]
+      if (is.character(col)) {
+        ends <- grepl("[\t\n\r\v\f]$", col, perl = TRUE)
+        if (any(ends)) {
+          col[ends] <- sub("[ \t\n\r\v\f]+$", "", col[ends], perl = TRUE)
+          out[[j]] <- col
+        }
+      }
+    }
   }
   # Stored SAS dates are numbers, which haven hands back as dates; see
   # build_dataset_from_data_frame().

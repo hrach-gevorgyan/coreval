@@ -241,6 +241,18 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
         return(NULL)
       }
       resolved <- resolve_binding(binding, dataset)
+      # CORE 1.0 reads a group column the dataset lacks as NULL, so each row
+      # takes the value of the group whose key is NULL, usually none
+      # (_join_group_values). Refused here, CORE-000168 skipped a PT that 1.0
+      # reports in full.
+      missing_groups <- setdiff(binding$group_cols, names(dataset$data))
+      if (is.null(resolved) && engine_is_core1() && identical(binding$kind, "grouped") &&
+            length(missing_groups) > 0) {
+        padded <- dataset
+        padded$data <- data.table::copy(dataset$data)
+        for (g in missing_groups) data.table::set(padded$data, j = g, value = rep(NA_character_, nrow(padded$data)))
+        resolved <- resolve_binding(binding, padded)
+      }
       # CORE 1.0 compares with a computed value that came out empty as with a
       # blank: equal_to is FALSE, and not_equal_to is TRUE for a filled target
       # (equal_to_operator.py truth table; _is_empty_sql_operation_variable).
@@ -922,6 +934,11 @@ assert_labels_available <- function(rule, study, domain) {
         !("variable_label" %in% collect_check_names(rule$check))) {
     return(invisible(NULL))
   }
+  # Only for data built in R. A transport file with every label blank is a
+  # submission with blank labels, which CORE 1.0 reports (CORE-000398).
+  if (isTRUE(study$datasets[[domain]]$submitted)) {
+    return(invisible(NULL))
+  }
   labels <- study$datasets[[domain]]$meta$label
   if (is.null(labels) || all(is.na(labels) | !nzchar(trimws(labels)))) {
     stop(
@@ -1461,7 +1478,10 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
   # or its parent's domain), and domain_class() knows it. Looked up in the
   # domain table alone, SUPPAE was taken for a sponsor's domain and given no
   # Library fields, and CORE 1.0's CORE-001082 was refused on every SUPP.
-  is_custom <- !is.null(domain) && is.na(domain_class(domain))
+  # A split part (LB1) belongs to its domain: 1.0 derives LB from the name,
+  # and a split LB was refused here as a sponsor's domain.
+  class_key <- if (!is.null(domain) && engine_is_core1()) unname(core1_derive_domain(toupper(domain))) else domain
+  is_custom <- !is.null(domain) && is.na(domain_class(class_key))
 
   if (!is.null(study) && !is_custom) {
     # Always present the library_* columns, even when nothing resolves, so
@@ -1476,7 +1496,7 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
     data$library_variable_data_type <- blank
     data$library_variable_core <- blank
 
-    lib <- library_variables_for(study, domain)
+    lib <- library_variables_for(study, class_key)
     i <- rep(NA_integer_, n_vars)
     if (nrow(lib) > 0) {
       lib <- lib[!duplicated(lib$variable), ]
@@ -1495,6 +1515,16 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
     # the Model specifies. Only fills gaps - the IG always wins where it
     # has an entry.
     model <- model_variables_for(domain, real_dataset)
+    # CORE 1.0 takes the Model only for the four observation classes and for
+    # a custom domain (get_variables_metadata_from_standard): a Special
+    # Purpose, Trial Design or Relationship dataset has the guide's own list
+    # alone. Filled from the Model, SE's SEENRTPT and SEDY looked defined and
+    # CORE-001082 missed them.
+    if (engine_is_core1() && nrow(lib) > 0 &&
+          !normalize_class(dataset_class(real_dataset, domain)) %in%
+            normalize_class(c("EVENTS", "INTERVENTIONS", "FINDINGS", "FINDINGS ABOUT"))) {
+      model <- model[0, ]
+    }
     if (nrow(model) > 0) {
       m <- match(meta$variable, model$variable)
       fill <- is.na(i) & !is.na(m)
