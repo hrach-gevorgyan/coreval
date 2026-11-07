@@ -117,6 +117,32 @@ def env_file(data_dir):
     return next(iter(glob.glob(os.path.join(data_dir, "*.env"))), None)
 
 
+# The standard a fixture with no .env is run under when --assume-env is given:
+# the first of these the rule names. SENDIG-DART 1.2 comes after 1.1 because
+# the engine's offline cache holds no library metadata for 1.2.
+ASSUMED = ["SENDIG 3.1", "SENDIG 3.1.1", "SENDIG 3.0", "SENDIG-DART 1.1", "SENDIG-DART 1.2",
+           "SENDIG-GENETOX 1.0", "SENDIG-AR 1.0", "SDTMIG 3.4", "SDTMIG 3.3", "SDTMIG 3.2"]
+
+
+def assumed_env(rule_yml, data_dir, scratch, tag):
+    """A copy of data_dir with an .env naming a standard the rule targets, or None."""
+    import shutil
+    import yaml
+    rule = yaml.safe_load(io.open(rule_yml, encoding="utf-8"))
+    named = {"%s %s" % (s.get("Name"), s.get("Version"))
+             for a in rule.get("Authorities") or [] for s in a.get("Standards") or []}
+    pick = next((p for p in ASSUMED if p in named), None)
+    if pick is None:
+        return None, None
+    copy = os.path.join(scratch, "assumed-env", tag)
+    shutil.rmtree(copy, ignore_errors=True)
+    shutil.copytree(data_dir, copy)
+    product, version = pick.split(" ")
+    with io.open(os.path.join(copy, ".env"), "w", encoding="utf-8") as f:
+        f.write("PRODUCT=%s\nVERSION=%s\n" % (product, version.replace(".", "-")))
+    return copy, pick
+
+
 def save(report):
     """Merge this run into the artifact rather than replacing it.
 
@@ -137,7 +163,10 @@ def main():
     # The scoreboard has no upstream folder, and a rule's folder is not always
     # its id: FDA.SENDIG.FB6507's data lives in FB6507, beside a same-named
     # directory holding only a rule.yml. Find the folder that has the cases.
-    wanted = sys.argv[1:] or [k for k, v in board.items() if v["status"] == "FAIL"]
+    args = sys.argv[1:]
+    assume = "--assume-env" in args
+    args = [a for a in args if a != "--assume-env"]
+    wanted = args or [k for k, v in board.items() if v["status"] == "FAIL"]
     commit = engine_commit()
     report, scratch = {}, os.path.join("tests", "conformance", ".engine-out")
     os.makedirs(scratch, exist_ok=True)
@@ -161,6 +190,11 @@ def main():
             data = os.path.join(case, "data")
             sheet = records(os.path.join(case, "results", "results.csv"))
             env = env_file(data)
+            assumed = None
+            if env is None and assume:
+                data, assumed = assumed_env(ymls[0], data, scratch,
+                                            ("%s_%s" % (rule_id, label)).replace("/", "_"))
+                env = env_file(data) if data else None
             if env is None:
                 cases.append({"case": label, "engine": None, "sheet": sheet,
                               "note": "fixture ships no .env; CDISC's own test.py requires one"})
@@ -177,6 +211,9 @@ def main():
             note = None
             if engine is None:
                 note = "engine wrote no output: " + ((run.stdout or "") + (run.stderr or ""))[-200:]
+            if assumed:
+                # Never let an assumed declaration read as the fixture's own.
+                note = "fixture ships no .env; run as %s%s" % (assumed, "; " + note if note else "")
             cases.append({"case": label, "engine": engine, "sheet": sheet, "note": note})
 
         ran = [c for c in cases if c["engine"] is not None]

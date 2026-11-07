@@ -134,10 +134,12 @@ matters.
 written for Findings now also run on Findings About domains, as the reference
 runs them, so the fixture's FA is checked for the first time. Its positive case
 puts the text `<5` in `FASTRESN`, a column `_variables.csv` declares numeric.
-The reference reads that cell as a missing number; coreval keeps text in a
-numeric column as text, on purpose, because in a submission that text is itself
-the problem. A transport file cannot hold text in a numeric variable, so this
-difference exists only in CSV fixtures.
+CDISC's engine at the pinned commit cannot load that file: it stops on FA with
+"could not convert string to float: '<5'" and checks nothing there. coreval
+keeps text in a numeric column as text, on purpose, because in a submission
+that text is itself the problem. A transport file cannot hold text in a numeric
+variable, so this difference exists only in CSV fixtures. On `negative/01`,
+which the engine can read, it reports EG 1-5 and FA 1-3, and so does coreval.
 
 **FDA.SENDIG.FB6505** (the define declares LB with data, and there is no LB).
 The ten define-based presence rules could not fire before. This one's positive
@@ -192,10 +194,9 @@ fourteen. The committed `results.csv` differs from coreval's answer on every one
 | CORE-000866 | `{1,3,5,6}` | `{}` |
 | CORE-000884 | `{2,3,4}` | `{}` |
 
-Two of them the engine cannot run: neither CORE-000554 (`SENDIG-DART 1.1`) nor
-CORE-000652 (`SENDIG-GENETOX 1.0`) ships a `.env`, so the standard is never
-declared and the run never starts. CORE-000554's sheet is stale on signature
-anyway. CORE-000652 is the one published rule in the unadjudicated set.
+Two of them ship no `.env`: CORE-000554 (`SENDIG-DART`) and CORE-000652
+(`SENDIG-GENETOX 1.0`), so `test.py` cannot run them as published. Run with one
+supplied, the engine agrees with coreval on both (see below).
 
 #### Rules CDISC changed without updating the answer sheet
 
@@ -213,19 +214,52 @@ CDISC.SENDIG.190.1B, an unpublished rule that already failed, reports records 5,
 and 7 where it reported 5, for the same whole-group change. It ships no `.env`, so
 the engine cannot settle it.
 
-#### The 8 nobody can currently settle
+#### Fixtures with no `.env`, run with one supplied
 
-For these the engine cannot run the fixture and the sheet does not contradict
-its own data, so neither side can be shown wrong. They are not claimed as
-stale sheets and not conceded as coreval defects. They are open.
+These fixtures declare no standard, so CDISC's `test.py` cannot run them.
+`compare_engine.py --assume-env` copies such a case and adds an `.env` naming
+the first standard the rule lists that the engine's offline cache holds (the
+cache has no SENDIG-DART 1.2, so DART rules run as 1.1). The assumed standard
+is written into each case's note in `engine_comparison.json`, so it cannot be
+mistaken for the fixture's own.
 
-| rule | source |
-|---|---|
-| CORE-000652 | published |
-| FDA.SDTMIG.FB0801, FB0802, FB3211 | FDA business rules, draft |
-| CDISC.SENDIG.71, 153, 318, 359 | SENDIG draft |
+| rule | run as | the engine reports, as coreval does | the sheet says |
+|---|---|---|---|
+| CORE-000554 | SENDIG-DART 1.1 | nothing | SJ 5 |
+| CORE-000652 | SENDIG-GENETOX 1.0 | GV 7 | GV 5, 6 |
+| FDA.SDTMIG.FB0801 | SENDIG 3.1 | EX 1, 56 in `negative/01` | EX 1 |
+| FDA.SDTMIG.FB0802 | SENDIG 3.1 | EX 54, 55 | EX 54, 55, 56 |
+| FDA.SDTMIG.FB3211 | SENDIG 3.1 | DS 5, MH 2, ML 4 | BE 6, 7, DS 5, MH 2, ML 3 |
+| CDISC.SENDIG.71 | SENDIG 3.1 | VS 2, 4, 30 | DS 5, 6 |
+| CDISC.SENDIG.153 | SENDIG 3.1 | BG 1, 3, 4, 6, 7 | BG 3 |
+| CDISC.SENDIG.190.1B | SENDIG 3.1 | OM 5-7 in `positive/03`, OM 3-5 in `positive/04` and `negative/01` | nothing, nothing, OM 5 |
 
-What would settle them is a `.env` in the fixture, which is upstream's to add.
+Two cannot be settled that way, and differ for a reason that does not depend on
+either engine.
+
+**CDISC.SENDIG.359.** The fixture's header is `STUDYID ,DOMAIN ,...`, with
+trailing spaces. CDISC's engine takes a dataset's domain from the first
+record's `DOMAIN` column (`sdtm_dataset_metadata.py`, `domain`), finds none, and
+reads `--RPDY` as `RPDY`, which no dataset has; an `any` branch that raises
+counts as no match, so EX record 4 (`EXRPDY` = -2.2) is missed. coreval trims
+column names and reports EX 1-4. With the header spaces removed, the engine
+reports EX 1-4 too, and DS 1-4 and LB 1-4 as coreval does. The sheet's EX 5 and
+6 cite `EXRPSTDY` and `EXRPENDY`, which the Check does not read.
+
+**CDISC.SENDIG.318.** The engine cannot load the fixture: DM declares
+`ACTARMCD` twice ("All arrays must be of the same length"), and DS and LB hold
+`a`, `b` and `yesterday` in `--NOMDY`, which `_variables.csv` declares numeric.
+coreval reports DS 1, 2 and LB 1, 3, 5, 6, 7 on `negative/02`; each of those
+values (`a`, `b`, `yesterday`, `1.5`, `0`, `01`, `-0`) fails the rule's
+pattern `^-?[1-9]{1}\d*$`. The sheet's LB 3, 5, 7 is what a numeric reading
+gives (`01` becomes 1, `-0` becomes 0, the text is unreadable), and it records
+record 7's value as `0` where the file says `-0`. As with CORE-000732, the
+difference is text in a numeric column, which only a CSV can hold.
+
+**FDA.SENDIG.FB6505** runs only with two changes to a copy: its `rule.yml`
+has no `Core: Id`, so the engine selects no rule, and the engine reads a define
+only from a file named `define.xml`. With both, it reports the STUDY finding on
+`positive/02` and `negative/01`, which is what coreval reports.
 
 #### Why the sheets drift
 
