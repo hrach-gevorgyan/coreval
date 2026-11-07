@@ -305,3 +305,43 @@ test_that("a 1.0 rule reads the SDTM Model its guide links to (CORE-000550)", {
   expect_true("SPTOBID" %in% .coreval_env$model_variables$variable)
   restore()
 })
+
+test_that("AGE and AGETXT both given in TS are reported (CORE-000736)", {
+  ts <- function(codes, vals) {
+    data.frame(STUDYID = "S1", DOMAIN = "TS", TSSEQ = 1, TSPARMCD = codes, TSPARM = codes,
+               TSVAL = vals, stringsAsFactors = FALSE)
+  }
+  both <- study_dir(list(DM = dm_rows, TS = ts(c("TITLE", "AGE", "AGETXT"), c("A trial", "40", "18-65"))))
+  age_only <- study_dir(list(DM = dm_rows, TS = ts(c("TITLE", "AGE"), c("A trial", "40"))))
+  on.exit(unlink(c(both, age_only), recursive = TRUE))
+  hits <- found(suppressWarnings(check_study(both, standard = "SDTMIG", version = "3.4")), "CORE-000736")
+  expect_setequal(unique(hits$Record), c(2, 3))
+  expect_setequal(hits$Value[hits$Variable == "TSPARMCD"], c("AGE", "AGETXT"))
+  clean <- found(suppressWarnings(check_study(age_only, standard = "SDTMIG", version = "3.4")), "CORE-000736")
+  expect_equal(nrow(clean), 0)
+})
+
+test_that("a PPCAT naming no related PCTEST is reported through RELREC (CORE-000901)", {
+  # The SDTMIG's dataset-level PK relationship: PC and PP records of a subject
+  # are related where PCGRPID equals PPGRPID.
+  pc <- data.frame(STUDYID = "S1", DOMAIN = "PC", USUBJID = "S1-1", PCSEQ = c(1, 2),
+                   PCGRPID = c("DRUGX", "METX"), PCTESTCD = c("DRUGX", "METX"),
+                   PCTEST = c("Drug X", "Metabolite X"), PCRFTDTC = "2020-01-02T07:00",
+                   stringsAsFactors = FALSE)
+  pp <- function(cat) {
+    data.frame(STUDYID = "S1", DOMAIN = "PP", USUBJID = "S1-1", PPSEQ = c(1, 2),
+               PPGRPID = c("DRUGX", "METX"), PPTESTCD = "CMAX", PPTEST = "Max Conc",
+               PPCAT = cat, PPRFTDTC = "2020-01-02T07:00", stringsAsFactors = FALSE)
+  }
+  relrec <- data.frame(STUDYID = "S1", RDOMAIN = c("PC", "PP"), USUBJID = "",
+                       IDVAR = c("PCGRPID", "PPGRPID"), IDVARVAL = "", RELTYPE = c("ONE", "MANY"),
+                       RELID = "PKREL", stringsAsFactors = FALSE)
+  bad <- study_dir(list(DM = dm_rows, PC = pc, PP = pp(c("Drug X", "Metab X")), RELREC = relrec))
+  good <- study_dir(list(DM = dm_rows, PC = pc, PP = pp(c("Drug X", "Metabolite X")), RELREC = relrec))
+  on.exit(unlink(c(bad, good), recursive = TRUE))
+  hits <- found(suppressWarnings(check_study(bad, standard = "SDTMIG", version = "3.4")), "CORE-000901")
+  expect_equal(unique(hits$Record), 2)
+  expect_equal(hits$Value[hits$Variable == "RELREC.PCTEST"], "Metabolite X")
+  clean <- found(suppressWarnings(check_study(good, standard = "SDTMIG", version = "3.4")), "CORE-000901")
+  expect_equal(nrow(clean), 0)
+})
