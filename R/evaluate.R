@@ -35,6 +35,11 @@ dataset_wildcard <- function(dataset, domain) {
   if (startsWith(up, "AP") && nchar(up) > 2 && !startsWith(up, "APID")) {
     return(substr(up, 3, nchar(up)))
   }
+  # CORE 1.0 resolves an operation's "--" with the domain it derives from the
+  # file name (sql_rule_processor.py: `domain=dataset_metadata.domain`).
+  if (engine_is_core1()) {
+    return(unname(core1_derive_domain(up)))
+  }
   dom_col <- dataset$data[["DOMAIN"]]
   if (!is.null(dom_col) && length(dom_col) > 0) {
     # Trimmed for the same reason infer_domain() trims: an untrimmed "AE "
@@ -768,6 +773,28 @@ engine_is_core1 <- function() {
   identical(.coreval_env$engine, "core1")
 }
 
+#' A dataset's unsplit name as CORE 1.0 reads it: `_get_unsplit_name()`
+#' @param ds One lower-case dataset name.
+#' @return The lower-case unsplit name.
+#' @noRd
+core1_unsplit_name <- function(ds) {
+  if (startsWith(ds, "relrec")) return("relrec")
+  stem <- sub("[0-9]+$", "", ds)
+  if (nzchar(stem) && nchar(stem) < nchar(ds) && grepl("^[a-z]+$", stem)) return(stem)
+  if (!nzchar(stem)) return(ds)
+  if (ds %in% c("relsub", "pooldef", "aprelsub")) return(ds)
+  rest <- ds
+  prefix_length <- 0L
+  repeat {
+    p <- c("supp", "sqap", "sq", "ap")[startsWith(rest, c("supp", "sqap", "sq", "ap"))][1]
+    if (is.na(p)) break
+    prefix_length <- prefix_length + nchar(p)
+    rest <- substring(rest, nchar(p) + 1L)
+  }
+  if (nchar(rest) <= 2 || !grepl("^[a-z]+$", rest)) return(ds)
+  substr(ds, 1L, prefix_length + 2L)
+}
+
 #' A dataset's domain as CORE 1.0 derives it, from its name alone
 #'
 #' A port of `SdtmStandardsContext.derive_domain()` and `_get_unsplit_name()`
@@ -779,23 +806,6 @@ engine_is_core1 <- function() {
 #' @return Upper-case domain codes, one per name.
 #' @noRd
 core1_derive_domain <- function(name) {
-  unsplit <- function(ds) {
-    if (startsWith(ds, "relrec")) return("relrec")
-    stem <- sub("[0-9]+$", "", ds)
-    if (nzchar(stem) && nchar(stem) < nchar(ds) && grepl("^[a-z]+$", stem)) return(stem)
-    if (!nzchar(stem)) return(ds)
-    if (ds %in% c("relsub", "pooldef", "aprelsub")) return(ds)
-    rest <- ds
-    prefix_length <- 0L
-    repeat {
-      p <- c("supp", "sqap", "sq", "ap")[startsWith(rest, c("supp", "sqap", "sq", "ap"))][1]
-      if (is.na(p)) break
-      prefix_length <- prefix_length + nchar(p)
-      rest <- substring(rest, nchar(p) + 1L)
-    }
-    if (nchar(rest) <= 2 || !grepl("^[a-z]+$", rest)) return(ds)
-    substr(ds, 1L, prefix_length + 2L)
-  }
   vapply(tolower(name), function(ds) {
     toupper(if (startsWith(ds, "supp")) {
       substr(ds, 1L, 6L)
@@ -808,7 +818,7 @@ core1_derive_domain <- function(name) {
     } else if (startsWith(ds, "relsub")) {
       "relsub"
     } else if (startsWith(ds, "ap")) {
-      unsplit(ds)
+      core1_unsplit_name(ds)
     } else {
       substr(ds, 1L, 2L)
     })
@@ -1472,8 +1482,8 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
   # no standard to judge its variables against: comparing them to the
   # generic Model would flag every sponsor-specific variable as having the
   # wrong type. The reference draws the same distinction explicitly
-  # (`is_custom_domain`). Confirmed against CORE-001082, whose XY fixture
-  # expects no findings at all.
+  # (`is_custom_domain`). Confirmed against CDISC's CORE-001082, whose XY
+  # fixture expects no findings at all; CORE 1.0's differs, below.
   # A SUPP-- or AP-- dataset is not custom: the Library describes it (SUPPQUAL,
   # or its parent's domain), and domain_class() knows it. Looked up in the
   # domain table alone, SUPPAE was taken for a sponsor's domain and given no
@@ -1482,8 +1492,24 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
   # and a split LB was refused here as a sponsor's domain.
   class_key <- if (!is.null(domain) && engine_is_core1()) unname(core1_derive_domain(toupper(domain))) else domain
   is_custom <- !is.null(domain) && is.na(domain_class(class_key))
+  # CORE 1.0 takes the class from the declared guide, or from a topic
+  # variable (derive_class()). With neither, as for DI under SDTMIG 3.4, it
+  # finds no Model class and the rule fails (get_variables_metadata_from_standard()).
+  version <- study$standard$version
+  if (!is_custom && engine_is_core1() && length(version) == 1 && !is.na(version) &&
+        is.na(dataset_class(real_dataset, domain, list(standard = study$standard$product,
+                                                       version = version)))) {
+    is_custom <- TRUE
+  }
+  # CORE 1.0 does judge a custom domain, against the Model's variables for the
+  # class its topic variable gives it (get_variables_metadata_from_standard),
+  # and its CORE-001082 cases expect XYSEQ and XYDY reported by Model type.
+  # Without such a class it has no Model class to read either.
+  model_only <- is_custom && engine_is_core1() &&
+    normalize_class(dataset_class(real_dataset, domain)) %in%
+      normalize_class(c("EVENTS", "INTERVENTIONS", "FINDINGS", "FINDINGS ABOUT"))
 
-  if (!is.null(study) && !is_custom) {
+  if (!is.null(study) && (!is_custom || model_only)) {
     # Always present the library_* columns, even when nothing resolves, so
     # a rule referencing them can be evaluated (and correctly find nothing)
     # rather than being refused outright. A known domain the Implementation

@@ -188,9 +188,13 @@ class_matches <- function(classes_spec, domain, dataset = NULL, ig = NULL) {
 #' @param dataset The dataset, or `NULL`.
 #' @return A single logical.
 #' @noRd
-domains_match <- function(domains_spec, domain, dataset = NULL) {
+domains_match <- function(domains_spec, domain, dataset = NULL, core1 = FALSE) {
+  # CORE 1.0 matches the file name and the domain it derives from that name,
+  # never the DOMAIN column (sdtm_standards_context.py, within_rule_scope):
+  # apmh.xpt holding DOMAIN = MH is APMH, so `Exclude: [MH]` leaves it in.
   names_ <- unique(c(toupper(domain),
-                     if (!is.null(dataset)) dataset_unsplit_name(dataset, domain)))
+                     if (core1) core1_derive_domain(domain)
+                     else if (!is.null(dataset)) dataset_unsplit_name(dataset, domain)))
   include_exclude_matches(domains_spec, function(pattern) {
     any(vapply(names_, pattern_matches_domain, logical(1), pattern = pattern))
   })
@@ -308,11 +312,11 @@ rule_applies_to_domain <- function(rule, domain, use_case = NULL, dataset = NULL
 #' @noRd
 domains_scope_applies <- function(domains_spec, domain, dataset = NULL, core1 = FALSE) {
   include_split <- domains_spec[["include_split_datasets"]]
-  split <- !is.null(dataset) && dataset_is_split(dataset, domain)
+  split <- !is.null(dataset) && dataset_is_split(dataset, domain, core1)
   included <- is.null(domains_spec$Include) ||
-    domains_match(list(Include = domains_spec$Include), domain, dataset)
+    domains_match(list(Include = domains_spec$Include), domain, dataset, core1)
   excluded <- !is.null(domains_spec$Exclude) &&
-    !domains_match(list(Exclude = domains_spec$Exclude), domain, dataset)
+    !domains_match(list(Exclude = domains_spec$Exclude), domain, dataset, core1)
   if (!is.null(dataset)) {
     if (isTRUE(include_split) && is.null(domains_spec$Include) && !split) {
       included <- FALSE

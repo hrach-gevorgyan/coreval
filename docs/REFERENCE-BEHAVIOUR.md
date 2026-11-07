@@ -145,6 +145,38 @@ an inconvenient result was set aside.
     reported `EXECUTION ERROR` for CORE-000929 and CORE-001081 on the data CDISC
     ships with them. At 1.0.0 CORE-000929 runs all its cases.
 
+**CORE 1.0's `empty_within_except_last_row` has no tiebreak.** It finds a group's
+last record with `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY <ordering>)` alone
+(`empty_within_except_last_row_operator.py`), so of two records sharing the ordering
+value, the one counted as last is whatever the database's sort returns. On an SE
+holding two elements with the same SESTDTC, swapping the two records, or reversing
+the file, changed which one 1.0 reported (CORE-000527), in no consistent direction.
+coreval breaks the tie by file order, so its answer can be reproduced.
+
+**CORE 1.0 orders a dataset of no known domain against an empty list.** For a
+domain the declared SDTMIG version does not define and whose topic variable gives
+no class (DI, SJ, TP, TT under 3.4), its `get_column_order_from_library` returns an
+empty order without consulting the Model, and `is_not_ordered_subset_of` against an
+empty list is always true. CORE-000852 reports such a dataset as out of order even
+when its columns follow SDTM Model 2.0 exactly. coreval skips it: there is no
+order to compare against.
+
+**CORE 1.0 reads pooldef.xpt as domain PO.** It derives a domain from the first two
+letters of a file name, so `get_model_column_order` finds no Model list for "PO",
+returns nothing, and CORE-000550 reports every POOLDEF variable as not allowed,
+although all four are SDTM Model 2.0's POOLDEF variables. Its own CORE-000852 run
+on the same study fails with "Dataset 'po' not found in schema". coreval skips
+the rule there.
+
+**CORE 1.0 relates every record through a RELREC row it cannot resolve.** Its RELREC
+join adds an IDVAR condition only for a variable the dataset has (relrec.py,
+`_build_union_parts`, the `has_column` checks), and ignores the partner's IDVARVAL
+when the record's own is blank. A RELREC row naming a variable its RDOMAIN lacks
+therefore relates every record of that subject to every partner record, and
+CORE-000744, CORE-000757, CORE-000766 and CORE-000767 report records nothing
+relates. coreval relates no record through such a row, since it identifies none.
+SDTM allows neither row, so only data with that error is affected.
+
 **`does_not_have_next_corresponding_record` mislines its answers.** It
 sorts by `ordering` alone, groups by `within`, and assigns the exploded
 results back by position (dataframe_operators.py), so its answers belong to

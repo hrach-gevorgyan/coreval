@@ -192,6 +192,12 @@ apply_supp_match <- function(dataset, supp_dataset) {
   # CORE 1.0 links on these two, DOMAIN to RDOMAIN, and IDVAR (supp.py,
   # _get_linking_clauses).
   core1 <- engine_is_core1()
+  # 1.0's column names have no case (table_schema.py, add_column), so a QNAM
+  # of "aetrtem" fills the parent's AETRTEM, the column the rule reads.
+  if (core1 && any(supp$QNAM != toupper(supp$QNAM), na.rm = TRUE)) {
+    supp <- data.table::copy(supp)
+    data.table::set(supp, j = "QNAM", value = toupper(supp$QNAM))
+  }
   static_keys <- if (core1) c("STUDYID", "USUBJID") else c("STUDYID", "USUBJID", "APID", "POOLID", "SPDEVID")
   idvar_of <- if ("IDVAR" %in% names(supp)) trimws(as.character(supp$IDVAR)) else rep("", nrow(supp))
   idvar_of[is.na(idvar_of)] <- ""
@@ -420,6 +426,21 @@ apply_child_match <- function(dataset, study, keys) {
     k <- intersect(standard_keys, intersect(names(p_data), names(sub)))
     iv <- idvar[idx[1]]
     use_iv <- !blank_val[idx[1]] && !is_blank(iv) && iv %in% names(p_data)
+    unlinked <- FALSE
+    if (core1 && !blank_val[idx[1]] && !is_blank(iv)) {
+      # 1.0 matches IDVARVAL only against an IDVAR some row whose RDOMAIN is
+      # this parent's name carries, finding that column whatever its case
+      # (child.py, _find_idvar_linking_condition). Any other IDVAR links to
+      # nothing; taking the subject's first record matched "aeseq" rows by luck.
+      listed <- unique(idvar[!is.na(rdomain) & as.character(rdomain) == rd[idx[1]]])
+      listed <- listed[toupper(listed) %in% toupper(names(p_data))]
+      found <- names(p_data)[match(toupper(iv), toupper(names(p_data)))]
+      use_iv <- iv %in% listed
+      if (use_iv) {
+        iv <- found
+      }
+      unlinked <- !use_iv && length(listed) > 0
+    }
 
     left_cols <- k
     right_cols <- k
@@ -435,19 +456,35 @@ apply_child_match <- function(dataset, study, keys) {
       left_cols <- c(left_cols, "RDOMAIN")
     }
 
-    if (length(right_cols) == 0) {
+    # 1.0 compares STUDYID, USUBJID and RDOMAIN with DOMAIN as written
+    # (join.py, perform_join): " 01-701-1023" is not "01-701-1023" there.
+    # Only the IDVARVAL comparison reads through blanks and number formats.
+    as_written <- rep(core1, length(right_cols))
+    if (use_iv) {
+      as_written[length(k) + 1L] <- FALSE
+    }
+    key_of <- function(x, numeric, exact) {
+      if (exact && !is.numeric(x) && !numeric) sub(" +$", "", as.character(x)) else key_text(x, numeric = numeric)
+    }
+
+    if (unlinked) {
+      pick_idx <- rep(NA_integer_, length(idx))
+    } else if (length(right_cols) == 0) {
       # Nothing to match on: every row took the parent's first record.
       pick_idx <- rep(1L, length(idx))
     } else {
       right_key <- data.table::as.data.table(
-        lapply(right_cols, function(cl) key_text(p_data[[cl]]))
+        lapply(seq_along(right_cols), function(i) {
+          x <- p_data[[right_cols[[i]]]]
+          key_of(x, is.numeric(x), as_written[[i]])
+        })
       )
       data.table::setnames(right_key, paste0("k", seq_along(right_cols)))
       right_key[[".coreval_parent_row"]] <- seq_len(nrow(p_data))
       # IDVARVAL is text; against a numeric parent key it is read as a number.
       left_key <- data.table::as.data.table(
         lapply(seq_along(left_cols), function(i) {
-          key_text(sub[[left_cols[[i]]]], numeric = is.numeric(p_data[[right_cols[[i]]]]))
+          key_of(sub[[left_cols[[i]]]], is.numeric(p_data[[right_cols[[i]]]]), as_written[[i]])
         })
       )
       data.table::setnames(left_key, paste0("k", seq_along(left_cols)))
@@ -780,7 +817,12 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   # NA, so they need no fill. The key columns are left alone too, and so does
   # the reference, since after `all.x = TRUE` they hold the LEFT row's own
   # value rather than a missing right-hand one.
-  if (identical(tolower(as.character(spec[["Join Type"]])), "left")) {
+  #
+  # CORE 1.0 does not: its LEFT JOIN leaves them NULL (merges/join.py), and a
+  # NULL group key finds no group (distinct.py, `col = $1`). Blanked, the ARM
+  # of an SE record whose subject is not in DM matched TA's blank-ARM rows,
+  # and CORE-002101 compared it with that arm's elements.
+  if (is_left_join(spec) && !engine_is_core1()) {
     for (col in setdiff(names(right), keys)) {
       v <- merged[[col]]
       if (is.character(v) && anyNA(v)) {
@@ -841,6 +883,14 @@ apply_relrec_match <- function(dataset, study, current_domain) {
   rr_subject <- if ("USUBJID" %in% names(rr)) key_text(rr$USUBJID) else rep("", nrow(rr))
   rr_subject[is.na(rr_subject)] <- ""
   my_subject <- rr_subject[mine]
+  # A relationship belongs to one study as well as one subject. Both engines
+  # pair RELREC rows on STUDYID and join the two sides' records on it
+  # (relrec.py, _filter_relrec_for_domain and _build_union_parts in CORE 1.0;
+  # filter_relrec_for_domain and merge_on_relrec_record in CDISC's).
+  by_study <- "STUDYID" %in% names(rr) && "STUDYID" %in% names(left)
+  rr_study <- if (by_study) key_text(rr$STUDYID) else rep("", nrow(rr))
+  rr_study[is.na(rr_study)] <- ""
+  my_study <- rr_study[mine]
 
   # Every lookup below is by index, built once per column. Scanning instead
   # (re-reading a whole key column for each RELREC row) grew with the square
@@ -853,9 +903,10 @@ apply_relrec_match <- function(dataset, study, current_domain) {
     at <- if (length(key) == 1 && !is.na(key)) match(key, names(index)) else NA_integer_
     if (is.na(at)) integer(0) else index[[at]]
   }
-  # Partners share a RELID and a subject; a missing RELID pairs with nothing.
+  # Partners share a RELID, a study and a subject; a missing RELID pairs with
+  # nothing.
   partner_index <- index_of(ifelse(is.na(rr$RELID), NA_character_,
-                                   paste(rr$RELID, rr_subject, sep = "\x1f")))
+                                   paste(rr$RELID, rr_study, rr_subject, sep = "\x1f")))
   left_index <- list()
   right_cache <- list()
 
@@ -877,6 +928,14 @@ apply_relrec_match <- function(dataset, study, current_domain) {
     if (!is_blank(m$USUBJID) && "USUBJID" %in% names(left)) {
       qualifying_idx <- qualifying_idx[which(left$USUBJID[qualifying_idx] == m$USUBJID)]
     }
+    # CORE 1.0 also keeps only the records of the study the RELREC row names
+    # (relrec.py, _build_union_parts); CDISC's engine does not
+    # (merge_on_relrec_record), and CORE-000744's positive/03 relies on that.
+    if (by_study && engine_is_core1()) {
+      qualifying_idx <- qualifying_idx[which(
+        toupper(key_text(left$STUDYID[qualifying_idx])) == toupper(my_study[[i]])
+      )]
+    }
     if (length(qualifying_idx) == 0) {
       next
     }
@@ -886,7 +945,7 @@ apply_relrec_match <- function(dataset, study, current_domain) {
     # data_processor.py). Paired on RELID alone, subject 001's record was
     # related to subject 002's whenever the two reused a RELID.
     together <- if (is.na(m$RELID)) integer(0) else
-      rows_for(partner_index, paste(m$RELID, my_subject[[i]], sep = "\x1f"))
+      rows_for(partner_index, paste(m$RELID, my_study[[i]], my_subject[[i]], sep = "\x1f"))
     partners <- rr[together[!mine[together]], ]
     for (j in seq_len(nrow(partners))) {
       p <- partners[j, ]
@@ -933,6 +992,9 @@ apply_relrec_match <- function(dataset, study, current_domain) {
           if (!is_blank(subject)) {
             right_idx <- right_idx[key_text(right$USUBJID[right_idx]) == key_text(subject)]
           }
+        }
+        if (by_study && "STUDYID" %in% names(right)) {
+          right_idx <- right_idx[key_text(right$STUDYID[right_idx]) == key_text(left$STUDYID[ri])]
         }
         for (rj in right_idx) {
           right_row <- right[rj, ]

@@ -90,9 +90,17 @@ compute_unsplit_name <- function(dataset, domain) {
 #' Is this dataset one file of a domain split across several?
 #' @param dataset The dataset (`list(data, meta)`).
 #' @param domain The dataset's key/file name.
+#' @param core1 Whether the rule is a CORE 1.0 rule.
 #' @return `TRUE` if the dataset's name differs from its unsplit name.
 #' @noRd
-dataset_is_split <- function(dataset, domain) {
+dataset_is_split <- function(dataset, domain, core1 = FALSE) {
+  # CORE 1.0's derive_is_split() compares the file name with
+  # _get_unsplit_name(), never the DOMAIN column: ae.xpt holding DOMAIN = CE
+  # is not split, and pooldef (domain PO) is not either.
+  if (core1) {
+    return(!core1_derive_domain(domain) %in% c("SUPPQUAL", "RELREC", "RELSPEC", "RELSUB") &&
+             !identical(tolower(domain), core1_unsplit_name(tolower(domain))))
+  }
   !identical(toupper(domain), dataset_unsplit_name(dataset, domain))
 }
 

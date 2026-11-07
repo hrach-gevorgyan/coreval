@@ -441,3 +441,12 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     in CDISC's engine passes a target of spaces.
   - `check_study()` explains a hand-built study it cannot use, and
     `write_findings(tracking =)` must be TRUE or FALSE.
+  - 1.0's RELREC pairs records within one study as well as one subject, and its
+    left join leaves a subject missing from DM without an arm (CORE-002101).
+  - 1.0's SUPP link compares the subject and domain as written, uses an IDVAR only
+    where a row naming the parent lists it, and treats QNAM without regard to case.
+  - A 1.0 custom domain with a class from its topic variable is judged against the
+    Model, as 1.0's own CORE-001082 cases expect; that rule had passed only because
+    its custom dataset was not graded.
+  - A 1.0 rule scopes, splits and expands `--` by the file name throughout, and a TS
+    row with no terminology version is read with the study's own (CORE-001080).

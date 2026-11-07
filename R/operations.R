@@ -896,8 +896,13 @@ filter_metadata_rows <- function(rows, op) {
 model_variables_for <- function(domain, dataset = NULL) {
   tbl <- .coreval_env$model_variables
   cls <- dataset_class(dataset, domain)
-  # Every class inherits the General Observations variables.
-  rows <- tbl[normalize_class(tbl$class) %in% normalize_class(c("General Observations", cls)), ]
+  # Every class inherits the General Observations variables, and Findings
+  # About the Findings class's too (get_allowed_class_variables()).
+  classes <- c("General Observations", cls)
+  if (identical(normalize_class(cls), normalize_class("FINDINGS ABOUT"))) {
+    classes <- c(classes, "Findings")
+  }
+  rows <- tbl[normalize_class(tbl$class) %in% normalize_class(classes), ]
   if (nrow(rows) == 0) {
     return(rows)
   }
@@ -1743,6 +1748,15 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
           current_dataset$data, op$name %||% "", as.character(op$version)[[1]],
           study$standard$product
         )
+        # CORE 1.0 answers a row whose version is blank, or names a package it
+        # does not hold, from the study's own terminology (the CASE in
+        # sql_operations/get_codelist_attributes.py `_version_clause`). CDISC's
+        # engine has no such fallback.
+        fallback <- study$ct_package
+        if (engine_is_core1() && length(fallback) == 1 && !is.na(fallback) &&
+            fallback %in% ct_package_names()) {
+          pkgs[!pkgs %in% ct_package_names()] <- fallback
+        }
         bundled <- unique(pkgs[nzchar(pkgs) & pkgs %in% ct_package_names()])
         if (length(bundled) == 0) {
           stop(
