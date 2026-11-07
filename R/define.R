@@ -174,6 +174,27 @@ find_define_xml <- function(path) {
   if (length(files) == 1) files[[1]] else NULL
 }
 
+#' Read a study folder's define.xml, keeping why it could not be read
+#'
+#' An unreadable define is not a missing one. Told apart only by a warning,
+#' a truncated file was reported as "Missing Define-XML document"
+#' (CORE-002084) and every define rule skipped with "no define.xml found".
+#'
+#' @param path The study folder.
+#' @return `list(define, unreadable)`: the parsed define or `NULL`, and the
+#'   warning's text when a define file was there and not read, else `NULL`.
+#' @noRd
+read_study_define <- function(path) {
+  why <- NULL
+  define <- withCallingHandlers(
+    read_define_xml(find_define_xml(path)),
+    warning = function(w) {
+      if (startsWith(conditionMessage(w), "define.xml found but not read")) why <<- conditionMessage(w)
+    }
+  )
+  list(define = define, unreadable = why)
+}
+
 #' First non-empty attribute value from a set of candidate names
 #' @param nodes An `xml_nodeset`.
 #' @param names Candidate attribute names, tried in order.

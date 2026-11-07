@@ -174,10 +174,10 @@ this package keeps finding in itself, so they are held separate.
 
 #### The 16 published ones that disagreed before CORE 1.0 trace to stale answer sheets
 
-**coreval matched the engine on all sixteen. The committed `results.csv`
-differed from the engine on every one.**
+**The engine runs fourteen of the sixteen, and coreval matched it on all
+fourteen. The committed `results.csv` differs from coreval's answer on every one.**
 
-| rule | coreval and the engine agree on | the sheet says |
+| rule | coreval reports, as the engine does where it runs | the sheet says |
 |---|---|---|
 | CORE-000387 | `{2,3}` | `{1,3}` |
 | CORE-000390 | `{3,4}` | `{}` |

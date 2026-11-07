@@ -362,6 +362,7 @@ test_that("text in a Dataset-JSON column declared numeric is kept, not turned in
 })
 
 test_that("a Dataset-JSON file with no rows and no record count is refused", {
+  skip_if_not_installed("jsonlite")
   # Read as an empty dataset, it had nothing to report, the same as a dataset
   # that really is empty.
   path <- tempfile(fileext = ".json")

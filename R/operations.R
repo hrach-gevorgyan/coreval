@@ -230,7 +230,13 @@ compute_group_agg <- function(dt, group_cols, name, fn, set_valued = FALSE) {
   # The length guard stays. `unlist()` on groups holding more than one value
   # would change the row count rather than fail, which is the silent kind of
   # wrong.
-  if (!set_valued && all(lengths(agg$.value) == 1)) {
+  if (!set_valued && nrow(agg) == 0) {
+    # No group at all, after a filter: unlist() gave NULL and deleted the
+    # column, so every row read as no answer, where a row whose group is
+    # missing from a non-empty table reads as NA. CORE-000370 reported a
+    # subject or not depending on whether another subject had a record.
+    agg$.value <- vector(typeof(dt[[name]]), 0L)
+  } else if (!set_valued && all(lengths(agg$.value) == 1)) {
     agg$.value <- unlist(agg$.value)
   }
   agg
@@ -1244,8 +1250,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       stop("needs ", core1_static_table_names[[tolower(domain)]], ", a reference table CORE 1.0's engine ",
            "ships and coreval does not bundle", call. = FALSE)
     }
+    # The empty set has no type there, and PostgreSQL cannot test a number
+    # for membership of it, so a numeric target stops the rule (see
+    # membership_check()). Marked, so that can be told apart.
     if (engine_is_core1() && identical(op$operator, "distinct")) {
-      return(scalar_binding(distinct_values(character(0))))
+      return(scalar_binding(structure(character(0), core1_absent = toupper(domain))))
     }
     stop("operation needs ", toupper(domain), ", which is not in this study", call. = FALSE)
   }
@@ -1589,8 +1598,17 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # which merges the IG's per-domain list into the Model's skeleton
     # positionally rather than reading either alone.
     get_column_order_from_library = {
-      order_names <- standard_variable_order(study, current_domain, current_dataset)
-      if (length(order_names) == 0) NULL else scalar_binding(order_names)
+      # The dataset itself, not the variable table built from it: that has no
+      # DOMAIN column, so a custom domain had no class and no order, and
+      # CORE-000852 reported every custom dataset as out of order.
+      order_names <- standard_variable_order(study, current_domain, own)
+      # No order at all is no answer, and NULL reported the dataset against an
+      # empty list.
+      if (length(order_names) == 0) {
+        stop("needs the SDTM Model class of ", current_domain, ", which its variables do not tell",
+             call. = FALSE)
+      }
+      scalar_binding(order_names)
     },
     # The SDTM MODEL's variables for this domain's class, filtered by a
     # metadata key (e.g. role == "Timing"). Distinct from
@@ -1791,14 +1809,24 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # dataset may carry qualifiers for several parents. Used to check that a
     # supplemental qualifier's QNAM doesn't collide with a real variable
     # name of its parent domain.
-    get_parent_model_column_order = {
+    # The parent's class comes from the parent alone. Asked with the SUPP
+    # dataset, whose `$unsplit` answers for any key, every parent was looked
+    # up as RELATIONSHIP and lost its own variables, so in a study check
+    # CORE-000783 could never report a QNAM of AESEV.
+    get_parent_model_column_order = if (engine_is_core1()) {
+      # 1.0 names the parent from the file (derive_rdomain(): SUPPAE is AE's),
+      # once for the dataset.
+      key <- toupper(current_domain)
+      parent <- if (startsWith(key, "SUPP")) substring(key, 5L) else if (startsWith(key, "SQ")) substring(key, 3L) else ""
+      if (!nzchar(parent)) NULL else scalar_binding(model_variables_for(unname(core1_derive_domain(parent)))$variable)
+    } else {
       rdomain <- current_dataset$data[["RDOMAIN"]]
       if (is.null(rdomain)) {
         NULL
       } else {
         by_parent <- lapply(
           stats::setNames(nm = unique(toupper(rdomain))),
-          function(p) model_variables_for(p, current_dataset)$variable
+          function(p) model_variables_for(p)$variable
         )
         per_row_binding(unname(by_parent[toupper(rdomain)]))
       }
@@ -1884,8 +1912,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     get_model_column_order = {
       cls <- dataset_class(own, current_domain)
       current_code <- domain_code_of(study, current_domain)
+      # NULL here was no violation, so CORE-000550 and CORE-001079 ran on a
+      # custom dataset of no known class and could find nothing.
       if (is.na(cls)) {
-        NULL
+        stop("needs the SDTM Model class of ", current_domain, ", which its variables do not tell",
+             call. = FALSE)
       } else {
         # Normalize "-" vs " " (e.g. model class "Special-Purpose" vs
         # sdtm_domain_classes.rds's "SPECIAL PURPOSE") before comparing.
@@ -1902,7 +1933,9 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         # went unreported.
         if (length(allowed) == 0) {
           dsv <- .coreval_env$model_dataset_variables
-          allowed <- dsv$variable[dsv$domain == current_code]
+          # Every SUPP-- follows the Model's SUPPQUAL, as for the Library.
+          model_code <- if (grepl("^(SUPP|SQ)..", current_code)) "SUPPQUAL" else current_code
+          allowed <- dsv$variable[dsv$domain == model_code]
         }
         # An Associated Persons dataset carries its observation class's
         # variables PLUS the ones that make it an AP dataset in the first
@@ -1918,10 +1951,10 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
         }
         # Still nothing (a domain the Model does not describe at either
         # level): an empty `allowed` set would make "is_not_contained_by"
-        # trivially flag every single variable as disallowed, which is wrong
-        # - NULL (unresolvable) is honest instead.
+        # trivially flag every single variable as disallowed, and NULL read as
+        # no violation. Neither is an answer, so the rule is skipped.
         if (length(allowed) == 0) {
-          NULL
+          stop("the SDTM Model describes no variables for ", current_domain, call. = FALSE)
         } else {
           scalar_binding(resolve_var_name(allowed, dataset_wildcard(own, current_domain)))
         }

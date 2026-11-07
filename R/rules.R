@@ -345,9 +345,12 @@ list_rules_impl <- function(id = NULL, domain = NULL, standard = NULL,
 #' that wanted it.
 #'
 #' @param ct_package One package name, e.g. `"sdtmct-2026-03-27"`.
+#' @param standard,substandard The standard checked against, when known. A
+#'   package of another family (SEND terminology for an SDTM study) left every
+#'   value unchecked and the terminology rules reporting nothing.
 #' @return `ct_package`, unchanged.
 #' @noRd
-validate_ct_package <- function(ct_package) {
+validate_ct_package <- function(ct_package, standard = NULL, substandard = NULL) {
   if (!is.character(ct_package) || length(ct_package) != 1L || is.na(ct_package)) {
     stop("`ct_package` must be a single package name, e.g. \"sdtmct-2026-03-27\".",
          call. = FALSE)
@@ -369,6 +372,16 @@ validate_ct_package <- function(ct_package) {
       },
       call. = FALSE
     )
+  }
+  std <- toupper(as.character(standard %||% "")[1])
+  if (!is.na(std) && grepl("SDTM|SEND|TIG|ADAM", std)) {
+    want <- ct_family(std, substandard)
+    have <- sub("-[0-9].*$", "", ct_package)
+    if (!identical(have, want)) {
+      stop("'", ct_package, "' is ", have, " terminology, but ", std, " is checked against ",
+           want, ". Choose a ", want, " package: list_ct_packages(\"", want, "\").",
+           call. = FALSE)
+    }
   }
   ct_package
 }
@@ -597,7 +610,7 @@ refuse_standard_as_domain <- function(domain) {
 #' 438 MB of CDISC's own caches becomes half a megabyte here.
 #'
 #' @param family Optional prefix to narrow to one terminology family, e.g.
-#'   `"sdtm"` or `"send"`.
+#'   `"sdtm"` or `"send"` (`"sdtmct"` works too). An unknown family is an error.
 #' @return A character vector of package names, oldest first.
 #' @export
 #' @examples
@@ -608,7 +621,14 @@ list_ct_packages <- function(family = NULL) {
     if (!is.character(family) || length(family) != 1L) {
       stop("`family` must be a single prefix, e.g. \"sdtm\".", call. = FALSE)
     }
-    out <- grep(paste0("^", tolower(family), "ct-"), out, value = TRUE)
+    # "sdtmct" is how the packages are named, so it is as natural to type.
+    prefix <- sub("ct$", "", tolower(trimws(family)))
+    hit <- grep(paste0("^", prefix, "ct-"), out, value = TRUE)
+    if (length(hit) == 0) {
+      stop("no terminology family '", family, "'. Families: ",
+           paste(unique(sub("ct-[0-9].*$", "", out)), collapse = ", "), call. = FALSE)
+    }
+    out <- hit
   }
   out
 }

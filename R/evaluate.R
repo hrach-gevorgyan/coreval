@@ -316,7 +316,18 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
   # see dataset_wildcard(). Computed once here and carried on ctx so every
   # operator resolving its own column names (op_grouping, op_sequence, ...)
   # uses the same expansion.
-  wildcard <- dataset_wildcard(dataset, domain)
+  # CORE 1.0 expands a condition's "--" to the domain it derives from the
+  # file name (conditions.py: `column_prefix_map`, from derive_domain()),
+  # never from the DOMAIN column. Read from the column, a SUPP-- or RELREC
+  # dataset carrying DM's columns from a merge expanded "--DY" to DMDY and
+  # reported DM's dates under every SUPP record (CORE-000354, CORE-000529,
+  # CORE-000853). Only conditions: its operations fill the standard's
+  # variable lists for an AP dataset from the related domain (APEG's from EG).
+  wildcard <- if (engine_is_core1() && length(domain) == 1L && nzchar(domain)) {
+    unname(core1_derive_domain(toupper(domain)))
+  } else {
+    dataset_wildcard(dataset, domain)
+  }
   # A `distinct`-style Operation resolves to ONE collection for the whole
   # dataset, not a value per row. Operators that ask "is this value in the
   # target" have to answer once and give every row the same answer; treating
@@ -369,7 +380,9 @@ evaluate_condition <- function(condition, dataset, domain, bindings = list(), st
     # without one; read as a column it reported every record of every study.
     if (identical(name, "define.xml") && !is.null(study) &&
         condition$operator %in% c("exists", "not_exists")) {
-      exists <- !is.null(study$define)
+      # A define that is there and could not be read is there: CORE 1.0 asks
+      # whether the file exists.
+      exists <- !is.null(study$define) || !is.null(study$define_unreadable)
     } else if (!exists && !is.null(study) && condition$operator %in% c("exists", "not_exists")) {
       present <- c(toupper(names(study$datasets)),
                    vapply(names(study$datasets), function(k) {
@@ -984,7 +997,10 @@ assert_rule_inputs_available <- function(rule, study) {
   if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE)) && is.null(study$define)) {
     stop(
       "rule type '", rule$rule_type, "' needs define.xml: ",
-      if (define_xml_available()) {
+      if (!is.null(study$define_unreadable)) {
+        sub("^define.xml found but not read", "a define.xml was found but could not be read",
+            sub(". Rules that compare against it will be skipped.", "", study$define_unreadable, fixed = TRUE))
+      } else if (define_xml_available()) {
         "no define.xml found in this study"
       } else {
         "install the 'xml2' package to enable define.xml support"

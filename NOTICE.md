@@ -45,8 +45,10 @@ that engine, verisianHQ/cdisc-rules-engine, under the same notice.
 **No CDISC API is contacted, at build time or at run time.** CDISC's own engine
 reaches the CDISC Library through an API requiring a `CDISC_LIBRARY_API_KEY`,
 under the Library's separate terms of use. coreval holds no key and makes no
-such request. Every bundled file is taken from material CDISC committed to a
-public repository under MIT, by CDISC or by Verisian.
+such request. The rules, standards metadata and terminology are taken from
+material committed to a public repository under MIT, by CDISC or by Verisian.
+The W3C schemas and the JSONata library are not CDISC's: `inst/COPYRIGHTS`
+gives their own notices.
 
 `data-raw/UPSTREAM_SHA` (cdisc-open-rules), `data-raw/UPSTREAM_SHA_CORE1`
 (core-contributor), `data-raw/UPSTREAM_SHA_ENGINE` and

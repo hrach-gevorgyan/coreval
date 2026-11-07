@@ -492,8 +492,8 @@ fold_value_rows <- function(findings) {
 #'   legal term need this, and are skipped with a reason without it - coreval
 #'   will not pick a version for you, because terminology changes between
 #'   releases and judging a study against one it never declared would both
-#'   invent violations and hide real ones. Every published package is bundled;
-#'   `list_ct_packages()` shows them.
+#'   invent violations and hide real ones. Every package CDISC's engine carries,
+#'   from 2014 on, is bundled; `list_ct_packages()` shows them.
 #' @param include_deprecated Also run retired rules: those CDISC has
 #'   deprecated, and, for an SDTM study, CDISC's SDTM rules that CORE 1.0 no
 #'   longer carries. `FALSE` by default: a retired rule has a current
@@ -607,7 +607,7 @@ check_study <- function(study, standard = NULL, version = NULL,
   # typo is reported once and immediately instead of as a skip reason on every
   # rule that needed it.
   if (!is.null(ct_package)) {
-    study$ct_package <- validate_ct_package(ct_package)
+    study$ct_package <- validate_ct_package(ct_package, study$standard$product, substandard)
   } else if (is.null(study$ct_package)) {
     # The study usually says so itself, in TS. Asking the caller for something
     # already recorded in the data would be the same mistake as making them
@@ -877,12 +877,14 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
       # Both presence rule types answer one question about the whole study,
       # the define-based one included: reported per dataset, it repeated one
       # fact under every dataset name, against a row of the define.
+      #
+      # It is asked of each dataset until one answers, as CORE 1.0 asks every
+      # dataset: some of these read the dataset in hand ("MIDS is there but TM
+      # is not", CORE-000297), and asked of the first dataset alone, a study
+      # whose first dataset was AE could never report them.
       is_study_level <- isTRUE(startsWith(rule$rule_type, "Domain Presence Check"))
-      if (is_study_level) {
-        if (rule_id %in% study_level_done) {
-          next
-        }
-        study_level_done <- c(study_level_done, rule_id)
+      if (is_study_level && rule_id %in% study_level_done) {
+        next
       }
       # A Study-sensitivity rule (CORE 1.0's "is there a define.xml",
       # "are the Trial Design datasets all here") answers once for the study
@@ -927,7 +929,7 @@ run_checks <- function(study, use_case = NULL, require_referenced_domains = FALS
         )
       }
       if (nrow(findings) > 0) {
-        if (study_sensitivity) {
+        if (study_sensitivity || is_study_level) {
           study_level_done <- c(study_level_done, rule_id)
         }
         if (is_study_level || study_sensitivity) {

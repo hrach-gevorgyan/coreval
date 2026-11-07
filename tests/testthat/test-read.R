@@ -1,7 +1,7 @@
 test_that("read_study reads a CORE test-case data/ directory", {
   study <- read_study(test_path("fixtures", "test_case", "data"))
 
-  expect_equal(names(study), c("datasets", "define", "stf", "ct", "standard"))
+  expect_equal(names(study), c("datasets", "define", "define_unreadable", "stf", "ct", "standard"))
   expect_equal(names(study$datasets), "DM")
 
   dm <- study$datasets$DM

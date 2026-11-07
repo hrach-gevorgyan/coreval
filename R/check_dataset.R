@@ -380,8 +380,8 @@ infer_domain <- function(dataset, path = NULL) {
 #'   legal term need this, and are skipped with a reason without it - coreval
 #'   will not pick a version for you, because terminology changes between
 #'   releases and judging a study against one it never declared would both
-#'   invent violations and hide real ones. Every published package is bundled;
-#'   `list_ct_packages()` shows them.
+#'   invent violations and hide real ones. Every package CDISC's engine carries,
+#'   from 2014 on, is bundled; `list_ct_packages()` shows them.
 #' @param include_deprecated Also run retired rules: those CDISC has
 #'   deprecated, and, for an SDTM study, CDISC's SDTM rules that CORE 1.0 no
 #'   longer carries. `FALSE` by default: a retired rule has a current
@@ -481,7 +481,7 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     datasets = stats::setNames(list(dataset), domain),
     define = NULL,
     ct = NULL,
-    ct_package = if (is.null(ct_package)) NULL else validate_ct_package(ct_package),
+    ct_package = if (is.null(ct_package)) NULL else validate_ct_package(ct_package, standard, substandard),
     standard = list(
       product = if (is.null(standard)) NA_character_ else toupper(standard),
       version = if (is.null(version)) NA_character_ else version

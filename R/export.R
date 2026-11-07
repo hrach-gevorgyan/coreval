@@ -71,13 +71,9 @@
 #' unlink(dir, recursive = TRUE)
 #' @export
 write_findings <- function(result, path, tracking = TRUE) {
-  if (!is.list(result) || is.null(result$findings)) {
-    stop(
-      "`result` must be what check_dataset() or check_study() returned, ",
-      "with a `findings` element.",
-      call. = FALSE
-    )
-  }
+  # Any list with a `findings` element was taken: an empty one was written up
+  # as a complete result with nothing skipped.
+  assert_coreval_result(result, "result")
   # Checked here rather than left to fwrite: a non-string reached it and came
   # back as "is.character(file) && length(file) == 1L is not TRUE", and a
   # length-2 path failed even earlier, inside the `if` picking the format.

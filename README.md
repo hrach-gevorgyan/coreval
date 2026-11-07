@@ -72,7 +72,7 @@ Value must be a valid ISO 8601 datetime or interval.
   13 need a define.xml
      → put it in the study folder (reading it needs the xml2 package)
   2 need to know the controlled terminology version
-     → pass ct_package = "sdtmct-..." (see list_ct_packages()), or fill TSVCDREF and TSVCDVER in TS
+     → pass ct_package = "sdtmct-..." (see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS
   2 compare variable labels, and the data has none
      → give the variables labels: a data frame made in R has none until they are added
   2 for other reasons, see result$skipped
@@ -191,7 +191,7 @@ and USDM study files, and `QuickJSR` runs USDM's JSONata rules.
   rules are included but run only if you ask.
 - **Files**: XPT, SAS datasets, CSV, Dataset-JSON, Define-XML, and USDM study
   files with `usdm = TRUE`.
-- **Every Controlled Terminology release** CDISC has published, bundled.
+- **Controlled Terminology**: every release CDISC's engine carries, from 2014 on, bundled.
 
 Both rule sets ship worked examples, and coreval is tested against every one.
 More than nine in ten rules give exactly the expected answer;

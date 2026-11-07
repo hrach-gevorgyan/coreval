@@ -110,7 +110,7 @@ read_study_folder <- function(path, skip = character(0)) {
   files <- files[!normalizePath(files, mustWork = FALSE) %in%
                    normalizePath(skip, mustWork = FALSE)]
   ext <- tolower(tools::file_ext(files))
-  stray <- ext == "json" & !vapply(files, looks_like_dataset_json, logical(1), USE.NAMES = FALSE)
+  stray <- ext == "json" & vapply(files, is_stray_json, logical(1), USE.NAMES = FALSE)
   if (any(stray)) {
     warning("not a dataset, so left out: ", paste(basename(files[stray]), collapse = ", "), call. = FALSE)
     files <- files[!stray]
@@ -205,7 +205,8 @@ read_study_folder <- function(path, skip = character(0)) {
             "document in a folder of datasets. Check it from a folder of its ",
             "own, with usdm = TRUE.", call. = FALSE)
   }
-  list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
+  list(datasets = datasets, define = (define <- read_study_define(path))$define,
+       define_unreadable = define$unreadable,
        stf = read_stf_xml(find_stf_xml(path)),
        ct = NULL, standard = list(product = NA_character_, version = NA_character_))
 }
@@ -674,7 +675,8 @@ read_study_test_case <- function(path) {
          paste(dup, collapse = ", "), call. = FALSE)
   }
 
-  list(datasets = datasets, define = read_define_xml(find_define_xml(path)),
+  list(datasets = datasets, define = (define <- read_study_define(path))$define,
+       define_unreadable = define$unreadable,
        stf = read_stf_xml(find_stf_xml(path)), ct = NULL, standard = read_env_standard(path))
 }
 

@@ -30,8 +30,8 @@ upstream needs no new code unless it uses a new operator.
 
 At run time it needs only R, `data.table` and `haven`. There is no Python, no
 network access and no account. Everything it uses, from the rules and the
-standards metadata to every published Controlled Terminology package, is
-bundled.
+standards metadata to every Controlled Terminology package CDISC's engine
+carries, from 2014 on, is bundled.
 
 ## The two rule sets
 

@@ -225,11 +225,18 @@ is_literal_equality <- function(condition) {
 #' @return One of `TRIAGE_LEVELS`.
 #' @noRd
 finding_triage <- function(sub, rule = NULL) {
+  msg <- if (is.null(rule)) sub$issue[1] else rule_message(rule)
   # A dataset the study should hold and does not. It was filed by what the
   # rule happened to report: SE as a wrong value, TS as often legitimate.
+  # Except a dataset or variable the study must NOT hold (TT, EXVAMT beside
+  # EC): there the data is present and breaks the rule.
   if (isTRUE(grepl("Domain Presence", rule$rule_type, fixed = TRUE))) {
-    return("missing required")
+    forbidden <- isTRUE(grepl("(must|should|shall) not be present", msg, ignore.case = TRUE))
+    return(if (forbidden) "wrong value" else "missing required")
   }
+  # "must be present" asks for something the data lacks (CORE-000575's timing
+  # variable, CORE-000585's identifiers), whatever the finding lists.
+  wants_present <- isTRUE(grepl("(must|should|shall) be present", msg, ignore.case = TRUE))
   real <- sub[!startsWith(sub$Variable, "$"), ]
   # The identifiers a rule reports to say WHICH record it means are not
   # evidence about the record. Counted as evidence, one rule reporting a blank
@@ -260,8 +267,7 @@ finding_triage <- function(sub, rule = NULL) {
   if (any(grepl("expected|permissible", binds, ignore.case = TRUE))) {
     return("missing optional")
   }
-  msg <- if (is.null(rule)) sub$issue[1] else rule_message(rule)
-  if (isTRUE(grepl("required", msg, ignore.case = TRUE))) {
+  if (isTRUE(grepl("required", msg, ignore.case = TRUE)) || wants_present) {
     return("missing required")
   }
   if (isTRUE(grepl("expected|permissible", msg, ignore.case = TRUE))) {
@@ -330,6 +336,7 @@ skip_group <- function(reason) {
     supplied = has("was not supplied"),
     absent = has("which is not in this study"),
     study = has("which datasets the whole study contains") | has("asks about the whole study"),
+    define_bad = has("define.xml was found but could not be read"),
     define = has("define.xml"),
     ct = has("needs controlled terminology"),
     labels = has("compares variable labels"),
@@ -352,12 +359,13 @@ skip_group <- function(reason) {
 skip_group_text <- function() {
   ct <- "pass ct_package = \"sdtmct-...\" (see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS"
   data.table::data.table(
-    group = c("supplied", "absent", "study", "define", "ct", "labels", "dictionary",
+    group = c("supplied", "absent", "study", "define_bad", "define", "ct", "labels", "dictionary",
               "stf", "bundled", "variables", "other"),
     what = c(
       "need other datasets",
       "need datasets this study does not have",
       "ask what the whole study contains",
+      "need a define.xml, and the one in the study could not be read",
       "need a define.xml",
       "need to know the controlled terminology version",
       "compare variable labels, and the data has none",
@@ -371,6 +379,7 @@ skip_group_text <- function() {
       "run check_study() on the whole folder to cover these",
       "",
       "run check_study() on the whole folder to cover these",
+      "fix the file: the reason is in result$skipped",
       "put it in the study folder (reading it needs the xml2 package)",
       ct,
       "give the variables labels: a data frame made in R has none until they are added",
@@ -384,6 +393,7 @@ skip_group_text <- function() {
       "Check the whole study folder with check_study().",
       "Nothing, if the study is not meant to have them.",
       "Check the whole study folder with check_study().",
+      "Fix the define.xml: the Not checked sheet says why it could not be read.",
       "Put the define.xml in the study folder. Reading it needs the xml2 package.",
       paste0(toupper(substr(ct, 1, 1)), substring(ct, 2), "."),
       "Give the variables labels. A data frame made in R has none until they are added.",

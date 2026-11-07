@@ -49,8 +49,8 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
 
 * **More of "could not run" is explained.** The report groups three more
   reasons: variables the data does not have, reference data coreval does not
-  include, and the study tagging file. On the pilot study "other reasons" fell
-  from 170 checks to 22.
+  include, and the study tagging file. On the pilot study most of what was
+  "other reasons" now falls in a named group.
 
 * **A CORE 1.0 finding names its variable.** Rules that check many variables
   at once reported `variable_name = "RFSTDTC", variable_value = "2024-13-01"`,
@@ -288,8 +288,7 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     are written so Excel shows non-English text correctly.
   - A value the rule requires, left blank, is "missing required", not "often
     legitimate".
-  - `filter_findings(variable =)` finds a variable reported as missing, and
-    refuses a typo instead of matching nothing. It also finds CORE 1.0's
+  - `filter_findings(variable =)` finds a variable reported as missing. It also finds CORE 1.0's
     findings, which name the variable in a `variable_name` column.
   - A blank required value in CORE 1.0's output is "missing required", not
     "wrong value" (CORE-000356).
@@ -395,3 +394,29 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
     capped rule about variables counts variables.
   - A `.json` file that is no dataset is named and left out, rather than stopping the
     read, and a data frame with no columns is refused.
+  - A Domain Presence rule is asked of each dataset until one answers, as 1.0
+    asks every dataset. CORE-000297, CORE-000777 and CORE-000677 read the dataset
+    in hand, and a study whose first dataset lacked MIDS, RELMIDS or POOLID could
+    never report them.
+  - CORE-000783 looked its parent's variables up with the SUPP dataset's own
+    class and lost AESEV; in a study check it never reported. 1.0 names the
+    parent from the file, SUPPAE's is AE.
+  - A 1.0 condition expands `--` from the file name, as 1.0 does. From DOMAIN, a
+    SUPP-- or RELREC dataset with DM's columns from its merge read `--DY` as DMDY
+    (CORE-000354, CORE-000529, CORE-000853).
+  - CORE-000852 ordered a custom domain by the variable table, which has no class,
+    and reported every custom dataset.
+  - A 1.0 rule comparing a number with `distinct` of an absent dataset is skipped,
+    as 1.0's engine stops: every VISITNUM was reported against a missing TV
+    (CORE-000039, CORE-000140, CORE-000270, CORE-000842, CORE-000168).
+  - CORE-000550 and CORE-001079 found nothing on SUPP-- datasets, which now take
+    the Model's SUPPQUAL, and a dataset of no known class is skipped.
+  - CORE-000370 reported a subject only when some other subject had a record.
+  - `ct_package` of another family is refused, `list_ct_packages("sdtmct")` works,
+    and an unknown family is an error.
+  - An unreadable define.xml is reported as one: it was filed as "Missing Define-XML
+    document" (CORE-002084) and every define rule said "no define.xml found".
+  - `write_findings()` refuses what is not a result. An empty or broken `.json`
+    dataset stops the read again; only valid JSON with no dataset keys is left out.
+  - "must not be present" findings are wrong values and "must be present" ones
+    missing required. An all-missing data frame column no longer stops CORE-000362.

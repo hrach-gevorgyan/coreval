@@ -124,6 +124,7 @@ test_that("a document with no jsonlite still reads, without tables", {
 })
 
 test_that("a USDM document is checked only when asked for", {
+  skip_if_not_installed("jsonlite")
   # USDM is optional: most studies are tabular, and some USDM rules take
   # minutes on one file. Not asked for, the folder is refused with the way to
   # ask, and never read as empty, which check_study() would report as having

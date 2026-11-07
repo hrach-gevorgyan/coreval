@@ -59,6 +59,12 @@ repository.
 * Large round numbers are written out in full, not as `2e+05`.
 * A saved file names the version and terminology used, and says when records were
   capped.
+* Rules about which datasets a study holds look at every dataset, not only the
+  first, and SUPP and RELREC datasets are no longer judged by DM's dates.
+* A custom domain in the right order is no longer reported as out of order, and
+  CORE-000783 reports a QNAM that repeats a parent variable.
+* Terminology of the wrong family (SEND terminology for an SDTM study) is refused,
+  and a define.xml that cannot be read is reported as unreadable, not as missing.
 
 ## Speed
 

@@ -223,6 +223,10 @@ assert_coreval_result <- function(x, arg = "x") {
       call. = FALSE
     )
   }
+  if (!is.data.frame(x$findings) || !is.data.frame(x$skipped) || !"rule_id" %in% names(x$findings)) {
+    stop("`", arg, "` is not a coreval result: its findings and skipped entries are not ",
+         "the tables check_dataset() and check_study() return.", call. = FALSE)
+  }
   invisible(NULL)
 }
 

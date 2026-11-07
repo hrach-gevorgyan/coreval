@@ -282,10 +282,12 @@ test_that("an operation over a domain the study lacks is skipped, not answered c
   # CDISC's version of the rule is refused for want of TV.
   study <- read_study(dir)
   expect_error(evaluate_rule(fixture_rule("CORE-000039"), study, "SV"), "needs TV")
-  # CORE 1.0 reads a distinct over a missing domain as an empty set, so its
-  # version reports every visit as one TV does not list.
+  # CORE 1.0 reads a distinct over a missing domain as an empty set, which a
+  # number cannot be compared with: run through its engine, CORE-000039 ends
+  # in execution_error on SV. So it is skipped, never answered for every visit.
   result <- check_study(dir, standard = "SDTMIG")
-  expect_setequal(result$findings$Record[result$findings$rule_id == "CORE-000039"], c(1L, 2L))
+  expect_false("CORE-000039" %in% result$findings$rule_id)
+  expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-000039"], "needs TV")
 })
 
 test_that("a CORE 1.0 rule with an Include list does not take in split datasets (CORE-000778)", {

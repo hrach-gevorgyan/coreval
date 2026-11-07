@@ -116,7 +116,8 @@ purpose.
 - **Install.** Two R packages and under 2 MB of bundled data. Each engine needs
   26 Python packages, and CDISC's needs a metadata cache of about 480 MB as well.
 - **Offline.** No API key, no download, no cache to fill. Everything is
-  bundled, including every Controlled Terminology release.
+  bundled, including every Controlled Terminology release CDISC's engine carries,
+  from 2014 on.
 - **It says what it could not check.** Every skipped rule comes back with a
   reason in plain words, next to the findings. An empty report never hides
   rules that did not run.

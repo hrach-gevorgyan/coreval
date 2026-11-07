@@ -78,6 +78,7 @@ test_that("a JSONata rule refuses a study that is not a USDM document", {
 })
 
 test_that("a folder holding a USDM document is read as one, not as Dataset-JSON", {
+  skip_if_not_installed("jsonlite")
   # Both are .json and land in the same folder scan. Read as a Dataset-JSON, a
   # USDM document is refused for declaring no columns, which says nothing about
   # what it actually is.

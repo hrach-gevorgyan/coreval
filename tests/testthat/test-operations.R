@@ -340,13 +340,22 @@ test_that("get_model_column_order falls back to per-dataset Model variables for 
   expect_false("ARMCDXX" %in% binding$value)
 })
 
-test_that("get_model_column_order returns NULL (unresolvable) for a domain the Model does not describe", {
-  # NULL is still the honest answer where the Model says nothing at either
-  # level: an empty allowed-set would make is_not_contained_by flag every
-  # variable in the dataset as disallowed.
+test_that("get_model_column_order refuses a domain the Model does not describe", {
+  # An empty allowed-set would flag every variable as disallowed, and NULL
+  # read as no violation: CORE-000550 ran on such a dataset and found nothing.
   study <- list(datasets = list(ZZ = list(data = data.table::data.table(A = 1), meta = NULL)))
   op <- list(domain = "ZZ", id = "$allowed", operator = "get_model_column_order")
-  expect_null(compute_operation(op, study, "ZZ", study$datasets$ZZ))
+  expect_error(compute_operation(op, study, "ZZ", study$datasets$ZZ), "Model class of ZZ")
+})
+
+test_that("get_model_column_order gives a SUPP dataset SUPPQUAL's variables", {
+  supp <- data.table::data.table(STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "AESEQ",
+                                 IDVARVAL = "1", QNAM = "X", QLABEL = "x", QVAL = "1", XBOGUS = "z")
+  study <- list(datasets = list(SUPPAE = list(data = supp, meta = NULL)))
+  op <- list(domain = "SUPPAE", id = "$allowed", operator = "get_model_column_order")
+  allowed <- compute_operation(op, study, "SUPPAE", study$datasets$SUPPAE)$value
+  expect_true(all(c("QNAM", "IDVARVAL", "QEVAL") %in% allowed))
+  expect_false("XBOGUS" %in% allowed)
 })
 
 test_that("get_model_column_order allows an Associated Persons dataset its AP variables", {

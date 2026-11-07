@@ -7,6 +7,15 @@
 #' @return A logical vector.
 #' @noRd
 membership_check <- function(ctx) {
+  # CORE 1.0 answers `distinct` of an absent dataset with an untyped empty
+  # set, which a text column is simply not in (CORE-000235 relies on that).
+  # A numeric column cannot be compared with it, and the rule ends there:
+  # answered, every row with a VISITNUM was reported against a TV the study
+  # does not have (CORE-000140, CORE-000270, CORE-000842, CORE-000168).
+  absent <- attr(ctx$value, "core1_absent")
+  if (!is.null(absent) && is.numeric(ctx$target)) {
+    stop("needs ", absent, ", which is not in this study", call. = FALSE)
+  }
   # The TARGET can be a collection per row, not just a single value:
   # `define_variable_codelist_coded_codes is_not_contained_by $domain_lib_ccode`
   # asks about the whole set of codes a variable's codelist declares.

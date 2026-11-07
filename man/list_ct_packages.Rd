@@ -8,7 +8,7 @@ list_ct_packages(family = NULL)
 }
 \arguments{
 \item{family}{Optional prefix to narrow to one terminology family, e.g.
-\code{"sdtm"} or \code{"send"}.}
+\code{"sdtm"} or \code{"send"} (\code{"sdtmct"} works too). An unknown family is an error.}
 }
 \value{
 A character vector of package names, oldest first.

@@ -243,6 +243,24 @@ looks_like_dataset_json <- function(path) {
   grepl("\"(columns|rows|datasetJSONVersion)\"", head_text, useBytes = TRUE)
 }
 
+#' Is a `.json` file something other than a dataset, safe to leave out?
+#'
+#' Only a file that is valid JSON and holds none of Dataset-JSON's keys. An
+#' empty or broken file, or one whose keys sit past the part [file_head()]
+#' reads, is a dataset that could not be read, and the reader refuses it: left
+#' out with a warning, its rules never ran.
+#'
+#' @param path Path to a `.json` file.
+#' @return A single logical.
+#' @noRd
+is_stray_json <- function(path) {
+  if (looks_like_dataset_json(path) || !dataset_json_available()) {
+    return(FALSE)
+  }
+  parsed <- tryCatch(jsonlite::fromJSON(path, simplifyVector = FALSE), error = function(e) NULL)
+  is.list(parsed) && !any(c("columns", "rows", "datasetJSONVersion") %in% names(parsed))
+}
+
 #' Read one Dataset-NDJSON (`.ndjson`) file
 #'
 #' The metadata object is the first line and every line after it is one row.

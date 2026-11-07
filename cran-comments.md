@@ -52,7 +52,7 @@ length.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+To be filled in from the final `R CMD check --as-cran` run on each platform above.
 
 ## Notes for the reviewer
 

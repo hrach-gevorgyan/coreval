@@ -80,7 +80,7 @@ Never re-read files per rule.
 A rule that cannot be evaluated is reported as **skipped, with a reason**, never
 as a pass, and never as a confident finding.
 
-This turned out to be the single most valuable rule in the project. Trap 1's
+This turned out to be the single most valuable rule in the project. The
 "not a real column → literal text" fallback means any pseudo-column we can't
 supply silently becomes a literal string, so a comparison like
 `variable_label != "define_variable_label"` is true for *every* row, in the
