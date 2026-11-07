@@ -151,3 +151,87 @@ test_that("an all-missing column of a data frame is no text column (CORE-000362)
   result <- check_dataset(ae, domain = "AE", standard = "SDTMIG", version = "3.4")
   expect_false("CORE-000362" %in% result$skipped$rule_id)
 })
+
+with_core1 <- function(code) {
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "core1"
+  force(code)
+}
+
+test_that("trailing tabs and line breaks are dropped from transport text", {
+  path <- tempfile(fileext = ".xpt")
+  on.exit(unlink(path))
+  haven::write_xpt(data.frame(LBDTC = c("2018-02-20T06:00:00\t", "x\r\n", "ok ")), path,
+                   version = 5, name = "LB")
+  expect_equal(read_sas_file(path)$LBDTC, c("2018-02-20T06:00:00", "x", "ok"))
+})
+
+test_that("1.0's latest and earliest dates compare as ISO text (CORE-000238, CORE-000239)", {
+  with_core1({
+    expect_equal(pick_date(c("2014-02", "2014-02-01"), TRUE), "2014-02-01")
+    expect_equal(pick_date(c("2014-02", "2014-02-01"), FALSE), "2014-02")
+    expect_equal(pick_date(c("2011-01-14 00:00:00", "2010-01-01"), TRUE), "2011-01-14T00:00:00")
+    expect_equal(pick_date(c("2012-12-32", "garbage", "2014---15"), TRUE), "2014")
+  })
+})
+
+test_that("1.0's study day stops where its SQL does (CORE-000529)", {
+  with_core1({
+    dt <- data.table::data.table(RFSTDTC = c("2014-01-01", "2014-01-02"))
+    expect_equal(core1_dy_reference(dt, c("2014-01-05", NA)), c("2014-01-01", "2014-01-02"))
+    expect_error(core1_dy_reference(dt, c("2014-02-30", NA)), "not a real date")
+    expect_error(core1_dy_reference(dt, c("2014-13-01", NA)), "not a real date")
+    expect_error(core1_dy_reference(data.table::data.table(A = 1), "2014-01-01"), "RFSTDTC")
+  })
+})
+
+test_that("a 1.0 SUPP merge keeps every qualifier of a record and no identifier", {
+  with_core1({
+    ae <- list(data = data.table::data.table(STUDYID = "S", DOMAIN = "AE", USUBJID = "1", AESEQ = 1),
+               meta = NULL)
+    supp <- list(data = data.table::data.table(
+      STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "aeseq", IDVARVAL = "1",
+      QNAM = c("X", "Y"), QVAL = c("x", "y"), SPDEVID = c("D1", "D2"), POOLID = "P"), meta = NULL)
+    merged <- apply_supp_match(ae, supp)$data
+    expect_equal(c(merged$X, merged$Y), c("x", "y"))
+    expect_false(any(c("SPDEVID", "POOLID") %in% names(merged)))
+    supp$data$RDOMAIN <- NULL
+    expect_error(apply_supp_match(ae, supp), "RDOMAIN")
+  })
+})
+
+test_that("a 1.0 rule takes the domain from the file name, not DOMAIN", {
+  with_core1({
+    ae <- list(data = data.table::data.table(DOMAIN = "XX", AESEQ = 1), meta = NULL)
+    expect_equal(dataset_unsplit_name(ae, "AE"), "AE")
+    expect_equal(dataset_unsplit_name(ae, "LB1"), "LB")
+  })
+})
+
+test_that("a transport file with every label blank is checked for labels (CORE-000398)", {
+  dm <- dm_rows
+  dir <- study_dir(list(DM = dm))
+  on.exit(unlink(dir, recursive = TRUE))
+  result <- suppressWarnings(check_study(dir, standard = "SDTMIG", version = "3.4"))
+  expect_false(any(grepl("has none at all", result$skipped$reason)))
+  frame <- check_dataset(dm, domain = "DM", standard = "SDTMIG", version = "3.4")
+  expect_true(any(grepl("has none at all", frame$skipped$reason)))
+})
+
+test_that("Findings About may hold the Findings class variables (CORE-000550)", {
+  fa <- data.table::data.table(STUDYID = "S", DOMAIN = "FA", USUBJID = "1", FASEQ = 1, FATESTCD = "A",
+                               FATEST = "A", FAOBJ = "X", FAORRES = "1")
+  study <- list(datasets = list(FA = list(data = fa, meta = NULL)))
+  op <- list(domain = "FA", id = "$allowed", operator = "get_model_column_order")
+  allowed <- compute_operation(op, study, "FA", study$datasets$FA)$value
+  expect_true(all(c("FATESTCD", "FAORRES", "FAOBJ") %in% allowed))
+})
+
+test_that("a hand-built study list is refused with a message", {
+  expect_error(check_study(list(datasets = list(DM = dm_rows)), standard = "SDTMIG"),
+               "named list of datasets")
+  expect_error(write_findings(structure(list(findings = data.frame(rule_id = character()),
+                                             skipped = data.frame()), class = "coreval_result"),
+                              tempfile(fileext = ".csv"), tracking = NA), "TRUE or FALSE")
+})
