@@ -206,6 +206,7 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
   # every violating record. On a 100 000-row dataset that was 29% of the whole
   # check. What kind of thing a variable IS does not change between rows, so
   # it is decided once here.
+  core1 <- identical(rule_engine(rule), "core1")
   values_for <- function(v, rows) {
     n <- length(rows)
     if (startsWith(v, "$")) {
@@ -248,7 +249,14 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     x <- if (is_relrec_wildcard(v)) {
       resolve_relrec_wildcard_value(v, dataset, for_display = TRUE)[rows]
     } else if (!(v %in% names(dataset$data))) {
-      return(rep("Not in dataset", n))
+      # CORE 1.0 finds a column whatever the case it is named in
+      # (models/sql/table_schema.py), so the `domain` CORE-002000 reports is
+      # the dataset's DOMAIN.
+      hit <- if (core1) match(toupper(v), toupper(names(dataset$data))) else NA_integer_
+      if (is.na(hit)) {
+        return(rep("Not in dataset", n))
+      }
+      dataset$data[[hit]][rows]
     } else {
       dataset$data[[v]][rows]
     }
@@ -259,6 +267,11 @@ assemble_findings <- function(rule, dataset, domain, violations, bindings = list
     # `NA`). Left uncorrected, a violation on a row with a missing numeric
     # Output Variable would emit the literal text "NA". Numbers go through
     # number_text(): as.character() writes 200000 as "2e+05".
+    # A collection per row, such as a codelist's codes, CORE 1.0 writes
+    # comma-joined (format_metadata_dict(), store.py), not as R's c(...).
+    if (core1 && is.list(x)) {
+      x <- vapply(x, function(e) paste(e, collapse = ","), character(1))
+    }
     out <- json_text(x)
     out[is.na(x)] <- ""
     out

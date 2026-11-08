@@ -453,3 +453,10 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   - A 1.0 rule reads the SDTM Model its study's guide links to (1.4 for SDTMIG 3.2,
     1.7 for 3.3, 2.0 for 3.4), bundled in `sdtm_model_versions.rds`, not the newest
     Model for every version. CORE-000550 now passes all its cases.
+  - 1.0's define-item rules build the Library side as 1.0 does: the Model's class
+    variables under the guide's for the observation classes, the guide's list
+    alone otherwise, the Model for a custom domain. CORE-000929 and CORE-001081 now
+    pass all their cases, and a split QS or a custom domain is no longer refused.
+  - A 1.0 codelist holding one invalid code among valid ones is reported
+    (CORE-000929); it was missed. A SUPP value-level key sequence joins its
+    parent's (CORE-002007), and an output variable is found whatever its case.

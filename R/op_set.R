@@ -29,11 +29,22 @@ membership_check <- function(ctx) {
   # This branch comes first because the reference tests the target for being
   # a column of iterables before it looks at the comparator at all, and the
   # comparator may itself vary by row.
+  #
+  # CORE 1.0 holds such a collection as one comma-joined text (store.py,
+  # format_metadata_dict()) and asks whether that text is in the comparator
+  # (is_contained_by_operator.py). A single code is therefore contained when
+  # it is in the comparator, and several codes never are, even when every one
+  # of them is: 1.0 reports a RELREC whose RDOMAIN codelist holds AE, DS, DD
+  # and FA as having an invalid domain code (CORE-000929). For a 1.0 rule each
+  # item has to be in the comparator, which gives 1.0's answer for a single
+  # code and for any collection holding a code that is not in it.
   if (is.list(ctx$target) && length(ctx$target) == ctx$n) {
     per_row <- is.list(ctx$value) && length(ctx$value) == ctx$n
+    core1 <- engine_is_core1()
     return(vapply(seq_len(ctx$n), function(i) {
       comparator <- if (per_row) ctx$value[[i]] else ctx$value
-      any(ctx$target[[i]] %in% comparator)
+      hit <- ctx$target[[i]] %in% comparator
+      if (core1) length(hit) > 0 && all(hit) else any(hit)
     }, logical(1)))
   }
   if (is.list(ctx$value) && length(ctx$value) == ctx$n) {

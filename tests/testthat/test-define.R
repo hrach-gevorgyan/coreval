@@ -509,3 +509,76 @@ test_that("a define with a prefixed ODM namespace is refused with the true reaso
                     '</odm:MetaDataVersion></odm:Study></odm:ODM>'), f)
   expect_warning(read_define_xml(f), "namespace prefix")
 })
+
+test_that("CORE 1.0's define-item table carries the Model's variables and judges a custom domain by them", {
+  # define_items_against_library() lists every variable the define or the
+  # Library names, and for a general observation class or a domain the guide
+  # does not define, the Library is the Model's class variables. CORE-001081
+  # reports XDORRES, given role Topic, against the Model's Result Qualifier.
+  study <- list(
+    standard = list(product = "SDTMIG", version = "3-4"),
+    define = list(variables = data.table::data.table(
+      define_dataset_name = "XY", define_variable_name = c("XYTESTCD", "XYORRES"),
+      define_variable_role = c("Topic", "Topic")
+    )),
+    datasets = list(XY = list(
+      data = data.table::data.table(STUDYID = "S", DOMAIN = "XY", XYTESTCD = "A", XYORRES = "1"),
+      meta = NULL
+    ))
+  )
+  out <- core1_define_items_against_library(study, "XY")$data
+  expect_equal(out$library_variable_role[out$define_variable_name %in% "XYORRES"], "Result Qualifier")
+  expect_true("XYSEQ" %in% out$library_variable_name)
+  key <- ifelse(is.na(out$define_variable_name), out$library_variable_name, out$define_variable_name)
+  expect_identical(key, sort(key, method = "radix"))
+
+  # With no class from the guide or a topic variable, 1.0 stops the rule.
+  study$datasets$XY$data$XYTESTCD <- NULL
+  expect_error(core1_define_items_against_library(study, "XY"), "no class")
+})
+
+test_that("a supplemental qualifier the define makes a key joins the parent's key sequence", {
+  # get_dataset_key_sequence() reads a SUPP-- value-level item's KeySequence
+  # into the parent's keys; CORE-002007 reports them.
+  old <- .coreval_env$engine
+  .coreval_env$engine <- "core1"
+  on.exit(.coreval_env$engine <- old)
+  ae <- list(data = data.table::data.table(
+    STUDYID = "S", DOMAIN = "AE", USUBJID = c("1", "1"), AESEQ = c(1, 2), AEDECOD = c("X", "X")
+  ), meta = NULL)
+  supp <- list(data = data.table::data.table(
+    STUDYID = "S", RDOMAIN = "AE", USUBJID = "1", IDVAR = "AESEQ", IDVARVAL = c("1", "2"),
+    QNAM = "AETRTEM", QVAL = c("Y", "N")
+  ), meta = NULL)
+  study <- list(
+    define = list(
+      variables = data.table::data.table(
+        define_dataset_name = "AE", define_variable_name = c("STUDYID", "USUBJID", "AEDECOD"),
+        define_variable_key_sequence = 1:3
+      ),
+      vlm_keys = data.table::data.table(define_dataset_name = "SUPPAE", define_vlm_name = "AETRTEM",
+                                        define_vlm_key_sequence = 4L)
+    ),
+    datasets = list(AE = ae, SUPPAE = supp)
+  )
+  out <- build_dataset_contents_against_define(ae, study, "AE")$data
+  expect_equal(unique(out$define_dataset_key_sequence), "STUDYID,USUBJID,AEDECOD,AETRTEM")
+  expect_equal(out$define_key_sequence_is_unique, c(TRUE, TRUE))
+  # Without SUPPAE the key cannot be read, and 1.0's query fails there.
+  study$datasets$SUPPAE <- NULL
+  expect_error(build_dataset_contents_against_define(ae, study, "AE"), "AETRTEM")
+})
+
+test_that("for a CORE 1.0 rule a collection is contained only when every item is", {
+  # CORE-000929 asks whether a codelist's codes are DOMAIN codes. A codelist
+  # holding AE, DS and an unknown code has to be reported; any() answered
+  # that it was contained and the rule found nothing.
+  ctx <- list(target = list("C49562", c("C49562", "C49576"), c("C49562", "C99998"), character(0)),
+              value = c("C49562", "C49576"), n = 4)
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "core1"
+  expect_equal(membership_check(ctx), c(TRUE, TRUE, FALSE, FALSE))
+  .coreval_env$engine <- "cdisc"
+  expect_equal(membership_check(ctx), c(TRUE, TRUE, TRUE, FALSE))
+})

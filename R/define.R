@@ -545,7 +545,47 @@ read_define_xml <- function(path) {
   )
   list(datasets = datasets, variables = variables, ct_standards = ct_standards,
        vlms = define_value_level(doc, groups, item_defs),
+       vlm_keys = define_vlm_keys(doc, groups),
        external_dictionaries = external_dictionaries)
+}
+
+#' The value-level items the define makes keys, such as a SUPP-- qualifier
+#'
+#' Follows CORE 1.0's `_get_key_variables_for_supp_dataset()`
+#' (base_define_xml_reader.py): every ItemRef with a KeySequence in the
+#' def:ValueListDef of a dataset variable, whether or not its where clause
+#' exists.
+#'
+#' @param doc The define document, namespaces stripped.
+#' @param groups Its ItemGroupDef nodes.
+#' @return A data.table: `define_dataset_name`, `define_vlm_name`,
+#'   `define_vlm_key_sequence`.
+#' @noRd
+define_vlm_keys <- function(doc, groups) {
+  item_nodes <- xml2::xml_find_all(doc, "//ItemDef")
+  oids <- xml2::xml_attr(item_nodes, "OID")
+  item_name <- stats::setNames(xml_attr_any(item_nodes, c("Name", "SASFieldName")), oids)
+  vl_ref <- xml2::xml_find_first(item_nodes, "./*[local-name()='ValueListRef']")
+  value_list_of <- stats::setNames(xml_attr_any(vl_ref, c("ValueListOID", "def:ValueListOID")), oids)
+  lists <- xml2::xml_find_all(doc, "//*[local-name()='ValueListDef']")
+  list_by_oid <- stats::setNames(lists, xml2::xml_attr(lists, "OID"))
+  rows <- list()
+  for (g in seq_along(groups)) {
+    dataset <- xml2::xml_attr(groups[[g]], "Name")
+    if (is.na(dataset)) dataset <- xml2::xml_attr(groups[[g]], "SASDatasetName")
+    for (oid in xml2::xml_attr(xml2::xml_find_all(groups[[g]], "./ItemRef"), "ItemOID")) {
+      vl <- value_list_of[oid]
+      if (is.na(vl) || is.null(list_by_oid[[vl]])) next
+      refs <- xml2::xml_find_all(list_by_oid[[vl]], "./ItemRef[@KeySequence]")
+      if (!length(refs)) next
+      rows[[length(rows) + 1]] <- data.table::data.table(
+        define_dataset_name = dataset,
+        define_vlm_name = unname(item_name[xml2::xml_attr(refs, "ItemOID")]),
+        define_vlm_key_sequence = suppressWarnings(as.integer(xml2::xml_attr(refs, "KeySequence")))
+      )
+    }
+  }
+  data.table::rbindlist(rows)
 }
 
 #' The define's value-level metadata, one row per value-list item

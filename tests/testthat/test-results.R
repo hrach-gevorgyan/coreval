@@ -97,6 +97,18 @@ test_that("assemble_findings reports a real, non-$-binding Output Variable absen
   expect_equal(findings$Value[findings$Record == 1 & findings$Variable == "POOLID"], "CDISC001")
 })
 
+test_that("a CORE 1.0 Output Variable is found whatever its case", {
+  # 1.0 keys columns by their lower-cased name (table_schema.py), so the
+  # `domain` CORE-002000 reports is the dataset's DOMAIN, not "Not in dataset".
+  dataset <- list(data = data.table::data.table(DOMAIN = "ZZ", ZZSEQ = 1), meta = NULL)
+  rule <- list(source = "core_contributor", sensitivity = "Dataset",
+               outcome = list(`Output Variables` = c("domain", "ZZTERM")))
+  findings <- assemble_findings(rule, dataset, "ZZ", TRUE)
+  expect_equal(findings$Value, c("ZZ", "Not in dataset"))
+  rule$source <- "published"
+  expect_equal(assemble_findings(rule, dataset, "ZZ", TRUE)$Value, c("Not in dataset", "Not in dataset"))
+})
+
 test_that("group_first_violations collapses per-row violations to one flagged row per group (CORE-000888)", {
   # SETCD groups SET1(1-4)/SET2(5-7)/SET3(8): only SET2 and SET3 violate,
   # every row within a violating group shares the same result (the check is

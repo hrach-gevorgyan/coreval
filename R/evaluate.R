@@ -1622,35 +1622,62 @@ build_variable_metadata_dataset <- function(real_dataset, define = NULL, domain 
 #' row per define variable in define order, so the two number their records
 #' differently (CORE-000929 reports CM record 72 where CDISC's reports 2).
 #'
+#' The Library side is 1.0's `get_variables_metadata_from_standard()`
+#' (sdtm_standards_context.py): for the four general observation classes the
+#' Model's variables for the class with the guide's own on top, for any other
+#' class the guide's list alone, and for a domain the guide does not define
+#' the Model's variables for the class its topic variable gives it. A define
+#' variable neither names stays, with no Library fields. With no class at all,
+#' as for DI under SDTMIG 3.3, 1.0 stops the rule ("Class metadata is not
+#' found"), and so does this.
+#'
 #' @param study A study.
 #' @param domain The domain.
 #' @return A synthetic dataset.
 #' @noRd
 core1_define_items_against_library <- function(study, domain) {
   data <- build_define_item_metadata_dataset(study, domain)$data
-  if (nrow(data) == 0 || !"library_variable_name" %in% names(data)) {
+  if (nrow(data) == 0) {
     return(list(data = data, meta = NULL))
   }
-  # The IG's variables only. 1.0 also lists Model class variables for the
-  # general observation classes, from its own Library cache; that list is not
-  # reproduced here, so a record number can differ from 1.0's while the
-  # variable reported is the same.
-  lib <- library_variables_for(study, domain)
-  only_lib <- setdiff(unique(lib$variable), data$define_variable_name)
-  if (length(only_lib) > 0) {
-    lib <- lib[match(only_lib, lib$variable), ]
-    extra <- data.table::data.table(
-      library_variable_name = lib$variable, library_variable_label = lib$label,
-      library_variable_role = lib$role, library_variable_data_type = lib$type,
-      library_variable_core = lib$core,
-      library_variable_ccode = ifelse(is.na(lib$ccode), "", lib$ccode)
-    )
-    extra$library_variable_has_codelist <- nzchar(extra$library_variable_ccode)
-    data <- data.table::rbindlist(list(data, extra), use.names = TRUE, fill = TRUE)
+  data <- data[, !startsWith(names(data), "library_"), with = FALSE]
+  dataset <- study$datasets[[domain]]
+  code <- core1_derive_domain(domain)
+  ig <- library_variables_for(study, code)
+  ig <- ig[!duplicated(ig$variable), ]
+  cls <- dataset_class(dataset, domain, list(standard = study$standard$product, version = study$standard$version))
+  general <- normalize_class(cls) %in% normalize_class(c("EVENTS", "INTERVENTIONS", "FINDINGS", "FINDINGS ABOUT"))
+  if (nrow(ig) == 0 && is.na(cls)) {
+    stop("CORE 1.0 finds no class for ", toupper(domain), " in the Library, so has no variables to compare with",
+         call. = FALSE)
   }
-  key <- ifelse(is.na(data$define_variable_name), data$library_variable_name, data$define_variable_name)
-  data <- data[order(toupper(key), method = "radix")]
-  list(data = data, meta = NULL)
+  lib <- data.frame(variable = character(0), label = character(0), role = character(0), type = character(0),
+                    core = character(0), ccode = character(0), stringsAsFactors = FALSE)
+  if (nrow(ig) == 0 || general) {
+    model <- model_variables_for(domain, dataset)
+    if (nrow(model) > 0) {
+      lib <- data.frame(variable = model$variable, label = model$label, role = model$role, type = model$type,
+                        core = NA_character_, ccode = NA_character_, stringsAsFactors = FALSE)
+    }
+  }
+  if (nrow(ig) > 0) {
+    ig <- data.frame(variable = ig$variable, label = ig$label, role = ig$role, type = ig$type,
+                     core = ig$core, ccode = ig$ccode, stringsAsFactors = FALSE)
+    lib <- rbind(lib[!toupper(lib$variable) %in% toupper(ig$variable), ], ig)
+  }
+  names_all <- unique(c(toupper(data$define_variable_name), toupper(lib$variable)))
+  names_all <- names_all[order(names_all, method = "radix")]
+  out <- data[match(names_all, toupper(data$define_variable_name))]
+  at <- match(names_all, toupper(lib$variable))
+  data.table::set(out, j = "library_variable_name", value = lib$variable[at])
+  data.table::set(out, j = "library_variable_label", value = lib$label[at])
+  data.table::set(out, j = "library_variable_role", value = lib$role[at])
+  data.table::set(out, j = "library_variable_data_type", value = lib$type[at])
+  data.table::set(out, j = "library_variable_core", value = lib$core[at])
+  ccode <- lib$ccode[at]
+  data.table::set(out, j = "library_variable_ccode", value = ifelse(is.na(ccode), "", ccode))
+  data.table::set(out, j = "library_variable_has_codelist", value = nzchar(out$library_variable_ccode))
+  list(data = out, meta = NULL)
 }
 
 #' Each value with its variable's Library metadata and codelist terms
@@ -1816,7 +1843,19 @@ build_dataset_contents_against_define <- function(dataset, study, domain) {
   keys <- character(0)
   if (!is.null(dv) && "define_variable_key_sequence" %in% names(dv)) {
     mine <- dv[toupper(dv$define_dataset_name) %in% names_here & !is.na(dv$define_variable_key_sequence), ]
-    keys <- mine$define_variable_name[order(mine$define_variable_key_sequence)]
+    seq_no <- mine$define_variable_key_sequence
+    keys <- mine$define_variable_name
+    # A supplemental qualifier can be a key: the define gives it a KeySequence
+    # on its value-level item under SUPP--, and 1.0 reads it into the parent's
+    # keys (get_dataset_key_sequence(), base_define_xml_reader.py).
+    vl <- study$define$vlm_keys
+    if (engine_is_core1() && !is.null(vl) && nrow(vl) > 0) {
+      supp_keys <- vl[toupper(vl$define_dataset_name) %in% paste0("SUPP", names_here) &
+                        !is.na(vl$define_vlm_name) & !is.na(vl$define_vlm_key_sequence), ]
+      seq_no <- c(seq_no, supp_keys$define_vlm_key_sequence)
+      keys <- c(keys, supp_keys$define_vlm_name)
+    }
+    keys <- unique(keys[order(seq_no, keys)])
   }
   if (length(keys) > 0) {
     add("define_dataset_key_sequence", paste(keys, collapse = ","))

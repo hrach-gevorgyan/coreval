@@ -325,7 +325,7 @@ CORE-000892,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000901,core_contributor,Record Data,Partially Executable - Possible Underreporting,Record,PASS,
 CORE-000914,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000916,core_contributor,Record Data,Fully Executable,Record,PASS,
-CORE-000929,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[CM] record mismatch: expected {72}, got {37}"
+CORE-000929,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,PASS,
 CORE-000953,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-001034,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-000002,core_contributor,Record Data,Fully Executable,Record,PASS,
@@ -485,7 +485,7 @@ CORE-001064,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-001078,core_contributor,Record Data,Fully Executable,Group,PASS,
 CORE-001079,core_contributor,Variable Metadata Check,Partially Executable - Possible Underreporting,Record,PASS,
 CORE-001080,core_contributor,Record Data,Fully Executable,Record,FAIL,"[TS] record mismatch: expected {}, got {16}"
-CORE-001081,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,FAIL,"[LB] record mismatch: expected {2,131}, got {2,47}"
+CORE-001081,core_contributor,Define Item Metadata Check against Library Metadata,Fully Executable,Record,PASS,
 CORE-001082,core_contributor,Variable Metadata Check against Library Metadata,Partially Executable - Possible Overreporting,Record,PASS,
 CORE-000737,core_contributor,Record Data,Fully Executable,Dataset,PASS,
 CORE-000738,core_contributor,Record Data,Fully Executable,Record,PASS,

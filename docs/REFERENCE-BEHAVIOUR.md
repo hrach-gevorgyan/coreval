@@ -160,6 +160,27 @@ holding two elements with the same SESTDTC, swapping the two records, or reversi
 the file, changed which one 1.0 reported (CORE-000527), in no consistent direction.
 coreval breaks the tie by file order, so its answer can be reproduced.
 
+**CORE 1.0 reads a codelist of several codes as one invalid code (CORE-000929).** It
+stores a define variable's codelist codes as one comma-joined text
+(metadata/store.py, `format_metadata_dict`) and asks whether that text is among the
+DOMAIN codes (is_contained_by_operator.py, `IN`). Any codelist with more than one
+term is reported, even when every term is valid: on a define whose RELREC RDOMAIN
+codelist holds AE, DS, DD and FA, 1.0 reports RELREC record 3. coreval requires every
+code to be a DOMAIN code, which gives 1.0's answer for a single code and for any
+codelist holding an invalid one.
+
+**The Library gives SUPPQUAL no roles before SDTMIG 3.3.** Its SUPPQUAL variables
+carry a role from 3.3 on, and none in 3.1.2, 3.1.3 or 3.2. CORE-001081 compares the
+define's role with the Library's, so for a 3.2 or older study every SUPP-- define
+item is reported: run as 3.2, CORE 1.0 reports SUPPDM's IDVAR, IDVARVAL, QEVAL,
+QLABEL and QNAM, and coreval does the same.
+
+**CORE 1.0 cannot run CORE-002002 on the case it is written for.** It builds the
+define key-uniqueness column for every Dataset Contents rule, so when a key the
+define names is missing from the data, the whole rule fails. CORE-002002 asks
+exactly whether --TESTCD is missing, and reports nothing on that case; coreval
+skips it with the reason.
+
 **CORE 1.0 orders a dataset of no known domain against an empty list.** For a
 domain the declared SDTMIG version does not define and whose topic variable gives
 no class (DI, SJ, TP, TT under 3.4), its `get_column_order_from_library` returns an
