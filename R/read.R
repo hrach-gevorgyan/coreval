@@ -433,6 +433,14 @@ read_sas_file <- function(path) {
     stop("'", name, "' holds more than one dataset. Write each dataset to its own ",
          ".xpt file, as a submission does. Nothing was checked.", call. = FALSE)
   }
+  # Cut on a record boundary the size test above passes, and haven reads the
+  # rows that are left without a word: 100 rows less 800 bytes came back as 77.
+  if (xpt && xpt_ends_mid_row(path, size)) {
+    stop("'", name, "' is damaged: its last row is cut short, the way a file ",
+         "is when a copy or download was interrupted. Nothing was checked, ",
+         "because checking part of a dataset would miss problems in the rest.",
+         call. = FALSE)
+  }
   out <- tryCatch(
     if (xpt) haven::read_xpt(path) else haven::read_sas(path),
     error = function(e) {
@@ -490,6 +498,39 @@ xpt_member_count <- function(path) {
     at <- grepRaw("HEADER RECORD*******MEMB", raw, fixed = TRUE, all = TRUE)
     count <- count + sum((at - 1) %% 80 == 0)
   }
+}
+
+#' Does a transport file's data stop part-way through a row?
+#'
+#' The data follows the OBS header record and is a run of rows of the summed
+#' variable lengths, padded with blanks to a whole 80-byte record. What is
+#' left over after the last whole row must therefore be blank. A cut that
+#' happens to fall on a row boundary cannot be seen; one inside a row can.
+#'
+#' @param path A `.xpt` file.
+#' @param size Its size in bytes.
+#' @return `TRUE` when the leftover bytes are not blank padding.
+#' @noRd
+xpt_ends_mid_row <- function(path, size) {
+  lengths <- xpt_declared_lengths(path)
+  if (is.null(lengths) || !length(lengths) || sum(lengths) <= 0) {
+    return(FALSE)
+  }
+  head <- readBin(path, "raw", n = min(size, 2e6))
+  at <- grepRaw("HEADER RECORD*******OBS", head, fixed = TRUE, all = TRUE)
+  at <- at[(at - 1) %% 80 == 0]
+  if (!length(at)) {
+    return(FALSE)
+  }
+  start <- at[[1]] + 80
+  left <- (size - (start - 1)) %% sum(lengths)
+  if (left == 0) {
+    return(FALSE)
+  }
+  con <- file(path, "rb")
+  on.exit(close(con), add = TRUE)
+  seek(con, size - left)
+  any(readBin(con, "raw", n = left) != as.raw(0x20))
 }
 
 #' The declared length of each variable of a SAS transport file

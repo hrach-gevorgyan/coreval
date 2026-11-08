@@ -146,10 +146,11 @@ read_one_dataset_file <- function(path) {
   if (ext == "csv") {
     # A bare CSV declares no types, unlike an XPT (which carries its own) or a
     # CORE test case (which ships `_variables.csv`). Inference is the only
-    # option here, so it is done with fread's defaults - but note the cost:
-    # a numeric-looking identifier such as "007" becomes 7, and a rule about
-    # its text form can no longer see the original. Prefer .xpt when the
-    # distinction matters.
+    # option here. A value with a leading zero ("007") is kept as text: read
+    # as the number 7 it lost its zeros, and CORE-001082 then reported SUBJID
+    # as numeric where the data is not. A column of plain numbers still reads
+    # as numeric, so an identifier written "1001" is a number here. Prefer
+    # .xpt when the distinction matters.
     return(build_dataset_from_data_frame(read_csv_dataset(path)))
   }
   stop(
@@ -209,7 +210,7 @@ read_csv_dataset <- function(path) {
     stopped <- NULL
     dt <- withCallingHandlers(
       data.table::fread(path, na.strings = character(0), strip.white = FALSE,
-                        header = TRUE, sep = sep, ...),
+                        header = TRUE, sep = sep, keepLeadingZeros = TRUE, ...),
       warning = function(w) {
         # "Discarded single-line footer" is a short LAST row, dropped without
         # an error: a record lost as quietly as a short row anywhere else.
@@ -268,7 +269,10 @@ read_csv_dataset <- function(path) {
     # "Inf": a text value with a leading space read as the number 5, and the
     # rule about leading spaces (CORE-000867) never saw it.
     plain <- grepl("^[-+]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][-+]?[0-9]+)?$", x[!gap], useBytes = TRUE)
-    num <- if (all(plain)) suppressWarnings(as.numeric(x[!gap])) else NA_real_
+    # And not "007": fread kept that as text (keepLeadingZeros), and turning
+    # it into 7 here would lose the zeros it kept.
+    zeros <- any(grepl("^[-+]?0[0-9]", x[!gap], useBytes = TRUE))
+    num <- if (all(plain) && !zeros) suppressWarnings(as.numeric(x[!gap])) else NA_real_
     if (!anyNA(num)) {
       out <- rep(NA_real_, length(x))
       out[!gap] <- num
@@ -353,7 +357,11 @@ infer_domain <- function(dataset, path = NULL) {
 #' before drawing conclusions.
 #'
 #' @param x A data frame (or [data.table::data.table()]), or the path to one
-#'   `.xpt`, `.sas7bdat` or `.csv` file.
+#'   `.xpt`, `.sas7bdat` or `.csv` file. A CSV file records no types, so each
+#'   column's is guessed: one of plain numbers is read as numeric, and a value
+#'   with a leading zero such as `"007"` stays text. An identifier written as
+#'   a plain number can then be reported as the wrong type; an `.xpt` file
+#'   carries the types it was written with.
 #' @param domain Two-letter domain code, e.g. `"AE"`. Left as `NULL`, coreval
 #'   takes it from your `DOMAIN` column, or the file name if there isn't one.
 #'   For one file of a split dataset with no `DOMAIN` column, such as

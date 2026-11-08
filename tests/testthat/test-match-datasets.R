@@ -158,7 +158,7 @@ test_that("apply_match_dataset never matches a blank/NA key against another blan
   expect_true(is.na(joined$data$DTHFL[3])) # NA key: no fabricated match
 })
 
-test_that("apply_match_dataset skips the join entirely when a key is missing from either side, rather than joining on the rest", {
+test_that("apply_match_dataset refuses a join whose key is missing from either side, rather than joining on the rest", {
   # Bug: dropping just the missing key and joining on whatever's left turns
   # a composite key (USUBJID+VISITNUM) into a much looser one (USUBJID
   # alone) when the CURRENT domain has no VISITNUM at all - e.g. AE, which
@@ -169,9 +169,12 @@ test_that("apply_match_dataset skips the join entirely when a key is missing fro
     USUBJID = c("S1", "S1", "S1"), VISITNUM = c(1, 2, 3), SVPRESP = c("Y", "Y", "Y")
   )
   study <- list(datasets = list(SV = list(data = right_data, meta = NULL)))
-  joined <- apply_match_dataset(left, list(Keys = c("USUBJID", "VISITNUM"), Name = "SV"), study, "AE")
-  expect_equal(nrow(joined$data), 2) # unchanged - no cartesian explosion
-  expect_false("SVPRESP" %in% names(joined$data))
+  # Nor is it evaluated unjoined: SV's columns would then be absent, and a
+  # condition on them answered. Both engines stop here.
+  expect_error(
+    apply_match_dataset(left, list(Keys = c("USUBJID", "VISITNUM"), Name = "SV"), study, "AE"),
+    "joins on VISITNUM, which AE does not have"
+  )
 })
 
 test_that("apply_match_dataset handles an all-valid-key dataset without erroring on the empty blank branch", {
@@ -802,4 +805,21 @@ test_that("a 1.0 rule stops when its left-joined dataset is absent", {
   spec <- list(Name = "DM", Keys = list("USUBJID"), "Join Type" = "left")
   .coreval_env$engine <- "core1"
   expect_error(apply_match_dataset(ds, spec, study), "needs DM")
+})
+
+test_that("CORE 1.0 links a row with a blank IDVAR or IDVARVAL to no parent record", {
+  # child.py _find_idvar_linking_condition: once a row names a real parent
+  # column, the join is a CASE on IDVAR, which a blank IDVAR or IDVARVAL
+  # satisfies for no record. These rows used to take the subject's first AE.
+  ae <- data.table::data.table(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-1",
+                               AESEQ = c(1, 2), AETERM = c("HEADACHE", "NAUSEA"))
+  co <- data.table::data.table(STUDYID = "S1", DOMAIN = "CO", USUBJID = "S1-1", COSEQ = 1:3,
+                               RDOMAIN = "AE", IDVAR = c("AESEQ", "", "AESEQ"),
+                               IDVARVAL = c("2", "", ""), COVAL = "c")
+  study <- list(datasets = list(AE = list(data = ae, meta = NULL), CO = list(data = co, meta = NULL)))
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "core1"
+  out <- apply_child_match(list(data = co, meta = NULL), study, keys = list("USUBJID"))$data
+  expect_equal(out$AETERM, c("NAUSEA", NA, NA))
 })

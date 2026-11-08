@@ -775,6 +775,47 @@ newest_library_version <- function(versions) {
   numbered[order(padded)][length(numbered)]
 }
 
+#' The rows of a bundled Library table for a study's standard and version
+#'
+#' The Library keeps a guide's sub-variants under their base standard, with
+#' the variant folded into the version: SENDIG-DART 1.1 is `sendig` /
+#' `dart-1-1`, SDTMIG-MD 1.0 is `sdtmig` / `md-1-0`. CDISC's engine reads them
+#' that way (utilities/utils.py, normalize_standard_input). Looked up by the
+#' product name as given, a DART study found no rows at all, and its
+#' required-variable rules ran and reported nothing.
+#'
+#' A plain SENDIG or SDTMIG study is never answered from a variant's rows,
+#' even when its version is unknown and the newest is taken.
+#'
+#' @param tbl A table with `standard` and `version` columns.
+#' @param study Full study object.
+#' @return The matching rows, possibly none.
+#' @noRd
+library_rows <- function(tbl, study) {
+  product <- study$standard$product %||% NA_character_
+  standard <- if (is.na(product)) "sdtmig" else tolower(product)
+  if (identical(standard, "tig")) {
+    standard <- tig_library_standard(study)
+  }
+  version <- study$standard$version %||% NA_character_
+  variant <- regmatches(standard, regexec("^(sendig|sdtmig)-(.+)$", standard))[[1]]
+  if (length(variant) == 3) {
+    rows <- tbl[tbl$standard == variant[[2]] & startsWith(tbl$version, paste0(variant[[3]], "-")), ]
+    if (!is.na(version) && nzchar(version)) {
+      version <- paste0(variant[[3]], "-", version)
+    }
+  } else {
+    rows <- tbl[tbl$standard == standard, ]
+    if (standard %in% c("sendig", "sdtmig")) {
+      rows <- rows[grepl("^[0-9]", rows$version), ]
+    }
+  }
+  if (nrow(rows) == 0) {
+    return(rows)
+  }
+  rows[rows$version == pick_library_version(version, rows$version), ]
+}
+
 #' Rows of CDISC Library variable metadata matching a study's standard and domain
 #' @param study Full study object (its `$standard` selects standard/version).
 #' @param domain Domain code.
@@ -783,27 +824,12 @@ newest_library_version <- function(versions) {
 library_variables_for <- function(study, domain) {
   # Looked up by the domain a dataset belongs to, so LB1 finds LB's variables.
   domain <- domain_code_of(study, domain)
-  tbl <- .coreval_env$library_variables
-  product <- study$standard$product %||% NA_character_
-  standard <- if (is.na(product)) "sdtmig" else tolower(product)
   # TIG bundles a table per sub-standard (tig-sdtm, tig-send, tig-adam), as
   # the engine fetches the Library standard per sub-standard
   # (cdisc_library_service.py). Fixed to tig-sdtm, a SEND study was told its
-  # DM lacked RACE and DTHFL.
-  if (identical(standard, "tig")) {
-    standard <- tig_library_standard(study)
-  }
-  if (!(standard %in% tbl$standard)) {
-    return(tbl[0, ])
-  }
-  rows <- tbl[tbl$standard == standard, ]
-
-  # Version strings are dashed in both the `_env` file and the cache keys
-  # ("3-4"), so they compare directly. An undeclared or unknown version
-  # falls back to the newest available for that standard.
-  version <- study$standard$version %||% NA_character_
-  use_version <- pick_library_version(version, rows$version)
-  rows <- rows[rows$version == use_version, ]
+  # DM lacked RACE and DTHFL. An undeclared or unknown version falls back to
+  # the newest available for that standard.
+  rows <- library_rows(.coreval_env$library_variables, study)
 
   # Every SUPPxx dataset (SUPPAE, SUPPDM, ...) follows the SUPPQUAL template
   # and is keyed as "SUPPQUAL" in the Library data, not by its own literal
@@ -837,18 +863,10 @@ standard_domain_label <- function(study, domain, dataset = NULL) {
   if (is.null(tbl)) {
     return(fallback)
   }
-  product <- study$standard$product %||% NA_character_
-  standard <- if (is.na(product)) "sdtmig" else tolower(product)
-  if (identical(standard, "tig")) {
-    standard <- tig_library_standard(study)
-  }
-  rows <- tbl[tbl$standard == standard, ]
+  rows <- library_rows(tbl, study)
   if (nrow(rows) == 0) {
     return(fallback)
   }
-  version <- study$standard$version %||% NA_character_
-  use_version <- pick_library_version(version, rows$version)
-  rows <- rows[rows$version == use_version, ]
   hit <- rows$label[toupper(rows$domain) == toupper(domain)]
   if (length(hit) == 0) fallback else hit[1]
 }
@@ -1629,16 +1647,10 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # CORE-002122 reads FATEST as a variable label and asks whether it names a
     # qualifier that should have been its own variable.
     label_referenced_variable_metadata = {
-      tbl <- .coreval_env$library_variables
-      product <- tolower(study$standard$product %||% NA_character_)
-      standard <- if (is.na(product)) "sdtmig" else product
-      rows <- tbl[tbl$standard == standard, ]
+      rows <- library_rows(.coreval_env$library_variables, study)
       if (nrow(rows) == 0) {
-        stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
+        stop("no bundled Implementation Guide for ", study$standard$product %||% "SDTMIG", call. = FALSE)
       }
-      version <- study$standard$version %||% NA_character_
-      use <- pick_library_version(version, rows$version)
-      rows <- rows[rows$version == use, ]
       attribute <- op$attribute_name %||% "role"
       field <- switch(attribute, name = "variable", attribute)
       if (!field %in% names(rows)) {
@@ -1679,16 +1691,11 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # Guide defines, optionally only those of one class (CORE-002056 asks for
     # the Trial Design ones and subtracts those the study has).
     standard_domains = {
-      tbl <- .coreval_env$library_variables
-      product <- tolower(study$standard$product %||% NA_character_)
-      standard <- if (is.na(product)) "sdtmig" else product
-      rows <- tbl[tbl$standard == standard, ]
+      rows <- library_rows(.coreval_env$library_variables, study)
       if (nrow(rows) == 0) {
-        stop("no bundled Implementation Guide for ", toupper(standard), call. = FALSE)
+        stop("no bundled Implementation Guide for ", study$standard$product %||% "SDTMIG", call. = FALSE)
       }
-      version <- study$standard$version %||% NA_character_
-      use <- pick_library_version(version, rows$version)
-      doms <- unique(rows$domain[rows$version == use])
+      doms <- unique(rows$domain)
       if (!is.null(op$domain_class)) {
         cls <- vapply(doms, domain_class, character(1))
         doms <- doms[!is.na(cls) & toupper(cls) == toupper(op$domain_class)]
@@ -2089,13 +2096,19 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
       !(code %in% ig_domains(study))
     }),
     domain_label = scalar_binding(standard_domain_label(study, current_domain, ds)),
-    required_variables = {
-      vars <- sdtmig_variables_for(study, domain, "Req")
-      if (is.null(vars)) NULL else scalar_binding(vars)
-    },
+    # A domain the guide does not define has no required or expected
+    # variables: CDISC's engine reads a custom domain's from the Model class,
+    # which carries no Core designation, and gets an empty list. A standard
+    # with no bundled guide at all is refused: answered as empty, every
+    # SENDIG-DART study passed these rules while its lookup was broken.
+    required_variables = ,
     expected_variables = {
-      vars <- sdtmig_variables_for(study, domain, "Exp")
-      if (is.null(vars)) NULL else scalar_binding(vars)
+      if (nrow(library_rows(.coreval_env$library_variables, study)) == 0) {
+        stop("no bundled Implementation Guide for ", study$standard$product %||% "SDTMIG",
+             call. = FALSE)
+      }
+      core <- if (identical(op$operator, "required_variables")) "Req" else "Exp"
+      scalar_binding(sdtmig_variables_for(study, domain, core) %||% character(0))
     },
     get_model_column_order = {
       cls <- dataset_class(own, current_domain)
@@ -2278,14 +2291,16 @@ resolve_binding <- function(binding, dataset) {
 #' @return A character vector.
 #' @noRd
 ig_domains <- function(study) {
-  tbl <- .coreval_env$library_variables
   product <- tolower(study$standard$product %||% NA_character_)
-  rows <- tbl[tbl$standard == product & product %in% c("sdtmig", "sendig"), ]
+  rows <- if (isTRUE(grepl("^(sdtmig|sendig)", product))) {
+    library_rows(.coreval_env$library_variables, study)
+  } else {
+    .coreval_env$library_variables[0, ]
+  }
   if (nrow(rows) == 0) {
     return(.coreval_env$domain_classes$domain)
   }
-  use <- pick_library_version(study$standard$version %||% NA_character_, rows$version)
-  doms <- unique(rows$domain[rows$version == use])
+  doms <- unique(rows$domain)
   if (engine_is_core1()) doms else union(doms, .coreval_env$model_dataset_variables$domain)
 }
 

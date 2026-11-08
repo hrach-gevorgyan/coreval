@@ -18,7 +18,11 @@ check_dataset(
 }
 \arguments{
 \item{x}{A data frame (or \code{\link[data.table:data.table]{data.table::data.table()}}), or the path to one
-\code{.xpt}, \code{.sas7bdat} or \code{.csv} file.}
+\code{.xpt}, \code{.sas7bdat} or \code{.csv} file. A CSV file records no types, so each
+column's is guessed: one of plain numbers is read as numeric, and a value
+with a leading zero such as \code{"007"} stays text. An identifier written as
+a plain number can then be reported as the wrong type; an \code{.xpt} file
+carries the types it was written with.}
 
 \item{domain}{Two-letter domain code, e.g. \code{"AE"}. Left as \code{NULL}, coreval
 takes it from your \code{DOMAIN} column, or the file name if there isn't one.

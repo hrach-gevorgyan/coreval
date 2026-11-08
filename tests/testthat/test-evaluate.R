@@ -409,3 +409,40 @@ test_that("is_unique_set keeps the columns that exist, as CDISC's engine does (C
   none <- list(check = list(name = "TEDUR", operator = "is_not_unique_set", value = "TESTRL"))
   expect_error(evaluate_rule(none, study, "TE"), "none of which this dataset has")
 })
+
+test_that("the variable-metadata table is cached per engine, not shared between them", {
+  se <- data.frame(STUDYID = "S1", DOMAIN = "SE", USUBJID = "S1-1", SESEQ = 1, ETCD = "A",
+                   ELEMENT = "X", SESTDTC = "2020-01-01", SEENRTPT = "BEFORE", SEDY = 1,
+                   stringsAsFactors = FALSE)
+  # A real transport file: its variable metadata is what this table is built from.
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  haven::write_xpt(se, file.path(dir, "se.xpt"), name = "SE")
+  study <- read_study(dir)
+  study$standard <- list(product = "SDTMIG", version = "3.4")
+  rule <- list(rule_type = "Variable Metadata Check")
+  old <- list(engine = .coreval_env$engine, cache = .coreval_env$prep_cache)
+  on.exit({
+    .coreval_env$engine <- old$engine
+    .coreval_env$prep_cache <- old$cache
+  }, add = TRUE)
+  # As run_rule_on_domain() sets a rule up: the engine, and for 1.0 the Model
+  # its SDTMIG version links to.
+  build <- function(engine) {
+    .coreval_env$engine <- engine
+    if (engine == "core1") {
+      restore <- use_sdtm_model(study)
+      on.exit(restore())
+    }
+    prepare_dataset_for_rule(rule, study, "SE")$data$library_variable_name
+  }
+  .coreval_env$prep_cache <- NULL
+  fresh <- build("cdisc")
+  .coreval_env$prep_cache <- new.env(parent = emptyenv())
+  core1 <- build("core1")
+  # The two engines build different tables here; a CDISC rule run after a 1.0
+  # rule in the same study used to be handed 1.0's.
+  expect_false(identical(core1, fresh))
+  expect_identical(build("cdisc"), fresh)
+})

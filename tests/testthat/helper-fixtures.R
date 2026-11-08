@@ -89,7 +89,8 @@ one_dataset <- function(data, domain = "XX") {
 #' @return A logical vector, one per record.
 violations_or_skipped <- function(rule, study, domain) {
   tryCatch(evaluate_rule(rule, study, domain), error = function(e) {
-    if (!grepl("which this dataset does not have|none of which this dataset has", conditionMessage(e))) {
+    if (!grepl("which this dataset does not have|none of which this dataset has|^joins on .+ does not have",
+               conditionMessage(e))) {
       stop(e)
     }
     rep(FALSE, nrow(study$datasets[[domain]]$data))

@@ -345,3 +345,49 @@ test_that("a PPCAT naming no related PCTEST is reported through RELREC (CORE-000
   clean <- found(suppressWarnings(check_study(good, standard = "SDTMIG", version = "3.4")), "CORE-000901")
   expect_equal(nrow(clean), 0)
 })
+
+test_that("a CDISC rule whose join key one dataset lacks is skipped, not answered", {
+  # CDISC's engine, on these three files as TIG/SDTM INDH, reports CORE-000270
+  # SKIPPED: pandas' merge raises on the missing VISITNUM. Evaluated unjoined,
+  # coreval reported both AE records as visits missing from TV.
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  w <- function(x, n) haven::write_xpt(x, file.path(dir, paste0(tolower(n), ".xpt")), name = n)
+  w(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-1", AESEQ = 1, VISITNUM = 99), "AE")
+  w(data.frame(STUDYID = "S1", DOMAIN = "SV", USUBJID = "S1-1", VISIT = "V1", SVPRESP = ""), "SV")
+  w(data.frame(STUDYID = "S1", DOMAIN = "TV", VISITNUM = 1, VISIT = "V1"), "TV")
+  r <- suppressWarnings(check_study(dir, standard = "TIG", version = "1.0", substandard = "SDTM",
+                                    use_case = "INDH"))
+  expect_false("CORE-000270" %in% r$findings$rule_id)
+  expect_true(any(grepl("joins on VISITNUM, which SV does not have",
+                        r$skipped$reason[r$skipped$rule_id == "CORE-000270"])))
+})
+
+test_that("an operation that produces nothing refuses the rule rather than passing it", {
+  # CDISC's CORE-000783 on a SUPPAE with no RDOMAIN: the parent's variables
+  # cannot be found, and the comparison against them used to read as clean.
+  mk <- function(df) list(data = data.table::as.data.table(df), meta = NULL)
+  rule <- .coreval_env$data$cdisc_originals[["CORE-000783"]]
+  skip_if(is.null(rule))
+  supp <- data.frame(STUDYID = "S1", USUBJID = "S1-1", IDVAR = "AESEQ", IDVARVAL = "1",
+                     QNAM = "AESEV", QLABEL = "Severity", QVAL = "MILD")
+  study <- as_study(list(datasets = list(
+    AE = mk(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "S1-1", AESEQ = 1)),
+    SUPPAE = mk(supp)), standard = list(product = "SENDIG", version = "3.1")), "SUPPAE")
+  expect_error(run_rule_on_domain(rule, study, "SUPPAE"), "could not be computed")
+  study$datasets$SUPPAE$data$RDOMAIN <- "AE"
+  expect_true(any(run_rule_on_domain(rule, study, "SUPPAE")$violations))
+})
+
+test_that("a CDISC rule grouping by a column the dataset lacks is refused", {
+  # pandas' groupby raises on it; answered FALSE, the negated operator
+  # flagged every RELREC record of CORE-000484.
+  ctx <- list(condition = list(within = "USUBJID"), wildcard = "RE", exists = TRUE, n = 2,
+              dataset = list(data = data.table::data.table(RELID = c("A", "A"))),
+              target = c("A", "A"))
+  old <- .coreval_env$engine
+  on.exit(.coreval_env$engine <- old)
+  .coreval_env$engine <- "cdisc"
+  expect_error(present_on_multiple_rows_within_check(ctx), "groups by USUBJID")
+})

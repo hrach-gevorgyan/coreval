@@ -52,6 +52,17 @@ repository.
   terminology.
 * A rule that cannot be evaluated now says why, rather than answering "no problem".
 * CORE-002041, the MedDRA release check, failed on any real TS and now runs.
+* SENDIG-DART, SENDIG-GENETOX, SENDIG-AR, SDTMIG-AP and SDTMIG-MD studies now find
+  their own variable metadata. The required and expected variable rules ran on them
+  and reported nothing.
+* A rule that joins on a variable one dataset lacks is skipped, as CDISC's engine
+  skips it, rather than evaluated without the join, which reported problems that
+  were not there.
+* A rule whose computed value comes out empty, or that groups by a variable the
+  dataset lacks, is skipped with the reason rather than passed.
+* A transport file cut short on a record boundary is refused; its last rows were
+  dropped without a word. A CSV value with a leading zero, such as SUBJID `001`,
+  stays text.
 * CORE-002117 runs: a term a define adds to a codelist that CDISC already has,
   under the same name or as a synonym, is reported. Terminology synonyms now ship
   for this.

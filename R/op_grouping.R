@@ -376,6 +376,14 @@ register_operator("has_same_values", function(ctx) {
 #' @noRd
 present_on_multiple_rows_within_check <- function(ctx) {
   within_col <- resolve_var_name(ctx$condition$within, ctx$wildcard)
+  # CDISC's engine groups by the `within` column (dataframe_operators.py,
+  # present_on_multiple_rows_within), and pandas raises on one the dataset
+  # lacks. Answered FALSE here, the negated form flagged every row: CORE-000484
+  # on a RELREC with no USUBJID. A 1.0 rule naming a missing column has been
+  # answered before it gets here (core1_names_missing_column()).
+  if (ctx$exists && !(within_col %in% names(ctx$dataset$data)) && !engine_is_core1()) {
+    stop("groups by ", within_col, ", which this dataset does not have", call. = FALSE)
+  }
   if (!ctx$exists || !(within_col %in% names(ctx$dataset$data))) {
     return(rep(FALSE, ctx$n))
   }

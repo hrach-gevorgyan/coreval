@@ -343,7 +343,7 @@ skip_group <- function(reason) {
     dictionary = has("dictionary"),
     stf = has("study tagging file"),
     bundled = has("which coreval does not bundle"),
-    variables = has("which one of the datasets does not have") |
+    variables = grepl("joins on .+, which \\S+ does not have", reason) |
       has("which the dataset does not have")
   )
   out <- rep("other", length(reason))

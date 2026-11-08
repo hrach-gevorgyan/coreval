@@ -242,7 +242,16 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
   if (length(condition$value) == 1 && is.character(condition$value)) {
     if (startsWith(condition$value, "$")) {
       binding <- bindings[[condition$value]]
+      # An operation that produced nothing. Read as NA, the comparison decided
+      # nothing and the rule passed: CDISC's CORE-000783 on a SUPPAE with no
+      # RDOMAIN reported a clean SUPPAE. Recorded, so where the unknown decides
+      # a row the rule is refused (run_rule_on_domain()).
       if (is.null(binding)) {
+        if (!is.null(.coreval_env$unresolved)) {
+          .coreval_env$unresolved <- c(.coreval_env$unresolved, paste0(
+            condition$value, " could not be computed for this dataset"
+          ))
+        }
         return(NULL)
       }
       resolved <- resolve_binding(binding, dataset)
@@ -273,10 +282,12 @@ resolve_condition_value <- function(condition, dataset, domain, bindings = list(
       # passing, which is how CORE-002101 on an SE with no ARM reported
       # nothing. CDISC's engine fails on the missing join column too.
       if (is.null(resolved) && !is.null(.coreval_env$unresolved)) {
-        .coreval_env$unresolved <- c(.coreval_env$unresolved, paste0(
-          condition$value, " is computed per ", paste(binding$group_cols, collapse = ", "),
-          ", which this dataset does not have"
-        ))
+        .coreval_env$unresolved <- c(.coreval_env$unresolved, if (length(binding$group_cols)) {
+          paste0(condition$value, " is computed per ", paste(binding$group_cols, collapse = ", "),
+                 ", which this dataset does not have")
+        } else {
+          paste0(condition$value, " came out empty for this dataset")
+        })
       }
       return(resolved)
     }
@@ -1182,8 +1193,11 @@ prepare_dataset_for_rule <- function(rule, study, domain) {
         function() core1_define_and_library_variables(dataset, study$define, domain, study)
       ))
     }
+    # The engine is part of the key: this table is built differently for 1.0
+    # (class lookup, per-version Model, case-blind names), and a CDISC rule
+    # run after a 1.0 one in the same study was handed 1.0's table.
     return(cached_build(
-      paste0("varmeta\x1f", domain),
+      paste0("varmeta\x1f", if (engine_is_core1()) "core1" else "cdisc", "\x1f", domain),
       function() build_variable_metadata_dataset(dataset, study$define, domain, study)
     ))
   }

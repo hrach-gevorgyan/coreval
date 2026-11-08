@@ -427,18 +427,24 @@ apply_child_match <- function(dataset, study, keys) {
     iv <- idvar[idx[1]]
     use_iv <- !blank_val[idx[1]] && !is_blank(iv) && iv %in% names(p_data)
     unlinked <- FALSE
-    if (core1 && !blank_val[idx[1]] && !is_blank(iv)) {
+    if (core1) {
       # 1.0 matches IDVARVAL only against an IDVAR some row whose RDOMAIN is
       # this parent's name carries, finding that column whatever its case
       # (child.py, _find_idvar_linking_condition). Any other IDVAR links to
       # nothing; taking the subject's first record matched "aeseq" rows by luck.
       listed <- unique(idvar[!is.na(rdomain) & as.character(rdomain) == rd[idx[1]]])
-      listed <- listed[toupper(listed) %in% toupper(names(p_data))]
-      found <- names(p_data)[match(toupper(iv), toupper(names(p_data)))]
-      use_iv <- iv %in% listed
-      if (use_iv) {
-        iv <- found
+      listed <- listed[!is_blank(listed) & toupper(listed) %in% toupper(names(p_data))]
+      if (!blank_val[idx[1]] && !is_blank(iv)) {
+        found <- names(p_data)[match(toupper(iv), toupper(names(p_data)))]
+        use_iv <- iv %in% listed
+        if (use_iv) {
+          iv <- found
+        }
       }
+      # Once any row names a real parent column, the join condition is that
+      # CASE on IDVAR, and a row with a blank IDVAR or IDVARVAL satisfies it
+      # for no parent record. Here it fell back to the subject's first record,
+      # so an orphan check could not see it.
       unlinked <- !use_iv && length(listed) > 0
     }
 
@@ -640,17 +646,17 @@ apply_match_dataset <- function(dataset, spec, study, current_domain, rule = NUL
   keys <- key_spec$left
   if (!all(key_spec$left %in% names(dataset$data)) ||
         !all(key_spec$right %in% names(match_dataset$data))) {
-    # CORE 1.0 stops on a join key either side lacks (merges/join.py,
-    # missing_match_key_error), and the rule is not answered. Returned
-    # unjoined, its conditions on the partner's columns were FALSE and the
-    # rule passed: CORE-000270 on an AE with no VISITNUM.
-    if (engine_is_core1()) {
-      gone <- c(setdiff(key_spec$left, names(dataset$data)),
-                setdiff(key_spec$right, names(match_dataset$data)))
-      stop("joins on ", paste(unique(gone), collapse = ", "),
-           ", which one of the datasets does not have", call. = FALSE)
-    }
-    return(dataset)
+    # Both engines stop on a join key either side lacks: CORE 1.0 in
+    # merges/join.py (missing_match_key_error), CDISC's in pandas' merge
+    # (data_processor.py, merge_sdtm_datasets), which raises and leaves the
+    # rule SKIPPED. Returned unjoined, the partner's columns were absent and
+    # a condition such as "not in TV" held: CORE-000270 on an SV with no
+    # VISITNUM reported two AE records CDISC's engine does not.
+    gone_left <- setdiff(key_spec$left, names(dataset$data))
+    gone_right <- setdiff(key_spec$right, names(match_dataset$data))
+    stop("joins on ", paste(unique(c(gone_left, gone_right)), collapse = ", "),
+         ", which ", if (length(gone_left)) current_domain else match_name,
+         " does not have", call. = FALSE)
   }
 
   left <- dataset$data

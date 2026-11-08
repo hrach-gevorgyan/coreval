@@ -137,3 +137,31 @@ test_that("write_findings() explains a missing folder or a folder path", {
   expect_error(write_findings(result, dir), "is a folder")
   expect_error(write_findings(result, file.path(dir, "no", "out.csv")), "does not exist")
 })
+
+test_that("a transport file cut on a record boundary is refused, not read short", {
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = sprintf("S1-%03d", 1:100), AGE = 30)
+  f <- file.path(dir, "dm.xpt")
+  for (v in c(5, 8)) {
+    haven::write_xpt(dm, f, version = v)
+    expect_equal(nrow(read_study(dir)$datasets$DM$data), 100)
+    b <- readBin(f, "raw", file.size(f))
+    # 800 bytes is ten whole 80-byte records, so the size test cannot see it;
+    # haven read the 77 rows that were left without a word.
+    writeBin(b[seq_len(length(b) - 800)], f)
+    expect_error(read_study(dir), "last row is cut short")
+  }
+})
+
+test_that("a CSV value with a leading zero stays text", {
+  f <- tempfile(fileext = ".csv")
+  on.exit(unlink(f))
+  writeLines(c("STUDYID,DOMAIN,USUBJID,SUBJID,AGE", "S1,DM,S1-001,001,30"), f)
+  x <- read_csv_dataset(f)
+  expect_identical(x$SUBJID, "001")
+  expect_true(is.numeric(x$AGE))
+  r <- suppressWarnings(check_dataset(f, standard = "SDTMIG", version = "3.4"))
+  expect_false("CORE-001082" %in% r$findings$rule_id)
+})

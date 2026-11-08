@@ -129,7 +129,9 @@ domain_dataset <- function(study, code) {
     return(if (!is.null(direct)) direct else if (length(parts) == 1) study$datasets[[parts]] else NULL)
   }
   cache <- .coreval_env$prep_cache
-  cache_key <- paste0("domain_dataset:", code)
+  # Which files make up a domain depends on the engine (1.0 reads the domain
+  # from the file name), so the engine is part of the key.
+  cache_key <- paste0("domain_dataset:", if (engine_is_core1()) "core1:" else "cdisc:", code)
   if (!is.null(cache) && exists(cache_key, envir = cache, inherits = FALSE)) {
     return(get(cache_key, envir = cache, inherits = FALSE))
   }

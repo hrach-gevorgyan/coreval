@@ -1116,3 +1116,22 @@ test_that("check_dataset reads the terminology a TS names, and says when no TS w
                       domain = "AE", standard = "SDTMIG", version = "3.4")
   expect_false(any(grepl("TS has no TSVCDVER", ae$skipped$reason)))
 })
+
+test_that("a SEND or SDTM sub-variant finds its own Library metadata", {
+  # The Library keeps SENDIG-DART 1.1 as sendig / dart-1-1 (normalize_standard_input
+  # in CDISC's engine). Looked up as "sendig-dart" it found nothing, and the
+  # required- and expected-variable rules reported nothing. CDISC's engine,
+  # on a DM of STUDYID, DOMAIN, USUBJID and SUBJID, expects these.
+  study <- function(product, version) list(standard = list(product = product, version = version))
+  expected <- function(s) {
+    rows <- library_variables_for(s, "DM")
+    rows$variable[rows$core == "Exp"]
+  }
+  expect_true(nrow(library_variables_for(study("SENDIG-DART", "1.1"), "DM")) > 0)
+  expect_true(all(c("RFXSTDTC", "RFXENDTC", "RPATHCD") %in% expected(study("SENDIG-DART", "1.1"))))
+  expect_false("RPATHCD" %in% expected(study("SENDIG-GENETOX", "1.0")))
+  expect_true(nrow(library_variables_for(study("SDTMIG-MD", "1.1"), "DI")) > 0)
+  # A plain SENDIG study of unknown version is never answered from a variant.
+  expect_false(any(grepl("^[a-z]", library_rows(.coreval_env$library_variables,
+                                                  study("SENDIG", NA))$version)))
+})

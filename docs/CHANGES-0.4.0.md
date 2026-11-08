@@ -33,6 +33,35 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   missing when the rule tests the absent column and judges no other value,
   read from the rule's own conditions. On CDISC's pilot study 14 of 103 moved.
 
+* **Sub-variant standards find their Library metadata.** The Library keeps
+  SENDIG-DART 1.1 as `sendig` / `dart-1-1`, and likewise GENETOX, AR,
+  SDTMIG-AP and SDTMIG-MD (CDISC's engine, `normalize_standard_input`).
+  Looked up by the product name, these found no variables, and CORE-000355
+  and CORE-000334 ran and reported nothing. On a DART, GENETOX and SENDIG DM
+  they now report what CDISC's engine reports, variant by variant.
+
+* **A join key one dataset lacks skips the rule.** CDISC's engine raises in
+  pandas' merge there and reports the rule SKIPPED. coreval evaluated the
+  dataset unjoined, so a condition on the partner's absent columns held:
+  CORE-000270 on an SV with no VISITNUM reported both AE records.
+
+* **An empty computed value no longer passes a rule.** An Operation that
+  produced nothing was compared as unknown and read as no violation; CDISC's
+  CORE-000783 on a SUPPAE with no RDOMAIN reported a clean SUPPAE. It is now
+  skipped with the reason. A domain the guide does not define still has no
+  required or expected variables, as in CDISC's engine. A CDISC rule grouping
+  by a column the dataset lacks is skipped too: `not_present_on_multiple_rows_within`
+  flagged every RELREC record of CORE-000484.
+
+* **CORE 1.0 links a blank IDVAR or IDVARVAL to nothing.** Such a row of CO,
+  RELREC or SUPP-- took the subject's first parent record, so an orphan check
+  could not see it (child.py, `_find_idvar_linking_condition`).
+
+* **Damaged and CSV input.** A transport file cut on a record boundary, whose
+  last row is short, is refused; haven read the rows left without a word. A
+  bare CSV keeps a value with a leading zero as text, so SUBJID `001` is no
+  longer reported as numeric.
+
 * **A term a define adds to a codelist is checked against CDISC's.**
   CORE-002117 reports a term marked `def:ExtendedValue="Yes"` that the
   codelist already has, as a submission value or as one of a term's synonyms.
