@@ -211,6 +211,13 @@ results back by position (dataframe_operators.py), so its answers belong to
 the right records only when the data is already sorted by `within` and then
 `ordering`. coreval keeps each answer on its own record.
 
+**CORE 1.0's CORE-000539 flags the files of a split domain.** It compares each
+dataset's name with the list of dataset names, and that list holds the file
+names (`DM`, `LB1`, `LB2`), not the domains. Given `lb1.xpt` and `lb2.xpt`, both
+`DOMAIN = "LB"`, and no `lb.xpt`, 1.0's engine reports LB1 and LB2, and so does
+coreval. The SDTMIG allows a split domain, so on such a study this finding is
+the rule's, not the data's.
+
 **CDISC's engine can drop the last row of a narrow transport file.** It reads
 XPT with `pd.read_sas` (services/data_readers/xpt_reader.py). In pandas 3.0.5,
 when a row is 80 bytes or less, any all-blank 8-byte block in the file's last

@@ -14,11 +14,11 @@ Rscript tests/conformance/run_conformance.R data-raw/upstream/core-contributor
 Rscript tests/conformance/run_conformance.R data-raw/upstream/cdisc-open-rules
 ```
 
-At the sweep of 6 November 2026:
+At the sweep of 9 November 2026:
 
 | rule set | pass | disagree | cannot be measured |
 |---|---|---|---|
-| CORE 1.0 (`scoreboard_core1.csv`) | 589 | 5 | 27 |
+| CORE 1.0 (`scoreboard_core1.csv`) | 593 | 2 | 26 |
 | CDISC's (`scoreboard.csv`) | 956 | 57 | 41 |
 
 A rule counts as passing only if a case that expects findings was graded. A rule
@@ -105,7 +105,9 @@ class table (`standards_details.pkl`) and its own `rule_applies_to_class`:
 under SENDIG 3-1, `DM` is SPECIAL PURPOSE, `VS` is FINDINGS and `TX` is TRIAL
 DESIGN, while CORE-000794, CORE-000847 and CORE-000848 all require EVENTS.
 `RELSUB` is RELATIONSHIP where CORE-000229 requires SPECIAL PURPOSE. The engine
-filters those datasets out too, so those sheets are stale.
+filters those datasets out too, so those sheets are stale. CDISC.SENDIG.217 is
+scoped to TA and TE, and its cases hold only an SE, against which its sheet
+lists findings.
 
 That audit also turned up `FDA.SENDIG.FB6507`, skipped as a scope mismatch
 when its fixture ships no datasets at all, only a `define.xml`. The skip hid a
@@ -151,33 +153,43 @@ case ships an `lb.csv` whose `DOMAIN` column says `EX`, so by the DOMAIN value,
 which is how the reference matches a define entry to a dataset too, the study
 has no LB. The sheet expects nothing. The fixture contradicts its own name.
 
-#### What the reference says about the 55 that disagreed before
+#### What the reference says about the rules that disagree
 
-Settled by running CDISC's own engine (0.17.1 at commit `8740d201`) over every
-case of every non-passing rule, not by reading its source and reasoning about
-it. `tests/conformance/compare_engine.py` does this and writes
-`engine_comparison.json`, which records what the engine reported and what the
-committed sheet says, per rule per case. Both are in the repository, so the
-table below can be checked rather than taken on trust.
+Settled by running CDISC's own engine, 1.0.0 at the pinned commit `f3282a0d`,
+over every case of every non-passing rule, not by reading its source and
+reasoning about it. `tests/conformance/compare_engine.py` does this and writes
+`engine_comparison.json`, which records the engine commit, what the engine
+reported and what the committed sheet says, per rule per case. Both are in the
+repository, so what follows can be checked rather than taken on trust.
 
-| | rules | |
-|---|---|---|
-| The engine runs it, and **disagrees with its own committed sheet** | 41 | every single one |
-| The engine cannot run it, but the sheet contradicts its own data | 6 | stale on signature alone |
-| The engine cannot run it, and the sheet is self-consistent | 8 | **unadjudicated, listed below** |
+A fixture with no `.env` cannot be run by the engine as published, because
+CDISC's own `test.py` requires one too. `compare_engine.py --assume-env` runs
+such a case under the first standard the rule lists, and writes that standard
+into the case's note. A case the engine cannot run is never counted as
+agreement: that would be the vacuous-truth version of the silent-failure bug
+this package keeps finding in itself.
 
-Not one of the 41 is a case where the engine and the sheet agree and coreval is
-the odd one out. That set is empty.
+Graded against the engine's answers instead of the sheets, coreval agrees on
+every case of every failing rule the engine can run, published or not, except
+two:
 
-A fixture with no `.env` cannot be run by the engine at all, because CDISC's
-own `test.py` requires one too. Fourteen of the 55 are in that state. Counting
-those as agreement would be the vacuous-truth version of the silent-failure bug
-this package keeps finding in itself, so they are held separate.
+- **CORE-000468** (deprecated, off by default). On `negative/01` and
+  `negative/02` coreval also reports the TRT row whose `TSGRPID` is blank. The
+  engine reads a blank CSV cell as missing, and gives that row's group no
+  count. Given the same TS as a transport file, where a blank is an empty
+  string, the engine reports record 49 of `negative/01` as coreval does.
+- **CDISC.SDTMIG.CG0015** (an unpublished SDTMIG draft, off by default). Run as
+  SDTMIG 3.4, the engine reports a finding on SV and TV, with no record, on the
+  clean case and on the case built to fail alike; coreval reports neither. An
+  answer that does not tell the two cases apart settles nothing.
 
-#### The 16 published ones that disagreed before CORE 1.0 trace to stale answer sheets
+The fixtures with no `.env` are listed below with what the engine reports when
+given one. FDA.SENDIG.FB6505 alone the engine cannot run even then.
 
-**The engine runs fourteen of the sixteen, and coreval matched it on all
-fourteen. The committed `results.csv` differs from coreval's answer on every one.**
+#### The published ones trace to stale answer sheets
+
+**coreval reports what the engine reports on every one of these. The committed
+`results.csv` differs from both.**
 
 | rule | coreval reports, as the engine does where it runs | the sheet says |
 |---|---|---|
@@ -186,7 +198,6 @@ fourteen. The committed `results.csv` differs from coreval's answer on every one
 | CORE-000396 | `{61,62}` | `{59,60}` |
 | CORE-000554 | `{}` | `{5}` |
 | CORE-000570 | `{}` | `{5}` |
-| CORE-000612 | `{2,12}` | `{1..12}` |
 | CORE-000648 | `{6}` | `{}` |
 | CORE-000652 | `{7}` | `{5,6}` |
 | CORE-000670 | `{1..7}` | `{}` |
@@ -195,12 +206,16 @@ fourteen. The committed `results.csv` differs from coreval's answer on every one
 | CORE-000714 | `{1,3}` | `{1,3,6}` |
 | CORE-000864 | flags SM | omits SM |
 | CORE-000865 | `{2}` | `{2,4}` |
-| CORE-000866 | `{1,3,5,6}` | `{}` |
+| CORE-000866 | `{1,3,5}` | `{1,3,5,6}` |
 | CORE-000884 | `{2,3,4}` | `{}` |
 
 Two of them ship no `.env`: CORE-000554 (`SENDIG-DART`) and CORE-000652
 (`SENDIG-GENETOX 1.0`), so `test.py` cannot run them as published. Run with one
 supplied, the engine agrees with coreval on both (see below).
+
+CORE-000866's sheet adds record 6, an `LBDTC` of `2018-11` against an `LBENDTC`
+of `2018`. The engine compares two dates at the precision they share, the year
+here, so 2018 is not after 2018 (`compare_dates`, check_operators/helpers.py).
 
 #### Rules CDISC changed without updating the answer sheet
 

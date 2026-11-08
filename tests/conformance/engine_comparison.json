@@ -3,14 +3,28 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "SV": [
+      ""
+     ],
+     "TV": [
+      ""
+     ]
+    },
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "SV": [
+      ""
+     ],
+     "TV": [
+      ""
+     ]
+    },
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {
      "SV": [
       "1",
@@ -27,8 +41,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 2,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SDTMIG.CG0015",
   "source": "sdtmig_draft"
  },
@@ -36,14 +51,22 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "BG": [
+      "1",
+      "3",
+      "4",
+      "6",
+      "7"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "BG": [
       "3"
@@ -51,8 +74,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SENDIG.153",
   "source": "sendig_draft"
  },
@@ -60,32 +84,50 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/02",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/03",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "OM": [
+      "5",
+      "6",
+      "7"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/04_OMSTAT_NOT_DONE",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "OM": [
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "OM": [
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "OM": [
       "5"
@@ -94,8 +136,14 @@
    },
    {
     "case": "negative/02",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "OM": [
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "OM": [
       "3",
@@ -106,13 +154,19 @@
    },
    {
     "case": "negative/03",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "OM": [
+      "3",
+      "4"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": null
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 4,
+  "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SENDIG.190.1B",
   "source": "sendig_draft"
  },
@@ -120,14 +174,28 @@
   "cases": [
    {
     "case": "positive",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DM": [
+      ""
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative/01_float",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DM": [
+      ""
+     ],
+     "DS": [
+      ""
+     ],
+     "LB": [
+      ""
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "LB": [
       "3"
@@ -136,8 +204,18 @@
    },
    {
     "case": "negative/02_with_0_value",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DM": [
+      ""
+     ],
+     "DS": [
+      ""
+     ],
+     "LB": [
+      ""
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "LB": [
       "3",
@@ -147,8 +225,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 3,
+  "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SENDIG.318",
   "source": "sendig_draft"
  },
@@ -156,14 +235,30 @@
   "cases": [
    {
     "case": "positive",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG-DART 1.1",
     "sheet": {}
    },
    {
     "case": "negative",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DS": [
+      "1",
+      "2",
+      "3"
+     ],
+     "EX": [
+      "1",
+      "2",
+      "3"
+     ],
+     "LB": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG-DART 1.1",
     "sheet": {
      "DS": [
       "1",
@@ -192,8 +287,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SENDIG.359",
   "source": "sendig_draft"
  },
@@ -201,26 +297,32 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/02",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": null
    },
    {
     "case": "positive/03",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": null
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "VS": [
+      "2",
+      "4",
+      "30"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "DS": [
       "5",
@@ -229,8 +331,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 3,
+  "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CDISC.SENDIG.71",
   "source": "sendig_draft"
  },
@@ -265,6 +368,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000109",
   "source": "deprecated_dir"
  },
@@ -396,6 +500,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 5,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000145",
   "source": "deprecated_dir"
  },
@@ -440,6 +545,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000149",
   "source": "deprecated_dir"
  },
@@ -472,6 +578,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000150",
   "source": "deprecated_dir"
  },
@@ -501,6 +608,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000235",
   "source": "deprecated_dir"
  },
@@ -558,6 +666,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000259",
   "source": "deprecated_dir"
  },
@@ -656,6 +765,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000335",
   "source": "deprecated_dir"
  },
@@ -682,6 +792,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000338",
   "source": "deprecated_dir"
  },
@@ -712,6 +823,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000339",
   "source": "deprecated_dir"
  },
@@ -771,6 +883,7 @@
   ],
   "cases_engine_differs": 5,
   "cases_engine_ran": 5,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000362",
   "source": "deprecated_dir"
  },
@@ -801,6 +914,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000387",
   "source": "published"
  },
@@ -854,6 +968,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000390",
   "source": "published"
  },
@@ -884,6 +999,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000396",
   "source": "published"
  },
@@ -918,6 +1034,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000400",
   "source": "published"
  },
@@ -954,6 +1071,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000401",
   "source": "published"
  },
@@ -994,6 +1112,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000402",
   "source": "published"
  },
@@ -1028,6 +1147,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000403",
   "source": "published"
  },
@@ -1058,6 +1178,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000404",
   "source": "published"
  },
@@ -1090,6 +1211,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000407",
   "source": "published"
  },
@@ -1122,6 +1244,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000408",
   "source": "published"
  },
@@ -1178,6 +1301,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000413",
   "source": "published"
  },
@@ -1242,6 +1366,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000414",
   "source": "published"
  },
@@ -1304,6 +1429,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000416",
   "source": "published"
  },
@@ -1338,6 +1464,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000417",
   "source": "published"
  },
@@ -1442,6 +1569,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000419",
   "source": "published"
  },
@@ -1490,6 +1618,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000423",
   "source": "published"
  },
@@ -1520,6 +1649,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000424",
   "source": "published"
  },
@@ -1570,6 +1700,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000427",
   "source": "published"
  },
@@ -1602,6 +1733,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000428",
   "source": "published"
  },
@@ -1630,6 +1762,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000449",
   "source": "published"
  },
@@ -1677,6 +1810,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000468",
   "source": "deprecated_dir"
  },
@@ -1751,6 +1885,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000510",
   "source": "deprecated_dir"
  },
@@ -1776,6 +1911,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000515",
   "source": "deprecated_dir"
  },
@@ -1809,6 +1945,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000530",
   "source": "deprecated_dir"
  },
@@ -1911,6 +2048,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000544",
   "source": "deprecated_dir"
  },
@@ -1918,14 +2056,14 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG-DART 1.1",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG-DART 1.1",
     "sheet": {
      "SJ": [
       "5"
@@ -1933,8 +2071,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000554",
   "source": "published"
  },
@@ -1959,6 +2098,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000570",
   "source": "published"
  },
@@ -1974,13 +2114,37 @@
     "case": "negative/01",
     "engine": {
      "PC": [
+      "1",
       "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
       "12"
      ],
      "PP": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
       "6",
+      "7",
+      "8",
+      "9",
       "10",
-      "13"
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17"
      ]
     },
     "note": null,
@@ -2021,8 +2185,9 @@
     }
    }
   ],
-  "cases_engine_differs": 1,
+  "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000612",
   "source": "published"
  },
@@ -2055,6 +2220,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000648",
   "source": "published"
  },
@@ -2062,14 +2228,18 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG-GENETOX 1.0",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "GV": [
+      "7"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG-GENETOX 1.0",
     "sheet": {
      "GV": [
       "5",
@@ -2078,8 +2248,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000652",
   "source": "published"
  },
@@ -2111,6 +2282,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000658",
   "source": "deprecated_dir"
  },
@@ -2140,6 +2312,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000659",
   "source": "deprecated_dir"
  },
@@ -2185,6 +2358,7 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000670",
   "source": "published"
  },
@@ -2221,6 +2395,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000680",
   "source": "published"
  },
@@ -2265,6 +2440,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000681",
   "source": "published"
  },
@@ -2299,6 +2475,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000682",
   "source": "published"
  },
@@ -2333,6 +2510,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000683",
   "source": "published"
  },
@@ -2361,6 +2539,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000684",
   "source": "published"
  },
@@ -2391,6 +2570,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000691",
   "source": "published"
  },
@@ -2421,6 +2601,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000692",
   "source": "published"
  },
@@ -2451,6 +2632,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000693",
   "source": "published"
  },
@@ -2481,6 +2663,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000694",
   "source": "published"
  },
@@ -2511,6 +2694,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000695",
   "source": "published"
  },
@@ -2545,6 +2729,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000696",
   "source": "published"
  },
@@ -2583,6 +2768,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000697",
   "source": "published"
  },
@@ -2735,6 +2921,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000701",
   "source": "deprecated_dir"
  },
@@ -2777,6 +2964,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000702",
   "source": "published"
  },
@@ -2821,6 +3009,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000703",
   "source": "published"
  },
@@ -2845,6 +3034,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000705",
   "source": "deprecated_dir"
  },
@@ -2892,6 +3082,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000706",
   "source": "deprecated_dir"
  },
@@ -2923,6 +3114,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000711",
   "source": "published"
  },
@@ -2949,6 +3141,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000713",
   "source": "deprecated_dir"
  },
@@ -2980,6 +3173,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000714",
   "source": "published"
  },
@@ -3025,6 +3219,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000716",
   "source": "deprecated_dir"
  },
@@ -3070,6 +3265,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000719",
   "source": "deprecated_dir"
  },
@@ -3115,6 +3311,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000723",
   "source": "deprecated_dir"
  },
@@ -3167,21 +3364,85 @@
   ],
   "cases_engine_differs": 2,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000728",
   "source": "deprecated_dir"
+ },
+ "CORE-000732": {
+  "cases": [
+   {
+    "case": "positive/01",
+    "engine": {
+     "FA": [
+      ""
+     ]
+    },
+    "note": null,
+    "sheet": {}
+   },
+   {
+    "case": "negative/01",
+    "engine": {
+     "EG": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "FA": [
+      "1",
+      "2",
+      "3"
+     ]
+    },
+    "note": null,
+    "sheet": {
+     "EG": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "FA": [
+      "1",
+      "2",
+      "3"
+     ]
+    }
+   }
+  ],
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
+  "folder": "CORE-000732",
+  "source": "published"
  },
  "CORE-000738": {
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "TS": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+     ]
+    },
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {
      "TS": [
       "2"
@@ -3189,8 +3450,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000738",
   "source": "fda_business_rules_draft"
  },
@@ -3198,14 +3460,22 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DM": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {
      "DM": [
       "1",
@@ -3214,8 +3484,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000748",
   "source": "fda_business_rules_draft"
  },
@@ -3294,6 +3565,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000787",
   "source": "deprecated_dir"
  },
@@ -3364,7 +3636,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
-  "engine_commit": "9ffb1c611081b655c11fc0ac77ed6cc809828126",
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000793",
   "source": "published"
  },
@@ -3407,6 +3679,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000796",
   "source": "published"
  },
@@ -3441,6 +3714,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000797",
   "source": "published"
  },
@@ -3469,6 +3743,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000798",
   "source": "published"
  },
@@ -3497,6 +3772,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000799",
   "source": "published"
  },
@@ -3553,6 +3829,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000800",
   "source": "published"
  },
@@ -3583,6 +3860,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000801",
   "source": "published"
  },
@@ -3633,6 +3911,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000802",
   "source": "published"
  },
@@ -3669,6 +3948,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000803",
   "source": "published"
  },
@@ -3729,6 +4009,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000804",
   "source": "published"
  },
@@ -3757,6 +4038,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000805",
   "source": "published"
  },
@@ -3791,6 +4073,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000806",
   "source": "published"
  },
@@ -3823,6 +4106,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000807",
   "source": "published"
  },
@@ -3871,6 +4155,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000808",
   "source": "published"
  },
@@ -3913,6 +4198,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000809",
   "source": "published"
  },
@@ -4365,6 +4651,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 31,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000810",
   "source": "published"
  },
@@ -4395,6 +4682,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000811",
   "source": "published"
  },
@@ -4505,6 +4793,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000813",
   "source": "published"
  },
@@ -4539,6 +4828,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000814",
   "source": "published"
  },
@@ -6080,6 +6370,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000864",
   "source": "published"
  },
@@ -6109,6 +6400,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000865",
   "source": "published"
  },
@@ -6116,14 +6408,7 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": {
-     "LB": [
-      "1",
-      "3",
-      "5",
-      "6"
-     ]
-    },
+    "engine": {},
     "note": null,
     "sheet": {}
    },
@@ -6133,8 +6418,7 @@
      "LB": [
       "1",
       "3",
-      "5",
-      "6"
+      "5"
      ]
     },
     "note": null,
@@ -6150,6 +6434,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000866",
   "source": "published"
  },
@@ -6775,6 +7060,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000884",
   "source": "published"
  },
@@ -7773,6 +8059,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000935",
   "source": "published"
  },
@@ -7863,6 +8150,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000937",
   "source": "published"
  },
@@ -7883,6 +8171,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000938",
   "source": "published"
  },
@@ -8213,6 +8502,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000949",
   "source": "published"
  },
@@ -13620,7 +13910,7 @@
   ],
   "cases_engine_differs": 1,
   "cases_engine_ran": 3,
-  "engine_commit": "fd434a8aeb7fc17020f4fd25117fb7b6a7e71feb",
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001080",
   "source": "deprecated_dir"
  },
@@ -13628,26 +13918,31 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/02",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "positive/03",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "EX": [
+      "1",
+      "56"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "EX": [
       "1"
@@ -13656,8 +13951,17 @@
    },
    {
     "case": "negative/02",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "EX": [
+      "1",
+      "58",
+      "60",
+      "61",
+      "62",
+      "65"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "EX": [
       "1",
@@ -13670,8 +13974,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 5,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "FDA.SDTMIG.FB0801",
   "source": "fda_business_rules_draft"
  },
@@ -13679,14 +13984,19 @@
   "cases": [
    {
     "case": "positive",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "EX": [
+      "54",
+      "55"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "EX": [
       "54",
@@ -13696,8 +14006,9 @@
     }
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "FDA.SDTMIG.FB0802",
   "source": "fda_business_rules_draft"
  },
@@ -13705,19 +14016,24 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "TS": [
+      "1"
+     ]
+    },
+    "note": "fixture ships no .env; run as SDTMIG 3.4",
     "sheet": {}
    }
   ],
-  "cases_engine_differs": 0,
-  "cases_engine_ran": 0,
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "FDA.SDTMIG.FB1107",
   "source": "fda_business_rules_draft"
  },
@@ -13725,14 +14041,24 @@
   "cases": [
    {
     "case": "positive/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {},
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {}
    },
    {
     "case": "negative/01",
-    "engine": null,
-    "note": "fixture ships no .env; CDISC's own test.py requires one",
+    "engine": {
+     "DS": [
+      "5"
+     ],
+     "MH": [
+      "2"
+     ],
+     "ML": [
+      "4"
+     ]
+    },
+    "note": "fixture ships no .env; run as SENDIG 3.1",
     "sheet": {
      "BE": [
       "6",
@@ -13750,9 +14076,43 @@
     }
    }
   ],
+  "cases_engine_differs": 1,
+  "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
+  "folder": "FDA.SDTMIG.FB3211",
+  "source": "fda_business_rules_draft"
+ },
+ "FDA.SENDIG.FB6505": {
+  "cases": [
+   {
+    "case": "positive/01_case_1_positive_LB_Absent_LB_HasNoData_present",
+    "engine": null,
+    "note": "fixture ships no .env; run as SENDIG 3.1; engine wrote no output: ne\\scripts\\run_validation.py\", line 163, in run_validation\n    raise ValueError(\nValueError: No rules were selected for this standard/version \u00e2\u20ac\u201d nothing to execute, aborting before report generation\n",
+    "sheet": {}
+   },
+   {
+    "case": "positive/02_case_2_positive_LB_Present_LB_HasNoData_absent",
+    "engine": null,
+    "note": "fixture ships no .env; run as SENDIG 3.1; engine wrote no output: ne\\scripts\\run_validation.py\", line 163, in run_validation\n    raise ValueError(\nValueError: No rules were selected for this standard/version \u00e2\u20ac\u201d nothing to execute, aborting before report generation\n",
+    "sheet": {}
+   },
+   {
+    "case": "positive/03_case_3_positive_LB_Present_LB_HasNoData_present",
+    "engine": null,
+    "note": "fixture ships no .env; run as SENDIG 3.1; engine wrote no output: ne\\scripts\\run_validation.py\", line 163, in run_validation\n    raise ValueError(\nValueError: No rules were selected for this standard/version \u00e2\u20ac\u201d nothing to execute, aborting before report generation\n",
+    "sheet": {}
+   },
+   {
+    "case": "negative/01_case_1_negative_LB_Absent_LB_HasNoData_absent",
+    "engine": null,
+    "note": "fixture ships no .env; run as SENDIG 3.1; engine wrote no output: ne\\scripts\\run_validation.py\", line 163, in run_validation\n    raise ValueError(\nValueError: No rules were selected for this standard/version \u00e2\u20ac\u201d nothing to execute, aborting before report generation\n",
+    "sheet": null
+   }
+  ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 0,
-  "folder": "FDA.SDTMIG.FB3211",
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
+  "folder": "FB6505",
   "source": "fda_business_rules_draft"
  }
 }
