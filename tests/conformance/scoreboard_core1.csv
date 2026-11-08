@@ -609,7 +609,7 @@ CORE-002113,core_contributor,Value Check with Dataset Metadata,Fully Executable,
 CORE-002114,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002115,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002116,core_contributor,STF Metadata Check,Fully Executable,Study,PASS,
-CORE-002117,core_contributor,Record Data,Fully Executable,Study,SKIPPED,"evaluate_rule failed: needs the controlled terminology's synonyms, which coreval does not bundle"
+CORE-002117,core_contributor,Record Data,Fully Executable,Study,PASS,
 CORE-002118,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002119,core_contributor,Record Data,Fully Executable,Record,PASS,
 CORE-002120,core_contributor,Record Data,Fully Executable,Record,SKIPPED,"evaluate_rule failed: needs the loinc dictionary, which is not supplied: coreval does not read external dictionaries yet"

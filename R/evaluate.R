@@ -992,6 +992,21 @@ assert_labels_available <- function(rule, study, domain) {
   invisible(NULL)
 }
 
+#' Why a study has no parsed define.xml, in words for a skip reason
+#' @param study Full study object.
+#' @return A string: unreadable (with why), absent, or xml2 not installed.
+#' @noRd
+define_absent_reason <- function(study) {
+  if (!is.null(study$define_unreadable)) {
+    sub("^define.xml found but not read", "a define.xml was found but could not be read",
+        sub(". Rules that compare against it will be skipped.", "", study$define_unreadable, fixed = TRUE))
+  } else if (define_xml_available()) {
+    "no define.xml found in this study"
+  } else {
+    "install the 'xml2' package to enable define.xml support"
+  }
+}
+
 #' Refuse a rule whose required input sources are unavailable for this study
 #' @param rule A rule record.
 #' @param study Full study object.
@@ -1054,18 +1069,8 @@ assert_rule_inputs_available <- function(rule, study) {
     }
   }
   if (isTRUE(grepl("Define", rule$rule_type, fixed = TRUE)) && is.null(study$define)) {
-    stop(
-      "rule type '", rule$rule_type, "' needs define.xml: ",
-      if (!is.null(study$define_unreadable)) {
-        sub("^define.xml found but not read", "a define.xml was found but could not be read",
-            sub(". Rules that compare against it will be skipped.", "", study$define_unreadable, fixed = TRUE))
-      } else if (define_xml_available()) {
-        "no define.xml found in this study"
-      } else {
-        "install the 'xml2' package to enable define.xml support"
-      },
-      call. = FALSE
-    )
+    stop("rule type '", rule$rule_type, "' needs define.xml: ", define_absent_reason(study),
+         call. = FALSE)
   }
   invisible(NULL)
 }

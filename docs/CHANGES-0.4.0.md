@@ -33,6 +33,14 @@ The full list behind the short notes in `NEWS.md`, changes against 0.3.0.
   missing when the rule tests the absent column and judges no other value,
   read from the rule's own conditions. On CDISC's pilot study 14 of 103 moved.
 
+* **A term a define adds to a codelist is checked against CDISC's.**
+  CORE-002117 reports a term marked `def:ExtendedValue="Yes"` that the
+  codelist already has, as a submission value or as one of a term's synonyms.
+  It was skipped because the bundled terminology had no synonyms. They now
+  ship for the extensible codelists, the only ones a study can add to, in
+  `inst/extdata/ct_synonyms.rds` (0.32 MB), read only when the rule runs. On
+  the rule's own case it reports the two terms CORE 1.0's engine reports.
+
 * **The MedDRA release check no longer fails on ordinary data.** CORE-002041
   stopped with an error on any TS holding text in `TSVAL`, which is every TS,
   and was reported as a check that could not run.

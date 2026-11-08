@@ -37,6 +37,12 @@ Every package is kept, not just recent ones. Terminology changes between
 releases - SEX gained INTERSEX and lost UNDIFFERENTIATED - so judging a study
 against a version it does not declare would invent violations and hide real
 ones. Keeping all 206 costs about 0.04 MB more than keeping three.
+
+Synonyms go to a THIRD file, ct_synonyms.csv, for the extensible codelists
+only. CORE 1.0's define_extended_terms_in_ct (CORE-002117) asks whether a term
+a define adds to an extensible codelist is already a synonym of one of its
+terms, and that is the only use. Every codelist's synonyms would be 0.49 MB
+installed; the extensible ones alone are 0.27 MB, and nothing else reads them.
 """
 
 import ast
@@ -51,6 +57,7 @@ CACHE_DIR = os.path.join(
 )
 OUT = os.path.join("data-raw", "ct_codelists.csv")
 OUT_PREF = os.path.join("data-raw", "ct_pref_terms.csv")
+OUT_SYN = os.path.join("data-raw", "ct_synonyms.csv")
 
 # The terms of one codelist are joined with the ASCII Unit Separator, which
 # cannot appear in a submission value, so the column can be split back apart
@@ -80,7 +87,7 @@ def main():
 
     rows = 0
     term_count = 0
-    with open(OUT, "w", newline="", encoding="utf-8") as fh,             open(OUT_PREF, "w", newline="", encoding="utf-8") as pfh:
+    with open(OUT, "w", newline="", encoding="utf-8") as fh,             open(OUT_PREF, "w", newline="", encoding="utf-8") as pfh,             open(OUT_SYN, "w", newline="", encoding="utf-8") as sfh:
         writer = csv.DictWriter(
             fh,
             fieldnames=[
@@ -97,6 +104,12 @@ def main():
             pfh, fieldnames=["package", "codelist_code", "term_pref_terms"]
         )
         pref_writer.writeheader()
+        # A term's synonyms joined with "; ", as CORE 1.0's codelist_reader
+        # stores them, so they split back apart the way its SQL splits them.
+        syn_writer = csv.DictWriter(
+            sfh, fieldnames=["package", "codelist_code", "term_synonyms"]
+        )
+        syn_writer.writeheader()
         for path in files:
             package = os.path.basename(path)[: -len(".pkl")]
             with open(path, "rb") as pf:
@@ -121,10 +134,19 @@ def main():
                         (t.get("preferredTerm") or "") for t in terms
                     ),
                 })
+                if codelist.get("extensible") is True:
+                    syn_writer.writerow({
+                        "package": package,
+                        "codelist_code": codelist.get("conceptId", ""),
+                        "term_synonyms": SEP.join(
+                            "; ".join(t.get("synonyms") or []) for t in terms
+                        ),
+                    })
                 rows += 1
 
     print("wrote %s: %d codelists from %d packages" % (OUT, rows, len(files)))
     print("wrote %s: the preferred term of each of those terms" % OUT_PREF)
+    print("wrote %s: the synonyms of each term of the extensible ones" % OUT_SYN)
     print("  terms: %d" % term_count)
 
 

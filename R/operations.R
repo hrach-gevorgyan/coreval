@@ -1076,6 +1076,86 @@ ct_pref_terms <- function() {
   .coreval_env$ct_pref_terms
 }
 
+#' The synonyms of every term of every extensible bundled codelist
+#'
+#' A third file, read on first use, for CORE 1.0's CORE-002117 alone. Keyed by
+#' `package` and `codelist_code` like [ct_codelists()], with one field per term
+#' in that table's term order (data-raw/ct_synonyms.R checks the alignment).
+#'
+#' @return A data.frame, or `NULL` if the file is not installed.
+#' @noRd
+ct_synonyms <- function() {
+  if (is.null(.coreval_env$ct_synonyms)) {
+    path <- system.file("extdata", "ct_synonyms.rds", package = "coreval")
+    if (!nzchar(path)) {
+      return(NULL)
+    }
+    .coreval_env$ct_synonyms <- readRDS(path)
+  }
+  .coreval_env$ct_synonyms
+}
+
+#' Extended define terms that an extensible codelist already covers
+#'
+#' CORE 1.0's define_extended_terms_in_ct.py. Each term the define marks
+#' `def:ExtendedValue="Yes"` is compared with the terms of the codelist of the
+#' same C-code in the study's terminology. It is reported when it equals a
+#' term's submission value, equals one of that term's synonyms, or, where the
+#' submission value is a ";"-separated list, when every ";"-separated part of
+#' it is one of that list's parts. Parts and synonyms are trimmed; the
+#' extended term itself is not, as there.
+#'
+#' @param extended The define's extended terms: `name`, `codelist`, `value`.
+#' @param package The terminology package to compare against.
+#' @param case_sensitive As the operation's `case_sensitive`, default `TRUE`.
+#' @return Unique `"name (code): value"` strings, in the engine's order.
+#' @noRd
+define_extended_terms_in_ct <- function(extended, package, case_sensitive = TRUE) {
+  cl <- ct_codelists()
+  syn <- ct_synonyms()
+  if (is.null(cl) || is.null(syn)) {
+    stop("the bundled controlled terminology synonyms are not installed", call. = FALSE)
+  }
+  fold <- if (isTRUE(case_sensitive)) identity else toupper
+  split_parts <- function(x) trimws(strsplit(x, ";", fixed = TRUE)[[1]])
+  sep <- "\x1f"
+  hits <- character(0)
+  extended <- extended[!is.na(extended$value) & nzchar(extended$value) &
+                         !is.na(extended$codelist), , drop = FALSE]
+  for (code in unique(extended$codelist)) {
+    row <- which(cl$package == package & cl$codelist_code == code)
+    if (!length(row)) next
+    values <- strsplit(cl$term_values[row[[1]]], sep, fixed = TRUE)[[1]]
+    s <- which(syn$package == package & syn$codelist_code == code)
+    synonyms <- if (length(s)) {
+      out <- strsplit(syn$term_synonyms[s[[1]]], sep, fixed = TRUE)[[1]]
+      c(out, rep("", length(values) - length(out)))
+    } else {
+      rep("", length(values))
+    }
+    lib_value <- fold(values)
+    lib_syn <- lapply(synonyms, function(x) if (nzchar(x)) fold(split_parts(x)) else character(0))
+    multi <- grepl(";", values, fixed = TRUE)
+    lib_parts <- lapply(values, function(x) fold(split_parts(x)))
+    mine <- extended[extended$codelist == code, , drop = FALSE]
+    for (i in seq_len(nrow(mine))) {
+      v <- fold(mine$value[[i]])
+      ext_parts <- fold(split_parts(mine$value[[i]]))
+      covered <- any(lib_value == v) ||
+        any(vapply(lib_syn, function(x) v %in% x, logical(1))) ||
+        any(multi & vapply(lib_parts, function(x) all(ext_parts %in% x), logical(1)))
+      if (covered) {
+        hits <- c(hits, paste0(mine$name[[i]], " (", code, "): ", mine$value[[i]]))
+      }
+    }
+  }
+  # The engine's ORDER BY runs under a locale collation, which puts
+  # "Age at Death" before "AGEDTH". Case-folded first, then as written, gives
+  # that order on every platform.
+  hits <- unique(hits)
+  hits[order(tolower(hits), hits, method = "radix")]
+}
+
 #' Package names of the bundled Controlled Terminology
 #' @return A character vector, e.g. `"sdtmct-2026-03-27"`.
 #' @noRd
@@ -1506,10 +1586,25 @@ compute_operation <- function(op, study, current_domain, current_dataset, bindin
     # adds to an extensible codelist is already one of the codelist's terms,
     # a SYNONYM of one, or part of one. The bundled terminology leaves the
     # synonyms out, so the check would quietly miss that case. Refused.
-    define_extended_terms_in_ct = stop(
-      "needs the controlled terminology's synonyms, which coreval does not bundle",
-      call. = FALSE
-    ),
+    define_extended_terms_in_ct = {
+      if (is.null(study$define)) {
+        stop("needs define.xml, which declares the extended terms: ", define_absent_reason(study),
+             call. = FALSE)
+      }
+      pkg <- study$ct_package
+      if (is.null(pkg) || !length(pkg) || is.na(pkg[[1]]) || !nzchar(pkg[[1]])) {
+        stop("needs controlled terminology, and this study does not say ",
+             "which version it follows", call. = FALSE)
+      }
+      if (!pkg[[1]] %in% ct_package_names()) {
+        stop("no bundled controlled terminology package named '", pkg[[1]], "'", call. = FALSE)
+      }
+      extended <- study$define$extended_terms %||%
+        data.frame(name = character(0), codelist = character(0), value = character(0))
+      scalar_binding(define_extended_terms_in_ct(
+        extended, pkg[[1]], !isFALSE(op$case_sensitive)
+      ))
+    },
     # CORE 1.0's define_exdict_version_operation.py: the version of an
     # external dictionary the define cites (the first codelist naming it).
     # None cited stops the rule, as it does there.

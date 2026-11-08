@@ -582,3 +582,95 @@ test_that("for a CORE 1.0 rule a collection is contained only when every item is
   .coreval_env$engine <- "cdisc"
   expect_equal(membership_check(ctx), c(TRUE, TRUE, TRUE, FALSE))
 })
+
+test_that("the terms a define adds to a codelist are read as CORE 1.0 reads them", {
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".xml")
+  writeLines(c(
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<ODM xmlns="http://www.cdisc.org/ns/odm/v1.3"',
+    '     xmlns:def="http://www.cdisc.org/ns/def/v2.1">',
+    '<Study OID="S"><MetaDataVersion OID="MDV.1" Name="v1">',
+    '<ItemGroupDef OID="IG.DM" Name="DM" Domain="DM" Repeating="No"/>',
+    '<CodeList OID="CL.NVTEST" Name="Nervous System Test" DataType="text">',
+    '<EnumeratedItem CodedValue="Interpretation" def:ExtendedValue="Yes"/>',
+    '<EnumeratedItem CodedValue="ATNR" def:ExtendedValue="Yes"/>',
+    # A CDISC term, not an extension: left out.
+    '<EnumeratedItem CodedValue="Asymmetric Tonic Neck Reflex"><Alias Context="nci:ExtCodeID" Name="C1"/></EnumeratedItem>',
+    '<Alias Context="nci:ExtCodeID" Name="C116103"/>',
+    '</CodeList>',
+    '<CodeList OID="CL.OETESTCD" Name="Ophthalmic Exam Test Code" DataType="text">',
+    '<CodeListItem CodedValue="INTP" def:ExtendedValue="Yes"><Decode><TranslatedText>x</TranslatedText></Decode></CodeListItem>',
+    '<Alias Context="nci:ExtCodeID" Name="C117743"/>',
+    '</CodeList>',
+    # No Alias, so no C-code to compare against: left out, as there.
+    '<CodeList OID="CL.SPONSOR" Name="Sponsor list" DataType="text">',
+    '<EnumeratedItem CodedValue="X" def:ExtendedValue="Yes"/>',
+    '</CodeList>',
+    '</MetaDataVersion></Study></ODM>'
+  ), path)
+
+  ext <- read_define_xml(path)$extended_terms
+  expect_equal(ext$value, c("Interpretation", "ATNR", "INTP"))
+  expect_equal(ext$codelist, c("C116103", "C116103", "C117743"))
+  expect_equal(unique(ext$name), c("Nervous System Test", "Ophthalmic Exam Test Code"))
+
+  # Hand-checked against sdtmct-2024-09-27, the package CORE-002117's own case
+  # names: ATNR is a SYNONYM of the NVTEST term "Asymmetric Tonic Neck Reflex",
+  # INTP is already an OETESTCD submission value, Interpretation is neither.
+  # CORE 1.0's engine reports exactly these two on that case.
+  expect_equal(
+    define_extended_terms_in_ct(ext, "sdtmct-2024-09-27"),
+    c("Nervous System Test (C116103): ATNR", "Ophthalmic Exam Test Code (C117743): INTP")
+  )
+  # ATNR became a synonym after 2020: the 2020-12-18 package does not list it.
+  expect_equal(
+    define_extended_terms_in_ct(ext, "sdtmct-2020-12-18"),
+    "Ophthalmic Exam Test Code (C117743): INTP"
+  )
+  # Case-sensitive by default, as the operation's case_sensitive is.
+  lower <- ext
+  lower$value <- tolower(lower$value)
+  expect_length(define_extended_terms_in_ct(lower, "sdtmct-2024-09-27"), 0)
+  expect_length(define_extended_terms_in_ct(lower, "sdtmct-2024-09-27", case_sensitive = FALSE), 2)
+})
+
+test_that("an extended term covering every part of a ';'-separated term is reported", {
+  # No bundled extensible codelist has such a term, so the branch is shown on a
+  # made-up one.
+  old <- list(cl = .coreval_env$ct_codelists, syn = .coreval_env$ct_synonyms)
+  on.exit({
+    .coreval_env$ct_codelists <- old$cl
+    .coreval_env$ct_synonyms <- old$syn
+  })
+  .coreval_env$ct_codelists <- data.frame(
+    package = "sdtmct-x", codelist_code = "C9", codelist = "ORG", extensible = "True",
+    term_values = "bacteria; bacteriophage\x1fVIRUS", term_codes = "C91\x1fC92",
+    stringsAsFactors = FALSE
+  )
+  .coreval_env$ct_synonyms <- data.frame(
+    package = "sdtmct-x", codelist_code = "C9", term_synonyms = "\x1fVirion; Viral agent",
+    stringsAsFactors = FALSE
+  )
+  ext <- data.frame(name = "Organism", codelist = "C9",
+                    value = c("bacteria", "bacteriophage;bacteria", "bacteria; fungus", "Viral agent", "VIRUS ", ""),
+                    stringsAsFactors = FALSE)
+  # The last two are not reported: the extended term is not trimmed, as there,
+  # and an empty one is never compared.
+  expect_setequal(
+    define_extended_terms_in_ct(ext, "sdtmct-x"),
+    c("Organism (C9): Viral agent", "Organism (C9): bacteria", "Organism (C9): bacteriophage;bacteria")
+  )
+})
+
+test_that("CORE-002117 is refused rather than answered without a define or a terminology", {
+  rule <- fixture_rule("CORE-002117")
+  skip_if(is.null(rule))
+  study <- one_dataset(list(STUDYID = "S1", DOMAIN = "DM", USUBJID = "1"), "DM")
+  study$ct_package <- "sdtmct-2024-09-27"
+  expect_error(evaluate_rule(rule, study, "DM"), "define.xml")
+  study$define <- list(extended_terms = data.frame(name = character(0), codelist = character(0),
+                                                    value = character(0)))
+  study$ct_package <- NULL
+  expect_error(evaluate_rule(rule, study, "DM"), "which version it follows")
+})

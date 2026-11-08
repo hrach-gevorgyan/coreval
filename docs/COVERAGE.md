@@ -32,16 +32,21 @@ shown to find what it is for.
 the shape the harness grades, and `tests/conformance/check_v1_reader.R` proves
 the reader against every cell the engine reports.
 
-**The 27 that cannot be measured** all need data coreval does not have, and are
-skipped with that reason rather than answered:
+**The rules that cannot be measured** all need an external dictionary coreval
+does not have, and are skipped with that reason rather than answered:
 
-| why | rules |
+| dictionary | rules |
 |---|---|
-| An external dictionary: MedDRA, WHODrug, UNII, MED-RT, SNOMED CT or LOINC | 26 |
-| Controlled terminology synonyms, which the bundled terminology does not carry (CORE-002117) | 1 |
+| MedDRA | 12 |
+| UNII | 6 |
+| WHODrug | 3 |
+| MED-RT | 2 |
+| SNOMED CT | 2 |
+| LOINC | 1 |
 
-Dictionaries are licensed separately and supplied by the user to 1.0's engine
-too; its rules report "not applicable" without one.
+MedDRA and WHODrug are licensed; the others are free, some after registering.
+All are supplied by the user to 1.0's engine too, and its rules report "not
+applicable" without one.
 
 **The 2 that disagree:**
 

@@ -466,6 +466,34 @@ read_define_xml <- function(path) {
     v[!is.na(v)]
   })
   names(codelist_values) <- xml2::xml_attr(code_lists, "OID")
+  # The terms a study adds to a codelist, marked def:ExtendedValue="Yes" on a
+  # CodeListItem or EnumeratedItem. CORE 1.0's get_extensible_codelist_mappings
+  # (define_xml_reader_2_0/2_1): keyed by the codelist's Name, so a later
+  # codelist of the same Name replaces an earlier one; the C-code is the first
+  # Alias of the codelist whatever its Context; a codelist with no Alias is
+  # left out. CORE-002117 asks whether CDISC already has such a term.
+  extended <- lapply(code_lists, function(cl) {
+    # One union, in document order. The reference lists CodeListItem first,
+    # which only reorders terms; the result is sorted anyway.
+    items <- xml2::xml_find_all(cl, "./CodeListItem | ./EnumeratedItem")
+    flag <- xml_attr_any(items, "ExtendedValue")
+    values <- xml2::xml_attr(items, "CodedValue")[!is.na(flag) & flag == "Yes"]
+    alias <- xml2::xml_find_first(cl, "./Alias")
+    if (!length(values) || inherits(alias, "xml_missing")) {
+      return(NULL)
+    }
+    list(name = xml2::xml_attr(cl, "Name") %||% NA_character_,
+         codelist = xml2::xml_attr(alias, "Name"), values = values)
+  })
+  extended <- Filter(Negate(is.null), extended)
+  keep <- !duplicated(vapply(extended, `[[`, "", "name"), fromLast = TRUE)
+  extended <- extended[keep]
+  extended_terms <- data.frame(
+    name = as.character(unlist(lapply(extended, function(e) rep(e$name, length(e$values))))),
+    codelist = as.character(unlist(lapply(extended, function(e) rep(e$codelist, length(e$values))))),
+    value = as.character(unlist(lapply(extended, `[[`, "values"))),
+    stringsAsFactors = FALSE
+  )
   item_defs$define_variable_codelist_coded_values <- lapply(
     item_codelist_oid,
     function(oid) {
@@ -546,7 +574,8 @@ read_define_xml <- function(path) {
   list(datasets = datasets, variables = variables, ct_standards = ct_standards,
        vlms = define_value_level(doc, groups, item_defs),
        vlm_keys = define_vlm_keys(doc, groups),
-       external_dictionaries = external_dictionaries)
+       external_dictionaries = external_dictionaries,
+       extended_terms = extended_terms)
 }
 
 #' The value-level items the define makes keys, such as a SUPP-- qualifier

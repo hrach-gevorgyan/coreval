@@ -98,6 +98,16 @@ and in the same order. A separate file rather than a column of that one because
 reads each file only when a rule reaches for it. Also CDISC Controlled
 Terminology, developed with NCI EVS.
 
+inst/extdata/ct_synonyms.rds
+----------------------------
+From cdisc-org/cdisc-rules-engine, extracted from the same offline caches under
+the same MIT licence, in the same build step, and likewise never through the
+CDISC Library API.
+
+The synonyms of each term of the extensible codelists in ct_codelists.rds,
+keyed the same way and in the same term order. One rule reads it. Also CDISC
+Controlled Terminology, developed with NCI EVS.
+
 inst/extdata/usdm_entities.rds
 ------------------------------
 From cdisc-org/cdisc-rules-engine, under the MIT licence reproduced below.

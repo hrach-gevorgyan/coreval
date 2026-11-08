@@ -297,6 +297,21 @@ the same data as coreval.
   A date older than every release known is a finding, and no SSTDTC row is none. The
   rule was run through 1.0's own runner on 13 altered copies of its negative case,
   and coreval agrees on all 13; a value that stops the engine is a skip with a reason.
+- **CORE 1.0's extended-term check (CORE-002117).** A term the define marks
+  `def:ExtendedValue="Yes"` is compared with the codelist of the same C-code
+  (the codelist's first `Alias`) in the terminology in use
+  (define_extended_terms_in_ct.py). It is reported when it equals a submission
+  value or one of that term's synonyms, case-sensitively. Synonyms are trimmed;
+  the extended term is not, so `" AGEDTH"` is new. A third test, every
+  ";"-part of the term being a part of a ";"-separated submission value, cannot
+  fire on CDISC's terminology: no term of an extensible codelist in any release
+  contains ";". On a define given 14 extended terms of every kind, the engine
+  and coreval report the same six, in the same order. The terminology is the
+  one the run names, so CORE-002117's own case, which names sdtmct-2024-09-27,
+  reports ATNR: it became a synonym after 2020. coreval compares with the
+  study's own SDTM or SEND package; the engine, given no `-ct` and a 2.1 define,
+  also compares with the define's DEFINE-XML terminology, whose codelists a
+  study's define does not normally extend.
 
 ## The engine answers by file format
 

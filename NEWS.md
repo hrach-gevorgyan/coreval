@@ -52,6 +52,9 @@ repository.
   terminology.
 * A rule that cannot be evaluated now says why, rather than answering "no problem".
 * CORE-002041, the MedDRA release check, failed on any real TS and now runs.
+* CORE-002117 runs: a term a define adds to a codelist that CDISC already has,
+  under the same name or as a synonym, is reported. Terminology synonyms now ship
+  for this.
 * Terminology is current to CDISC's September 2026 packages.
 * A duplicate subject and an over-long variable now count as wrong values, not as
   often legitimate.
