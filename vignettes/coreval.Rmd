@@ -119,7 +119,9 @@ head(unique(result$skipped$reason), 3)
 and `--SEQ`, which still find it after the data is sorted; they are blank in a
 dataset without them, such as `TS`. Each finding also has the `issue` in
 words, its `triage` and the `rule_id`. A blank `Record` means the problem is about the dataset as a whole, such as a missing
-variable.
+variable. For a rule about the variables themselves, such as a wrong type or
+label, `Record` is the variable's position in the dataset, not a row, and
+`Variable` and `Value` name the variable.
 
 **Always look at `skipped`.** A short list of problems can mean clean data, or
 it can mean many rules never ran. The skipped table tells you which.

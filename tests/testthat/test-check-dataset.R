@@ -517,3 +517,43 @@ test_that("a rule about the whole study is skipped on one dataset (CORE-002084, 
   expect_match(result$skipped$reason[result$skipped$rule_id == "CORE-002084"][1],
                "whole study")
 })
+
+test_that("ct_package is accepted in any case", {
+  expect_identical(validate_ct_package("SDTMCT-2026-03-27"), "sdtmct-2026-03-27")
+})
+
+test_that("lower-case names of a data frame are checked as upper case, said once", {
+  dm <- data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = c("S1-1", "S1-2"), SUBJID = c("1", "2"),
+                   AGE = c(30, 40), AGEU = c("YEARS", ""))
+  up <- suppressWarnings(check_dataset(dm, standard = "SDTMIG", version = "3.4"))
+  lo <- dm
+  names(lo) <- tolower(names(lo))
+  expect_warning(low <- check_dataset(lo, standard = "SDTMIG", version = "3.4"), "not upper case")
+  # The variable-name rules called every lower-case name "not allowed".
+  expect_identical(sort(unique(low$findings$rule_id)), sort(unique(up$findings$rule_id)))
+})
+
+test_that("a domain no standard defines is named in a warning; a split or sponsor domain is not", {
+  x <- data.frame(STUDYID = "S1", USUBJID = "1")
+  expect_warning(check_dataset(x, domain = "QQ", standard = "SDTMIG", version = "3.4"), "not a domain of SDTMIG")
+  for (d in c("ZZ", "LBCH", "SUPPAE", "APDM")) {
+    expect_no_warning(suppressMessages(check_dataset(x, domain = d, standard = "SDTMIG", version = "3.4")))
+  }
+})
+
+test_that("a filter naming a rule or dataset the check never saw says so", {
+  r <- suppressWarnings(check_dataset(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "1"),
+                                      standard = "SDTMIG", version = "3.4"))
+  expect_warning(filter_findings(r, rule = "CORE-999999"), "not run in this check")
+  expect_warning(filter_findings(r, dataset = "XX"), "no such dataset in this check")
+  expect_no_warning(filter_findings(r, dataset = "DM"))
+})
+
+test_that("datasets in a subfolder are named when the top folder is read", {
+  dir <- tempfile()
+  dir.create(file.path(dir, "more"), recursive = TRUE)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "1"), file.path(dir, "dm.xpt"))
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "AE", USUBJID = "1"), file.path(dir, "more", "ae.xpt"))
+  expect_warning(read_study(dir), "more in subfolders are not")
+})

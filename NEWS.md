@@ -63,6 +63,11 @@ repository.
 * A transport file cut short on a record boundary is refused; its last rows were
   dropped without a word. A CSV value with a leading zero, such as SUBJID `001`,
   stays text.
+* A data frame with lower-case column names is checked as upper case, with one
+  warning, instead of every variable being called not allowed.
+* Warnings now say when a filter names a rule that did not run or a dataset that was
+  not checked, when datasets in a subfolder are not read, and when `check_dataset()`
+  is given a domain the standard does not define. `ct_package` takes any case.
 * CORE-002117 runs: a term a define adds to a codelist that CDISC already has,
   under the same name or as a synonym, is reported. Terminology synonyms now ship
   for this.

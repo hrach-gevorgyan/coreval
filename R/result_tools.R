@@ -110,6 +110,22 @@ filter_findings <- function(result, triage = NULL, dataset = NULL,
   dataset <- text_arg(dataset, "dataset")
   rule <- text_arg(rule, "rule")
   variable <- text_arg(variable, "variable")
+  # A rule this check never ran, or a dataset it never read, matches nothing
+  # for a reason that has nothing to do with the data: a typo, or a rule out
+  # of scope. Said so, rather than left to read as "no findings".
+  ran_ids <- unique(c(attr(result, "ran")$rule_id, result$skipped$rule_id, f$rule_id))
+  not_run <- setdiff(rule, toupper(ran_ids))
+  if (length(not_run) > 0) {
+    warning("not run in this check, so nothing can match: ", paste(not_run, collapse = ", "),
+            ". attr(result, \"ran\") lists the rules that ran.", call. = FALSE)
+  }
+  read <- unique(c(toupper(attr(result, "domains")), toupper(f$Dataset)))
+  not_read <- setdiff(dataset, read)
+  if (length(not_read) > 0) {
+    warning("no such dataset in this check: ", paste(not_read, collapse = ", "),
+            ". It checked ", paste(sort(setdiff(read, "STUDY")), collapse = ", "), ".",
+            call. = FALSE)
+  }
   if (!is.null(dataset)) keep <- keep & f$Dataset %in% dataset
   if (!is.null(rule)) keep <- keep & f$rule_id %in% rule
   if (!is.null(variable)) {

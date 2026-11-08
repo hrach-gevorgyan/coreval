@@ -16,7 +16,8 @@ list_rules(
 }
 \arguments{
 \item{id}{Return only these rules, e.g. \code{"CORE-000547"}. This is how you
-look up a rule id the report gave you.}
+look up a rule id the report gave you. An id is found whatever
+\code{standard} says, so a rule written for TIG or SEND is returned too.}
 
 \item{domain}{Return only rules that apply to this domain, e.g. \code{"AE"},
 resolving each rule's \code{Scope > Classes} and \code{Scope > Domains}.}

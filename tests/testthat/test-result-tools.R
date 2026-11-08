@@ -126,7 +126,8 @@ test_that("filter_findings accepts the other selectors, and refuses nonsense", {
 
 test_that("filtering to nothing gives an empty result that still prints", {
   result <- check_dataset(demo(), standard = "SDTMIG")
-  none <- filter_findings(result, rule = "CORE-000001")
+  # A rule this check never ran: it says so, and the result is still empty.
+  expect_warning(none <- filter_findings(result, rule = "CORE-000001"), "not run in this check")
   expect_equal(nrow(none$findings), 0)
   expect_no_error(capture.output(print(none)))
 })
@@ -235,7 +236,8 @@ test_that("filtering everything away does not claim the data is clean", {
     AESTDTC = c("2024-01-10", "2024-02-30"), stringsAsFactors = FALSE
   )
   result <- check_dataset(ae, standard = "SDTMIG")
-  none <- filter_findings(result, rule = "CORE-000001")
+  # A rule this check never ran: it says so, and the result is still empty.
+  expect_warning(none <- filter_findings(result, rule = "CORE-000001"), "not run in this check")
   out <- paste(capture.output(print(none)), collapse = "\n")
 
   expect_match(out, "No findings match this filter")

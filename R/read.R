@@ -77,6 +77,19 @@ read_study <- function(path, usdm = FALSE) {
     }
     return(read_study_usdm(path))
   }
+  # Datasets in a subfolder are not read. With none at the top, the error for
+  # an empty folder points at them; with some, they were dropped unmentioned.
+  if (length(tabular) > 0 || length(json_files) > 0) {
+    nested <- list.files(path, pattern = "[.](xpt|sas7bdat|json|ndjson)$",
+                         ignore.case = TRUE, recursive = TRUE)
+    nested <- nested[dirname(nested) != "."]
+    if (length(nested) > 0) {
+      warning("only the datasets directly in this folder are checked; ", length(nested),
+              " more in subfolders are not (", paste(utils::head(nested, 3), collapse = ", "),
+              if (length(nested) > 3) ", ..." else "", "). Check each folder on its own.",
+              call. = FALSE)
+    }
+  }
   # With no datasets in any readable format this returns an empty study, which
   # is the honest answer, and check_study() refuses to call an empty study
   # clean.

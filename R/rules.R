@@ -168,7 +168,8 @@ build_rules_table <- function() {
 #'   twice.
 #'
 #' @param id Return only these rules, e.g. `"CORE-000547"`. This is how you
-#'   look up a rule id the report gave you.
+#'   look up a rule id the report gave you. An id is found whatever
+#'   `standard` says, so a rule written for TIG or SEND is returned too.
 #' @param domain Return only rules that apply to this domain, e.g. `"AE"`,
 #'   resolving each rule's `Scope > Classes` and `Scope > Domains`.
 #' @param standard Return only rules for this standard, e.g. `"SDTMIG"`.
@@ -355,6 +356,9 @@ validate_ct_package <- function(ct_package, standard = NULL, substandard = NULL)
     stop("`ct_package` must be a single package name, e.g. \"sdtmct-2026-03-27\".",
          call. = FALSE)
   }
+  # Bundled names are lower case; "SDTMCT-2026-03-27" names the same package,
+  # as `standard` and list_ct_packages() already take any case.
+  ct_package <- tolower(trimws(ct_package))
   known <- ct_package_names()
   if (!(ct_package %in% known)) {
     family <- sub("ct-.*$", "", ct_package)

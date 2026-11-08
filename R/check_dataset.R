@@ -462,6 +462,20 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     if (ncol(x) == 0) {
       stop("x has no columns, so there is nothing to check", call. = FALSE)
     }
+    # Lower-case names are how an R pipeline often leaves them. The value rules
+    # read them whatever their case, but the variable-name rules called every
+    # one of them "not allowed". In a data frame the casing is checked once,
+    # here, and the content checked as the upper-case names a submission uses.
+    # A file's names are what was submitted, and are left as they are.
+    lower <- names(x) != toupper(names(x))
+    if (any(lower) && !anyDuplicated(toupper(names(x)))) {
+      warning(sum(lower), " column name", if (sum(lower) > 1) "s are" else " is",
+              " not upper case (", paste(utils::head(names(x)[lower], 4), collapse = ", "),
+              if (sum(lower) > 4) ", ..." else "", "); checked as upper case. ",
+              "A submission needs them upper case.", call. = FALSE)
+      x <- as.data.frame(x)
+      names(x) <- toupper(names(x))
+    }
     dataset <- build_dataset_from_data_frame(x)
   } else {
     stop("x must be a data frame, or a path to one dataset file", call. = FALSE)
@@ -499,6 +513,18 @@ check_dataset <- function(x, domain = NULL, standard = NULL, version = NULL,
     ),
     version_note = older$note
   )
+  # A domain the standard does not define, and which is not a sponsor's own
+  # (X-, Y-, Z-), a supplemental qualifier or an associated-persons dataset,
+  # is most likely a typo: "DMX" ran only the rules for every domain, quietly.
+  family <- library_rows(.coreval_env$library_variables, study)$domain
+  known <- toupper(unique(c(family, .coreval_env$domain_classes$domain)))
+  base <- sub("[0-9]+$", "", domain)
+  if (length(family) > 0 && !base %in% known && !substr(base, 1, 2) %in% known &&
+      !grepl("^(X|Y|Z|SUPP|SQ|AP)", base)) {
+    warning("'", domain, "' is not a domain of ", study$standard$product,
+            "; only the rules that apply to every domain ran. Check the name.",
+            call. = FALSE)
+  }
   if (is.null(study$ct_package) && identical(domain, "TS")) {
     study$ct_package <- ct_package_from_ts(study)
   }

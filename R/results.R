@@ -522,7 +522,9 @@ fold_value_rows <- function(findings) {
 #'   rules comparing the define with the study ran).
 #'
 #'   * `findings` - what is wrong. One row per affected record and variable, with `Dataset`,
-#'     `Record` (its row in the file), `USUBJID` and `SEQ` (its subject and
+#'     `Record` (its row in the file, or for a rule about the variables
+#'     themselves, such as a type or label check, the variable's position),
+#'     `USUBJID` and `SEQ` (its subject and
 #'     `--SEQ`, blank where the dataset has none or the row is not a record),
 #'     `Variable`, `Value`, the `issue` in words, its `triage` and `rule_id`.
 #'     `Not in dataset` under `Value` means the rule wanted a variable you do
