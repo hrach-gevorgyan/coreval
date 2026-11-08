@@ -4,7 +4,7 @@
   "why": "These rules' committed results.csv files are empty. Their fixtures ship no .env and no TS, so nothing declares a CT version; the engine raises MissingDataError and writes no rows. The empty file records a crash, not an expectation - grading against it would mark a correct answer wrong.",
   "engine": "cdisc-org/cdisc-rules-engine 0.17.1 at commit 8740d201 (the commit cdisc-open-rules pins)",
   "command": "python core.py validate -lr <rule.yml> -d <case>/data -s <standard> -v <version> -ct <package> -of JSON",
-  "regenerate": "see docs/RULE_TRIAGE.md; this file is evidence, not an assumption"
+  "regenerate": "see docs/COVERAGE.md; this file is evidence, not an assumption"
  },
  "cases": {
   "CDISC.SDTMIG.CG0555|negative/01": {

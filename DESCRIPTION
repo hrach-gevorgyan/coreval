@@ -27,6 +27,7 @@ Copyright: Hrach Gevorgyan holds the copyright in this package's own code.
     cdisc-org/cdisc-open-rules, copyright CDISC, and the bundled standards
     metadata and controlled terminology from cdisc-org/cdisc-rules-engine,
     copyright CDISC, and reference tables in inst/extdata/core1_reference.rds
+    and the per-version SDTM Model in inst/extdata/sdtm_model_versions.rds
     from verisianHQ/cdisc-rules-engine, copyright CDISC, all used under their
     MIT licenses. Two further bundled
     components belong to others: inst/extdata/js/jsonata.min.js is JSONata,
