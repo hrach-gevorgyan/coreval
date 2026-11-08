@@ -130,11 +130,12 @@ compare_op <- function(fn, set_fn = NULL) {
     no_flag <- !isTRUE(type_insensitive) && !identical(type_insensitive, "numeric")
     # PostgreSQL has no `=` between text and a number, so 1.0 fails on two
     # columns of different types. A literal it coerces, and that compares by value.
-    # A data frame's all-NA column is logical, of no known type, not text:
-    # refusing it skipped CORE-000362. A transport file's blank Char column
-    # is text, typed so in 1.0's table, and stops the rule there.
+    # A text side with no value at all is a column of no known type (a data
+    # frame's all-NA column, read in as blank text), not text: refusing it
+    # skipped CORE-000362. A transport file's all-blank Char column looks the
+    # same by then, and is compared too, where 1.0 would stop.
     text_side <- if (is.numeric(target)) value else target
-    if (mixed && equality && no_flag && value_is_column(ctx) && !is.logical(text_side)) {
+    if (mixed && equality && no_flag && value_is_column(ctx) && !all(is_blank(text_side))) {
       stop("compares a text column with a numeric one, which CORE 1.0 cannot do", call. = FALSE)
     }
     if (core1 && isTRUE(type_insensitive)) {
