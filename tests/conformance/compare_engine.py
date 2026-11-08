@@ -75,9 +75,18 @@ def records(path):
         # /Entity/<zero-based index>. Same statement, different spelling, and
         # reading only the SDTM column names off one gives a silent empty set.
         if "path" in row and "Dataset" not in row:
-            m = re.fullmatch(r"/([A-Za-z][A-Za-z0-9]*)/(\d+)", (row.get("path") or "").strip())
-            if m and (row.get("attribute") or "").strip():
+            path_ = (row.get("path") or "").strip()
+            if not (row.get("attribute") or "").strip():
+                continue
+            m = re.fullmatch(r"/([A-Za-z][A-Za-z0-9]*)/(\d+)", path_)
+            if m:
                 found[m.group(1).upper()].add(str(int(m.group(2)) + 1))
+            elif path_:
+                # A nested path (/study/documentedBy/0/versions/0/...) has no
+                # entity-and-row form. Dropped, every such sheet and report
+                # read as empty, and an engine that found nothing "agreed"
+                # with a sheet that lists findings. Kept whole instead.
+                found["USDM"].add(path_)
             continue
         if (row.get("Variable") or "").strip():
             found[(row.get("Dataset") or "").strip()].add((row.get("Record") or "").strip())
