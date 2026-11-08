@@ -357,7 +357,7 @@ skip_group <- function(reason) {
 #'   blank where there is nothing to do.
 #' @noRd
 skip_group_text <- function() {
-  ct <- "pass ct_package = \"sdtmct-...\" (see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS"
+  ct <- "pass ct_package (\"sdtmct-...\" or \"sendct-...\"; see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS"
   data.table::data.table(
     group = c("supplied", "absent", "study", "define_bad", "define", "ct", "labels", "dictionary",
               "stf", "bundled", "variables", "other"),

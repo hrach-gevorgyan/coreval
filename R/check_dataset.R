@@ -183,8 +183,11 @@ read_one_dataset_file <- function(path) {
 #' @noRd
 read_csv_dataset <- function(path) {
   name <- basename(path)
-  if (isTRUE(file.size(path) == 0)) {
-    stop("'", name, "' is empty (0 bytes), so there is no dataset in it to check.",
+  # A file of nothing but blank lines is empty too; fread's own message for
+  # it did not name the file.
+  if (isTRUE(file.size(path) == 0) ||
+      !any(grepl("[^ \t\r]", readLines(path, n = 50L, warn = FALSE), useBytes = TRUE))) {
+    stop("'", name, "' is empty, so there is no dataset in it to check.",
          call. = FALSE)
   }
   # Protections build_dataset_from_csv() also has, which explains them:

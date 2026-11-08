@@ -165,3 +165,30 @@ test_that("a CSV value with a leading zero stays text", {
   r <- suppressWarnings(check_dataset(f, standard = "SDTMIG", version = "3.4"))
   expect_false("CORE-001082" %in% r$findings$rule_id)
 })
+
+test_that("a CSV of blank lines is refused by name", {
+  f <- tempfile(fileext = ".csv")
+  on.exit(unlink(f))
+  writeLines(c("", "  "), f)
+  expect_error(check_dataset(f, standard = "SDTMIG"), paste0("'", basename(f), "' is empty"))
+})
+
+test_that("usdm = TRUE on a folder with no USDM document says so", {
+  skip_if_not_installed("jsonlite")
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "1"), file.path(dir, "dm.xpt"))
+  expect_error(suppressWarnings(check_study(dir, usdm = TRUE)), "no USDM study design document")
+})
+
+test_that("without jsonlite, a stray .json beside the datasets is left out, not fatal", {
+  dir <- tempfile()
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE))
+  haven::write_xpt(data.frame(STUDYID = "S1", DOMAIN = "DM", USUBJID = "1"), file.path(dir, "dm.xpt"))
+  writeLines('{"manifest": true}', file.path(dir, "manifest.json"))
+  local_mocked_bindings(dataset_json_available = function() FALSE)
+  expect_true(is_stray_json(file.path(dir, "manifest.json")))
+  expect_named(suppressWarnings(read_study(dir))$datasets, "DM")
+})

@@ -581,6 +581,13 @@ check_study <- function(study, standard = NULL, version = NULL,
       require_standard(standard, read_env_standard(folder)$product)
     }
     study <- read_study(study, usdm = usdm)
+    # No USDM document in the folder: asking for a standard, which a USDM
+    # check does not need, pointed at the wrong fix.
+    if (isTRUE(usdm) && is.null(standard) &&
+        !identical(study$standard$product, "USDM")) {
+      stop("usdm = TRUE, but no USDM study design document (.json) was found in '",
+           folder, "'. Point check_study() at the folder that holds it.", call. = FALSE)
+    }
   }
   # Anything that is not a study object went straight through to run_checks(),
   # where `names(study$datasets)` is NULL, nothing runs, and the result prints

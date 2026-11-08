@@ -254,8 +254,14 @@ looks_like_dataset_json <- function(path) {
 #' @return A single logical.
 #' @noRd
 is_stray_json <- function(path) {
-  if (looks_like_dataset_json(path) || !dataset_json_available()) {
+  if (looks_like_dataset_json(path)) {
     return(FALSE)
+  }
+  # Without jsonlite a file cannot be parsed, only sniffed. One that does not
+  # look like Dataset-JSON is left out with the warning, as before: refused,
+  # an xpt study holding a manifest.json could not be read at all.
+  if (!dataset_json_available()) {
+    return(TRUE)
   }
   parsed <- tryCatch(jsonlite::fromJSON(path, simplifyVector = FALSE), error = function(e) NULL)
   is.list(parsed) && !any(c("columns", "rows", "datasetJSONVersion") %in% names(parsed))

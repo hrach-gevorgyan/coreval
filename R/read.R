@@ -462,9 +462,11 @@ read_sas_file <- function(path) {
     for (j in seq_along(out)) {
       col <- out[[j]]
       if (is.character(col)) {
-        ends <- grepl("[\t\n\r\v\f]$", col, perl = TRUE)
+        # By bytes: a value in another encoding (a Windows apostrophe in the
+        # pilot's TSVAL) made perl = TRUE warn "invalid UTF-8", naming no file.
+        ends <- grepl("[\t\n\r\v\f]$", col, useBytes = TRUE)
         if (any(ends)) {
-          col[ends] <- sub("[ \t\n\r\v\f]+$", "", col[ends], perl = TRUE)
+          col[ends] <- sub("[ \t\n\r\v\f]+$", "", col[ends], useBytes = TRUE)
           out[[j]] <- col
         }
       }

@@ -211,6 +211,17 @@ results back by position (dataframe_operators.py), so its answers belong to
 the right records only when the data is already sorted by `within` and then
 `ordering`. coreval keeps each answer on its own record.
 
+**CDISC's engine can drop the last row of a narrow transport file.** It reads
+XPT with `pd.read_sas` (services/data_readers/xpt_reader.py). In pandas 3.0.5,
+when a row is 80 bytes or less, any all-blank 8-byte block in the file's last
+80 bytes is taken for padding (`sas_xport.py`, `_record_count`), and that can
+swallow the final real row. A three-row TS of four short variables reads as two
+rows there and three in pyreadstat and haven, and the engine reported rows 1 and
+2 of CORE-000742 where coreval reported 1, 2 and 3; widened past 80 bytes, the
+engine reported all three. CORE 1.0 overrides `_record_count` and reads every
+row (readers/data_readers/xpt_data_reader.py). CDISC's own cases are CSV and are
+not affected; an engine run on a small hand-made XPT study has to be checked for it.
+
 ## Rule sets and denominators
 
 23. **Partially Executable rules** are marked so by their authors and may not
