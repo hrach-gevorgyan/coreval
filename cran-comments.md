@@ -54,7 +54,12 @@ length.
 
 Local, Windows 11, R 4.6.1: 0 errors | 0 warnings | 0 notes.
 
-win-builder and GitHub Actions to be filled in before submission.
+win-builder, R-devel: 1 NOTE, the incoming-feasibility check.
+
+* "Verisian" is flagged as possibly misspelled. It is the name of the company
+  that maintains the CORE 1.0 rules repository, and is spelled correctly.
+* Six github.com URLs were reported with status 504. GitHub reported a service
+  outage at the time; each URL answers 200 when checked again.
 
 ## Notes for the reviewer
 
