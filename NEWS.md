@@ -1,4 +1,4 @@
-# coreval (development version)
+# coreval 0.4.0
 
 This release follows CORE 1.0, which moved the SDTM rules to Verisian's
 repository. The full list of changes is in `docs/CHANGES-0.4.0.md` in the

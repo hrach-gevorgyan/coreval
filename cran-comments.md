@@ -52,7 +52,9 @@ length.
 
 ## R CMD check results
 
-To be filled in from the final `R CMD check --as-cran` run on each platform above.
+Local, Windows 11, R 4.6.1: 0 errors | 0 warnings | 0 notes.
+
+win-builder and GitHub Actions to be filled in before submission.
 
 ## Notes for the reviewer
 
