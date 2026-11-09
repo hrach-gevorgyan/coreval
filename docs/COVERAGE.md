@@ -81,6 +81,13 @@ CDISC's own service over a document to produce them and
 `tests/conformance/compare_usdm_reader.R` diffs coreval's against those, cell
 by cell.
 
+The answer sheets were themselves checked against CDISC's engine, 1.0.0 at the
+pinned commit `f3282a0d`, over every case of all 257 rules. The engine reports
+the same paths as the sheet on every one. One case, CORE-000968 `negative/01`,
+ships no `.env`; run with its positive case's `USDM 4-0`, the engine reports
+the seven paths the sheet lists. `engine_comparison.json` keeps a nested path
+such as `/study/documentedBy/0/versions/0/dateValues/0` whole, under `USDM`.
+
 ### The 41 that cannot be measured
 
 36 are fixtures with nothing to check against, 4 need a rule type coreval

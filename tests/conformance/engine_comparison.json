@@ -1198,15 +1198,35 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
@@ -4759,6 +4779,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 6,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000812",
   "source": "published"
  },
@@ -4927,6 +4948,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000815",
   "source": "published"
  },
@@ -4975,6 +4997,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000816",
   "source": "published"
  },
@@ -5009,6 +5032,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000817",
   "source": "published"
  },
@@ -5037,6 +5061,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000818",
   "source": "published"
  },
@@ -5065,6 +5090,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000819",
   "source": "published"
  },
@@ -5109,6 +5135,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000820",
   "source": "published"
  },
@@ -5137,6 +5164,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000821",
   "source": "published"
  },
@@ -5181,6 +5209,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000822",
   "source": "published"
  },
@@ -5209,6 +5238,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000823",
   "source": "published"
  },
@@ -5243,6 +5273,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000824",
   "source": "published"
  },
@@ -5287,6 +5318,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000825",
   "source": "published"
  },
@@ -5331,6 +5363,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000826",
   "source": "published"
  },
@@ -5361,6 +5394,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000827",
   "source": "published"
  },
@@ -5397,6 +5431,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000828",
   "source": "published"
  },
@@ -5427,6 +5462,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000829",
   "source": "published"
  },
@@ -5471,6 +5507,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000830",
   "source": "published"
  },
@@ -5501,6 +5538,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000831",
   "source": "published"
  },
@@ -5531,6 +5569,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000832",
   "source": "published"
  },
@@ -5575,6 +5614,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000833",
   "source": "published"
  },
@@ -5609,6 +5649,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000834",
   "source": "published"
  },
@@ -5637,6 +5678,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000835",
   "source": "published"
  },
@@ -5665,6 +5707,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000836",
   "source": "published"
  },
@@ -5695,6 +5738,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000837",
   "source": "published"
  },
@@ -5725,6 +5769,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000838",
   "source": "published"
  },
@@ -5755,6 +5800,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000839",
   "source": "published"
  },
@@ -5783,6 +5829,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000840",
   "source": "published"
  },
@@ -5835,6 +5882,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000849",
   "source": "published"
  },
@@ -5939,6 +5987,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000850",
   "source": "published"
  },
@@ -5985,6 +6034,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000851",
   "source": "published"
  },
@@ -6023,6 +6073,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000854",
   "source": "published"
  },
@@ -6067,6 +6118,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000855",
   "source": "published"
  },
@@ -6095,6 +6147,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000856",
   "source": "published"
  },
@@ -6167,6 +6220,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000857",
   "source": "published"
  },
@@ -6195,6 +6249,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000858",
   "source": "published"
  },
@@ -6233,6 +6288,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000859",
   "source": "published"
  },
@@ -6271,6 +6327,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000860",
   "source": "published"
  },
@@ -6309,6 +6366,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000861",
   "source": "published"
  },
@@ -6467,6 +6525,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000868",
   "source": "published"
  },
@@ -6523,6 +6582,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000869",
   "source": "published"
  },
@@ -6575,6 +6635,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000870",
   "source": "published"
  },
@@ -6635,6 +6696,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000871",
   "source": "published"
  },
@@ -6683,6 +6745,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000872",
   "source": "published"
  },
@@ -6731,6 +6794,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000873",
   "source": "published"
  },
@@ -6763,6 +6827,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000874",
   "source": "published"
  },
@@ -6865,6 +6930,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000875",
   "source": "published"
  },
@@ -6899,6 +6965,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000876",
   "source": "published"
  },
@@ -6929,6 +6996,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000877",
   "source": "published"
  },
@@ -6981,6 +7049,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000878",
   "source": "published"
  },
@@ -7025,6 +7094,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000879",
   "source": "published"
  },
@@ -7107,6 +7177,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000897",
   "source": "published"
  },
@@ -7137,6 +7208,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000900",
   "source": "published"
  },
@@ -7177,6 +7249,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000904",
   "source": "published"
  },
@@ -7213,6 +7286,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000905",
   "source": "published"
  },
@@ -7259,6 +7333,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000906",
   "source": "published"
  },
@@ -7299,6 +7374,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000907",
   "source": "published"
  },
@@ -7339,6 +7415,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000908",
   "source": "published"
  },
@@ -7379,6 +7456,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000909",
   "source": "published"
  },
@@ -7417,6 +7495,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000910",
   "source": "published"
  },
@@ -7449,6 +7528,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000911",
   "source": "published"
  },
@@ -7479,6 +7559,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000912",
   "source": "published"
  },
@@ -7517,6 +7598,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000917",
   "source": "published"
  },
@@ -7555,6 +7637,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000918",
   "source": "published"
  },
@@ -7587,6 +7670,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000919",
   "source": "published"
  },
@@ -7627,6 +7711,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000920",
   "source": "published"
  },
@@ -7667,6 +7752,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000921",
   "source": "published"
  },
@@ -7705,6 +7791,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000922",
   "source": "published"
  },
@@ -7733,6 +7820,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000923",
   "source": "published"
  },
@@ -7781,6 +7869,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000924",
   "source": "published"
  },
@@ -7817,6 +7906,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000925",
   "source": "published"
  },
@@ -7877,6 +7967,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000929",
   "source": "published"
  },
@@ -7923,6 +8014,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000930",
   "source": "published"
  },
@@ -7963,6 +8055,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000931",
   "source": "published"
  },
@@ -7999,6 +8092,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000932",
   "source": "published"
  },
@@ -8039,6 +8133,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000933",
   "source": "published"
  },
@@ -8052,9 +8147,25 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/minimumResponseDuration",
+      "/study/versions/0/studyDesigns/0/encounters/0",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/dateValues/0/type"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/minimumResponseDuration",
+      "/study/versions/0/studyDesigns/0/encounters/0",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/dateValues/0/type"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
@@ -8130,6 +8241,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000936",
   "source": "published"
  },
@@ -8143,9 +8255,21 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/timings/7",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/timings/7",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
@@ -8164,9 +8288,21 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/14",
+      "/study/versions/0/abbreviations/11",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/14",
+      "/study/versions/0/abbreviations/11",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
@@ -8210,6 +8346,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000939",
   "source": "published"
  },
@@ -8248,6 +8385,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000940",
   "source": "published"
  },
@@ -8284,6 +8422,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000941",
   "source": "published"
  },
@@ -8318,6 +8457,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000942",
   "source": "published"
  },
@@ -8354,6 +8494,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000943",
   "source": "published"
  },
@@ -8367,13 +8508,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/4",
+      "/study/documentedBy/0/versions/0/contents/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/4",
+      "/study/documentedBy/0/versions/0/contents/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000944",
   "source": "published"
  },
@@ -8450,6 +8602,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000945",
   "source": "published"
  },
@@ -8469,19 +8622,48 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/0",
+      "/study/versions/0/studyDesigns/0/studyCells/1",
+      "/study/versions/0/studyDesigns/1/studyCells/4",
+      "/study/versions/0/studyDesigns/1/studyCells/14"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/0",
+      "/study/versions/0/studyDesigns/0/studyCells/1",
+      "/study/versions/0/studyDesigns/1/studyCells/4",
+      "/study/versions/0/studyDesigns/1/studyCells/14"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/0",
+      "/study/versions/0/studyDesigns/0/studyCells/1",
+      "/study/versions/0/studyDesigns/1/studyCells/4",
+      "/study/versions/0/studyDesigns/1/studyCells/14"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/studyCells/0",
+      "/study/versions/0/studyDesigns/0/studyCells/1",
+      "/study/versions/0/studyDesigns/1/studyCells/4",
+      "/study/versions/0/studyDesigns/1/studyCells/14"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000948",
   "source": "published"
  },
@@ -8495,9 +8677,19 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/timings/8"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/timings/8"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
@@ -8516,13 +8708,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/0",
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/16"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/0",
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/16"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000950",
   "source": "published"
  },
@@ -8561,6 +8764,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000951",
   "source": "published"
  },
@@ -8574,13 +8778,38 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/2",
+      "/study/versions/0/studyDesigns/0/activities/5",
+      "/study/versions/0/studyDesigns/0/activities/6",
+      "/study/versions/0/studyDesigns/0/activities/19",
+      "/study/versions/0/studyDesigns/0/activities/4",
+      "/study/versions/0/studyDesigns/0/activities/3",
+      "/study/versions/0/studyDesigns/0/activities/21",
+      "/study/versions/0/studyDesigns/0/activities/1",
+      "/study/versions/0/studyDesigns/0/activities/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/2",
+      "/study/versions/0/studyDesigns/0/activities/5",
+      "/study/versions/0/studyDesigns/0/activities/6",
+      "/study/versions/0/studyDesigns/0/activities/19",
+      "/study/versions/0/studyDesigns/0/activities/4",
+      "/study/versions/0/studyDesigns/0/activities/3",
+      "/study/versions/0/studyDesigns/0/activities/21",
+      "/study/versions/0/studyDesigns/0/activities/1",
+      "/study/versions/0/studyDesigns/0/activities/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000954",
   "source": "published"
  },
@@ -8606,13 +8835,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/identifiers/0",
+      "/study/versions/0/administrableProducts/1/identifiers/0",
+      "/study/versions/0/referenceIdentifiers/0",
+      "/study/versions/0/studyIdentifiers/0",
+      "/study/versions/0/medicalDevices/0/identifiers/2",
+      "/study/versions/0/medicalDevices/3/identifiers/2",
+      "/study/versions/0/medicalDevices/0/identifiers/0",
+      "/study/versions/0/medicalDevices/0/identifiers/1",
+      "/study/versions/0/studyIdentifiers/2",
+      "/study/versions/0/referenceIdentifiers/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/identifiers/0",
+      "/study/versions/0/administrableProducts/1/identifiers/0",
+      "/study/versions/0/referenceIdentifiers/0",
+      "/study/versions/0/studyIdentifiers/0",
+      "/study/versions/0/medicalDevices/0/identifiers/2",
+      "/study/versions/0/medicalDevices/3/identifiers/2",
+      "/study/versions/0/medicalDevices/0/identifiers/0",
+      "/study/versions/0/medicalDevices/0/identifiers/1",
+      "/study/versions/0/studyIdentifiers/2",
+      "/study/versions/0/referenceIdentifiers/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000955",
   "source": "published"
  },
@@ -8638,13 +8894,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyIdentifiers/0",
+      "/study/versions/0/studyIdentifiers/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyIdentifiers/0",
+      "/study/versions/0/studyIdentifiers/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000956",
   "source": "published"
  },
@@ -8681,6 +8948,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000957",
   "source": "published"
  },
@@ -8719,6 +8987,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000958",
   "source": "published"
  },
@@ -8757,6 +9026,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000959",
   "source": "published"
  },
@@ -8815,6 +9085,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000960",
   "source": "published"
  },
@@ -8828,13 +9099,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000961",
   "source": "published"
  },
@@ -8866,25 +9150,54 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000962",
   "source": "published"
  },
@@ -8916,25 +9229,52 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/population",
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 7,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000963",
   "source": "published"
  },
@@ -8948,13 +9288,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/5",
+      "/study/documentedBy/0/versions/0/contents/0",
+      "/study/documentedBy/0/versions/0/contents/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/5",
+      "/study/documentedBy/0/versions/0/contents/0",
+      "/study/documentedBy/0/versions/0/contents/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000964",
   "source": "published"
  },
@@ -8968,13 +9321,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/1",
+      "/study/documentedBy/0/versions/0/contents/3",
+      "/study/documentedBy/0/versions/0/contents/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/1",
+      "/study/documentedBy/0/versions/0/contents/3",
+      "/study/documentedBy/0/versions/0/contents/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000965",
   "source": "published"
  },
@@ -8988,13 +9354,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/1",
+      "/study/versions/0/studyInterventions/1/administrations/0",
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/1",
+      "/study/versions/0/studyInterventions/1/administrations/0",
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000966",
   "source": "published"
  },
@@ -9008,13 +9387,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000967",
   "source": "published"
  },
@@ -9030,11 +9418,22 @@
     "case": "negative/01",
     "engine": null,
     "note": "fixture ships no .env; CDISC's own test.py requires one",
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0/dateValues/1",
+      "/study/documentedBy/0/versions/0/dateValues/0",
+      "/study/documentedBy/0/versions/0/dateValues/2",
+      "/study/documentedBy/0/versions/1/dateValues/2",
+      "/study/documentedBy/0/versions/1/dateValues/1",
+      "/study/documentedBy/1/versions/0/dateValues/0",
+      "/study/documentedBy/1/versions/0/dateValues/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 1,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000968",
   "source": "published"
  },
@@ -9048,13 +9447,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0",
+      "/study/versions/0/studyInterventions/0/administrations/1",
+      "/study/versions/0/studyInterventions/0/administrations/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0",
+      "/study/versions/0/studyInterventions/0/administrations/1",
+      "/study/versions/0/studyInterventions/0/administrations/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000969",
   "source": "published"
  },
@@ -9068,13 +9480,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/1",
+      "/study/versions/0/roles/0",
+      "/study/versions/0/roles/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/1",
+      "/study/versions/0/roles/0",
+      "/study/versions/0/roles/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000970",
   "source": "published"
  },
@@ -9088,13 +9513,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/organizations/0/legalAddress",
+      "/study/versions/0/organizations/1/legalAddress",
+      "/study/versions/0/organizations/2/legalAddress"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/organizations/0/legalAddress",
+      "/study/versions/0/organizations/1/legalAddress",
+      "/study/versions/0/organizations/2/legalAddress"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000971",
   "source": "published"
  },
@@ -9131,6 +9569,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000972",
   "source": "published"
  },
@@ -9144,19 +9583,36 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000973",
   "source": "published"
  },
@@ -9176,25 +9632,50 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 5,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000974",
   "source": "published"
  },
@@ -9233,6 +9714,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000975",
   "source": "published"
  },
@@ -9271,6 +9753,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000976",
   "source": "published"
  },
@@ -9309,6 +9792,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000977",
   "source": "published"
  },
@@ -9351,6 +9835,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000978",
   "source": "published"
  },
@@ -9383,6 +9868,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000979",
   "source": "published"
  },
@@ -9396,13 +9882,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000980",
   "source": "published"
  },
@@ -9440,49 +9939,106 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/04",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/05",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/06",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/07",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 12,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000981",
   "source": "published"
  },
@@ -9520,49 +10076,106 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/04",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/05",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/06",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/07",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 12,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000982",
   "source": "published"
  },
@@ -9576,13 +10189,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/2/definedProcedures/0",
+      "/study/versions/0/studyDesigns/1/activities/1/definedProcedures/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/2/definedProcedures/0",
+      "/study/versions/0/studyDesigns/1/activities/1/definedProcedures/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000983",
   "source": "published"
  },
@@ -9596,13 +10220,38 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/amendments/1/enrollments/1",
+      "/study/versions/0/amendments/1/enrollments/2",
+      "/study/versions/0/amendments/2/enrollments/0",
+      "/study/versions/0/amendments/0/enrollments/2",
+      "/study/versions/0/amendments/1/enrollments/0",
+      "/study/versions/0/amendments/2/enrollments/2",
+      "/study/versions/0/amendments/2/enrollments/1",
+      "/study/versions/0/amendments/0/enrollments/0",
+      "/study/versions/0/amendments/0/enrollments/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/amendments/1/enrollments/1",
+      "/study/versions/0/amendments/1/enrollments/2",
+      "/study/versions/0/amendments/2/enrollments/0",
+      "/study/versions/0/amendments/0/enrollments/2",
+      "/study/versions/0/amendments/1/enrollments/0",
+      "/study/versions/0/amendments/2/enrollments/2",
+      "/study/versions/0/amendments/2/enrollments/1",
+      "/study/versions/0/amendments/0/enrollments/0",
+      "/study/versions/0/amendments/0/enrollments/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000984",
   "source": "published"
  },
@@ -9616,13 +10265,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/amendments/0/changes/1/changedSections/1",
+      "/study/versions/0/amendments/0/changes/3/changedSections/0",
+      "/study/versions/0/amendments/1/changes/2/changedSections/0",
+      "/study/versions/0/amendments/1/changes/0/changedSections/0",
+      "/study/versions/0/amendments/0/changes/1/changedSections/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/amendments/0/changes/1/changedSections/1",
+      "/study/versions/0/amendments/0/changes/3/changedSections/0",
+      "/study/versions/0/amendments/1/changes/2/changedSections/0",
+      "/study/versions/0/amendments/1/changes/0/changedSections/0",
+      "/study/versions/0/amendments/0/changes/1/changedSections/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000985",
   "source": "published"
  },
@@ -9636,13 +10302,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000986",
   "source": "published"
  },
@@ -9675,6 +10350,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000987",
   "source": "published"
  },
@@ -9711,6 +10387,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000988",
   "source": "published"
  },
@@ -9747,6 +10424,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000989",
   "source": "published"
  },
@@ -9785,6 +10463,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000990",
   "source": "published"
  },
@@ -9823,6 +10502,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000991",
   "source": "published"
  },
@@ -9861,6 +10541,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000992",
   "source": "published"
  },
@@ -9874,13 +10555,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0/duration",
+      "/study/versions/0/studyInterventions/1/administrations/0/duration",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/plannedDuration",
+      "/study/versions/0/studyInterventions/2/administrations/0/duration",
+      "/study/versions/0/studyInterventions/0/administrations/1/duration"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/0/administrations/0/duration",
+      "/study/versions/0/studyInterventions/1/administrations/0/duration",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/plannedDuration",
+      "/study/versions/0/studyInterventions/2/administrations/0/duration",
+      "/study/versions/0/studyInterventions/0/administrations/1/duration"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000994",
   "source": "published"
  },
@@ -9894,13 +10592,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/1/administrations/0/duration",
+      "/study/versions/0/studyInterventions/0/administrations/0/duration",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/plannedDuration"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyInterventions/1/administrations/0/duration",
+      "/study/versions/0/studyInterventions/0/administrations/0/duration",
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0/plannedDuration"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000995",
   "source": "published"
  },
@@ -9920,19 +10631,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/cohorts/2",
+      "/study/versions/0/studyDesigns/0/population/cohorts/1",
+      "/study/versions/0/studyDesigns/0/population/cohorts/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/cohorts/2",
+      "/study/versions/0/studyDesigns/0/population/cohorts/1",
+      "/study/versions/0/studyDesigns/0/population/cohorts/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000996",
   "source": "published"
  },
@@ -9946,13 +10678,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/1",
+      "/study/versions/0/roles/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/1",
+      "/study/versions/0/roles/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000997",
   "source": "published"
  },
@@ -9966,13 +10709,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000998",
   "source": "published"
  },
@@ -9986,13 +10740,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-000999",
   "source": "published"
  },
@@ -10006,31 +10769,64 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    },
    {
     "case": "negative/04",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 5,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001000",
   "source": "published"
  },
@@ -10044,13 +10840,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001001",
   "source": "published"
  },
@@ -10064,13 +10869,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001002",
   "source": "published"
  },
@@ -10084,13 +10902,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001003",
   "source": "published"
  },
@@ -10104,13 +10935,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001004",
   "source": "published"
  },
@@ -10124,13 +10966,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001005",
   "source": "published"
  },
@@ -10144,13 +10997,50 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/18",
+      "/study/versions/0/biomedicalConcepts/17",
+      "/study/versions/0/biomedicalConcepts/26",
+      "/study/versions/0/biomedicalConcepts/15",
+      "/study/versions/0/biomedicalConcepts/0",
+      "/study/versions/0/biomedicalConcepts/27",
+      "/study/versions/0/biomedicalConcepts/29",
+      "/study/versions/0/biomedicalConcepts/3",
+      "/study/versions/0/biomedicalConcepts/2",
+      "/study/versions/0/biomedicalConcepts/39",
+      "/study/versions/0/biomedicalConcepts/4",
+      "/study/versions/0/biomedicalConcepts/14",
+      "/study/versions/0/biomedicalConcepts/28",
+      "/study/versions/0/biomedicalConcepts/16",
+      "/study/versions/0/biomedicalConcepts/30"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/18",
+      "/study/versions/0/biomedicalConcepts/17",
+      "/study/versions/0/biomedicalConcepts/26",
+      "/study/versions/0/biomedicalConcepts/15",
+      "/study/versions/0/biomedicalConcepts/0",
+      "/study/versions/0/biomedicalConcepts/27",
+      "/study/versions/0/biomedicalConcepts/29",
+      "/study/versions/0/biomedicalConcepts/3",
+      "/study/versions/0/biomedicalConcepts/2",
+      "/study/versions/0/biomedicalConcepts/39",
+      "/study/versions/0/biomedicalConcepts/4",
+      "/study/versions/0/biomedicalConcepts/14",
+      "/study/versions/0/biomedicalConcepts/28",
+      "/study/versions/0/biomedicalConcepts/16",
+      "/study/versions/0/biomedicalConcepts/30"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001006",
   "source": "published"
  },
@@ -10164,13 +11054,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/2/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/2/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001007",
   "source": "published"
  },
@@ -10184,13 +11085,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/2/ingredients/0/substance/strengths/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0",
+      "/study/versions/0/administrableProducts/2/ingredients/0/substance/strengths/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001008",
   "source": "published"
  },
@@ -10204,13 +11118,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/plannedEnrollmentNumber",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedCompletionNumber"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/plannedEnrollmentNumber",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedCompletionNumber"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001009",
   "source": "published"
  },
@@ -10224,13 +11155,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/referenceSubstance"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/referenceSubstance"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001010",
   "source": "published"
  },
@@ -10244,13 +11184,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/amendments/0/primaryReason"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/amendments/0/primaryReason"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001011",
   "source": "published"
  },
@@ -10264,13 +11213,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0/numerator"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/1/ingredients/0/substance/strengths/0/numerator",
+      "/study/versions/0/studyDesigns/0/population/plannedAge",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0/numerator"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001012",
   "source": "published"
  },
@@ -10284,13 +11246,852 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/11/properties/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/2",
+      "/study/versions/0/biomedicalConcepts/6/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/0/transitionEndRule",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/19/properties/3",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/6/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/7/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/20",
+      "/study/versions/0/biomedicalConcepts/7/properties/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/16/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/6",
+      "/study/versions/0/biomedicalConcepts/10/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/3",
+      "/study/versions/0/biomedicalConcepts/7",
+      "/study/versions/0/biomedicalConcepts/31/properties/5",
+      "/study/versions/0/biomedicalConcepts/5/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/19/properties/1",
+      "/study/versions/0/biomedicalConcepts/5/properties/3",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/7/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/4",
+      "/study/versions/0/biomedicalConcepts/27/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/28/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/21/properties/4",
+      "/study/versions/0/biomedicalConcepts/9/properties/2",
+      "/study/versions/0/biomedicalConcepts/25/properties/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/5",
+      "/study/versions/0/biomedicalConcepts/25/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/29/properties/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/20/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/0",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/6",
+      "/study/versions/0/biomedicalConcepts/19/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/4",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/19/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/15/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/6/properties/3",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/1",
+      "/study/documentedBy/1/versions/0/dateValues/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/3",
+      "/study/versions/0/biomedicalConcepts/3/properties/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/31/properties/4",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/4/properties/2",
+      "/study/versions/0/biomedicalConcepts/25/properties/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/12/properties/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/0",
+      "/study/versions/0/biomedicalConcepts/4/properties/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/7/properties/2",
+      "/study/versions/0/biomedicalConcepts/9/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/17",
+      "/study/versions/0/biomedicalConcepts/8/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/2/properties/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29",
+      "/study/versions/0/biomedicalConcepts/6",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/5/properties/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/4",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/13/properties/16/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/18/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/18",
+      "/study/versions/0/biomedicalConcepts/13/properties/14/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/22/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27",
+      "/study/versions/0/biomedicalConcepts/28/properties/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/21/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11",
+      "/study/versions/0/biomedicalConcepts/30/properties/1",
+      "/study/versions/0/biomedicalConcepts/22",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/6",
+      "/study/versions/0/biomedicalConcepts/5/properties/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/25",
+      "/study/versions/0/biomedicalConcepts/5",
+      "/study/versions/0/biomedicalConcepts/28/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15",
+      "/study/versions/0/biomedicalConcepts/23/properties/4",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/29/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/4/properties/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3",
+      "/study/versions/0/biomedicalConcepts/11/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/24/properties/2",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/16",
+      "/study/versions/0/biomedicalConcepts/30/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/25/properties/2",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/24/properties/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/6/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/10/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/23/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28",
+      "/study/versions/0/biomedicalConcepts/0/properties/1",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/22/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/5",
+      "/study/versions/0/biomedicalConcepts/21/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/8/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/3",
+      "/study/documentedBy/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31",
+      "/study/versions/0/biomedicalConcepts/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/4",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/19/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/6",
+      "/study/versions/0/biomedicalConcepts/17/properties/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/3",
+      "/study/documentedBy/0/versions/0/dateValues/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/23/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/5",
+      "/study/versions/0/biomedicalConcepts/26/properties/5",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/19/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/4",
+      "/study/versions/0/biomedicalConcepts/14/properties/3",
+      "/study/versions/0/biomedicalConcepts/14/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/1",
+      "/study/versions/0/biomedicalConcepts/9/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/1",
+      "/study/versions/0/biomedicalConcepts/10",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/17/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/26/properties/3",
+      "/study/versions/0/biomedicalConcepts/29/properties/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/2/transitionStartRule",
+      "/study/versions/0/biomedicalConcepts/7/properties/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/24/properties/4",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/7/properties/4",
+      "/study/versions/0/biomedicalConcepts/24",
+      "/study/versions/0/biomedicalConcepts/12/properties/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/6",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/3",
+      "/study/versions/0/biomedicalConcepts/22/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/2",
+      "/study/versions/0/biomedicalConcepts/22/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/3",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30",
+      "/study/versions/0/biomedicalConcepts/18/properties/3",
+      "/study/documentedBy/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/12/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/11/properties/4",
+      "/study/versions/0/biomedicalConcepts/24/properties/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/6",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/8",
+      "/study/versions/0/biomedicalConcepts/30/properties/5",
+      "/study/versions/0/biomedicalConcepts/9/properties/4",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/6",
+      "/study/versions/0/biomedicalConcepts/5/properties/4",
+      "/study/versions/0/biomedicalConcepts/2/properties/0",
+      "/study/versions/0/biomedicalConcepts/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/0",
+      "/study/versions/0/biomedicalConcepts/21",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/4",
+      "/study/versions/0/biomedicalConcepts/23",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/3/properties/2",
+      "/study/versions/0/biomedicalConcepts/11/properties/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/10/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/14/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/4",
+      "/study/versions/0/biomedicalConcepts/25/properties/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/6",
+      "/study/versions/0/biomedicalConcepts/13/properties/17/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/3",
+      "/study/versions/0/biomedicalConcepts/24/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/2",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/0",
+      "/study/versions/0/biomedicalConcepts/1/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/22/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/18/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/3",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/21/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/11/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/2/properties/2",
+      "/study/versions/0/biomedicalConcepts/26",
+      "/study/versions/0/biomedicalConcepts/8/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/19/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/15/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/6/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/1",
+      "/study/versions/0/studyDesigns/0/encounters/2/transitionEndRule",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2",
+      "/study/versions/0/biomedicalConcepts/16/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/0/transitionStartRule",
+      "/study/versions/0/biomedicalConcepts/14/properties/4",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/20/properties/2",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/21/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/19/properties/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/1",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/11/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/12/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/13/properties/22/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/9",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/2",
+      "/study/versions/0/biomedicalConcepts/17/properties/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/3",
+      "/study/versions/0/biomedicalConcepts/6/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/7/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/19/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/24/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/20/properties/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/20/responseCodes/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/11/properties/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/2",
+      "/study/versions/0/biomedicalConcepts/6/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/0/transitionEndRule",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/19/properties/3",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/6/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/7/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/20",
+      "/study/versions/0/biomedicalConcepts/7/properties/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/16/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/6",
+      "/study/versions/0/biomedicalConcepts/10/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/3",
+      "/study/versions/0/biomedicalConcepts/7",
+      "/study/versions/0/biomedicalConcepts/31/properties/5",
+      "/study/versions/0/biomedicalConcepts/5/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/19/properties/1",
+      "/study/versions/0/biomedicalConcepts/5/properties/3",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/7/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/4",
+      "/study/versions/0/biomedicalConcepts/27/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/28/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/21/properties/4",
+      "/study/versions/0/biomedicalConcepts/9/properties/2",
+      "/study/versions/0/biomedicalConcepts/25/properties/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/5",
+      "/study/versions/0/biomedicalConcepts/25/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/29/properties/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/20/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/0",
+      "/study/versions/0/biomedicalConcepts/11/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/6",
+      "/study/versions/0/biomedicalConcepts/19/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/4",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/19/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/15/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/6/properties/3",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/1",
+      "/study/documentedBy/1/versions/0/dateValues/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/3",
+      "/study/versions/0/biomedicalConcepts/3/properties/1",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/31/properties/4",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/4/properties/2",
+      "/study/versions/0/biomedicalConcepts/25/properties/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/12/properties/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/0",
+      "/study/versions/0/biomedicalConcepts/4/properties/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/7/properties/2",
+      "/study/versions/0/biomedicalConcepts/9/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/17",
+      "/study/versions/0/biomedicalConcepts/8/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/2/properties/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29",
+      "/study/versions/0/biomedicalConcepts/6",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/5/properties/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/4",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/13/properties/16/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/18/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/18",
+      "/study/versions/0/biomedicalConcepts/13/properties/14/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/22/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27",
+      "/study/versions/0/biomedicalConcepts/28/properties/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/21/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11",
+      "/study/versions/0/biomedicalConcepts/30/properties/1",
+      "/study/versions/0/biomedicalConcepts/22",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/6",
+      "/study/versions/0/biomedicalConcepts/5/properties/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/25",
+      "/study/versions/0/biomedicalConcepts/5",
+      "/study/versions/0/biomedicalConcepts/28/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15",
+      "/study/versions/0/biomedicalConcepts/23/properties/4",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/29/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/4/properties/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3",
+      "/study/versions/0/biomedicalConcepts/11/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/24/properties/2",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/5/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/16",
+      "/study/versions/0/biomedicalConcepts/30/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/25/properties/2",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/24/properties/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/6/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/10/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/23/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28",
+      "/study/versions/0/biomedicalConcepts/0/properties/1",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/22/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/5",
+      "/study/versions/0/biomedicalConcepts/21/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/8/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/3",
+      "/study/documentedBy/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31",
+      "/study/versions/0/biomedicalConcepts/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/4",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/19/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/6",
+      "/study/versions/0/biomedicalConcepts/17/properties/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/3",
+      "/study/versions/0/biomedicalConcepts/26/properties/3/responseCodes/3",
+      "/study/documentedBy/0/versions/0/dateValues/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/23/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/27/properties/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/5",
+      "/study/versions/0/biomedicalConcepts/26/properties/5",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/19/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/4",
+      "/study/versions/0/biomedicalConcepts/14/properties/3",
+      "/study/versions/0/biomedicalConcepts/14/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/15/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/1",
+      "/study/versions/0/biomedicalConcepts/9/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/1",
+      "/study/versions/0/biomedicalConcepts/10",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/17/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/26/properties/3",
+      "/study/versions/0/biomedicalConcepts/29/properties/0",
+      "/study/versions/0/biomedicalConcepts/8/properties/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/2/transitionStartRule",
+      "/study/versions/0/biomedicalConcepts/7/properties/1",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/24/properties/4",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/11/properties/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/7/properties/4",
+      "/study/versions/0/biomedicalConcepts/24",
+      "/study/versions/0/biomedicalConcepts/12/properties/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/6",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/3",
+      "/study/versions/0/biomedicalConcepts/22/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/2",
+      "/study/versions/0/biomedicalConcepts/22/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/3",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/25/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30",
+      "/study/versions/0/biomedicalConcepts/18/properties/3",
+      "/study/documentedBy/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/10/properties/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/12/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/4/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/26/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/12/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/11/properties/4",
+      "/study/versions/0/biomedicalConcepts/24/properties/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/6",
+      "/study/versions/0/biomedicalConcepts/7/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/8",
+      "/study/versions/0/biomedicalConcepts/30/properties/5",
+      "/study/versions/0/biomedicalConcepts/9/properties/4",
+      "/study/versions/0/biomedicalConcepts/8/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/0",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/6",
+      "/study/versions/0/biomedicalConcepts/5/properties/4",
+      "/study/versions/0/biomedicalConcepts/2/properties/0",
+      "/study/versions/0/biomedicalConcepts/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/0",
+      "/study/versions/0/biomedicalConcepts/21",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/3",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/4",
+      "/study/versions/0/biomedicalConcepts/23",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/3/properties/2",
+      "/study/versions/0/biomedicalConcepts/11/properties/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/2",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/10/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/5",
+      "/study/versions/0/biomedicalConcepts/2/properties/3",
+      "/study/versions/0/biomedicalConcepts/16/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/5/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/0",
+      "/study/versions/0/biomedicalConcepts/16/properties/2",
+      "/study/versions/0/biomedicalConcepts/26/properties/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/14/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/1",
+      "/study/versions/0/biomedicalConcepts/7/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/29/properties/4",
+      "/study/versions/0/biomedicalConcepts/25/properties/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/6",
+      "/study/versions/0/biomedicalConcepts/13/properties/17/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/3",
+      "/study/versions/0/biomedicalConcepts/24/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/18/properties/2",
+      "/study/versions/0/biomedicalConcepts/16/properties/2/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/31/properties/0",
+      "/study/versions/0/biomedicalConcepts/1/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/22/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/18/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/30/properties/3",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/21/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/11/properties/2",
+      "/study/versions/0/biomedicalConcepts/30/properties/0",
+      "/study/versions/0/biomedicalConcepts/9/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/14/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/14/properties/5/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/23/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/21/properties/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/2/properties/2",
+      "/study/versions/0/biomedicalConcepts/26",
+      "/study/versions/0/biomedicalConcepts/8/properties/3",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/15/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/3/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/29/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/19/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/15/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/6/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/22/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/19",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/1",
+      "/study/versions/0/studyDesigns/0/encounters/2/transitionEndRule",
+      "/study/versions/0/biomedicalConcepts/18/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/10/properties/2",
+      "/study/versions/0/biomedicalConcepts/16/properties/0",
+      "/study/versions/0/studyDesigns/0/encounters/0/transitionStartRule",
+      "/study/versions/0/biomedicalConcepts/14/properties/4",
+      "/study/versions/0/biomedicalConcepts/28/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/20/properties/2",
+      "/study/versions/0/biomedicalConcepts/5/properties/2/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/13/properties/21/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/3/responseCodes/3",
+      "/study/versions/0/biomedicalConcepts/19/properties/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/1",
+      "/study/versions/0/biomedicalConcepts/25/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/31/properties/4/responseCodes/5",
+      "/study/versions/0/biomedicalConcepts/11/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/3/properties/0",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/15/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/12/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/2/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/13/properties/22/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/28/properties/3/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/9",
+      "/study/versions/0/biomedicalConcepts/29/properties/3/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/21/properties/2/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/14/properties/2",
+      "/study/versions/0/biomedicalConcepts/17/properties/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/3",
+      "/study/versions/0/biomedicalConcepts/6/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/7/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/19/properties/4/responseCodes/0",
+      "/study/versions/0/biomedicalConcepts/24/properties/2/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/24/properties/4/responseCodes/1",
+      "/study/versions/0/biomedicalConcepts/27/properties/4/responseCodes/2",
+      "/study/versions/0/biomedicalConcepts/20/properties/1",
+      "/study/versions/0/biomedicalConcepts/16/properties/1",
+      "/study/versions/0/biomedicalConcepts/17/properties/1",
+      "/study/versions/0/biomedicalConcepts/13/properties/20/responseCodes/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001013",
   "source": "published"
  },
@@ -10304,13 +12105,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/1/assignedPersons/0/personName",
+      "/study/versions/0/roles/1/assignedPersons/1/personName"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/1/assignedPersons/0/personName",
+      "/study/versions/0/roles/1/assignedPersons/1/personName"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001014",
   "source": "published"
  },
@@ -10324,13 +12136,56 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0/dateValues/0/type",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/code/standardCode",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/maxValue/unit",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/code",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit/standardCode",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/maxValue/unit/standardCode",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/code",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit",
+      "/study/documentedBy/0/versions/0/dateValues/0",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/type",
+      "/study/documentedBy/1/versions/0/dateValues/0",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/type",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0",
+      "/study/documentedBy/0/versions/0/status",
+      "/study/documentedBy/0/versions/0/dateValues/0/type",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/code/standardCode",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0",
+      "/study/documentedBy/1/versions/0/status"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0/dateValues/0/type",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/code/standardCode",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/maxValue/unit",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/code",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit/standardCode",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/maxValue/unit/standardCode",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/code",
+      "/study/versions/0/studyDesigns/0/population/plannedAge/minValue/unit",
+      "/study/documentedBy/0/versions/0/dateValues/0",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/type",
+      "/study/documentedBy/1/versions/0/dateValues/0",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0/type",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0",
+      "/study/documentedBy/0/versions/0/status",
+      "/study/documentedBy/0/versions/0/dateValues/0/type",
+      "/study/documentedBy/0/versions/0/dateValues/0/geographicScopes/0/code/standardCode",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0",
+      "/study/documentedBy/1/versions/0/status"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001015",
   "source": "published"
  },
@@ -10344,19 +12199,36 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/scheduleTimelines/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001016",
   "source": "published"
  },
@@ -10370,13 +12242,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001017",
   "source": "published"
  },
@@ -10390,13 +12273,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/30"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/30"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001018",
   "source": "published"
  },
@@ -10410,13 +12304,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/1",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/30",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/29",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/1",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/30",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/29",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001019",
   "source": "published"
  },
@@ -10430,13 +12339,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/1/substance/strengths/0",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/administrableProducts/0/ingredients/1/substance/strengths/0",
+      "/study/versions/0/administrableProducts/0/ingredients/0/substance/strengths/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001020",
   "source": "published"
  },
@@ -10450,13 +12370,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/productOrganizationRoles/2",
+      "/study/versions/0/productOrganizationRoles/1",
+      "/study/versions/0/productOrganizationRoles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/productOrganizationRoles/2",
+      "/study/versions/0/productOrganizationRoles/1",
+      "/study/versions/0/productOrganizationRoles/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001021",
   "source": "published"
  },
@@ -10470,13 +12403,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/productOrganizationRoles/0",
+      "/study/versions/0/productOrganizationRoles/3",
+      "/study/versions/0/productOrganizationRoles/1",
+      "/study/versions/0/productOrganizationRoles/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/productOrganizationRoles/0",
+      "/study/versions/0/productOrganizationRoles/3",
+      "/study/versions/0/productOrganizationRoles/1",
+      "/study/versions/0/productOrganizationRoles/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001022",
   "source": "published"
  },
@@ -10490,13 +12438,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001023",
   "source": "published"
  },
@@ -10510,13 +12469,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001024",
   "source": "published"
  },
@@ -10530,13 +12498,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/biospecimenRetentions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/biospecimenRetentions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001025",
   "source": "published"
  },
@@ -10550,13 +12527,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/arms/2",
+      "/study/versions/0/studyDesigns/0/arms/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/arms/2",
+      "/study/versions/0/studyDesigns/0/arms/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001026",
   "source": "published"
  },
@@ -10570,13 +12558,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/27",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/1",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/28",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/27",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/1",
+      "/study/versions/0/studyDesigns/1/eligibilityCriteria/28",
+      "/study/versions/0/studyDesigns/0/eligibilityCriteria/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001027",
   "source": "published"
  },
@@ -10590,13 +12593,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/eligibilityCriterionItems/7",
+      "/study/versions/0/eligibilityCriterionItems/30"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/eligibilityCriterionItems/7",
+      "/study/versions/0/eligibilityCriterionItems/30"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001028",
   "source": "published"
  },
@@ -10610,13 +12624,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/cohorts/0",
+      "/study/versions/0/studyDesigns/1/population/cohorts/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/population/cohorts/0",
+      "/study/versions/0/studyDesigns/1/population/cohorts/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001029",
   "source": "published"
  },
@@ -10630,13 +12655,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/elements/0",
+      "/study/versions/0/studyDesigns/0/elements/2",
+      "/study/versions/0/studyDesigns/1/elements/0",
+      "/study/versions/0/studyDesigns/0/elements/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/elements/0",
+      "/study/versions/0/studyDesigns/0/elements/2",
+      "/study/versions/0/studyDesigns/1/elements/0",
+      "/study/versions/0/studyDesigns/0/elements/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001030",
   "source": "published"
  },
@@ -10650,13 +12690,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/amendments/0/secondaryReasons/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/amendments/0/secondaryReasons/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001031",
   "source": "published"
  },
@@ -10670,13 +12719,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001032",
   "source": "published"
  },
@@ -10690,13 +12750,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001033",
   "source": "published"
  },
@@ -10739,6 +12812,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001035",
   "source": "published"
  },
@@ -10758,19 +12832,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001036",
   "source": "published"
  },
@@ -10784,13 +12879,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/objectives/0/endpoints/1",
+      "/study/versions/0/studyDesigns/1/population/cohorts/1/characteristics/0",
+      "/study/versions/0/studyDesigns/1/conditions/1",
+      "/study/versions/0/studyDesigns/1/population/criteria/0",
+      "/study/versions/0/studyDesigns/1/objectives/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/objectives/0/endpoints/1",
+      "/study/versions/0/studyDesigns/1/population/cohorts/1/characteristics/0",
+      "/study/versions/0/studyDesigns/1/conditions/1",
+      "/study/versions/0/studyDesigns/1/population/criteria/0",
+      "/study/versions/0/studyDesigns/1/objectives/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001037",
   "source": "published"
  },
@@ -10810,19 +12922,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/conditions/1",
+      "/study/versions/0/conditions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/conditions/1",
+      "/study/versions/0/conditions/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/conditions/1",
+      "/study/versions/0/studyDesigns/0/conditions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/conditions/1",
+      "/study/versions/0/studyDesigns/0/conditions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001038",
   "source": "published"
  },
@@ -10836,13 +12969,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/15",
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/15",
+      "/study/versions/0/studyDesigns/1/scheduleTimelines/0/instances/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001039",
   "source": "published"
  },
@@ -10856,13 +13000,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/elements/6",
+      "/study/versions/0/studyDesigns/1/elements/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/elements/6",
+      "/study/versions/0/studyDesigns/1/elements/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001040",
   "source": "published"
  },
@@ -10876,13 +13031,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/0/versions/1/contents/2",
+      "/study/documentedBy/0/versions/1/contents/0",
+      "/study/documentedBy/0/versions/1/contents/1",
+      "/study/documentedBy/0/versions/0/contents/75",
+      "/study/documentedBy/0/versions/0/contents/76"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/0/versions/1/contents/2",
+      "/study/documentedBy/0/versions/1/contents/0",
+      "/study/documentedBy/0/versions/1/contents/1",
+      "/study/documentedBy/0/versions/0/contents/75",
+      "/study/documentedBy/0/versions/0/contents/76"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001041",
   "source": "published"
  },
@@ -10896,13 +13068,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/geographicScopes/0",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/enrollments/0/forGeographicScope"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/geographicScopes/0",
+      "/study/documentedBy/1/versions/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/dateValues/0/geographicScopes/0",
+      "/study/versions/0/amendments/0/enrollments/0/forGeographicScope"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001042",
   "source": "published"
  },
@@ -10916,13 +13105,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/arms/0",
+      "/study/versions/0/studyDesigns/0/arms/1",
+      "/study/versions/0/studyDesigns/1/arms/0",
+      "/study/versions/0/studyDesigns/0/arms/2"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/arms/0",
+      "/study/versions/0/studyDesigns/0/arms/1",
+      "/study/versions/0/studyDesigns/1/arms/0",
+      "/study/versions/0/studyDesigns/0/arms/2"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001045",
   "source": "published"
  },
@@ -10936,13 +13140,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001046",
   "source": "published"
  },
@@ -10956,13 +13173,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/activities/3",
+      "/study/versions/0/studyDesigns/1/activities/12"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/activities/3",
+      "/study/versions/0/studyDesigns/1/activities/12"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001047",
   "source": "published"
  },
@@ -10976,13 +13204,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001048",
   "source": "published"
  },
@@ -11002,19 +13243,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/dictionaries/1/parameterMaps/2",
+      "/study/versions/0/dictionaries/1/parameterMaps/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/dictionaries/1/parameterMaps/2",
+      "/study/versions/0/dictionaries/1/parameterMaps/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/dictionaries/1/parameterMaps/2",
+      "/study/versions/0/studyDesigns/0/dictionaries/0/parameterMaps/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/dictionaries/1/parameterMaps/2",
+      "/study/versions/0/studyDesigns/0/dictionaries/0/parameterMaps/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001049",
   "source": "published"
  },
@@ -11028,13 +13290,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/versions/0/contents/15",
+      "/study/documentedBy/versions/0/contents/1"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/versions/0/contents/15",
+      "/study/documentedBy/versions/0/contents/1"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001050",
   "source": "published"
  },
@@ -11048,13 +13321,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/2",
+      "/study/documentedBy/0/versions/0/contents/0",
+      "/study/documentedBy/0/versions/1/contents/74",
+      "/study/documentedBy/0/versions/1/contents/61",
+      "/study/documentedBy/0/versions/1/contents/75"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/0/versions/0/contents/2",
+      "/study/documentedBy/0/versions/0/contents/0",
+      "/study/documentedBy/0/versions/1/contents/74",
+      "/study/documentedBy/0/versions/1/contents/61",
+      "/study/documentedBy/0/versions/1/contents/75"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001051",
   "source": "published"
  },
@@ -11068,13 +13358,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001052",
   "source": "published"
  },
@@ -11088,13 +13387,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/abbreviations/8",
+      "/study/versions/0/abbreviations/14",
+      "/study/versions/0/abbreviations/18",
+      "/study/versions/0/abbreviations/15"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/abbreviations/8",
+      "/study/versions/0/abbreviations/14",
+      "/study/versions/0/abbreviations/18",
+      "/study/versions/0/abbreviations/15"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001053",
   "source": "published"
  },
@@ -11108,25 +13422,50 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    },
    {
     "case": "negative/03",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001054",
   "source": "published"
  },
@@ -11140,13 +13479,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0/contents/2",
+      "/study/documentedBy/0/versions/0/contents/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/documentedBy/1/versions/0/contents/2",
+      "/study/documentedBy/0/versions/0/contents/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001055",
   "source": "published"
  },
@@ -11185,6 +13535,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001056",
   "source": "published"
  },
@@ -11213,6 +13564,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001057",
   "source": "published"
  },
@@ -11255,6 +13607,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001058",
   "source": "published"
  },
@@ -11297,6 +13650,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001059",
   "source": "published"
  },
@@ -11335,6 +13689,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001060",
   "source": "published"
  },
@@ -11371,6 +13726,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001061",
   "source": "published"
  },
@@ -11384,13 +13740,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/36"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/36"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001062",
   "source": "published"
  },
@@ -11429,6 +13794,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001063",
   "source": "published"
  },
@@ -11448,19 +13814,36 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    },
    {
     "case": "negative/02",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 3,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001065",
   "source": "published"
  },
@@ -11474,13 +13857,30 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/32",
+      "/study/versions/0/studyDesigns/1/activities/36",
+      "/study/versions/0/studyDesigns/0/activities/37",
+      "/study/versions/0/studyDesigns/1/activities/37",
+      "/study/versions/0/studyDesigns/0/activities/36"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0/activities/32",
+      "/study/versions/0/studyDesigns/1/activities/36",
+      "/study/versions/0/studyDesigns/0/activities/37",
+      "/study/versions/0/studyDesigns/1/activities/37",
+      "/study/versions/0/studyDesigns/0/activities/36"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 1,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001066",
   "source": "published"
  },
@@ -11494,13 +13894,28 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/abbreviations/9",
+      "/study/versions/0/abbreviations/13",
+      "/study/versions/0/abbreviations/3",
+      "/study/versions/0/abbreviations/12"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/abbreviations/9",
+      "/study/versions/0/abbreviations/13",
+      "/study/versions/0/abbreviations/3",
+      "/study/versions/0/abbreviations/12"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001067",
   "source": "published"
  },
@@ -11549,6 +13964,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 4,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001068",
   "source": "published"
  },
@@ -11603,6 +14019,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001069",
   "source": "published"
  },
@@ -11616,13 +14033,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/roles/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001070",
   "source": "published"
  },
@@ -11636,13 +14062,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1",
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001071",
   "source": "published"
  },
@@ -11656,13 +14095,22 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001072",
   "source": "published"
  },
@@ -11676,13 +14124,24 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/narrativeContentItems/0",
+      "/study/versions/0/narrativeContentItems/14"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/narrativeContentItems/0",
+      "/study/versions/0/narrativeContentItems/14"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001073",
   "source": "published"
  },
@@ -11696,13 +14155,32 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/estimands/0/intercurrentEvents/0",
+      "/study/versions/0/studyDesigns/1/objectives/0/endpoints/1",
+      "/study/versions/0/eligibilityCriterionItems/0",
+      "/study/versions/0/studyDesigns/1/objectives/0",
+      "/study/versions/0/conditions/1",
+      "/study/versions/0/studyDesigns/1/population/cohorts/1/characteristics/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/1/estimands/0/intercurrentEvents/0",
+      "/study/versions/0/studyDesigns/1/objectives/0/endpoints/1",
+      "/study/versions/0/eligibilityCriterionItems/0",
+      "/study/versions/0/studyDesigns/1/objectives/0",
+      "/study/versions/0/conditions/1",
+      "/study/versions/0/studyDesigns/1/population/cohorts/1/characteristics/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001074",
   "source": "published"
  },
@@ -11716,13 +14194,40 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/9/properties/4/code/standardCode",
+      "/study/versions/0/studyDesigns/0/activities/27",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/4/code/standardCode",
+      "/study/versions/0/studyDesigns/0/objectives/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/2/code",
+      "/study/versions/0/dictionaries/1/parameterMaps/0",
+      "/study/versions/0/narrativeContentItems/52",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/1",
+      "/study/versions/0/studyInterventions/0/minimumResponseDuration"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/biomedicalConcepts/9/properties/4/code/standardCode",
+      "/study/versions/0/studyDesigns/0/activities/27",
+      "/study/versions/0/biomedicalConcepts/31/properties/3/responseCodes/4",
+      "/study/versions/0/biomedicalConcepts/13/properties/4/code/standardCode",
+      "/study/versions/0/studyDesigns/0/objectives/3",
+      "/study/versions/0/biomedicalConcepts/30/properties/3/responseCodes/2/code",
+      "/study/versions/0/dictionaries/1/parameterMaps/0",
+      "/study/versions/0/narrativeContentItems/52",
+      "/study/versions/0/biomedicalConcepts/20/properties/3/responseCodes/1",
+      "/study/versions/0/studyInterventions/0/minimumResponseDuration"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001075",
   "source": "published"
  },
@@ -13849,6 +16354,7 @@
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 127,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001076",
   "source": "published"
  },
@@ -13862,13 +16368,26 @@
    },
    {
     "case": "negative/01",
-    "engine": {},
+    "engine": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/3",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    },
     "note": null,
-    "sheet": {}
+    "sheet": {
+     "USDM": [
+      "/study/versions/0/studyDesigns/2",
+      "/study/versions/0/studyDesigns/3",
+      "/study/versions/0/studyDesigns/0"
+     ]
+    }
    }
   ],
   "cases_engine_differs": 0,
   "cases_engine_ran": 2,
+  "engine_commit": "f3282a0d870bbdf57e326e9992cceea3ed0d9af5",
   "folder": "CORE-001077",
   "source": "published"
  },
