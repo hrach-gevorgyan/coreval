@@ -39,9 +39,9 @@ ae <- data.frame(
   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
   AESTDTC = c("2024-01-10", "2024-02-30")
 )
-summary(check_dataset(ae))
-#> 4 problems across 1 record  (159 checks ran, 48 could not)
-#>   wrong value       2
-#>   missing required  1
-#>   missing optional  1
+summary(check_dataset(ae, standard = "SDTMIG"))
+#> 6 problems across 2 records  (154 checks ran, 68 could not)
+#>   wrong value       1
+#>   missing required  3
+#>   missing optional  2
 ```

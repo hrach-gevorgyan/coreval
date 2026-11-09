@@ -27,15 +27,15 @@ write_findings(result, path, tracking = TRUE)
 
 - tracking:
 
-  Add the empty `Status`/`Owner`/`Notes` columns. `TRUE` by default; set
-  `FALSE` for a file you intend to read back into R.
+  Add the empty tracking columns. `TRUE` by default; set `FALSE` for a
+  file you intend to read back into R.
 
 ## Value
 
 The paths actually written, invisibly. One element for Excel (a single
 workbook). For CSV, one path per file written: the findings, plus
-siblings for `skipped` and `about`, plus one for `truncated` when any
-rule flagged more records than were kept.
+siblings for `skipped`, `about` and `summary`, plus one for `truncated`
+when any rule flagged more records than were kept.
 
 ## Details
 
@@ -44,14 +44,29 @@ findings table can mean clean data, or it can mean many rules were
 skipped, and those two situations look identical if the skipped table is
 dropped:
 
-- **Excel** (`.xlsx`) - one workbook with a sheet per table: `findings`,
-  `skipped`, `about`, and `truncated` when any rule matched more records
-  than were kept.
+- **Excel** (`.xlsx`) - four sheets laid out for a person to read:
 
-- **CSV** (`.csv`) - one file per table, since CSV has no notion of
-  sheets. Findings go to `path`; the others go to sibling files with a
-  suffix before the extension, so `issues.csv` gives
-  `issues_skipped.csv` and `issues_about.csv`.
+  - `Problems`: one row per problem, definite errors first, then the
+    ones touching most records. What is wrong and the rule's number, the
+    variables it names (or the missing ones), and how many records it
+    affects, or `whole dataset`.
+
+  - `Records`: one row per affected record and problem, in the order of
+    `Problems`, with `USUBJID`, `SEQ` and the values, such as
+    `AESTDTC = "2024-02-30"`. A dataset with no subject gives the row
+    instead.
+
+  - `Not checked`: the checks that could not run, grouped by reason,
+    with what to do about each, then when and how the check was run.
+
+  - `Rules`: every rule, and whether it found problems, found none or
+    could not run. A rule that found nothing appears nowhere else.
+
+- **CSV** (`.csv`) - the tables as they are in R, for reading back into
+  a program. Findings go to `path`; the others go to sibling files with
+  a suffix before the extension, so `issues.csv` gives
+  `issues_skipped.csv`, `issues_about.csv` and `issues_summary.csv` (one
+  row per problem).
 
 An existing file at `path`, or at a sibling path, is replaced.
 
@@ -68,11 +83,12 @@ isn't installed you get a clear message telling you to install it or use
 
 ## Columns for tracking
 
-Three empty columns are added to the findings - `Status`, `Owner` and
-`Notes` - for you to fill in by hand once the file is open. They exist
-so a finding you have looked at and decided not to act on ("expected,
-see protocol deviation log") can be recorded next to the finding itself,
-rather than in a separate document nobody reads.
+Empty columns are added for you to fill in by hand once the file is
+open: `Status` and `Notes` on `Problems` and `Notes` on `Records` in
+Excel, `Status`, `Owner` and `Notes` in CSV. They exist so a finding you
+have looked at and decided not to act on ("expected, see protocol
+deviation log") can be recorded next to the finding itself, rather than
+in a separate document nobody reads.
 
 ## Examples
 
@@ -81,12 +97,13 @@ dir <- tempfile("coreval_study_")
 dir.create(dir)
 haven::write_xpt(data.frame(USUBJID = c("1", "2"), AGE = c(30, 65)), file.path(dir, "dm.xpt"))
 study <- read_study(dir)
-result <- check_study(study)
+result <- check_study(study, standard = "SDTMIG")
 
 out <- file.path(dir, "findings.csv")
 written <- write_findings(result, out)
 basename(written)
 #> [1] "findings.csv"         "findings_skipped.csv" "findings_about.csv"  
+#> [4] "findings_summary.csv"
 
 unlink(dir, recursive = TRUE)
 ```

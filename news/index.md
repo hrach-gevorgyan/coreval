@@ -1,113 +1,117 @@
 # Changelog
 
-## coreval (development version)
+## coreval 0.4.0
 
-- **Findings that were not real.**
+This release follows CORE 1.0, which moved the SDTM rules to Verisian’s
+repository. The full list of changes is in `docs/CHANGES-0.4.0.md` in
+the repository.
 
-  - A RELREC relationship linked records of different subjects whenever
-    the subjects reused a RELID, so a findings-about record was compared
-    with another subject’s adverse event (CORE-000744, CORE-000757).
-  - With a domain RELREC does not mention, or no RELREC at all, every
-    record of that domain was reported.
-  - A Define-XML 1.0 was read with every label blank, so the rule
-    comparing labels with the define reported every labelled variable.
-    CDISC’s pilot submission uses Define-XML 1.0.
-  - Less-than and greater-than compared text as text where the reference
-    compares numbers, so “150” was less than “LOW”.
-  - A rule joining a dataset the study lacks compared against the
-    missing columns’ names: with no DM, every death in DS was reported
-    by CORE-000034. Such a rule is now skipped, saying which dataset it
-    needs.
-  - An SDTM study checked with no standard declared was told that ADSL
-    and the tobacco dataset TO were missing.
-  - A few smaller cases: `has_same_values` ignored blanks, and
-    `is_not_unique_relationship` against a missing column depended on
-    row order.
+### Changes that need action
 
-- **Problems that were never looked for.**
-
-  - A dataset split across files (LB1, LB2) was scoped, classed and
-    looked up under its file name, and about a hundred rules per domain
-    passed it by. Split files now get the rules of their domain.
-  - Sponsor-defined domains got no class, so every class-scoped rule
-    skipped them; Findings About domains (FA, SR) got none of the rules
-    written for Findings.
-  - SUPP qualifiers written the way SAS writes them (” 1”), or as “1.0”,
-    or for sequence numbers of 100,000 and more, joined nothing.
-  - One word such as BLQ in a results column switched off every numeric
-    comparison in it.
-  - A folder holding any .xpt file ignored its .sas7bdat and
-    Dataset-JSON files, and then reported their datasets as missing.
-    Every dataset file is now read.
-  - Date-time columns, from R or from a SAS DATETIME variable, were not
-    read as ISO 8601, so the date rules found nothing in them.
-  - An operation over a dataset the study lacks answered “no violation”
-    for every row. It is now skipped with the reason.
-  - Ten define-based presence rules for SEND could never fire.
-  - A Dataset-JSON cell holding the word “study” made the whole folder
-    read as an empty USDM study.
-  - About a dozen rules stopped on any date-time column, each reported
-    as skipped with “character string is not in a standard unambiguous
-    format”. A CSV folder described by a `_variables.csv` keeps such a
-    column as a date-time; CDISC’s ADaM examples lost CORE-000690, which
-    finds two variables sharing one label, and ten others that way.
-  - A folder holding a define.xml and no datasets was refused. It is now
-    checked with the rules that compare the define with what the study
-    contains, such as a define saying MI has data when there is no MI.
-
-- **USDM is checked when you ask for it.**
+- `standard` is now required by
   [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
   and
-  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
-  take `usdm = TRUE`. Without it, a folder holding a USDM study design
-  document stops with a message saying how to check it. Most studies are
-  tabular, and a few USDM rules take minutes on one file.
+  [`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md),
+  as both reference engines require it. Add `standard = "SDTMIG"` (or
+  `"SENDIG"`, `"TIG"`, …) to existing calls. USDM documents and CORE
+  test cases declare their own. Left out, every standard’s rules ran,
+  which added 26,678 SEND and TIG findings to CDISC’s pilot SDTM study.
+- `standard = "TIG"` needs `substandard = "SDTM"`, `"SEND"` or `"ADaM"`.
+- [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  reads a USDM document only with `usdm = TRUE`.
+- `result$findings` gains `USUBJID` and `SEQ`.
+- The Excel file has a new layout (see below). CSV files keep the raw
+  tables and gain `_summary.csv`.
 
-- **CDISC’s October 2026 rules.** The bundled rules are updated to
-  CDISC’s current release, and this one changes answers rather than
-  wording: 103 rules check something different, 138 report different
-  columns with each finding, and a few change which datasets they apply
-  to. Findings on real data will move. Two rules CDISC gave test data
-  for are now graded and pass, and a date “not equal” comparison follows
-  CDISC’s engine when both dates are blank: they count as equal, not
-  different (CORE-000370, CORE-001044).
+### New
 
-  - A finding now names what is missing. CDISC added a set-difference
-    operation, so “a required variable is missing” reports which ones
-    (CORE-000334, CORE-000355) instead of listing everything the rule
-    compared.
-  - A terminology lookup can answer from the version the study declares,
-    and be narrowed to one codelist, which is how CORE-000929 now asks
-    its question. A filter the bundled terminology cannot answer is
-    refused rather than answered from the whole package.
+- **CORE 1.0.** An SDTM study is checked with the 1.0 rules, 130 of them
+  new, and each runs the way 1.0’s engine runs it. SEND, TIG and USDM
+  stay on CDISC’s rules, updated to the October 2026 release and matched
+  to CDISC’s engine 1.0.0. `rules_version` names both repositories.
+- **A new Excel file.** Four sheets written for a reviewer: `Problems`,
+  one row per problem with the most serious first; `Records`, the
+  affected records by subject and sequence number; `Not checked`, what
+  could not run and what to do about it; and `Rules`, every rule and
+  whether it found problems, found none or could not run.
+- **Findings name the subject.** The report and the files show `USUBJID`
+  and `--SEQ` beside the row number.
+- **Older versions are checked, with a note.** SDTMIG 3.1.2, which no
+  rule targets, is checked against 3.2, and the report and the file say
+  so.
+- New rule types, the study tagging file (`stf.xml`), the FDA Data
+  Standards Catalog, and country code lists, for the 1.0 rules that need
+  them.
+- [`vignette("coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/coreval.md)
+  is now a short getting-started guide, and
+  [`vignette("technical")`](https://hrach-gevorgyan.github.io/coreval/articles/technical.md)
+  is the full reference.
 
-- **A stray space in a CSV header is no longer part of the variable’s
-  name.** CDISC’s own example data writes `DOMAIN` and `MHDY`.
-  Untrimmed, the declared variable was invisible: a rule asking whether
-  it exists reported a violation that CDISC’s engine does not, and where
-  `DOMAIN` itself went missing every dataset in the folder was classed
-  wrongly, which silently changed which rules ran against it. Values
-  keep their own whitespace.
+### Better answers
 
-- **Reports and exports.**
+- Definite errors come first: a problem about a missing column is no
+  longer called a wrong value.
+- Findings read `RFSTDTC = "2024-13-01"` rather than naming CORE 1.0’s
+  internal columns, so filtering by variable finds them.
+- The report names only the declared standard’s rule numbers, and
+  explains more of the checks that could not run.
+- Many false findings are gone, among them type rules firing on SAS
+  dates, RELREC links crossing subjects, and whole-study rules firing on
+  a single dataset.
+- Many problems that were silently missed are now found, among them
+  wrong values hidden inside a codelist term, second bad values on a
+  record, split datasets skipping about a hundred rules per domain, and
+  SEND studies judged against SDTM terminology.
+- A rule that cannot be evaluated now says why, rather than answering
+  “no problem”.
+- CORE-002041, the MedDRA release check, failed on any real TS and now
+  runs.
+- SENDIG-DART, SENDIG-GENETOX, SENDIG-AR, SDTMIG-AP and SDTMIG-MD
+  studies now find their own variable metadata. The required and
+  expected variable rules ran on them and reported nothing.
+- A rule that joins on a variable one dataset lacks is skipped, as
+  CDISC’s engine skips it, rather than evaluated without the join, which
+  reported problems that were not there.
+- A rule whose computed value comes out empty, or that groups by a
+  variable the dataset lacks, is skipped with the reason rather than
+  passed.
+- A transport file cut short on a record boundary is refused; its last
+  rows were dropped without a word. A CSV value with a leading zero,
+  such as SUBJID `001`, stays text.
+- A data frame with lower-case column names is checked as upper case,
+  with one warning, instead of every variable being called not allowed.
+- Warnings now say when a filter names a rule that did not run or a
+  dataset that was not checked, when datasets in a subfolder are not
+  read, and when
+  [`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md)
+  is given a domain the standard does not define. `ct_package` takes any
+  case.
+- CORE-002117 runs: a term a define adds to a codelist that CDISC
+  already has, under the same name or as a synonym, is reported.
+  Terminology synonyms now ship for this.
+- Terminology is current to CDISC’s September 2026 packages.
+- A duplicate subject and an over-long variable now count as wrong
+  values, not as often legitimate.
+- A run where every check was skipped says so, rather than “Nothing to
+  fix”.
+- Large round numbers are written out in full, not as `2e+05`.
+- A saved file names the version and terminology used, and says when
+  records were capped.
+- Rules about which datasets a study holds look at every dataset, not
+  only the first, and SUPP and RELREC datasets are no longer judged by
+  DM’s dates.
+- A custom domain in the right order is no longer reported as out of
+  order, and CORE-000783 reports a QNAM that repeats a parent variable.
+- Terminology of the wrong family (SEND terminology for an SDTM study)
+  is refused, and a define.xml that cannot be read is reported as
+  unreadable, not as missing.
 
-  - CSV exports no longer let a data value run as a spreadsheet formula,
-    and are written so Excel shows non-English text correctly.
-  - A value the rule requires, left blank, is “missing required”, not
-    “often legitimate”.
-  - `filter_findings(variable =)` finds a variable reported as missing,
-    and refuses a typo instead of matching nothing.
+### Speed
 
-- **Faster, and lighter.** CDISC’s pilot submission is checked in about
-  19 seconds against 26 before, with the same findings. A study ten
-  times its size, about three million records, takes 156 seconds against
-  184 and a little less memory. USDM study documents are read in half
-  the time.
-
-- **Stricter testing.** The conformance harness no longer counts a rule
-  as passing when the only cases it could grade were the ones expecting
-  nothing, and split fixtures are graded. See docs/COVERAGE.md for the
-  current counts and every rule that moved.
+- CDISC’s pilot submission takes about 30 seconds, and a study ten times
+  its size about 3 minutes and 5 GB. 0.3.0 took about 21 seconds on the
+  pilot, while running fewer rules and finding a third of the problems.
+  `docs/BENCHMARKS.md` has the measurements.
 
 ## coreval 0.3.0
 

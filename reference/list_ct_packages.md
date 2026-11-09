@@ -17,7 +17,7 @@ list_ct_packages(family = NULL)
 - family:
 
   Optional prefix to narrow to one terminology family, e.g. `"sdtm"` or
-  `"send"`.
+  `"send"` (`"sdtmct"` works too). An unknown family is an error.
 
 ## Value
 

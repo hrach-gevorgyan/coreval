@@ -15,7 +15,8 @@ check_dataset(
   use_case = NULL,
   max_records = 1000,
   include_deprecated = FALSE,
-  ct_package = NULL
+  ct_package = NULL,
+  substandard = NULL
 )
 ```
 
@@ -25,7 +26,11 @@ check_dataset(
 
   A data frame (or
   [`data.table::data.table()`](https://rdrr.io/pkg/data.table/man/data.table.html)),
-  or the path to one `.xpt`, `.sas7bdat` or `.csv` file.
+  or the path to one `.xpt`, `.sas7bdat` or `.csv` file. A CSV file
+  records no types, so each column's is guessed: one of plain numbers is
+  read as numeric, and a value with a leading zero such as `"007"` stays
+  text. An identifier written as a plain number can then be reported as
+  the wrong type; an `.xpt` file carries the types it was written with.
 
 - domain:
 
@@ -36,20 +41,16 @@ check_dataset(
 
 - standard:
 
-  The standard the data follows, e.g. `"SDTMIG"` or `"SENDIG"`. Rules
-  are scoped to it, which is usually what you want - a SENDIG rule has
-  nothing to say about an SDTM study.
-
-  It is not free, though, and CDISC's coverage is uneven. The general
-  "dates must be valid ISO 8601" rule (`CORE-000547`) is published for
-  SENDIG and TIG but **not for SDTMIG**, whose only equivalents are
-  `TSVAL`-specific or deprecated. So `standard = "SDTMIG"` can stop a
-  malformed `RFSTDTC` being reported at all. The report says how many
-  rules were set aside; leave `standard` unset to see everything.
+  Required. The standard the data follows, e.g. `"SDTMIG"`, `"SENDIG"`
+  or `"TIG"`. Only that standard's rules run: a SENDIG rule has nothing
+  to say about an SDTM study. The report says how many rules were set
+  aside.
 
 - version:
 
-  The standard's version, e.g. `"3-4"`.
+  The standard's version, e.g. `"3-4"`. A version older than any the
+  rules are written for is checked against the oldest that has rules,
+  and the report says so.
 
 - use_case:
 
@@ -65,9 +66,10 @@ check_dataset(
 
 - include_deprecated:
 
-  Also run rules CDISC has deprecated. `FALSE` by default: a deprecated
-  rule has a published replacement, so running both reports the same
-  defect twice.
+  Also run retired rules: those CDISC has deprecated, and, for an SDTM
+  study, CDISC's SDTM rules that CORE 1.0 no longer carries. `FALSE` by
+  default: a retired rule has a current replacement, so running both can
+  report the same defect twice.
 
 - ct_package:
 
@@ -76,9 +78,18 @@ check_dataset(
   need this, and are skipped with a reason without it - coreval will not
   pick a version for you, because terminology changes between releases
   and judging a study against one it never declared would both invent
-  violations and hide real ones. Every published package is bundled;
+  violations and hide real ones. Every package CDISC's engine carries,
+  from 2014 on, is bundled;
   [`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md)
   shows them.
+
+- substandard:
+
+  For `standard = "TIG"` only, and required there: whether the tobacco
+  study is `"SDTM"` (clinical), `"SEND"` (nonclinical) or `"ADaM"`. A
+  TIG rule's use case covers different datasets in each, so CDISC's
+  engine will not check a TIG study without it, and neither will
+  coreval.
 
 ## Value
 
@@ -93,9 +104,10 @@ work on it unchanged. Because it has a class, typing the result's name
 prints a readable report rather than dumping the list.
 
 `skipped` carries a `reason` for every rule that did not run - a dataset
-you did not supply, a missing Define-XML, or (for 9 rules) CDISC's
-controlled terminology, if you did not say which package the study
-follows - see `ct_package`. Nothing skipped is ever counted as a pass.
+you did not supply, a missing Define-XML, or, for the rules that ask
+whether a value is an allowed term, CDISC's controlled terminology if
+you did not say which package the study follows - see `ct_package`.
+Nothing skipped is ever counted as a pass.
 
 Provenance rides along as attributes: `checks_run` (how many rules were
 evaluated), `domains`, and `excluded_by_standard` (how many rules the
@@ -136,19 +148,22 @@ ae <- data.frame(
   AESEQ = c(1, 2), AETERM = c("Headache", "Rash"),
   AESTDTC = c("2024-01-10", "2024-02-30") # 30 February is not a date
 )
-result <- check_dataset(ae)
+result <- check_dataset(ae, standard = "SDTMIG")
 result$findings[result$findings$Value == "2024-02-30", ]
-#>    Dataset Record Variable      Value
-#>     <char>  <int>   <char>     <char>
-#> 1:      AE      2  AESTDTC 2024-02-30
-#>                                                                issue
-#>                                                               <char>
-#> 1: Variable value is not in correct ISO 8601 date or datetime format
-#>         triage     rule_id
-#>         <char>      <char>
-#> 1: wrong value CORE-000547
+#>    Dataset Record USUBJID   SEQ Variable      Value
+#>     <char>  <int>  <char> <num>   <char>     <char>
+#> 1:      AE      2      01     2  AESTDTC 2024-02-30
+#> 2:      AE      2      01     2  AESTDTC 2024-02-30
+#>                                                               issue
+#>                                                              <char>
+#> 1: Missing treatment-emergent flag (AETRTEM) for the Adverse Event.
+#> 2:             Value must be a valid ISO 8601 datetime or interval.
+#>              triage     rule_id
+#>              <char>      <char>
+#> 1: missing required CORE-002034
+#> 2:      wrong value CORE-002121
 
 # Always look at what could not run:
 nrow(result$skipped)
-#> [1] 48
+#> [1] 68
 ```

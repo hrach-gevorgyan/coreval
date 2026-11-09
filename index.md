@@ -1,77 +1,166 @@
 # coreval
 
-**Check your SDTM, SEND and USDM data against CDISC’s rules, without
-leaving R.**
+**Find out what’s wrong with your SDTM, SEND or USDM data before you
+send it anywhere.**
 
-You’ve just written the code that builds a dataset. Before you export it
-and send it off to a validation tool, coreval tells you what’s wrong
-with it, in plain words, in a few seconds, on your own machine.
+You’ve just written the code that builds a dataset. Normally you’d
+export it, upload it to a validation tool, wait, and then work out which
+line of your code caused each problem. coreval does the checking
+straight away, in R, on your own machine. It tells you in plain words
+what’s wrong, which rows, and what the values were.
 
-It uses CDISC’s own published conformance rules. It doesn’t replace your
-validated tool; it means that tool finds far less.
+It runs CDISC’s published conformance rules (CORE): CORE 1.0’s rules for
+SDTM, and CDISC’s own for SEND, TIG and USDM. You’ll still run your
+qualified tool before you submit. You’ll just arrive with far less for
+it to find.
 
-## What it looks like
+## Try it
 
 ``` r
 
+install.packages("coreval")
 library(coreval)
 
 dm <- data.frame(
   STUDYID = "STUDY1",
   DOMAIN  = "DM",
   USUBJID = c("STUDY1-001", "STUDY1-002", "STUDY1-003"),
-  RFSTDTC = c("2024-01-15", "2024-13-01", "2024-02-03"),
+  RFSTDTC = c("2024-01-15", "2024-13-01", "2024-02-03"),  # month 13
   AGE     = c(34, 51, 47),
-  AGEU    = c("YEARS", "YEARS", "")
+  AGEU    = c("YEARS", "YEARS", "")                       # age with no unit
 )
 
-result <- check_dataset(dm)
-print(result, n = 2)   # the two most important problems; the default shows ten
+result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
+print(result, n = 2)   # describe the first two problems; typing `result` shows ten
 ```
+
+You get a report like this:
 
     ── coreval — DM ────────────────────────────────────────────────────────────────
 
-    6 problems across 3 records  (163 checks ran)
+    4 problems across 2 records  (143 checks ran)
 
-      wrong value         3   the data breaks the rule - start here
+      wrong value         2   the data breaks the rule - start here
       missing required    1   the standard requires it
-      missing optional    2   often legitimate: not collected, screen failure, ...
+      missing optional    1   often legitimate: not collected, screen failure, ...
 
     [wrong value]
-    AGEU is missing when AGE is provided.
+    AGEU must be populated when AGE is populated.
       1 record · AGE, AGEU
-        row 3     AGE = "47", AGEU = (empty)
-        CORE-000189  · also CG0665, TIG0699
+        row 3  STUDY1-003  AGE = "47", AGEU = (empty)
+        CORE-000189  · also CG0665
 
     [wrong value]
-    Variable value is not in correct ISO 8601 date or datetime format
+    Value must be a valid ISO 8601 datetime or interval.
       1 record · RFSTDTC
-        row 2     RFSTDTC = "2024-13-01"
-        CORE-000547  · also SEND66, SEND67, SEND68, ...
+        row 2  STUDY1-002  RFSTDTC = "2024-13-01"
+        CORE-002121  · also CG0011
 
-      ... and 4 more here. See result$findings for all of them.
+      ... and 2 more here. See result$findings for all of them.
 
     ────────────────────────────────────────────────────────────────────────────────
-    58 checks could not run.
-      33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
+    69 checks could not run.
+      28 need other datasets (AE, CE, DD, DS, EX, RELREC, ...)
          → run check_study() on the whole folder to cover these
-      14 ask what the whole study contains
-      7 need a define.xml
-      4 for other reasons, see result$skipped
+      22 ask what the whole study contains
+      13 need a define.xml
+         → put it in the study folder (reading it needs the xml2 package)
+      2 need to know the controlled terminology version
+         → pass ct_package = "sdtmct-..." (see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS
+      2 compare variable labels, and the data has none
+         → give the variables labels: a data frame made in R has none until they are added
+      2 for other reasons, see result$skipped
 
-    No standard declared, so rules from every standard ran.
-      Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
+    Scoped to SDTMIG: 109 rules written for other standards, or other versions of this one, were not run.
 
     Fix what you can, then run this again.
     To track the rest:  write_findings(result, "issues.xlsx")
 
-Each problem says what’s wrong, which row, and the value that caused it.
-The rule number is there if you want to look it up, along with the older
-IDs that Pinnacle 21 uses for the same rule.
+Both planted mistakes are found. Definite errors come first, and each
+one shows the row, the subject (and the `--SEQ`, in a dataset that has
+one) and the value. The rule number is at the end, with the same rule’s
+number in CDISC’s Conformance Rules or the FDA Business Rules after
+“also”. The bottom part tells you what it couldn’t check and how to fix
+that.
 
-Problems are sorted so the ones that are **definitely wrong** come
-first. A month of 13 is a bug. A blank value might be perfectly fine for
-your study, so those come last.
+## Everyday use
+
+Three functions cover almost everything.
+
+**While you write code**, check the data frame you just built, or a
+single `.xpt`, `.sas7bdat` or `.csv` file:
+
+``` r
+
+result <- check_dataset(ae, standard = "SDTMIG", version = "3.4")
+```
+
+**When the study exists as files**, check the whole folder. This is the
+only way to run the rules that compare datasets with each other, such as
+an adverse event date against the subject’s dates in DM. A `define.xml`
+in the folder is used automatically.
+
+``` r
+
+result <- check_study("path/to/sdtm", standard = "SDTMIG", version = "3.4")
+```
+
+**To share with your team**, save an Excel workbook. It lists the
+problems, the records behind them, what couldn’t be checked and every
+rule’s result, with empty `Status` and `Notes` columns for tracking
+what’s being fixed.
+
+``` r
+
+write_findings(result, "issues.xlsx")
+```
+
+## What the tags mean
+
+| Tag | Means | What to do |
+|----|----|----|
+| `wrong value` | the data holds a value that breaks the rule, like a month of 13 | fix it first |
+| `missing required` | something the standard requires is missing or blank | fix it |
+| `missing optional` | something expected is missing | often fine for your study: check it applies |
+
+To see only the definite errors:
+`filter_findings(result, triage = "wrong value")`.
+
+## A clean report isn’t always clean data
+
+A short report can mean your data is fine, or that many rules couldn’t
+run. coreval never lets those look the same. Every result lists what it
+skipped and why, in plain words: a dataset you didn’t supply, no
+define.xml, no Controlled Terminology version. If nothing applies, it
+stops with an error rather than printing a clean report, and if every
+check had to be skipped, it says that no check ran.
+
+So before you celebrate, look at `result$skipped`.
+
+## Common questions
+
+**Which terminology version does it use?** The one your study declares,
+in TS (`TSVCDVER`, with `TSVCDREF` = `CDISC`) or in the define.xml. If
+neither says, the terminology rules are skipped until you tell it, for
+example `ct_package = "sdtmct-2026-03-27"`.
+[`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md)
+lists every release. It never guesses.
+
+**What does a rule check?** `list_rules(id = "CORE-000189")` gives its
+description, the guidance it comes from and its Conformance Rules
+numbers.
+
+**Does my data leave my computer?** No. There’s no internet access,
+account or API key. The rules and terminology are bundled in the
+package.
+
+**Can I make my program stop when a dataset has errors?** Yes, see “Stop
+my program when a dataset has errors” in
+[`vignette("coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/coreval.md).
+
+**Is it a replacement for Pinnacle 21 or CDISC’s engine?** No. It’s the
+quick check you run while working. Use a qualified tool for the
+submission.
 
 ## Install
 
@@ -80,8 +169,7 @@ your study, so those come last.
 install.packages("coreval")
 ```
 
-CRAN can lag behind a release by a few days. The newest version is
-always on GitHub:
+The development version, with changes not yet on CRAN, is on GitHub:
 
 ``` r
 
@@ -89,115 +177,86 @@ always on GitHub:
 pak::pak("hrach-gevorgyan/coreval")
 ```
 
-It needs R 4.1 or newer. A few extras switch on more checks, and coreval
-tells you when a check was skipped because one is missing:
+It needs R 4.1 or newer. A few optional packages switch on more, and
+coreval tells you when something was skipped because one is missing:
 
 ``` r
 
-install.packages(c("xml2", "jsonlite", "QuickJSR", "writexl"))
+install.packages(c("xml2", "writexl", "jsonlite", "QuickJSR"))
 ```
 
-`xml2` reads Define-XML, `jsonlite` and `QuickJSR` read USDM study
-files, and `writexl` saves results to Excel.
-
-## The three things you’ll use
-
-**Check one dataset** while you’re writing code. Give it a data frame or
-a file (`.xpt`, `.sas7bdat`, `.csv`):
-
-``` r
-
-result <- check_dataset(dm)
-```
-
-**Check a whole study** when you have the folder. This is the only way
-to run the rules that compare one dataset with another, like an adverse
-event date against the subject’s reference dates in DM:
-
-``` r
-
-result <- check_study("path/to/sdtm")
-```
-
-**Save what’s left to fix** as a spreadsheet, with empty Status, Owner
-and Notes columns for tracking:
-
-``` r
-
-write_findings(result, "issues.xlsx")
-```
-
-## It tells you what it couldn’t check
-
-A clean report can mean two things: your data is fine, or half the rules
-never ran. coreval never lets those look the same. Every result lists
-the checks it had to skip and says why, for example because they need a
-dataset you didn’t provide:
-
-    60 checks could not run.
-      33 need other datasets (AE, AG, CM, DD, DS, EX, ...)
-         → run check_study() on the whole folder to cover these
-      16 ask what the whole study contains
-      7 need a define.xml
-
-If nothing could be checked at all, it stops with an error instead of
-printing a clean report.
+`xml2` reads define.xml, `writexl` saves to Excel, `jsonlite` reads
+Dataset-JSON and USDM study files, and `QuickJSR` runs USDM’s JSONata
+rules.
 
 ## What it covers
 
-coreval ships **1,054 CDISC conformance rules** for SDTM, SEND, the
-Tobacco Implementation Guide, and USDM study designs. Most are
-published; some are CDISC drafts, and retired rules are included but
-only run if you ask for them.
+- **The published rules**, which
+  [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+  lists: CORE 1.0’s for SDTMIG 3.2 to 3.4 and the FDA Business Rules,
+  maintained by Verisian in
+  [core-contributor](https://github.com/verisianHQ/core-contributor),
+  and CDISC’s rules for SEND, TIG and USDM from
+  [cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules).
+  Retired rules are included but run only if you ask.
+- **Files**: XPT, SAS datasets, CSV, Dataset-JSON, Define-XML, and USDM
+  study files with `usdm = TRUE`.
+- **Controlled Terminology**: every release CDISC’s engine carries, from
+  2014 on, bundled.
 
-Where CDISC publishes a worked example for a rule, coreval was run
-against it, and more than nine in ten come back with exactly the answer
-CDISC gives.
+Both rule sets ship worked examples, and coreval is tested against every
+one. More than nine in ten rules give exactly the expected answer;
 [docs/COVERAGE.md](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COVERAGE.md)
-goes through the rest, one by one.
+explains each of the rest.
 
-It reads XPT, SAS, CSV and Dataset-JSON datasets and Define-XML, and
-USDM study files when you ask for them with `usdm = TRUE`. Nothing is
-downloaded and no account or API key is needed. The rules are bundled
-with the package.
+**Not yet:**
 
-**What it doesn’t do yet:**
+- **ADaM.** CDISC publishes expected results for one ADaM rule only, so
+  there’s no way to show the rest would be right.
+- **Medical dictionaries.** It can’t check terms against your licensed
+  MedDRA or WHODrug.
 
-- **ADaM.** CDISC publishes no worked examples for its ADaM rules, so
-  there’s no way to show they’d be right.
-- **Medical dictionaries.** It can’t check that a term exists in your
-  licensed MedDRA or WHODrug dictionary.
-- **Terminology without a version.** Rules about allowed values need to
-  know which Controlled Terminology release your study uses. It’s read
-  from your TS dataset, or you can pass
-  `ct_package = "sdtmct-2026-03-27"`.
+## How it compares
+
+coreval is an independent implementation of the same rules that CDISC’s
+engine and Verisian’s CORE 1.0 engine run. On CDISC’s complete pilot
+study it agreed with Verisian’s engine on almost every rule, and each
+difference has a traced cause. It runs inside R, offline, and in a
+fraction of the time and memory. The engines are the official reference
+and can check medical dictionaries.
+[docs/COMPARISON.md](https://github.com/hrach-gevorgyan/coreval/blob/master/docs/COMPARISON.md)
+goes through it all.
 
 ## Learn more
 
-- **Getting started guide:**
-  [`vignette("coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/coreval.md)
-  walks through a real session, reading results, narrowing to one
-  standard, and looking up a rule.
-- **Every function** is documented:
+- **Getting started:**
+  [`vignette("coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/coreval.md).
+  Four steps, then answers to common tasks: only the real errors,
+  choosing your standard, terminology, big studies.
+- **How it works:**
+  [`vignette("technical")`](https://hrach-gevorgyan.github.io/coreval/articles/technical.md).
+  The full reference: which files are read, which rules run and why,
+  every skip reason, every column of a result.
+- **Help for each function:**
   [`?check_dataset`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md),
   [`?check_study`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md),
   [`?write_findings`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md),
-  [`?list_rules`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md),
   [`?filter_findings`](https://hrach-gevorgyan.github.io/coreval/reference/filter_findings.md),
-  [`?read_study`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md),
-  [`?list_ct_packages`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md).
-- [**docs/**](https://github.com/hrach-gevorgyan/coreval/tree/master/docs)
-  has the detail: which rules pass and why, a complete real study
-  checked by both coreval and CDISC’s engine, how that engine behaves,
-  speed benchmarks, and the design decisions.
+  [`?list_rules`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md),
+  [`?list_ct_packages`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md),
+  [`?read_study`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md).
+- **The evidence:**
+  [docs/](https://github.com/hrach-gevorgyan/coreval/tree/master/docs)
+  has a real study checked by coreval and the reference engine, rule
+  coverage, speed benchmarks and design decisions.
 
 ## Please read this
 
 coreval is an independent, personal open-source project. It is **not** a
 CDISC product, not endorsed by CDISC, and not a certified CORE engine.
-It is not validated software. A clean result here doesn’t mean a
-submission will be accepted, and it doesn’t replace your organisation’s
-own validation. Treat it as a fast first check while you work.
+It is not validated software. A clean result doesn’t mean a submission
+will be accepted, and it doesn’t replace your organisation’s own
+validation.
 
 Found a wrong or missing result? That’s the most useful thing you can
 report. [Open an
@@ -209,14 +268,16 @@ first.
 ## License
 
 The package code is MIT. The bundled rules and standards data come from
-CDISC’s MIT-licensed
+three MIT-licensed repositories: CDISC’s
 [cdisc-open-rules](https://github.com/cdisc-org/cdisc-open-rules) and
-[cdisc-rules-engine](https://github.com/cdisc-org/cdisc-rules-engine)
-repositories. Two other bundled pieces carry their own permissive
-licences: the W3C’s XHTML schemas, used to check narrative text in USDM
-files, and IBM’s JSONata, used to run some USDM rules. Every bundled
-file, where it came from and its licence are listed in
-`inst/COPYRIGHTS`.
+[cdisc-rules-engine](https://github.com/cdisc-org/cdisc-rules-engine),
+and Verisian’s
+[core-contributor](https://github.com/verisianHQ/core-contributor),
+which holds the CORE 1.0 SDTM rules. Two other bundled pieces carry
+their own permissive licences: the W3C’s XHTML schemas, used to check
+narrative text in USDM files, and IBM’s JSONata, used to run some USDM
+rules. Every bundled file, where it came from and its licence are listed
+in `inst/COPYRIGHTS`.
 
 CDISC, CORE, SDTM, SEND, ADaM, Define-XML and TIG are trademarks of the
 Clinical Data Interchange Standards Consortium, used here only to name

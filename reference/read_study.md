@@ -30,14 +30,17 @@ read_study(path, usdm = FALSE)
 ## Value
 
 A study object:
-`list(datasets = <named list of domain -> list(data, meta, label)>, define, ct = NULL, standard = list(product, version))`.
+`list(datasets = <named list of domain -> list(data, meta, label, file_size)>, define, stf, ct = NULL, standard = list(product, version))`.
 `define` is the parsed Define-XML if one was found in `path` and the
-`xml2` package is installed, and `NULL` otherwise; `ct` is always
-`NULL`. Each `data` is a
+`xml2` package is installed, and `NULL` otherwise; `stf` likewise holds
+the study tagging file (`stf*.xml`), one row per document file tag; `ct`
+is always `NULL`. Each `data` is a
 [`data.table::data.table()`](https://rdrr.io/pkg/data.table/man/data.table.html);
 each `meta` is a data.table with columns `variable`, `label`, `type`;
 `label` is the dataset's own label (e.g. `"Adverse Events"`), or `NA` if
-unavailable. `standard` is the study's declared standard/version (e.g.
+unavailable; `file_size` is the size in bytes of the file it was read
+from, which CORE 1.0's dataset size rules compare. `standard` is the
+study's declared standard/version (e.g.
 `list(product = "SDTMIG", version = "3-4")`), read from a CORE test
 case's `.env` file or a USDM document, and both `NA` for a folder of
 datasets, which does not declare one.

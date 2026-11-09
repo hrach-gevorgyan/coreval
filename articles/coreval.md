@@ -1,33 +1,36 @@
 # Getting started with coreval
 
-If you build SDTM datasets, you know the loop: write code, export,
-upload to a validation tool, wait, read the report, work out which line
-of code caused each finding, fix, repeat.
+coreval checks SDTM, SEND and USDM data against CDISC’s conformance
+rules, inside R, on your own machine. This page shows the few steps you
+need and then answers the questions people ask most. For how it all
+works underneath, see
+[`vignette("technical", package = "coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/technical.md).
 
-Hardly any of that time is spent *fixing* things. It goes on **finding
-out what’s broken**.
+> coreval is a personal open-source project. It is not a CDISC product
+> and is not validated software. Treat its findings as a fast first
+> check, and run your qualified tool before you submit.
 
-coreval does the finding part on your machine, in seconds. You still run
-your qualified tool before you submit. You just arrive with a lot less
-for it to find.
+## Four steps
 
-> coreval is a personal open-source project. It’s not a CDISC product,
-> isn’t affiliated with or endorsed by CDISC, and isn’t qualified or
-> validated software. Treat every result as a hint, not a verdict. Your
-> qualified tool and your own review are still what decide whether data
-> is good to go.
+### 1. Install and load
+
+``` r
+
+install.packages("coreval")
+install.packages(c("xml2", "writexl"))  # optional: define.xml and Excel output
+```
 
 ``` r
 
 library(coreval)
 ```
 
-## Start with one dataset
+### 2. Check a dataset while you write it
 
-This is the one you’ll use most while writing code. You have a data
-frame; check it.
-
-Note row 2: `2024-02-30`. February never has 30 days.
+Give
+[`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md)
+the data frame you just built. Row 2 below has `2024-02-30`, a date that
+does not exist.
 
 ``` r
 
@@ -38,518 +41,382 @@ ae <- data.frame(
   AEENDTC = c("2024-01-12", "2024-02-01", "")
 )
 
-result <- check_dataset(ae)
+result <- check_dataset(ae, standard = "SDTMIG", version = "3.4")
 result
 #> 
 #> ── coreval — AE ────────────────────────────────────────────────────────────────
 #> 
-#> 5 problems across 2 records  (159 checks ran)
+#> 8 problems across 3 records  (152 checks ran)
 #> 
-#>   wrong value         3   the data breaks the rule - start here
-#>   missing required    1   the standard requires it
-#>   missing optional    1   often legitimate: not collected, screen failure, ...
-#> 
-#> [wrong value]
-#> Variable value is not in correct ISO 8601 date or datetime format
-#>   2 records · AESTDTC, AEENDTC
-#>     row 2     AESTDTC = "2024-02-30", AEENDTC = "2024-02-01"
-#>     row 3     AESTDTC = "2024-01-12", AEENDTC = (empty)
-#>     CORE-000547  · also SEND66, SEND67, SEND68, ...
+#>   wrong value         2   the data breaks the rule - start here
+#>   missing required    4   the standard requires it
+#>   missing optional    2   often legitimate: not collected, screen failure, ...
 #> 
 #> [wrong value]
+#> --STDTC falls after --ENDTC.
+#>   1 record · AESTDTC, AEENDTC
+#>     row 2  S1 seq 2  AESTDTC = "2024-02-30", AEENDTC = "2024-02-01"
+#>     CORE-000718  · also FB3209
+#> 
+#> [wrong value]
+#> Value must be a valid ISO 8601 datetime or interval.
+#>   1 record · AESTDTC
+#>     row 2  S1 seq 2  AESTDTC = "2024-02-30"
+#>     CORE-002121  · also CG0011
+#> 
+#> [missing required]
+#> Missing treatment-emergent flag (AETRTEM) for the Adverse Event.
+#>   3 records · AETERM, AESTDTC
+#>     row 1  S1 seq 1  AETERM = "Headache", AESTDTC = "2024-01-10"
+#>     row 2  S1 seq 2  AETERM = "Nausea", AESTDTC = "2024-02-30"
+#>     row 3  S2 seq 1  AETERM = "Rash", AESTDTC = "2024-01-12"
+#>     CORE-002034  · also FB0101
+#> 
+#> [missing required]
 #> Study Day of Start of Observation (--STDY) variable is missing when Start
 #>   Date/Time of Observation (--STDTC) is present.
 #>   the dataset · AESTDTC
 #>     AESTDTC = "2024-01-10"
 #>     CORE-000328  · also FB3202
 #> 
-#> [wrong value]
+#> [missing required]
+#> Required variable is missing from the dataset.
+#>   the dataset
+#>     missing required variables: AEDECOD
+#>     CORE-000355  · also CG0014
+#> 
+#> [missing required]
 #> Study Day of End of Observation (--ENDY) variable is missing when End
 #>   Date/Time of Observation (--ENDTC) is present.
 #>   the dataset · AEENDTC
 #>     AEENDTC = "2024-01-12"
 #>     CORE-000776  · also FB3203
 #> 
-#> [missing required]
-#> Required variable is missing from the dataset.
-#>   the dataset
-#>     missing required variables: AEDECOD
-#>     CORE-000355  · also CG0014, SEND12, TIG0299, ...
+#> [missing optional]
+#> EPOCH is missing for clinical subject-level observation.
+#>   3 records · EPOCH
+#>     not in the dataset: EPOCH
+#>     CORE-000701  · also FB2201
 #> 
 #> [missing optional]
 #> Expected variable is missing from the dataset.
 #>   the dataset
 #>     missing expected variables: AELLT, AELLTCD, AEPTCD, AEHLT, AEHLTCD, AEHLGT, AEHLGTCD, AEBODSYS, ...
-#>     CORE-000334  · also CG0016, TIG0301, SEND13, ...
+#>     CORE-000334  · also CG0016
 #> 
 #> ────────────────────────────────────────────────────────────────────────────────
-#> 48 checks could not run.
-#>   24 need other datasets (DM, POOLDEF, SUPPAE, SV, TA, TO, ...)
+#> 67 checks could not run.
+#>   28 need other datasets (DM, DS, RELREC, SV, TA, TS, ...)
 #>      → run check_study() on the whole folder to cover these
-#>   14 ask what the whole study contains
-#>   6 need a define.xml
-#>   4 for other reasons, see result$skipped
+#>   22 ask what the whole study contains
+#>   11 need a define.xml
+#>      → put it in the study folder (reading it needs the xml2 package)
+#>   2 need to know the controlled terminology version
+#>      → pass ct_package ("sdtmct-..." or "sendct-..."; see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS
+#>   2 compare variable labels, and the data has none
+#>      → give the variables labels: a data frame made in R has none until they are added
+#>   2 for other reasons, see result$skipped
 #> 
-#> No standard declared, so rules from every standard ran.
-#>   Narrow with  standard = "SDTMIG"  (or "SENDIG", "TIG", ...)
+#> Scoped to SDTMIG: 69 rules written for other standards, or other versions of this one, were not run.
 #> 
 #> Fix what you can, then run this again.
 #> To track the rest:  write_findings(result, "issues.xlsx")
 ```
 
-Each problem is described in words, with the rows and values that caused
-it, and the rule number at the end in case you want to look it up.
+A file works too: `check_dataset("ae.xpt", standard = "SDTMIG")`, or a
+`.sas7bdat` or `.csv`.
 
-The tag on each problem is worth understanding. CDISC Open Rules carry
-no severity field - Pinnacle 21’s Notes/Minor/Major/Critical is P21’s
-own layer, not CDISC’s - so coreval does not report one and will not
-invent one. What it does instead is separate the findings that are
-definitely wrong from the ones that may be fine:
+### 3. Check the whole study
 
-- `wrong value` - the data contains something that breaks the rule, like
-  a month of 13. Nothing about your study explains it away. Start here.
-- `missing required` - something the standard marks Required is absent.
-- `missing optional` - something Expected is absent, or a value is
-  blank. Often legitimate: a screen-failure subject with no reference
-  dates, a variable your raw data does not carry yet.
-
-Problems are ordered by that first and by how many records they touch
-second, and within a problem the record holding a real offending value
-is shown before one that is merely empty. It is also a `triage` column
-on every finding, so you can sort a spreadsheet by it.
-
-The rows themselves, ready to filter or count, are in `result$findings`,
-with the same description in an `issue` column:
+Once the datasets exist as files, point
+[`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+at the folder. This is the only way to run the rules that compare one
+dataset with another, such as an adverse event date against the
+subject’s dates in DM.
 
 ``` r
 
-result$findings[result$findings$Value == "2024-02-30", ]
-#>    Dataset Record Variable      Value
-#>     <char>  <int>   <char>     <char>
-#> 1:      AE      2  AESTDTC 2024-02-30
-#>                                                                issue
-#>                                                               <char>
-#> 1: Variable value is not in correct ISO 8601 date or datetime format
-#>         triage     rule_id
-#>         <char>      <char>
-#> 1: wrong value CORE-000547
+result <- check_study("path/to/sdtm", standard = "SDTMIG", version = "3.4")
 ```
 
-You can pass a file instead of a data frame: `.xpt`, `.sas7bdat` or
-`.csv`:
+If the folder holds a `define.xml`, it is used automatically (with
+`xml2` installed).
+
+### 4. Save it for the team
 
 ``` r
 
-result <- check_dataset("ae.xpt")
+write_findings(result, "issues.xlsx")
 ```
 
-coreval works out the domain from your `DOMAIN` column, and falls back
-to the file name only when the data has no `DOMAIN` column at all. That
-order matters for a split dataset: `ae1.xpt` is checked as `AE` because
-its `DOMAIN` column says `AE`. On a file with no `DOMAIN` column the
-name `ae1` is taken at face value. If it guesses wrong, just say so:
-`check_dataset(ae, domain = "AE")`.
+The workbook has four sheets: the problems, one row each; the affected
+records, by subject and sequence number; the checks that could not run,
+with what to do about them; and every rule with what happened to it.
+`Status` and `Notes` columns are there for you to fill in.
 
-### What it couldn’t check, and why that matters
+## Reading the report
 
-Lots of CDISC rules compare **one dataset against another**: an adverse
-event date against the subject’s reference dates in `DM`, a visit
-against the trial design. Give coreval a single dataset and those
-questions simply can’t be answered.
+Every problem carries one of three tags:
 
-coreval won’t guess. It skips them and tells you what it wanted:
+| Tag | Means | What to do |
+|----|----|----|
+| `wrong value` | the data holds a value that breaks the rule | fix it, start here |
+| `missing required` | something the standard requires is absent or blank | fix it |
+| `missing optional` | something expected is absent | often fine: check whether it applies to your study |
+
+The detail is in two tables:
 
 ``` r
 
-cross <- result$skipped[grepl("was not supplied", result$skipped$reason), ]
-nrow(cross)
-#> [1] 24
-head(unique(cross$reason), 3)
-#> [1] "needs DM, which was not supplied - check the whole study folder to run this rule"
-#> [2] "needs TV, which was not supplied - check the whole study folder to run this rule"
-#> [3] "needs SV, which was not supplied - check the whole study folder to run this rule"
+# what is wrong: dataset, row, subject, variable, value
+f <- result$findings
+head(f[!is.na(f$Record), c("Dataset", "Record", "USUBJID", "SEQ", "Variable", "Value")])
+#>    Dataset Record USUBJID   SEQ Variable          Value
+#>     <char>  <int>  <char> <num>   <char>         <char>
+#> 1:      AE      2      S1     2  AESTDTC     2024-02-30
+#> 2:      AE      2      S1     2  AEENDTC     2024-02-01
+#> 3:      AE      1      S1     1    EPOCH Not in dataset
+#> 4:      AE      2      S1     2    EPOCH Not in dataset
+#> 5:      AE      3      S2     1    EPOCH Not in dataset
+#> 6:      AE      1      S1     1   AETERM       Headache
+
+# what could not be checked, and why
+head(unique(result$skipped$reason), 3)
+#> [1] "needs TV, which is not in this study"                                                        
+#> [2] "needs SV, which is not in this study"                                                        
+#> [3] "evaluation failed: a date is not a real date (2024-02-30), and CORE 1.0 stops the rule on it"
 ```
 
-If it ran those anyway, it would be comparing your data against columns
-that aren’t there, and reporting problems that don’t exist. Saying
-nothing is better than making something up.
+`Record` is the row in the file. `USUBJID` and `SEQ` are the record’s
+subject and `--SEQ`, which still find it after the data is sorted; they
+are blank in a dataset without them, such as `TS`. Each finding also has
+the `issue` in words, its `triage` and the `rule_id`. A blank `Record`
+means the problem is about the dataset as a whole, such as a missing
+variable. For a rule about the variables themselves, such as a wrong
+type or label, `Record` is the variable’s position in the dataset, not a
+row, and `Variable` and `Value` name the variable.
 
-Nine rules ask a different kind of question: is this value one of the
-terms CDISC’s controlled terminology allows for this variable? `SEX` may
-be `F`, `M`, `U` or `INTERSEX` and nothing else. Those need to know
-which version of the terminology your study follows, because it changes
-between releases - `SEX` gained `INTERSEX` and lost `UNDIFFERENTIATED`.
-So tell it:
+**Always look at `skipped`.** A short list of problems can mean clean
+data, or it can mean many rules never ran. The skipped table tells you
+which.
 
-``` r
+## Common tasks
 
-check_study(dir, ct_package = "sdtmct-2026-03-27")
-list_ct_packages("sdtm")   # every published version, pick the one you declare
-```
-
-Without it those rules are reported as skipped, by name, saying exactly
-that - coreval will not pick a version for you, because judging your
-data against terminology it never declared would invent violations and
-hide real ones.
-
-Most rules do still run on a single dataset. But the ones that can’t are
-the cross-dataset checks, and those are often the ones you care about.
-
-**So a short findings list here doesn’t mean your data is clean.** It’s
-a quick first pass, not a verdict.
-
-## Then check the whole study
-
-Once the datasets exist as files, point coreval at the folder. Here’s a
-small one, built on the fly so this vignette runs without any data of
-your own:
+### Show me only the real errors
 
 ``` r
 
-dir <- tempfile("coreval_demo_")
-dir.create(dir)
-
-dm <- data.frame(
-  STUDYID = "DEMO", DOMAIN = "DM", USUBJID = c("S1", "S2", "S3"),
-  RFSTDTC = c("2024-01-05", "2024-01-06", ""),
-  AGE = c(34, 61, 47), AGEU = c("YEARS", "YEARS", ""),
-  SEX = c("M", "F", "F")
-)
-
-haven::write_xpt(dm, file.path(dir, "dm.xpt"))
-haven::write_xpt(ae, file.path(dir, "ae.xpt"))
-```
-
-Point it at the **folder**, not a file:
-
-``` r
-
-study_result <- check_study(dir)
-```
-
-coreval reads everything in there, and reading it all at once is the
-point. now the cross-dataset rules have both halves to work with. If
-there’s a Define-XML in the folder it finds it and uses it (that needs
-the `xml2` package).
-
-If you want to look at what was parsed, or check the same large study
-more than once without re-reading it, do the read yourself and pass the
-object instead:
-
-``` r
-
-study <- read_study(dir)
-names(study$datasets)
-#> [1] "AE" "DM"
-```
-
-## Reading the results
-
-You get two tables back, and you want to look at both.
-
-### What’s wrong
-
-``` r
-
-head(study_result$findings)
-#>    Dataset Record                    Variable
-#>     <char>  <int>                      <char>
-#> 1:      AE     NA                      AESTDY
-#> 2:      AE     NA                     AESTDTC
-#> 3:      AE     NA $missing_expected_variables
-#> 4:      AE     NA $missing_required_variables
-#> 5:      AE      2                     RFSTDTC
-#> 6:      AE      2                     RFENDTC
-#>                                                                                                                                              Value
-#>                                                                                                                                             <char>
-#> 1:                                                                                                                                  Not in dataset
-#> 2:                                                                                                                                      2024-01-10
-#> 3: ['AELLT', 'AELLTCD', 'AEPTCD', 'AEHLT', 'AEHLTCD', 'AEHLGT', 'AEHLGTCD', 'AEBODSYS', 'AEBDSYCD', 'AESOC', 'AESOCCD', 'AESER', 'AEACN', 'AEREL']
-#> 4:                                                                                                                                         AEDECOD
-#> 5:                                                                                                                                  Not in dataset
-#> 6:                                                                                                                                  Not in dataset
-#>                                                                                                                       issue
-#>                                                                                                                      <char>
-#> 1: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.
-#> 2: Study Day of Start of Observation (--STDY) variable is missing when Start Date/Time of Observation (--STDTC) is present.
-#> 3:                                                                           Expected variable is missing from the dataset.
-#> 4:                                                                           Required variable is missing from the dataset.
-#> 5:                                                        Variable value is not in correct ISO 8601 date or datetime format
-#> 6:                                                        Variable value is not in correct ISO 8601 date or datetime format
-#>              triage     rule_id
-#>              <char>      <char>
-#> 1:      wrong value CORE-000328
-#> 2:      wrong value CORE-000328
-#> 3: missing optional CORE-000334
-#> 4: missing required CORE-000355
-#> 5:      wrong value CORE-000547
-#> 6:      wrong value CORE-000547
-```
-
-One row per affected record, pointing straight at it:
-
-| Column     | What it tells you                                       |
-|------------|---------------------------------------------------------|
-| `Dataset`  | which dataset, or `STUDY` for whole-study checks        |
-| `Record`   | row number, counting from 1                             |
-| `Variable` | the variable being complained about                     |
-| `Value`    | what was actually in there                              |
-| `issue`    | what’s wrong, in words                                  |
-| `triage`   | `wrong value`, `missing required` or `missing optional` |
-| `rule_id`  | the CDISC rule, if you want to look it up               |
-
-One thing that surprises people: `Not in dataset` under `Value` means
-the rule wanted a variable you don’t have, which is usually the finding.
-
-It’s a plain data frame, so slice it however you like:
-
-``` r
-
-f <- study_result$findings
-head(f[f$Dataset == "DM", ])
-#>    Dataset Record                    Variable
-#>     <char>  <int>                      <char>
-#> 1:      DM      1                      SUBJID
-#> 2:      DM      2                      SUBJID
-#> 3:      DM      3                      SUBJID
-#> 4:      DM      3                         AGE
-#> 5:      DM      3                        AGEU
-#> 6:      DM     NA $missing_expected_variables
-#>                                                                                                                                                Value
-#>                                                                                                                                               <char>
-#> 1:                                                                                                                                    Not in dataset
-#> 2:                                                                                                                                    Not in dataset
-#> 3:                                                                                                                                    Not in dataset
-#> 4:                                                                                                                                                47
-#> 5:                                                                                                                                                  
-#> 6: ['RFENDTC', 'RFXSTDTC', 'RFXENDTC', 'RFICDTC', 'RFPENDTC', 'DTHDTC', 'DTHFL', 'RACE', 'ARMCD', 'ARM', 'ACTARMCD', 'ACTARM', 'ARMNRS', 'ACTARMUD']
-#>                                             issue           triage     rule_id
-#>                                            <char>           <char>      <char>
-#> 1:             SUBJID is not unique within study. missing optional CORE-000186
-#> 2:             SUBJID is not unique within study. missing optional CORE-000186
-#> 3:             SUBJID is not unique within study. missing optional CORE-000186
-#> 4:  AGEU must be populated when AGE is populated.      wrong value CORE-000189
-#> 5:  AGEU must be populated when AGE is populated.      wrong value CORE-000189
-#> 6: Expected variable is missing from the dataset. missing optional CORE-000334
-sort(table(f$rule_id), decreasing = TRUE)[1:3]
+errors <- filter_findings(result, triage = "wrong value")
+errors
 #> 
-#> CORE-000547 CORE-000883 CORE-000186 
-#>          21           4           3
+#> ── coreval ─────────────────────────────────────────────────────────────────────
+#> 
+#> (filtered - this is a subset of the full result)
+#> 
+#> 3 problems across 2 records in 2 datasets  (346 checks ran)
+#> 
+#>   wrong value         3   the data breaks the rule - start here
+#> 
+#>   AE           2 problems    1 record
+#>   DM           1 problem     1 record
+#> 
+#> ── AE ──────────────────────────────────────────────────────────────────────────
+#> 
+#> [wrong value]
+#> --STDTC falls after --ENDTC.
+#>   1 record · AESTDTC, AEENDTC
+#>     row 2  S1 seq 2  AESTDTC = "2024-02-30", AEENDTC = "2024-02-01"
+#>     CORE-000718  · also FB3209
+#> 
+#> [wrong value]
+#> Value must be a valid ISO 8601 datetime or interval.
+#>   1 record · AESTDTC
+#>     row 2  S1 seq 2  AESTDTC = "2024-02-30"
+#>     CORE-002121  · also CG0011
+#> 
+#> ── DM ──────────────────────────────────────────────────────────────────────────
+#> 
+#> [wrong value]
+#> AGEU must be populated when AGE is populated.
+#>   1 record · AGE, AGEU
+#>     row 3  S3  AGE = "47", AGEU = (empty)
+#>     CORE-000189  · also CG0665
+#> 
+#> ────────────────────────────────────────────────────────────────────────────────
+#> 81 checks could not run.
+#>   21 need datasets this study does not have (CE, DS, EX, RELREC, SS, SUPPDM, ...)
+#>   52 need a define.xml
+#>      → put it in the study folder (reading it needs the xml2 package)
+#>   4 need to know the controlled terminology version
+#>      → pass ct_package ("sdtmct-..." or "sendct-..."; see list_ct_packages()), or for a study fill TSVCDREF and TSVCDVER in TS
+#>   2 need the study tagging file (stf.xml)
+#>      → put it in the study folder
+#>   1 need variables the data does not have
+#>   1 for other reasons, see result$skipped
+#> 
+#> Scoped to SDTMIG: 122 rules written for other standards, or other versions of this one, were not run.
+#> 
+#> Fix what you can, then run this again.
+#> To track the rest:  write_findings(result, "issues.xlsx")
 ```
 
-Slicing the data frame gives you rows.
-[`filter_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/filter_findings.md)
-gives you back a *result*, the same object narrowed. That is the
-difference that matters: because a result is what
-[`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
-and [`summary()`](https://rdrr.io/r/base/summary.html) take:
+You can also narrow by `dataset`, `rule` or `variable`, and save the
+narrowed result with
+[`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md).
+The saved file notes that it is a subset.
+
+### My study is SDTMIG 3.3, or SEND
+
+`standard` is required, and only the rules for that standard and version
+run:
 
 ``` r
 
-worst <- filter_findings(study_result, triage = "wrong value")
-nrow(worst$findings)
-#> [1] 24
-summary(worst)
-#> 5 problems across 3 records  (339 checks ran, 74 could not)
-#>   (filtered - a subset of the full result)
-#>   wrong value       5
+check_study("path/to/sdtm", standard = "SDTMIG", version = "3.3")
+check_study("path/to/send", standard = "SENDIG", version = "3.1")
 ```
 
-The two numbers there are counting different things, and the difference
-is worth knowing: `findings` has a row per affected *record*, while
-[`summary()`](https://rdrr.io/r/base/summary.html) counts distinct
-*problems*: one rule going wrong in one dataset, however many records it
-touched. A single missing variable in a 500-row dataset is one problem
-and 500 rows.
-
-`triage` has three levels, worst first: `"wrong value"` is a value that
-contradicts the data around it, `"missing required"` a variable the
-standard says must be there, `"missing optional"` one it merely expects.
-You can also narrow by `dataset`, `rule` or `variable`, and combine
-them.
-
-### What couldn’t be checked
-
-``` r
-
-head(study_result$skipped)
-#>        rule_id domain
-#>         <char> <char>
-#> 1: CORE-000019     AE
-#> 2: CORE-000140     AE
-#> 3: CORE-000168     AE
-#> 4: CORE-000249     AE
-#> 5: CORE-000269     AE
-#> 6: CORE-000270     AE
-#>                                                                                                                                        reason
-#>                                                                                                                                        <char>
-#> 1: evaluation failed: compares variable labels, and this dataset has none at all (a data frame built in R has no labels until they are added)
-#> 2:                                                                                                       needs TV, which is not in this study
-#> 3:                                                                                                       needs SV, which is not in this study
-#> 4:                                                                                                       needs TV, which is not in this study
-#> 5:                                                                                                   needs SV, TV, which is not in this study
-#> 6:                                                                                                   needs SV, TV, which is not in this study
-```
-
-**This is the table people skip, and it’s the one that bites.** An empty
-findings table means one of two things: your data is clean, or a lot of
-rules never ran. Those look identical if you only read the findings.
-coreval always shows you both, with a reason for every rule it couldn’t
+Leave `version` out and the rules for every version of that standard
 run.
-
-### Saving it, and tracking what you didn’t fix
-
-``` r
-
-write_findings(study_result, "issues.xlsx")  # one workbook, a sheet per table
-write_findings(study_result, "issues.csv")   # issues.csv + _skipped + _about
-```
-
-Both tables get written every time, for the reason just above. Excel
-output needs the `writexl` package.
-
-The saved file has three empty columns, `Status`, `Owner` and `Notes`,
-for you to fill in once it is open. Not every finding is something you
-will fix: some are expected, some belong to someone else, some are
-waiting on a data query. Those decisions are worth recording next to the
-finding rather than in a separate document. Pass `tracking = FALSE` if
-you would rather not have them.
-
-## The rule set
-
-One function answers every question about the rule set.
-
-``` r
-
-rules <- list_rules()
-nrow(rules)
-#> [1] 1054
-table(rules$source)
-#> 
-#>           deprecated_dir fda_business_rules_draft                published 
-#>                      163                       27                      823 
-#>             sdtmig_draft             sendig_draft 
-#>                       11                       30
-
-attr(rules, "rules_version")
-#> [1] "bc4c2f3020ce3e99949ecaeffd277abb8e0622e0"
-```
-
-That last one is the exact CDISC commit the bundled rules came from.
-Worth writing down next to your results, though
-[`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
-already records it in every file it saves.
-
-Not every rule carries the same weight. `source` separates fully-vetted
-published rules from deprecated and draft ones;
-[`?list_rules`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
-says what each means.
-
-Note the count above includes the deprecated ones.
 [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
-is the catalog of what is *bundled*; a check excludes superseded rules,
-because running one alongside its replacement reports the same problem
-twice. Listing is not running.
+shows which standards and versions there are.
 
-Ask it what applies to a domain, or what a rule the report named
-actually checks:
+### It says terminology checks were skipped
 
-``` r
-
-nrow(list_rules(domain = "AE"))
-#> [1] 239
-
-rule <- list_rules(id = "CORE-000547")
-rule$issue
-#> [1] "Variable value is not in correct ISO 8601 date or datetime format"
-```
-
-Two more columns are worth knowing. `legacy_ids` are the names Pinnacle
-21 and CDISC’s older Conformance Rules spreadsheets use for the same
-rule, which is how you match a finding here to a line in a P21 report.
-`guidance` is the sentence from the Implementation Guide the rule exists
-to enforce: the reason behind it.
+Rules about allowed values (is `SEX` one of the permitted terms?) need
+to know which Controlled Terminology release your study uses. coreval
+reads it from `TSVCDVER` in your TS dataset (on rows whose `TSVCDREF` is
+`CDISC`), or from the define.xml. If neither says, tell it:
 
 ``` r
 
-rule$legacy_ids
-#> [1] "SEND66, SEND67, SEND68, TIG0267, TIG0268, TIG0269"
+list_ct_packages("sdtm")   # every release you can choose from
+check_study("path/to/sdtm", standard = "SDTMIG", ct_package = "sdtmct-2026-03-27")
 ```
 
-`print(result, guidance = TRUE)` shows that sentence under each problem
-in the report. It’s off by default because it roughly doubles the
-length.
+### Many checks say “was not supplied”
 
-## Narrowing to your standard
+You checked one dataset, and those rules compare it with another one.
+Run
+[`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+on the folder that holds both.
 
-With no standard given, coreval runs the rules for every standard it
-has, and the report says so. Tell it which one your data follows and it
-runs only those, and only for your version of the Implementation Guide:
+### Stop my program when a dataset has errors
+
+Put a check at the end of the code that builds a dataset:
 
 ``` r
 
-result <- check_dataset(dm, standard = "SDTMIG", version = "3.4")
+r <- check_dataset(ae, standard = "SDTMIG", version = "3.4")
+bad <- filter_findings(r, triage = "wrong value")
+if (nrow(bad$findings) > 0) {
+  print(bad)
+  stop("AE has values that break CDISC rules")
+}
 ```
 
-That cuts the list a lot, and it can cut too far. CDISC’s coverage is
-uneven: the general “dates must be valid ISO 8601” rule is published for
-SEND and the Tobacco Implementation Guide but not for SDTM, so narrowing
-to SDTMIG stops a month of 13 being reported. The report always says how
-many rules it set aside. Leave `standard` unset if you’d rather see
-everything.
+### Find out what a rule checks
 
-## USDM study designs
-
-A USDM study file is a single JSON document describing a study design
-rather than a folder of datasets. Checking one is optional, because a
-few of its rules can take minutes on a single file, so you ask for it.
-Put the file in a folder of its own and pass `usdm = TRUE`. It needs the
-`jsonlite` and `QuickJSR` packages.
+The report ends each problem with a rule id. Look it up:
 
 ``` r
 
-result <- check_study("path/to/usdm", usdm = TRUE)
+rule <- list_rules(id = "CORE-000718")
+rule$issue        # what it checks
+#> [1] "--STDTC falls after --ENDTC."
+rule$legacy_ids   # the same rule's id in CDISC's Conformance Rules or FDA lists
+#> [1] "FB3209"
 ```
 
-Without `usdm = TRUE`, a folder holding a USDM file stops with a message
-that says so, rather than being checked as if it were empty.
+`print(result, guidance = TRUE)` adds the Implementation Guide sentence
+behind each rule to the report.
 
-Problems are reported against the part of the design they’re about, such
-as `STUDYDESIGN` or `ENCOUNTER`, and the row within it.
+### See every problem, not just the first ten
 
-## The whole API
+``` r
 
-Seven functions, and three of them do the work:
+print(result, n = Inf)   # every problem in the report
+result$findings          # every finding, as a table
+```
 
-|  |  |
+A rule that flags a very large number of records keeps the first 1,000
+and records the real count in `result$truncated`. Pass
+`max_records = Inf` to keep them all.
+
+### Check one file of a split dataset
+
+`check_dataset("lb1.xpt", standard = "SDTMIG")` reads the domain from
+the `DOMAIN` column. If the file has none, say which domain it is with
+`domain = "LB"`.
+
+### Check a big study faster
+
+- Set `version` as well as `standard`: fewer rules run.
+- Read once, check several times:
+
+``` r
+
+study <- read_study("path/to/sdtm")
+r1 <- check_study(study, standard = "SDTMIG", version = "3.4")
+```
+
+A progress bar shows in interactive sessions. Turn it off with
+`options(coreval.progress = FALSE)`.
+
+### Check a USDM study design
+
+Put the USDM JSON file in a folder of its own and ask for it. It needs
+the `jsonlite` and `QuickJSR` packages, and no `standard`, since the
+document is USDM.
+
+``` r
+
+check_study("path/to/usdm", usdm = TRUE)
+```
+
+## Questions people ask
+
+**No problems were found. Is my data clean?** Not necessarily. Look at
+`result$skipped` first. Checking one dataset on its own leaves out every
+rule that compares datasets, and the terminology rules need a CT
+release.
+
+**What does `Not in dataset` mean in the `Value` column?** The rule
+wanted a variable your dataset does not have. That is usually the
+finding.
+
+**What is a `Variable` starting with `$`?** Something the rule worked
+out from your data, such as the list of STUDYID values in DM, shown so
+you can see what your record was compared against.
+
+**A warning says some files were not read.** A study folder is read from
+`.xpt`, `.sas7bdat` and Dataset-JSON files. CSV files are skipped there,
+since they carry no types or labels; check one with
+[`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md).
+If two files hold the same dataset, the warning says which one was used.
+
+**Does anything leave my computer?** No. There is no internet access,
+account or API key. The rules and terminology are bundled in the
+package.
+
+**Which rules version produced my results?**
+`attr(list_rules(), "rules_version")`. It is also recorded in every file
+[`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+saves.
+
+**A result looks wrong.** Please [open an
+issue](https://github.com/hrach-gevorgyan/coreval/issues), ideally with
+a small dataset that shows it. A wrong or missing finding is the most
+useful thing you can report.
+
+## All the functions
+
+| Function | Use it to |
 |----|----|
-| `check_dataset(x)` | one dataset: a data frame, or an `.xpt`/`.sas7bdat`/`.csv` |
-| `check_study(path)` | a whole folder |
+| `check_dataset(x, standard = )` | check one data frame or file |
+| `check_study(path, standard = )` | check a whole study folder |
 | `write_findings(result, path)` | save to Excel or CSV |
-| [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md) | the rule set, one rule, or the rules for a domain |
 | `filter_findings(result, ...)` | narrow a result |
-| `read_study(path)` | read a folder yourself, when you want to inspect it |
-| [`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md) | the Controlled Terminology releases you can pass as `ct_package` |
-
-Plus [`print()`](https://rdrr.io/r/base/print.html) and
-[`summary()`](https://rdrr.io/r/base/summary.html) on a result.
-[`print()`](https://rdrr.io/r/base/print.html) is what you get by typing
-the result’s name; [`summary()`](https://rdrr.io/r/base/summary.html)
-you call yourself, and it returns a one-row table you can rbind across
-datasets.
-
-## Two last things
-
-**Nothing leaves your machine.** No internet, no API key, no account.
-The rules and the standards metadata are bundled inside the package.
-
-**Think of the accuracy number as a floor.** For most rules CDISC
-publishes an answer sheet: some example data, and the exact rows a
-correct implementation should flag. Every rule here is run against those
-examples and compared row by row, and more than nine in ten come back
-with exactly the answer CDISC gives.
-
-But those examples are small and tidy, and real submissions are neither,
-so agreement is a lower bound on correctness rather than a score. The
-README lists what coreval doesn’t do yet. The advice does not change:
-run your qualified tool before you submit.
+| [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md) | look up rules |
+| [`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md) | list Controlled Terminology releases |
+| `read_study(path)` | read a folder once, to check it several times |

@@ -1,0 +1,466 @@
+# How coreval works
+
+This is the reference for people who need to know what coreval does with
+their data before they rely on it: which files it reads, which rules it
+runs and why, what it does when a rule cannot be answered, and what
+every part of a result means. For a quick start, see
+[`vignette("coreval")`](https://hrach-gevorgyan.github.io/coreval/articles/coreval.md)
+instead.
+
+## What coreval is
+
+coreval runs the CDISC Open Rules (CORE) conformance rules inside R. It
+does not call CDISC’s engine. It reads each rule’s published definition
+and evaluates it with its own implementation of the rule language.
+
+**Rules are data, operators are code.** Every rule ships as data,
+extracted from the upstream repositories at a pinned commit. The R code
+implements the *operators* the rules are written in (`equal_to`,
+`is_complete_date`, `is_unique_set`, and so on). No rule has a function
+of its own, so a new rule upstream needs no new code unless it uses a
+new operator.
+
+At run time it needs only R, `data.table` and `haven`. There is no
+Python, no network access and no account. Everything it uses, from the
+rules and the standards metadata to every Controlled Terminology package
+CDISC’s engine carries, from 2014 on, is bundled.
+
+## The two rule sets
+
+In November 2026 CORE 1.0 split the rules between two repositories, and
+coreval bundles both:
+
+| Rule set | Repository | Used for |
+|----|----|----|
+| CORE 1.0 | `verisianHQ/core-contributor` | SDTMIG 3.2, 3.3 and 3.4, and the FDA Business Rules |
+| CDISC | `cdisc-org/cdisc-open-rules` | SENDIG, TIG and USDM |
+
+Which set runs follows from the standard:
+
+- `standard = "SENDIG"` (or any SEND variant) or `"TIG"` uses CDISC’s
+  set.
+- `"SDTMIG"` uses the CORE 1.0 set. `"ADaMIG"` and `"USDM"` use CDISC’s
+  rules for those standards.
+
+Some rules exist in both repositories under the same id. A study checked
+as SDTM gets the CORE 1.0 version. A study checked as SEND or TIG gets
+CDISC’s version, narrowed to those standards.
+
+The two engines behind these rule sets do not behave identically, and
+coreval follows each set’s own engine. The difference you are most
+likely to meet is a rule that reads a column the dataset does not have:
+
+- A **CDISC** rule is skipped, with a reason naming the column. CDISC’s
+  engine raises an error there and reports the rule as skipped.
+- A **CORE 1.0** rule treats a condition on a missing column as false,
+  as 1.0’s engine does, and carries on. A missing column used in a
+  computed step stops the rule with a skip in both.
+
+`docs/REFERENCE-BEHAVIOUR.md` in the repository lists every difference
+coreval knows of, with the engine source that settles each one.
+
+### Which version you are running
+
+``` r
+
+attr(list_rules(), "rules_version")
+#> "cdisc-org/cdisc-open-rules af05dfd2...; verisianHQ/core-contributor a3b4d0b0..."
+```
+
+Both commits are recorded with every file
+[`write_findings()`](https://hrach-gevorgyan.github.io/coreval/reference/write_findings.md)
+saves, so a saved report always says which rules produced it.
+
+### Status of a rule
+
+[`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+returns one row per bundled rule. Its `source` column says where the
+rule came from and how settled it is:
+
+| `source` | Meaning | Runs by default |
+|----|----|----|
+| `core_contributor` | CORE 1.0’s published SDTM and FDA rules | yes |
+| `published` | CDISC’s published rules | yes |
+| `sendig_draft` | drafts in CDISC’s repository | yes |
+| `sdtmig_draft`, `fda_business_rules_draft` | drafts in CDISC’s repository | for SEND and TIG; not for SDTM, see below |
+| `deprecated_dir` | retired by CDISC | no |
+
+Retired rules, and CDISC’s SDTM rules that CORE 1.0 no longer carries,
+run only with `include_deprecated = TRUE`. That second group takes in
+the SDTMIG drafts, the FDA drafts written for SDTMIG and two published
+rules, since CORE 1.0 replaced them; the same rules still run for SEND
+or TIG where CDISC wrote them for those too. They are off by default
+because a retired rule usually has a current replacement, and running
+both reports the same defect twice.
+
+[`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+itself includes the retired ones, because it lists what is bundled, not
+what will run.
+
+## Reading data
+
+### A study folder
+
+`check_study(path, standard = )` and `read_study(path)` read every
+dataset in the folder:
+
+| Format | Extension | Notes |
+|----|----|----|
+| SAS transport | `.xpt` | A file holding more than one dataset is refused. |
+| SAS dataset | `.sas7bdat` |  |
+| Dataset-JSON | `.json`, `.ndjson` | Needs the `jsonlite` package. The name the file declares is used over the file name. |
+| Define-XML | any `.xml` named like a define | Needs the `xml2` package. |
+| USDM | `.json` | Only with `usdm = TRUE`, in a folder of its own. |
+
+Some details that matter in practice:
+
+- **Dataset names come from file names**, upper-cased: `ae.xpt` is `AE`,
+  `suppae.xpt` is `SUPPAE`. Split datasets (`lb1.xpt`, `lb2.xpt`) keep
+  their own names and are recognised as parts of `LB`.
+- **Two files holding the same dataset**, such as `dm.xpt` and
+  `dm.sas7bdat` during a conversion: the transport file wins, then the
+  SAS dataset, then Dataset-JSON, and a warning names the file left out.
+  Two files of the same format for one dataset are refused, since there
+  is no telling which is meant.
+- **CSV files in a study folder are not read** (a CORE test case’s
+  folder, with `_variables.csv`, is the exception), because a CSV
+  carries no column types or labels. They are named in a warning so they
+  are not missed. Check a CSV on its own with
+  [`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md).
+- **The define.xml**: a file called `define.xml` is preferred. Failing
+  that, any XML file whose name contains “define” is used, with a
+  warning if there is more than one candidate, and a folder holding a
+  single XML file uses that one whatever its name. The define gives
+  rules the variable metadata, value-level metadata and controlled
+  terminology version they compare against.
+- **Blank values**: character columns hold `""` for a missing value, as
+  SAS transport files do, and numeric columns hold `NA`. Column types
+  are taken from the file, never guessed, so an identifier like `"007"`
+  stays text.
+- **Text encoding**: bytes that are not valid UTF-8 are repaired rather
+  than allowed to fail a rule silently.
+- [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+  refuses, with an error, an empty folder, a folder that does not exist,
+  or a folder holding nothing coreval can read. It never reports one as
+  a clean study.
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  refuses a missing folder, and returns an empty study for an empty one.
+
+### One dataset
+
+`check_dataset(x, standard = )` takes a data frame, or one `.xpt`,
+`.sas7bdat` or `.csv` file. The domain comes from the `DOMAIN` column;
+only a dataset with no `DOMAIN` column falls back to the file name. Set
+`domain =` to override either.
+
+A bare CSV has no declared types, so its types are inferred, and a
+numeric-looking identifier will be read as a number. Prefer `.xpt` when
+that matters. A CSV row with too many or too few fields is refused
+rather than read partly.
+
+A data frame built in R has no variable labels. The few rules that
+compare labels are skipped on one, with a reason saying so.
+
+## Which rules run
+
+For every dataset, coreval selects the rules that apply to it and then
+evaluates each one. Selection uses, in order:
+
+1.  **The rule set**, chosen from the standard as described above.
+2.  **Status.** Retired rules are left out unless
+    `include_deprecated = TRUE`.
+3.  **Standard and version.** With `standard` (and optionally `version`)
+    set, only rules written for that standard and version run. The
+    number set aside is kept in the `excluded_by_standard` attribute and
+    shown in the report. A check without a standard is refused, as
+    CDISC’s and Verisian’s engines refuse it: running every standard’s
+    rules put SEND and TIG problems in an SDTM report. A few rules CDISC
+    wrote for both SDTM and SEND or TIG run only when `standard` names
+    SEND or TIG, since CORE 1.0 replaced their SDTM half.
+4.  **Domain and class.** A rule’s scope names the domains and
+    observation classes it applies to. A domain’s class (Events,
+    Findings, …) is looked up from the bundled SDTMIG metadata. For a
+    CORE 1.0 rule, the declared SDTMIG version also decides whether the
+    IG defines the domain at all.
+5.  **Use case**, if you pass `use_case` (for example `"INDH"`). A TIG
+    check needs `substandard` too, `"SDTM"` or `"SEND"` (or `"ADaM"`): a
+    TIG rule’s use case covers different datasets in each, and CDISC’s
+    engine will not check a TIG study without it.
+
+A study folder does not declare its standard, so for a folder of
+datasets `standard` has to be passed. A CORE test case or a USDM file
+declares its own, and an explicit `standard` overrides it.
+
+### Controlled terminology
+
+Rules that ask whether a value is an allowed term need to know which
+Controlled Terminology release the study follows, because terms are
+added and removed between releases. coreval takes it from, in order:
+
+1.  `ct_package`, if you pass one (for example `"sdtmct-2026-03-27"`);
+2.  the study’s `TS` dataset: the `TSVCDVER` column, on rows whose
+    `TSVCDREF` is `CDISC` or `CDISC CT`;
+3.  the define.xml’s `def:Standards` declaration.
+
+If none of those names a release, the terminology rules are skipped with
+a reason. coreval never picks a release for you: judged against a
+release the study never declared, the data would show violations that
+are not there and hide some that are.
+[`list_ct_packages()`](https://hrach-gevorgyan.github.io/coreval/reference/list_ct_packages.md)
+lists every bundled release.
+
+### Dictionaries
+
+MedDRA, WHODrug and the other licensed dictionaries are not bundled and
+cannot be read. Rules that need one are skipped with a reason naming the
+dictionary.
+
+## Evaluation
+
+Every dataset in a study is read once, then every applicable rule is run
+against it.
+[`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+and
+[`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md)
+go through the same evaluation loop, so a rule behaves the same in both.
+They differ in what counts as missing: checking one dataset, every other
+dataset is *unsupplied*, and rules that need one are skipped, as are the
+rules about the study as a whole. Checking a study, a rule that needs a
+dataset the study does not have is skipped too, saying the dataset is
+not in the study, except where the rule itself says what an absent one
+means: an optional (left) join, and a CORE 1.0 rule computing a set of
+values from it, which is then empty.
+
+A rule can be about:
+
+- **records**: one finding per offending row, with `Record` set to the
+  row number;
+- **a whole dataset**, such as “this dataset has no records”: `Record`
+  is blank;
+- **the whole study**, such as “is DM present at all?”: answered once
+  and reported under `Dataset = "STUDY"`.
+
+Rules that join datasets (a supplemental qualifier to its parent, a
+record to DM, RELREC relationships) do the join first and evaluate the
+joined rows.
+
+## When a rule cannot be answered
+
+Some rules cannot be evaluated on a given dataset. coreval never reports
+one of those as passing. Each goes into `result$skipped` with a reason.
+The common ones:
+
+| Reason | What it means | What to do |
+|----|----|----|
+| *needs DM, which was not supplied* | the rule compares with another dataset, and you checked one on its own | run [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md) on the folder |
+| *needs TV, which is not in this study* | the dataset it compares with does not exist in the study | nothing, if the study has no TV |
+| *asks which datasets the whole study contains*, *asks about the whole study* | a rule about the study as a whole, asked of one dataset | run [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md) |
+| *needs controlled terminology* | no CT release was found | pass `ct_package`, or fill `TSVCDREF` and `TSVCDVER` in TS |
+| *… needs define.xml …* | the rule compares data with the define | add the define to the folder and install `xml2` |
+| *needs AESER, which this dataset does not have* | a CDISC rule reads a column the dataset lacks | often nothing: the column may be legitimately absent |
+| *needs the MedDRA dictionary* | dictionary not bundled | check with your licensed tool |
+| *an operation groups by EPOCH, which the dataset does not have* | a computed step needs a missing column | as above |
+| *unimplemented Operations type* | coreval cannot evaluate this rule at all | check with your qualified tool |
+
+Many of these are expected and harmless. Read them anyway, because **an
+empty findings table means either clean data or rules that never ran**,
+and the skipped table is the only way to tell which.
+
+A check that cannot run at all, because nothing applies or the input is
+unusable, stops with an error rather than printing a clean report. If
+every check that applied had to be skipped, the report says that no
+check ran.
+
+## The result
+
+[`check_dataset()`](https://hrach-gevorgyan.github.io/coreval/reference/check_dataset.md)
+and
+[`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md)
+both return an object of class `coreval_result`. It is a list of three
+data tables:
+
+### `findings`
+
+One row per affected (dataset, record, variable).
+
+| Column | Meaning |
+|----|----|
+| `Dataset` | dataset name, or `STUDY` for study-level rules |
+| `Record` | row number in the dataset, counting from 1; blank for dataset-level rules |
+| `USUBJID` | the record’s subject, blank where the dataset has none or the row is not a record |
+| `SEQ` | the record’s `--SEQ`, blank in the same way |
+| `Variable` | the variable the rule reports |
+| `Value` | the value it found; `Not in dataset` when the variable does not exist |
+| `issue` | the rule’s message, in words |
+| `triage` | `wrong value`, `missing required` or `missing optional` |
+| `rule_id` | the CORE rule id |
+
+A `Variable` beginning with `$` is a value the rule computed rather than
+a column of your data, for example `$dm_studyid`, the set of STUDYID
+values found in DM. It is shown so you can see what the record was
+compared against.
+
+### `skipped`
+
+One row per rule and dataset that could not be checked: `rule_id`,
+`domain` and `reason`.
+
+### `truncated`
+
+Rules that flagged more records than `max_records` (1,000 by default)
+kept: `rule_id`, `domain`, `records_found` and `records_kept`. A rule
+flagging every row of a large dataset would otherwise produce more rows
+than anyone can read or Excel can hold. The true count is always kept
+here, and the report says “or more” where counts are capped. Use
+`max_records = Inf` to keep everything.
+
+### Attributes
+
+| Attribute | Meaning |
+|----|----|
+| `checks_run` | how many rule-and-dataset checks were evaluated |
+| `domains` | the datasets checked |
+| `excluded_by_standard` | rules set aside by `standard` / `version` |
+| `define_only` | `TRUE` when the folder held a define.xml and no datasets |
+
+### Triage
+
+CDISC’s rules carry no severity, so coreval does not invent one. It
+sorts each problem (one rule in one dataset) into one of three groups
+instead:
+
+- **`wrong value`**: at least one reported variable holds a value, and
+  that value breaks the rule. The data itself is the evidence.
+  Identifiers such as `USUBJID` and `--SEQ` do not count as evidence,
+  since they only say which record is meant.
+- **`missing required`**: nothing is present, and the rule concerns
+  something the standard marks Required, or a value is blank in a
+  variable that exists.
+- **`missing optional`**: nothing is present, and it is Expected or
+  Permissible, or the variable is simply not in the dataset. Often
+  legitimate.
+
+The printed report orders problems by triage group, then by how many
+records they touch. Within a problem, records holding a real offending
+value are shown before blank ones.
+
+### Printing, summarising, saving
+
+- `print(result, n = 10, rows = 3, guidance = FALSE)` prints the report.
+  `n` is the number of problems to describe (per dataset for a study),
+  `rows` the example records per problem, and `guidance = TRUE` adds the
+  Implementation Guide sentence each rule enforces.
+- `summary(result)` returns a one-row table: problems, records, counts
+  per triage group, checks run, checks that could not run, and capped
+  rules. It binds across results with
+  [`rbind()`](https://rdrr.io/r/base/cbind.html).
+- `filter_findings(result, triage =, dataset =, rule =, variable =)`
+  returns a narrowed result that still prints, summarises and saves. A
+  saved file records that it was filtered.
+- `write_findings(result, "issues.xlsx")` writes one workbook with
+  sheets `Problems`, `Records`, `Not checked` and `Rules`. A `.csv` path
+  writes one file per table (`issues.csv`, `issues_summary.csv`,
+  `issues_skipped.csv`, `issues_about.csv`). The foot of `Not checked`,
+  like `issues_about.csv`, records the coreval version, the rules
+  commit, the standard, version and terminology used, the number of
+  checks run, and whether the file is the whole result. In CSV output a
+  text value starting with `=`, `+`, `-` or `@` is prefixed with `'`, so
+  a spreadsheet does not run it as a formula.
+
+## Speed and memory
+
+The whole study is held in memory, as data tables, while it is checked.
+Memory grows roughly in step with the number of rows.
+`docs/BENCHMARKS.md` in the repository has measured times and peak
+memory on CDISC’s pilot submission and on copies of it up to 5.9 million
+rows, with the scripts to reproduce them.
+
+Some practical points:
+
+- An interactive session shows a progress bar weighted by dataset size.
+  Turn it on or off with `options(coreval.progress = TRUE)` or `FALSE`.
+- To check the same study several times, read it once with
+  [`read_study()`](https://hrach-gevorgyan.github.io/coreval/reference/read_study.md)
+  and pass the object to
+  [`check_study()`](https://hrach-gevorgyan.github.io/coreval/reference/check_study.md).
+- `version` cuts the number of rules further than `standard` alone, and
+  with them the time.
+- USDM checks are opt-in (`usdm = TRUE`) because a few of their rules
+  can take minutes on one file.
+
+## Optional packages
+
+| Package    | Needed for                                    |
+|------------|-----------------------------------------------|
+| `xml2`     | reading define.xml and the study tagging file |
+| `jsonlite` | Dataset-JSON and USDM study files             |
+| `QuickJSR` | USDM’s JSONata rules                          |
+| `writexl`  | saving to Excel                               |
+
+Without one, the rules or output that need it are skipped or refused
+with a message naming the package. Nothing else changes.
+
+## How the results are checked
+
+For most rules the upstream repositories publish worked examples: small
+datasets, and the exact records a correct implementation should flag.
+coreval’s conformance harness runs every rule against every example and
+compares the result row by row. More than nine in ten rules in each set
+match exactly. `docs/COVERAGE.md` goes through every rule that does not,
+and why.
+
+`docs/REAL-STUDY.md` compares coreval with CORE 1.0’s own engine on
+CDISC’s pilot submission, finding by finding, and explains every
+difference.
+
+Those examples are small and tidy, and real submissions are neither, so
+the agreement rate is a floor on correctness rather than a score.
+
+## coreval and the CORE engines
+
+Three programs run these rules:
+
+- **CDISC’s engine** (`cdisc-org/cdisc-rules-engine`), written in
+  Python. Since CORE 1.0 it is the reference for SEND, TIG and USDM.
+- **Verisian’s engine** (`verisianHQ/cdisc-rules-engine`), the CORE 1.0
+  engine, written in Python on a PostgreSQL database. It is the
+  reference for SDTMIG and the FDA Business Rules.
+- **coreval**, an independent implementation in R of both rule sets,
+  following each engine’s behaviour for the rules written for it.
+
+The engines are the official reference: when coreval and an engine
+disagree and nothing else settles it, the engine is right. They also
+check terms against the licensed dictionaries (MedDRA, WHODrug and
+others) when you supply them, which coreval cannot do.
+
+coreval is built for a different moment. It runs inside R, on a data
+frame you have open as well as on a folder of files. It needs no Python,
+database, network or API key, and it reports every rule it could not
+run, with the reason, next to the findings.
+
+A sensible split is coreval while you build the datasets, the engines
+before submission, and your organisation’s qualified tool for the
+submission itself.
+
+`docs/COMPARISON.md` in the repository compares the three in detail,
+with measured speed and memory and every difference found on CDISC’s
+pilot study. It lives in the repository rather than here because those
+details change with each release of the engines.
+
+## What it does not do
+
+- **ADaM.** Expected results are published for one ADaM rule only, so
+  there is no way to show the rest would be right.
+- **Licensed dictionaries** (MedDRA, WHODrug), as above.
+- **Severity.** CDISC’s rules do not carry one. The `legacy_ids` column
+  of
+  [`list_rules()`](https://hrach-gevorgyan.github.io/coreval/reference/list_rules.md)
+  gives the CDISC Conformance Rules and FDA Business Rules ids, which is
+  how to match a finding to a severity in another tool.
+- **Tracking between runs.** Each check stands alone. The `Status` and
+  `Notes` columns of a saved file, and `Owner` in a CSV, are for
+  tracking by hand.
+
+coreval is not validated software and is not a certified CORE engine.
+Treat its findings as a fast first check, and run your qualified tool
+before submission.
