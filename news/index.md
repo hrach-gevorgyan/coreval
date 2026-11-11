@@ -2,6 +2,8 @@
 
 ## coreval 0.4.0
 
+CRAN release: 2026-11-11
+
 This release follows CORE 1.0, which moved the SDTM rules to Verisian’s
 repository. The full list of changes is in `docs/CHANGES-0.4.0.md` in
 the repository.

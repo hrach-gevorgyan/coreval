@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/hrach-gevorgyan/coreval/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/hrach-gevorgyan/coreval/blob/v0.4.0/DESCRIPTION)
 
 Gevorgyan H (2026). *coreval: Check Clinical Trial Data Against 'CDISC'
 Open Rules*. R package version 0.4.0,
